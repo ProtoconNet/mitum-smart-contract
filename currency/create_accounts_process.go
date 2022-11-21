@@ -139,7 +139,12 @@ func NewCreateAccountsProcessor(
 	) (base.OperationProcessor, error) {
 		e := util.StringErrorFunc("failed to create new CreateAccountsProcessor")
 
-		opp := createAccountsProcessorPool.Get().(*CreateAccountsProcessor)
+		nopp := createAccountsProcessorPool.Get()
+		opp, ok := nopp.(*CreateAccountsProcessor)
+		if !ok {
+			return nil, errors.Errorf("expected CreateAccountsProcessor, not %T", nopp)
+		}
+
 		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
@@ -159,7 +164,10 @@ func NewCreateAccountsProcessor(
 func (opp *CreateAccountsProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	fact := op.Fact().(CreateAccountsFact)
+	fact, ok := op.Fact().(CreateAccountsFact)
+	if !ok {
+		return ctx, nil, errors.Errorf("expected CreateAccountsFact, not %T", op.Fact())
+	}
 
 	if err := checkExistsState(StateKeyAccount(fact.sender), getStateFunc); err != nil {
 		return ctx, nil, err
@@ -178,7 +186,10 @@ func (opp *CreateAccountsProcessor) Process( // nolint:dupl
 ) {
 	e := util.StringErrorFunc("failed to preprocess for CreateAccounts")
 
-	fact := op.Fact().(CreateAccountsFact)
+	fact, ok := op.Fact().(CreateAccountsFact)
+	if !ok {
+		return nil, nil, errors.Errorf("expected CreateAccountsFact, not %T", op.Fact())
+	}
 
 	if required, err := opp.calculateItemsFee(op, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %w", err), nil
@@ -191,7 +202,11 @@ func (opp *CreateAccountsProcessor) Process( // nolint:dupl
 
 	ns := make([]*CreateAccountsItemProcessor, len(fact.items))
 	for i := range fact.items {
-		c := createAccountsItemProcessorPool.Get().(*CreateAccountsItemProcessor)
+		cip := createAccountsItemProcessorPool.Get()
+		c, ok := cip.(*CreateAccountsItemProcessor)
+		if !ok {
+			return nil, nil, errors.Errorf("expected CreateAccountsItemProcessor, not %T", cip)
+		}
 
 		c.h = op.Hash()
 		c.item = fact.items[i]
@@ -245,7 +260,10 @@ func (opp *CreateAccountsProcessor) Close() error {
 }
 
 func (opp *CreateAccountsProcessor) calculateItemsFee(op base.Operation, getStateFunc base.GetStateFunc) (map[CurrencyID][2]Big, error) {
-	fact := op.Fact().(CreateAccountsFact)
+	fact, ok := op.Fact().(CreateAccountsFact)
+	if !ok {
+		return nil, errors.Errorf("expected CreateAccountsFact, not %T", op.Fact())
+	}
 
 	items := make([]AmountsItem, len(fact.items))
 	for i := range fact.items {

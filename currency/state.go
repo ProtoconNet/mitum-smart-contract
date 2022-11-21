@@ -242,7 +242,10 @@ func existsCurrencyPolicy(cid CurrencyID, getStateFunc base.GetStateFunc) (Curre
 	case !found:
 		return CurrencyPolicy{}, base.NewBaseOperationProcessReasonError("currency not found, %v", cid)
 	default:
-		currencydesign := i.Value().(CurrencyDesignStateValue) //nolint:forcetypeassert //...
+		currencydesign, ok := i.Value().(CurrencyDesignStateValue) //nolint:forcetypeassert //...
+		if !ok {
+			return CurrencyPolicy{}, errors.Errorf("expected CurrencyDesignStateValue, not %T", i.Value())
+		}
 		policy = currencydesign.CurrencyDesign.policy
 	}
 	return policy, nil

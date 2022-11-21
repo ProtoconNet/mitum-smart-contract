@@ -3,6 +3,7 @@ package currency
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 )
 
@@ -16,7 +17,10 @@ func (op GenesisCurrencies) Process(
 	ctx context.Context, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	fact := op.Fact().(GenesisCurrenciesFact)
+	fact, ok := op.Fact().(GenesisCurrenciesFact)
+	if !ok {
+		return nil, nil, errors.Errorf("expected GenesisCurrenciesFact, not %T", op.Fact())
+	}
 
 	newAddress, err := fact.Address()
 	if err != nil {

@@ -109,7 +109,12 @@ func NewTransfersProcessor() GetNewProcessor {
 	) (base.OperationProcessor, error) {
 		e := util.StringErrorFunc("failed to create new TransfersProcessor")
 
-		opp := transfersProcessorPool.Get().(*TransfersProcessor)
+		nopp := transfersProcessorPool.Get()
+		opp, ok := nopp.(*TransfersProcessor)
+		if !ok {
+			return nil, e(errors.Errorf("expected TransfersProcessor, not %T", nopp), "")
+		}
+
 		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
@@ -128,7 +133,10 @@ func NewTransfersProcessor() GetNewProcessor {
 func (opp *TransfersProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	fact := op.Fact().(TransfersFact)
+	fact, ok := op.Fact().(TransfersFact)
+	if !ok {
+		return ctx, nil, errors.Errorf("expected TransfersFact, not %T", op.Fact())
+	}
 
 	if err := checkExistsState(StateKeyAccount(fact.sender), getStateFunc); err != nil {
 		return ctx, nil, err
@@ -147,7 +155,10 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 ) {
 	e := util.StringErrorFunc("failed to preprocess for Transfers")
 
-	fact := op.Fact().(TransfersFact)
+	fact, ok := op.Fact().(TransfersFact)
+	if !ok {
+		return nil, nil, e(errors.Errorf("expected TransfersFact, not %T", op.Fact()), "")
+	}
 
 	if required, err := opp.calculateItemsFee(op, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %w", err), nil
@@ -160,7 +171,11 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 
 	ns := make([]*TransfersItemProcessor, len(fact.items))
 	for i := range fact.items {
-		c := transfersItemProcessorPool.Get().(*TransfersItemProcessor)
+		cip := transfersItemProcessorPool.Get()
+		c, ok := cip.(*TransfersItemProcessor)
+		if !ok {
+			return nil, nil, e(errors.Errorf("expected TransfersItemProcessor, not %T", cip), "")
+		}
 
 		c.h = op.Hash()
 		c.item = fact.items[i]
@@ -210,8 +225,10 @@ func (opp *TransfersProcessor) Close() error {
 }
 
 func (opp *TransfersProcessor) calculateItemsFee(op base.Operation, getStateFunc base.GetStateFunc) (map[CurrencyID][2]Big, error) {
-	fact := op.Fact().(TransfersFact)
-
+	fact, ok := op.Fact().(TransfersFact)
+	if !ok {
+		return nil, errors.Errorf("expected TransfersFact, not %T", op.Fact())
+	}
 	items := make([]AmountsItem, len(fact.items))
 	for i := range fact.items {
 		items[i] = fact.items[i]

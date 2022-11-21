@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/isaac"
 	"github.com/spikeekips/mitum/util"
@@ -38,7 +39,12 @@ func NewCurrencyRegisterProcessor(threshold base.Threshold) GetNewProcessor {
 	) (base.OperationProcessor, error) {
 		e := util.StringErrorFunc("failed to create new CurrencyRegisterProcessor")
 
-		opp := currencyRegisterProcessorPool.Get().(*CurrencyRegisterProcessor)
+		nopp := currencyRegisterProcessorPool.Get()
+		opp, ok := nopp.(*CurrencyRegisterProcessor)
+		if !ok {
+			return nil, e(errors.Errorf("expected CurrencyRegisterProcessor, not %T", nopp), "")
+		}
+
 		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
@@ -75,16 +81,21 @@ func (opp *CurrencyRegisterProcessor) PreProcess(
 ) (context.Context, base.OperationProcessReasonError, error) {
 	e := util.StringErrorFunc("failed to preprocess for CurrencyRegister")
 
-	noop, ok := op.(CurrencyRegister)
+	nop, ok := op.(CurrencyRegister)
 	if !ok {
 		return ctx, nil, e(nil, "not CurrencyRegister, %T", op)
 	}
 
-	if err := base.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, noop.NodeSigns()); err != nil {
+	if err := base.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, nop.NodeSigns()); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError("not enough signs"), nil
 	}
 
-	item := op.Fact().(CurrencyRegisterFact).currency
+	fact, ok := op.Fact().(CurrencyRegisterFact)
+	if !ok {
+		return ctx, nil, e(nil, "not CurrencyRegisterFact, %T", op.Fact())
+	}
+
+	item := fact.currency
 
 	_, err := notExistsState(StateKeyCurrencyDesign(item.amount.Currency()), item.amount.Currency().String(), getStateFunc)
 	if err != nil {
@@ -126,7 +137,10 @@ func (opp *CurrencyRegisterProcessor) Process(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	fact := op.Fact().(CurrencyRegisterFact)
+	fact, ok := op.Fact().(CurrencyRegisterFact)
+	if !ok {
+		return nil, nil, errors.Errorf("not CurrencyRegisterFact, %T", op.Fact())
+	}
 
 	sts := make([]base.StateMergeValue, 4)
 	v, ok := opp.ga.Value().(BalanceStateValue)

@@ -3,6 +3,7 @@ package currency
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/hint"
@@ -131,7 +132,10 @@ func (opp *FeeOperationProcessor) Process(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	fact := op.Fact().(FeeOperationFact)
+	fact, ok := op.Fact().(FeeOperationFact)
+	if !ok {
+		return nil, nil, errors.Errorf("expected FeeOperationFact, not %T", op.Fact())
+	}
 
 	sts := make([]base.StateMergeValue, len(fact.amounts))
 	for i := range fact.amounts {

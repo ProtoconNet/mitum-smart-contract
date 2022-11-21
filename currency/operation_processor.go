@@ -130,7 +130,7 @@ func (opr *OperationProcessor) New(
 	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	newProcessConstraintFunc base.NewOperationProcessorProcessFunc) (*OperationProcessor, error) {
 	e := util.StringErrorFunc("failed to create new OperationProcessor")
-	fmt.Println("opr *OperationProcessor New")
+
 	nopr := operationProcessorPool.Get().(*OperationProcessor)
 	if nopr.processorHintSet == nil {
 		nopr.processorHintSet = opr.processorHintSet
@@ -139,7 +139,7 @@ func (opr *OperationProcessor) New(
 	if nopr.fee == nil {
 		nopr.fee = opr.fee
 	}
-	fmt.Println(opr.duplicated)
+
 	if nopr.duplicated == nil {
 		nopr.duplicated = make(map[string]DuplicationType)
 	}
@@ -178,8 +178,7 @@ func (opr *OperationProcessor) SetProcessor(
 
 func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (context.Context, base.OperationProcessReasonError, error) {
 	e := util.StringErrorFunc("failed to preprocess for OperationProcessor")
-	fmt.Println("PreProcess opr duplicated")
-	fmt.Println(opr.duplicated)
+
 	if opr.processorClosers == nil {
 		opr.processorClosers = &sync.Map{}
 	}
@@ -206,8 +205,7 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation
 
 func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
 	e := util.StringErrorFunc("failed to process for OperationProcessor")
-	fmt.Println("check duplication")
-	fmt.Println(opr.duplicated)
+
 	if err := opr.checkDuplication(op); err != nil {
 		return nil, nil, base.NewBaseOperationProcessReasonError("duplication found: %w", err)
 	}
@@ -224,7 +222,7 @@ func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, g
 
 	stateMergeValues, reasonerr, err := sp.Process(ctx, op, getStateFunc)
 	// opr.collecFee(stateMergeValues...)
-	fmt.Println(err)
+
 	return stateMergeValues, reasonerr, err
 }
 
@@ -254,10 +252,13 @@ func (opr *OperationProcessor) checkDuplication(op base.Operation) error {
 	var did string
 	var didtype DuplicationType
 	var newAddresses []base.Address
-	fmt.Println(opr.duplicated)
+
 	switch t := op.(type) {
 	case CreateAccounts:
-		fact := t.Fact().(CreateAccountsFact)
+		fact, ok := t.Fact().(CreateAccountsFact)
+		if !ok {
+			return errors.Errorf("expected GenesisCurrenciesFact, not %T", t.Fact())
+		}
 		as, err := fact.Targets()
 		if err != nil {
 			return errors.Errorf("failed to get Addresses")
@@ -266,11 +267,18 @@ func (opr *OperationProcessor) checkDuplication(op base.Operation) error {
 		did = fact.Sender().String()
 		didtype = DuplicationTypeSender
 	case Transfers:
-		fact := t.Fact().(TransfersFact)
+		fact, ok := t.Fact().(TransfersFact)
+		if !ok {
+			return errors.Errorf("expected TransfersFact, not %T", t.Fact())
+		}
 		did = fact.Sender().String()
 		didtype = DuplicationTypeSender
 	case CurrencyRegister:
-		did = t.Fact().(CurrencyRegisterFact).Currency().amount.Currency().String()
+		fact, ok := t.Fact().(CurrencyRegisterFact)
+		if !ok {
+			return errors.Errorf("expected CurrencyRegisterFact, not %T", t.Fact())
+		}
+		did = fact.Currency().amount.Currency().String()
 		didtype = DuplicationTypeCurrency
 	default:
 		return nil
@@ -419,8 +427,6 @@ func (opr *OperationProcessor) close() {
 	opr.duplicated = nil
 	opr.duplicatedNewAddress = nil
 	opr.processorClosers = &sync.Map{}
-	fmt.Println("close")
-	fmt.Println(opr.duplicated)
 
 	operationProcessorPool.Put(opr)
 

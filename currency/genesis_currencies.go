@@ -1,6 +1,7 @@
 package currency
 
 import (
+	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/hint"
@@ -126,7 +127,11 @@ func (op GenesisCurrencies) IsValid(networkID []byte) error {
 		return util.ErrInvalid.Errorf("genesis currencies should be signed only by genesis node key")
 	}
 
-	fact := op.Fact().(GenesisCurrenciesFact)
+	fact, ok := op.Fact().(GenesisCurrenciesFact)
+	if !ok {
+		return errors.Errorf("expected GenesisCurrenciesFact, not %T", op.Fact())
+	}
+
 	if !fact.genesisNodeKey.Equal(op.Signs()[0].Signer()) {
 		return util.ErrInvalid.Errorf("not signed by genesis node key")
 	}
