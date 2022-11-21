@@ -1,0 +1,114 @@
+package currency
+
+import (
+	"encoding/json"
+
+	"github.com/spikeekips/mitum/util"
+	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
+	"github.com/spikeekips/mitum/util/hint"
+)
+
+type AccountStateValueJSONMarshaler struct {
+	hint.BaseHinter
+	AC Account `json:"account"`
+}
+
+func (s AccountStateValue) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(AccountStateValueJSONMarshaler{
+		BaseHinter: s.BaseHinter,
+		AC:         s.Account,
+	})
+}
+
+type AccountStateValueJSONUnmarshaler struct {
+	AC json.RawMessage `json:"account"`
+}
+
+func (s *AccountStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+	e := util.StringErrorFunc("failed to decode AccountStateValue")
+
+	var u AccountStateValueJSONUnmarshaler
+	if err := enc.Unmarshal(b, &u); err != nil {
+		return e(err, "")
+	}
+
+	var ac Account
+
+	if err := ac.DecodeJSON(u.AC, enc); err != nil {
+		return e(err, "")
+	}
+
+	s.Account = ac
+
+	return nil
+}
+
+type BalanceStateValueJSONMarshaler struct {
+	hint.BaseHinter
+	AM Amount `json:"amount"`
+}
+
+func (s BalanceStateValue) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(BalanceStateValueJSONMarshaler{
+		BaseHinter: s.BaseHinter,
+		AM:         s.Amount,
+	})
+}
+
+type BalanceStateValueJSONUnmarshaler struct {
+	AM json.RawMessage `json:"amount"`
+}
+
+func (s *BalanceStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+	e := util.StringErrorFunc("failed to decode BalanceStateValue")
+
+	var u BalanceStateValueJSONUnmarshaler
+	if err := enc.Unmarshal(b, &u); err != nil {
+		return e(err, "")
+	}
+
+	var am Amount
+
+	if err := am.DecodeJSON(u.AM, enc); err != nil {
+		return e(err, "")
+	}
+
+	s.Amount = am
+
+	return nil
+}
+
+type CurrencyDesignStateValueJSONMarshaler struct {
+	hint.BaseHinter
+	CD CurrencyDesign `json:"currencydesign"`
+}
+
+func (s CurrencyDesignStateValue) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(CurrencyDesignStateValueJSONMarshaler{
+		BaseHinter: s.BaseHinter,
+		CD:         s.CurrencyDesign,
+	})
+}
+
+type CurrencyDesignStateValueJSONUnmarshaler struct {
+	CD json.RawMessage `json:"currencydesign"`
+}
+
+func (s *CurrencyDesignStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+	e := util.StringErrorFunc("failed to decode CurrencyDesignStateValue")
+
+	var u CurrencyDesignStateValueJSONUnmarshaler
+	if err := enc.Unmarshal(b, &u); err != nil {
+		return e(err, "")
+	}
+
+	var cd CurrencyDesign
+
+	if err := cd.DecodeJSON(u.CD, enc); err != nil {
+		return e(err, "")
+	}
+
+	s.CurrencyDesign = cd
+
+	return nil
+}
