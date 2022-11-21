@@ -1,0 +1,41 @@
+facts:
+  - _hint: suffrage-genesis-join-fact-v0.0.1
+    nodes:
+      - _hint: node-v0.0.1
+        address: no0sas
+        publickey: bXTT1hoetSKYPUmfu3bMRcs8aU342MTTzhgeCQ1bTavBmpu
+
+  - _hint: genesis-network-policy-fact-v0.0.1
+    policy:
+      _hint: network-policy-v0.0.1
+      max_operations_in_proposal: 99
+      suffrage_candidate_lifespan: 333333333
+      suffrage_candidate_limiter:
+        _hint: fixed-suffrage-candidate-limiter-rule-v0.0.1
+        limit: 1
+      max_suffrage_size: 3
+  - _hint: mitum-currency-genesis-currencies-operation-fact-v0.0.1
+    genesis_node_key: bXTT1hoetSKYPUmfu3bMRcs8aU342MTTzhgeCQ1bTavBmpu
+    keys:
+      _hint: mitum-currency-keys-v0.0.1  
+      keys: 
+        - _hint: mitum-currency-key-v0.0.1
+          key: kYJADZP1XKNvUNn7XHY39yisp9QCfU1LtyxGw2HRjQwXmpu
+          # D4QPRNSTgYmgRymYVS1mLgyGtCbzeAPYhd5r4jNQahwampr
+          weight: 100
+      threshold: 100
+    currencies:
+      - _hint: mitum-currency-currency-design-v0.0.1
+        amount: 
+          _hint: mitum-currency-amount-v0.0.1
+          amount: "1000000000000000000000000000"
+          currency: MCC
+        genesis_account:
+        policy:
+          _hint: mitum-currency-currency-policy-v0.0.1
+          new_account_min_balance: "10"
+          feeer:
+            _hint: mitum-currency-fixed-feeer-v0.0.1
+            receiver: 2E5qNuz9HsXydeTTdG1a3SZtj1iBWNUyVyfHYNcs4gSgmca
+            amount: "10000000000000000000"
+        aggregate: "1000000000000000000000000000"
