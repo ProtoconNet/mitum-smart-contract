@@ -146,7 +146,7 @@ func (di *Digester) digest(ctx context.Context, blk base.BlockMap) error {
 	}
 
 	var opstree fixedtree.Tree
-	switch v, found, err := reader.Item(base.BlockMapItemTypeOperations); {
+	switch v, found, err := reader.Item(base.BlockMapItemTypeOperationsTree); {
 	case err != nil:
 		return err
 	case found:

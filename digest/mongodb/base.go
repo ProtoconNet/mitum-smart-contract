@@ -2,7 +2,6 @@ package mongodbstorage
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -887,7 +886,7 @@ func (st *Database) SetInfo(key string, b []byte) error {
 	if st.readonly {
 		return errors.Errorf("readonly mode")
 	}
-	fmt.Println(b)
+
 	if doc, err := NewInfoDoc(key, b, st.enc); err != nil {
 		return err
 	} else if _, err := st.client.Set(ColNameInfo, doc); err != nil {
