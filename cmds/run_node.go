@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/arl/statsviz"
 	"github.com/pkg/errors"
@@ -17,6 +18,7 @@ import (
 	isaacnetwork "github.com/spikeekips/mitum/isaac/network"
 	isaacstates "github.com/spikeekips/mitum/isaac/states"
 	"github.com/spikeekips/mitum/launch"
+	"github.com/spikeekips/mitum/network/quicmemberlist"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/logging"
 	"github.com/spikeekips/mitum/util/ps"
@@ -77,6 +79,8 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		PreAddOK(PNameOperationProcessorsMap, POperationProcessorsMap)
 	_ = pps.POK(PNameDigest).
 		PostAddOK(PNameDigestAPIHandlers, cmd.pDigestAPIHandlers)
+	_ = pps.POK(PNameDigester).
+		PostAddOK(PNameDigesterFollowUp, PdigesterFollowUp)
 
 	_ = pps.SetLogging(log)
 
@@ -178,6 +182,7 @@ func (cmd *RunCommand) pWhenNewBlockSavedInConsensusStateFunc(pctx context.Conte
 	var params *isaac.LocalParams
 	var ballotbox *isaacstates.Ballotbox
 	var nodeinfo *isaacnetwork.NodeInfoUpdater
+	var di *digest.Digester
 
 	if err := util.LoadFromContextOK(pctx,
 		launch.LoggingContextKey, &log,
@@ -185,12 +190,15 @@ func (cmd *RunCommand) pWhenNewBlockSavedInConsensusStateFunc(pctx context.Conte
 		launch.LocalParamsContextKey, &params,
 		launch.BallotboxContextKey, &ballotbox,
 		launch.NodeInfoContextKey, &nodeinfo,
+		ContextValueDigester, &di,
 	); err != nil {
 		return pctx, err
 	}
+	g := cmd.whenBlockSaved(db, di)
 
 	f := func(height base.Height) {
 		launch.WhenNewBlockSavedInConsensusStateFunc(params, ballotbox, db, nodeinfo)(height)
+		g(pctx)
 
 		l := log.Log().With().Interface("height", height).Logger()
 		l.Debug().Msg("new block saved")
@@ -208,6 +216,27 @@ func (cmd *RunCommand) pWhenNewBlockSavedInConsensusStateFunc(pctx context.Conte
 	pctx = context.WithValue(pctx, launch.WhenNewBlockSavedInConsensusStateFuncContextKey, f)
 
 	return pctx, nil
+}
+
+func (cmd *RunCommand) whenBlockSaved(
+	db isaac.Database,
+	di *digest.Digester,
+) ps.Func {
+	return func(ctx context.Context) (context.Context, error) {
+		switch m, found, err := db.LastBlockMap(); {
+		case err != nil:
+			return ctx, err
+		case !found:
+			return ctx, errors.Errorf("last BlockMap not found")
+		default:
+			if di != nil {
+				go func() {
+					di.Digest([]base.BlockMap{m})
+				}()
+			}
+		}
+		return ctx, nil
+	}
 }
 
 func (cmd *RunCommand) pCheckHold(pctx context.Context) (context.Context, error) {
@@ -347,16 +376,32 @@ func (cmd *RunCommand) setDigestSendHandler(
 	params base.LocalParams,
 	handlers *digest.Handlers,
 ) (*digest.Handlers, error) {
-	var cb *isaacnetwork.CallbackBroadcaster
-	if err := util.LoadFromContextOK(ctx, launch.CallbackBroadcasterContextKey, &cb); err != nil {
+	var memberlist *quicmemberlist.Memberlist
+	if err := util.LoadFromContextOK(ctx, launch.MemberlistContextKey, &memberlist); err != nil {
 		return nil, err
 	}
 
+	client := launch.NewNetworkClient( //nolint:gomnd //...
+		encs, enc, time.Second*2,
+		base.NetworkID([]byte(params.NetworkID())),
+	)
+
 	handlers = handlers.SetSend(
-		NewSendHandler(local.Privatekey(), params.NetworkID(), func() (*isaacnetwork.CallbackBroadcaster, error) { // nolint:contextcheck
-			return cb, nil
+		NewSendHandler(local.Privatekey(), params.NetworkID(), func() (*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
+			return client, memberlist, nil
 		}),
 	)
+
+	// var memberlist *quicmemberlist.Memberlist
+	// if err := util.LoadFromContextOK(ctx, launch.MemberlistContextKey, &memberlist); err != nil {
+	// 	return nil, err
+	// }
+
+	// handlers = handlers.SetSend(
+	// 	NewSendHandler(local.Privatekey(), params.NetworkID(), func() (*quicmemberlist.Memberlist, error) { // nolint:contextcheck
+	// 		return memberlist, nil
+	// 	}),
+	// )
 
 	cmd.log.Debug().Msg("send handler attached")
 

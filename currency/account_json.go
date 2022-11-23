@@ -60,12 +60,13 @@ func (ac *Account) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	k, err := enc.Decode(uac.KS)
 	if err != nil {
 		return e(err, "")
+	} else if k != nil {
+		v, ok := k.(BaseAccountKeys)
+		if !ok {
+			return util.ErrWrongType.Errorf("expected Keys, not %T", k)
+		}
+		ac.keys = v
 	}
-	v, ok := k.(BaseAccountKeys)
-	if !ok {
-		return util.ErrWrongType.Errorf("expected Keys, not %T", k)
-	}
-	ac.keys = v
 
 	return nil
 }

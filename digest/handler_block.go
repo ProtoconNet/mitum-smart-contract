@@ -78,7 +78,7 @@ func (hd *Handlers) buildBlockHalByHeight(height base.Height) (Hal, error) {
 	}
 	hal = hal.AddLink("next", NewHalLink(h, nil))
 
-	if height > base.GenesisHeight+1 {
+	if height > base.GenesisHeight {
 		h, err = hd.combineURL(HandlerPathBlockByHeight, "height", (height - 1).String())
 		if err != nil {
 			return nil, err

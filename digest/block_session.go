@@ -1,6 +1,5 @@
 package digest
 
-/*
 import (
 	"context"
 	"fmt"
@@ -13,12 +12,8 @@ import (
 
 	"github.com/spikeekips/mitum-currency/currency"
 	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/base/block"
-	"github.com/spikeekips/mitum/base/operation"
-	"github.com/spikeekips/mitum/base/state"
 	mitumutil "github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/tree"
-	"github.com/spikeekips/mitum/util/valuehash"
+	"github.com/spikeekips/mitum/util/fixedtree"
 )
 
 var bulkWriteLimit = 500
@@ -26,15 +21,18 @@ var bulkWriteLimit = 500
 type BlockSession struct {
 	sync.RWMutex
 	block           base.BlockMap
+	ops             []base.Operation
+	opstree         fixedtree.Tree
+	sts             []base.State
 	st              *Database
-	opsTreeNodes    map[string]operation.FixedTreeNode
+	opsTreeNodes    map[string]base.OperationFixedtreeNode
 	operationModels []mongo.WriteModel
 	accountModels   []mongo.WriteModel
 	balanceModels   []mongo.WriteModel
 	statesValue     *sync.Map
 }
 
-func NewBlockSession(st *Database, blk block.BlockMap) (*BlockSession, error) {
+func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opstree fixedtree.Tree, sts []base.State) (*BlockSession, error) {
 	if st.Readonly() {
 		return nil, errors.Errorf("readonly mode")
 	}
@@ -47,6 +45,9 @@ func NewBlockSession(st *Database, blk block.BlockMap) (*BlockSession, error) {
 	return &BlockSession{
 		st:          nst,
 		block:       blk,
+		ops:         ops,
+		opstree:     opstree,
+		sts:         sts,
 		statesValue: &sync.Map{},
 	}, nil
 }
@@ -96,11 +97,11 @@ func (bs *BlockSession) Close() error {
 }
 
 func (bs *BlockSession) prepareOperationsTree() error {
-	nodes := map[string]operation.FixedTreeNode{}
-	if err := bs.block.Manifest().OperationsTree().Traverse(func(no tree.FixedTreeNode) (bool, error) {
-		nno := no.(operation.FixedTreeNode)
-		fh := valuehash.NewBytes(nno.Key())
-		nodes[fh.String()] = nno
+	nodes := map[string]base.OperationFixedtreeNode{}
+
+	if err := bs.opstree.Traverse(func(_ uint64, no fixedtree.Node) (bool, error) {
+		nno := no.(base.OperationFixedtreeNode)
+		nodes[nno.Key()] = nno
 
 		return true, nil
 	}); err != nil {
@@ -113,11 +114,11 @@ func (bs *BlockSession) prepareOperationsTree() error {
 }
 
 func (bs *BlockSession) prepareOperations() error {
-	if len(bs.block.Operations()) < 1 {
+	if len(bs.ops) < 1 {
 		return nil
 	}
 
-	node := func(h mitumutil.Hash) (bool, bool, operation.ReasonError) {
+	node := func(h mitumutil.Hash) (bool, bool, base.OperationProcessReasonError) {
 		no, found := bs.opsTreeNodes[h.String()]
 		if !found {
 			return false, false, nil
@@ -126,10 +127,10 @@ func (bs *BlockSession) prepareOperations() error {
 		return true, no.InState(), no.Reason()
 	}
 
-	bs.operationModels = make([]mongo.WriteModel, len(bs.block.Operations()))
+	bs.operationModels = make([]mongo.WriteModel, len(bs.ops))
 
-	for i := range bs.block.Operations() {
-		op := bs.block.Operations()[i]
+	for i := range bs.ops {
+		op := bs.ops[i]
 
 		found, inState, reason := node(op.Fact().Hash())
 		if !found {
@@ -139,8 +140,8 @@ func (bs *BlockSession) prepareOperations() error {
 		doc, err := NewOperationDoc(
 			op,
 			bs.st.database.Encoder(),
-			bs.block.Height(),
-			bs.block.ConfirmedAt(),
+			bs.block.Manifest().Height(),
+			bs.block.SignedAt(),
 			inState,
 			reason,
 			uint64(i),
@@ -155,14 +156,14 @@ func (bs *BlockSession) prepareOperations() error {
 }
 
 func (bs *BlockSession) prepareAccounts() error {
-	if len(bs.block.States()) < 1 {
+	if len(bs.sts) < 1 {
 		return nil
 	}
 
 	var accountModels []mongo.WriteModel
 	var balanceModels []mongo.WriteModel
-	for i := range bs.block.States() {
-		st := bs.block.States()[i]
+	for i := range bs.sts {
+		st := bs.sts[i]
 		switch {
 		case currency.IsStateAccountKey(st.Key()):
 			j, err := bs.handleAccountState(st)
@@ -187,7 +188,7 @@ func (bs *BlockSession) prepareAccounts() error {
 	return nil
 }
 
-func (bs *BlockSession) handleAccountState(st state.State) ([]mongo.WriteModel, error) {
+func (bs *BlockSession) handleAccountState(st base.State) ([]mongo.WriteModel, error) {
 	if rs, err := NewAccountValue(st); err != nil {
 		return nil, err
 	} else if doc, err := NewAccountDoc(rs, bs.st.database.Encoder()); err != nil {
@@ -197,7 +198,7 @@ func (bs *BlockSession) handleAccountState(st state.State) ([]mongo.WriteModel, 
 	}
 }
 
-func (bs *BlockSession) handleBalanceState(st state.State) ([]mongo.WriteModel, error) {
+func (bs *BlockSession) handleBalanceState(st base.State) ([]mongo.WriteModel, error) {
 	doc, err := NewBalanceDoc(st, bs.st.database.Encoder())
 	if err != nil {
 		return nil, err
@@ -257,4 +258,3 @@ func (bs *BlockSession) close() error {
 
 	return bs.st.Close()
 }
-*/

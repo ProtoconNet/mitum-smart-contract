@@ -21,6 +21,9 @@ var hinters = []encoder.DecodeDetail{
 	{Hint: currency.CurrencyDesignHint, Instance: currency.CurrencyDesign{}},
 	{Hint: currency.CurrencyPolicyHint, Instance: currency.CurrencyPolicy{}},
 	{Hint: currency.CurrencyRegisterHint, Instance: currency.CurrencyRegister{}},
+	{Hint: currency.TransfersItemMultiAmountsHint, Instance: currency.TransfersItemMultiAmounts{}},
+	{Hint: currency.TransfersItemSingleAmountHint, Instance: currency.TransfersItemSingleAmount{}},
+	{Hint: currency.TransfersHint, Instance: currency.Transfers{}},
 	{Hint: currency.FeeOperationFactHint, Instance: currency.FeeOperationFact{}},
 	{Hint: currency.FeeOperationHint, Instance: currency.FeeOperation{}},
 	{Hint: currency.FixedFeeerHint, Instance: currency.FixedFeeer{}},
@@ -38,6 +41,7 @@ var hinters = []encoder.DecodeDetail{
 var supportedProposalOperationFactHinters = []encoder.DecodeDetail{
 	{Hint: currency.CreateAccountsFactHint, Instance: currency.CreateAccountsFact{}},
 	{Hint: currency.CurrencyRegisterFactHint, Instance: currency.CurrencyRegisterFact{}},
+	{Hint: currency.TransfersFactHint, Instance: currency.TransfersFact{}},
 }
 
 func init() {

@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/memberlist"
 	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum-currency/currency"
-	"github.com/spikeekips/mitum-currency/digest"
 	bsonenc "github.com/spikeekips/mitum-currency/digest/bson"
 	mongodbstorage "github.com/spikeekips/mitum-currency/digest/mongodb"
 	"github.com/spikeekips/mitum/base"
@@ -47,6 +46,7 @@ var (
 	PNameOperationProcessorsMap = ps.Name("mitum-currency-operation-processors-map")
 	PNameGenerateGenesis        = ps.Name("mitum-currency-generate-genesis")
 	PNameDigestAPIHandlers      = ps.Name("mitum-currency-digest-api-handlers")
+	PNameDigesterFollowUp       = ps.Name("mitum-currency-followup_digester")
 	BEncoderContextKey          = util.ContextKey("bencoder")
 )
 
@@ -159,9 +159,19 @@ func POperationProcessorsMap(ctx context.Context) (context.Context, error) {
 
 	opr := currency.NewOperationProcessor()
 	opr.SetProcessor(currency.CreateAccountsHint, currency.NewCreateAccountsProcessor())
+	opr.SetProcessor(currency.TransfersHint, currency.NewTransfersProcessor())
 	opr.SetProcessor(currency.CurrencyRegisterHint, currency.NewCurrencyRegisterProcessor(params.Threshold()))
 
 	_ = set.Add(currency.CreateAccountsHint, func(height base.Height) (base.OperationProcessor, error) {
+		return opr.New(
+			height,
+			db.State,
+			nil,
+			nil,
+		)
+	})
+
+	_ = set.Add(currency.TransfersHint, func(height base.Height) (base.OperationProcessor, error) {
 		return opr.New(
 			height,
 			db.State,
@@ -1076,7 +1086,7 @@ func PNetworkHandlers(ctx context.Context) (context.Context, error) {
 		return ctx, e(err, "")
 	}
 
-	sendOperationFilterf, err := launch.SendOperationFilterFunc(ctx)
+	sendOperationFilterf, err := SendOperationFilterFunc(ctx)
 	if err != nil {
 		return ctx, e(err, "")
 	}
@@ -1209,6 +1219,74 @@ func PNetworkHandlers(ctx context.Context) (context.Context, error) {
 		Add(launch.HandlerPrefixPprof, launch.NetworkHandlerPprofFunc(encs))
 
 	return ctx, nil
+}
+
+func SendOperationFilterFunc(ctx context.Context) (
+	func(base.Operation) (bool, error),
+	error,
+) {
+	var db isaac.Database
+	var oprs *hint.CompatibleSet
+
+	if err := util.LoadFromContextOK(ctx,
+		launch.CenterDatabaseContextKey, &db,
+		launch.OperationProcessorsMapContextKey, &oprs,
+	); err != nil {
+		return nil, err
+	}
+
+	operationfilterf := IsSupportedProposalOperationFactHintFunc()
+
+	return func(op base.Operation) (bool, error) {
+		switch hinter, ok := op.Fact().(hint.Hinter); {
+		case !ok:
+			return false, nil
+		case !operationfilterf(hinter.Hint()):
+			return false, nil
+		}
+
+		var height base.Height
+
+		switch m, found, err := db.LastBlockMap(); {
+		case err != nil:
+			return false, err
+		case !found:
+			return true, nil
+		default:
+			height = m.Manifest().Height()
+		}
+
+		f, closef, err := launch.OperationPreProcess(oprs, op, height)
+		if err != nil {
+			return false, err
+		}
+
+		defer func() {
+			_ = closef()
+		}()
+
+		_, reason, err := f(context.Background(), db.State)
+		if err != nil {
+			return false, err
+		}
+
+		return reason == nil, reason
+	}, nil
+}
+
+func IsSupportedProposalOperationFactHintFunc() func(hint.Hint) bool {
+	return func(ht hint.Hint) bool {
+		for i := range SupportedProposalOperationFactHinters {
+			s := SupportedProposalOperationFactHinters[i].Hint
+			if ht.Type() != s.Type() {
+				continue
+			}
+
+			return ht.IsCompatible(s)
+		}
+
+		return false
+	}
 }
 
 func PProposalProcessors(ctx context.Context) (context.Context, error) {
@@ -1745,27 +1823,4 @@ func processMongodbDatabase(ctx context.Context, l DigestDesign) (context.Contex
 	_ = dst.SetLogging(log)
 
 	return context.WithValue(ctx, ContextValueDigestDatabase, dst), nil
-}
-
-func loadDigestDatabase(mst *isaacdatabase.Center, st *mongodbstorage.Database, readonly bool) (*digest.Database, error) {
-	var dst *digest.Database
-	if readonly {
-		s, err := digest.NewReadonlyDatabase(mst, st)
-		if err != nil {
-			return nil, err
-		}
-		dst = s
-	} else {
-		s, err := digest.NewDatabase(mst, st)
-		if err != nil {
-			return nil, err
-		}
-		dst = s
-	}
-
-	if err := dst.Initialize(); err != nil {
-		return nil, err
-	}
-
-	return dst, nil
 }

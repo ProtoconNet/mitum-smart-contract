@@ -1,19 +1,20 @@
 package cmds
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
-	"fmt"
+	"encoding/json"
+	"time"
 
-	"github.com/spikeekips/mitum-currency/digest/config"
+	"github.com/spikeekips/mitum-currency/digest"
 	"github.com/spikeekips/mitum/base"
 	isaacnetwork "github.com/spikeekips/mitum/isaac/network"
 	"github.com/spikeekips/mitum/launch"
+	"github.com/spikeekips/mitum/network/quicmemberlist"
 	"github.com/spikeekips/mitum/util"
 	mitumutil "github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/logging"
-
-	"github.com/spikeekips/mitum-currency/digest"
 )
 
 const (
@@ -48,16 +49,16 @@ func ProcessDigestAPI(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	}
 
-	// var st *digest.Database
-	// if err := mitumutil.LoadFromContextOK(ctx, ContextValueDigestDatabase, &st); err != nil {
-	// 	log.Log().Debug().Err(err).Msg("digest api disabled; empty database")
+	var st *digest.Database
+	if err := mitumutil.LoadFromContextOK(ctx, ContextValueDigestDatabase, &st); err != nil {
+		log.Log().Debug().Err(err).Msg("digest api disabled; empty database")
 
-	// 	return ctx, nil
-	// } else if st == nil {
-	// 	log.Log().Debug().Msg("digest api disabled; empty database")
+		return ctx, nil
+	} else if st == nil {
+		log.Log().Debug().Msg("digest api disabled; empty database")
 
-	// 	return ctx, nil
-	// }
+		return ctx, nil
+	}
 
 	log.Log().Info().
 		Str("bind", design.Network().Bind().String()).
@@ -88,37 +89,88 @@ func ProcessDigestAPI(ctx context.Context) (context.Context, error) {
 func NewSendHandler(
 	priv base.Privatekey,
 	networkID base.NetworkID,
-	cbf func() (*isaacnetwork.CallbackBroadcaster, error),
+	f func() (*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error),
 ) func(interface{}) (base.Operation, error) {
 	return func(v interface{}) (base.Operation, error) {
-		fmt.Println("opopiopopopopopopoop")
 		op, ok := v.(base.Operation)
 		if !ok {
 			return nil, util.ErrWrongType.Errorf("expected Operation, not %T", v)
 		}
+		buf := bytes.NewBuffer(nil)
+		if err := json.NewEncoder(buf).Encode(op); err != nil {
+			return nil, err
+		}
+		var header = isaacnetwork.NewSendOperationRequestHeader()
 
-		cb, err := cbf()
-		var success bool
+		client, memberlist, err := f()
+		errchan := make(chan error, memberlist.MembersLen())
 		switch {
 		case err != nil:
 			return nil, err
 
-		// ci, ok := connInfo.(quicstream.UDPConnInfo)
-		// if !ok {
-		// 	return nil, util.ErrWrongType.Errorf("expected quicstream.UDPConnInfo, not %T", v)
-		// }
+			// ci, ok := connInfo.(quicstream.UDPConnInfo)
+			// if !ok {
+			// 	return nil, util.ErrWrongType.Errorf("expected quicstream.UDPConnInfo, not %T", v)
+			// }
+
 		default:
-			fmt.Println("ffffff")
-			err := cb.Broadcast(op.Hash().String(), op.HashBytes(), nil)
-			if err == nil {
+			// memberlist.Broadcast(quicmemberlist.NewBroadcast(i, id, notifych)
+			// memberlist.Members(func(node quicmemberlist.Node) bool {
+			// 	client.SendOperation()
+			// 	ci = node.UDPConnInfo()
+			// 	return true
+			// })
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+
+			worker := util.NewErrgroupWorker(ctx, int64(memberlist.MembersLen()))
+			defer worker.Close()
+			go func() {
+				defer worker.Done()
+
+				memberlist.Members(func(node quicmemberlist.Node) bool {
+					ci := node.UDPConnInfo()
+					return worker.NewJob(func(ctx context.Context, _ uint64) error {
+						cctx, cancel := context.WithTimeout(ctx, time.Second*2) //nolint:gomnd //...
+						defer cancel()
+						response, _, cancelrequest, err := client.Request(cctx, ci, header, buf)
+						switch {
+						case err != nil:
+							errchan <- err
+						case response.Err() != nil:
+							errchan <- response.Err()
+						}
+
+						defer func() {
+							_ = cancelrequest()
+						}()
+
+						return nil
+					}) == nil
+				})
+			}()
+
+			worker.Wait()
+			close(errchan)
+
+		}
+
+		var success bool
+		var failed error
+		for err := range errchan {
+			if !success && err == nil {
 				success = true
+			} else {
+				failed = err
 			}
 		}
+
 		if success {
 			return op, nil
 		}
 
-		return op, err
+		return op, failed
 	}
 }
 
@@ -135,7 +187,6 @@ func SignSeal(sl seal.Seal, priv base.Privatekey, networkID base.NetworkID) (sea
 
 	return p.Elem().Interface().(seal.Seal), nil
 }
-*/
 
 func HookSetLocalChannel(ctx context.Context) (context.Context, error) {
 	var conf config.LocalNetwork
@@ -148,29 +199,23 @@ func HookSetLocalChannel(ctx context.Context) (context.Context, error) {
 		return nil, err
 	}
 
-	/*
 		var nodepool *network.Nodepool
 		if err := process.LoadNodepoolContextValue(ctx, &nodepool); err != nil {
 			return nil, err
 		}
-	*/
 
-	/*
 		ch, err := process.LoadNodeChannel(conf.ConnInfo(), encs, time.Second*30)
 		if err != nil {
 			return ctx, err
 		}
-	*/
-	/*
+
 		if err := nodepool.SetChannel(local.Address(), ch); err != nil {
 			return ctx, err
 		}
-	*/
 
 	return ctx, nil
 }
 
-/*
 func makeSendingSeal(priv base.Privatekey, networkID base.NetworkID, v interface{}) (seal.Seal, error) {
 	switch t := v.(type) {
 

@@ -97,15 +97,15 @@ func (st *Database) Initialize() error {
 	st.Lock()
 	defer st.Unlock()
 
-	// switch h, found, err := loadLastBlock(st); {
-	// case err != nil:
-	// 	return errors.Wrap(err, "failed to get last block for digest")
-	// case !found:
-	// 	st.lastBlock = base.NilHeight
-	// 	st.Log().Debug().Msg("last block for digest not found")
-	// default:
-	// 	st.lastBlock = h
-
+	switch h, found, err := loadLastBlock(st); {
+	case err != nil:
+		return errors.Wrap(err, "failed to initialize digest database")
+	case !found:
+		st.lastBlock = base.NilHeight
+		st.Log().Debug().Msg("last block for digest not found")
+	default:
+		st.lastBlock = h
+	}
 	// 	if !st.readonly {
 	// 		if err := st.createIndex(); err != nil {
 	// 			return err
@@ -223,7 +223,7 @@ func (st *Database) CleanByHeight(ctx context.Context, height base.Height) error
 }
 
 func (st *Database) cleanByHeight(ctx context.Context, height base.Height) error {
-	if height <= base.GenesisHeight+1 {
+	if height <= base.GenesisHeight {
 		return st.clean(ctx)
 	}
 

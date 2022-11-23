@@ -2,6 +2,7 @@ package mongodbstorage
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -123,11 +124,10 @@ func (st *Database) Initialize() error {
 		return nil
 	}
 
+	// if err := st.loadLastBlock(); err != nil && !errors.Is(err, mitumutil.ErrNotFound) {
+	// 	return err
+	// }
 	/*
-		if err := st.loadLastBlock(); err != nil && !errors.Is(err, mitumutil.ErrNotFound) {
-			return err
-		}
-
 		if err := st.cleanupIncompleteData(); err != nil {
 			return err
 		}
@@ -364,11 +364,11 @@ func (st *Database) CleanByHeight(height base.Height) error {
 		return st.setLastBlock(m, true, true)
 	}
 }
+*/
 
 func (st *Database) Encoder() encoder.Encoder {
 	return st.enc
 }
-*/
 
 func (st *Database) Encoders() *encoder.Encoders {
 	return st.encs
@@ -887,7 +887,7 @@ func (st *Database) SetInfo(key string, b []byte) error {
 	if st.readonly {
 		return errors.Errorf("readonly mode")
 	}
-
+	fmt.Println(b)
 	if doc, err := NewInfoDoc(key, b, st.enc); err != nil {
 		return err
 	} else if _, err := st.client.Set(ColNameInfo, doc); err != nil {
@@ -910,7 +910,7 @@ func (st *Database) Info(key string) ([]byte, bool, error) {
 			return nil
 		},
 	); err != nil {
-		if errors.Is(err, mitumutil.ErrNotFound) {
+		if errors.Is(err, mitumutil.ErrNotFound) || errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, false, nil
 		}
 

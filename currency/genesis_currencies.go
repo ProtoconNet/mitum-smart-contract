@@ -27,7 +27,7 @@ func NewGenesisCurrenciesFact(
 	cs []CurrencyDesign,
 ) GenesisCurrenciesFact {
 	fact := GenesisCurrenciesFact{
-		BaseFact:       base.NewBaseFact(GenesisCurrenciesHint, token),
+		BaseFact:       base.NewBaseFact(GenesisCurrenciesFactHint, token),
 		genesisNodeKey: genesisNodeKey,
 		keys:           keys,
 		cs:             cs,

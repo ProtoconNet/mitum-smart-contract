@@ -2,6 +2,8 @@
 *.dylib
 *.test
 *.out
+*.sh
+*.json
 .*.sw?
 .sw?
 .DS_Store
@@ -22,3 +24,5 @@ tests/*/*/coverage/
 /go.local.sum
 /mitum-currency
 /mc-blockfs
+/.vscode
+/mitum-data
