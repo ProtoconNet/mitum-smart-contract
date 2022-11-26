@@ -129,7 +129,7 @@ type CreateAccountsProcessor struct {
 }
 
 func NewCreateAccountsProcessor(
-//collectFee func(*OperationProcessor, AddFee) error,
+// collectFee func(*OperationProcessor, AddFee) error,
 ) GetNewProcessor {
 	return func(
 		height base.Height,
@@ -166,15 +166,15 @@ func (opp *CreateAccountsProcessor) PreProcess(
 ) (context.Context, base.OperationProcessReasonError, error) {
 	fact, ok := op.Fact().(CreateAccountsFact)
 	if !ok {
-		return ctx, nil, errors.Errorf("expected CreateAccountsFact, not %T", op.Fact())
+		return ctx, base.NewBaseOperationProcessReasonError("expected CreateAccountsFact, not %T", op.Fact()), nil
 	}
 
 	if err := checkExistsState(StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, nil, err
+		return ctx, base.NewBaseOperationProcessReasonError("failed to check existence of sender %v : %w", fact.sender, err), nil
 	}
 
 	if err := checkFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
-		return ctx, nil, errors.Wrap(err, "invalid signing")
+		return ctx, base.NewBaseOperationProcessReasonError("invalid signing :  %w", err), nil
 	}
 
 	return ctx, nil, nil
@@ -184,17 +184,15 @@ func (opp *CreateAccountsProcessor) Process( // nolint:dupl
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringErrorFunc("failed to preprocess for CreateAccounts")
-
 	fact, ok := op.Fact().(CreateAccountsFact)
 	if !ok {
-		return nil, nil, errors.Errorf("expected CreateAccountsFact, not %T", op.Fact())
+		return nil, base.NewBaseOperationProcessReasonError("expected CreateAccountsFact, not %T", op.Fact()), nil
 	}
 
 	if required, err := opp.calculateItemsFee(op, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %w", err), nil
 	} else if sb, err := CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
-		return nil, nil, err
+		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %s : %w", fact.sender, err), nil
 	} else {
 		opp.required = required
 		opp.sb = sb
@@ -205,14 +203,14 @@ func (opp *CreateAccountsProcessor) Process( // nolint:dupl
 		cip := createAccountsItemProcessorPool.Get()
 		c, ok := cip.(*CreateAccountsItemProcessor)
 		if !ok {
-			return nil, nil, errors.Errorf("expected CreateAccountsItemProcessor, not %T", cip)
+			return nil, base.NewBaseOperationProcessReasonError("expected CreateAccountsItemProcessor, not %T", cip), nil
 		}
 
 		c.h = op.Hash()
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, nil, e(err, "")
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateAccountsItem: %w", err), nil
 		}
 
 		ns[i] = c
@@ -223,7 +221,7 @@ func (opp *CreateAccountsProcessor) Process( // nolint:dupl
 	for i := range opp.ns {
 		s, err := opp.ns[i].Process(ctx, op, getStateFunc)
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("failed to process create account item: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to process CreateAccountsItem: %w", err), nil
 		}
 		sts = append(sts, s...)
 	}
@@ -231,7 +229,7 @@ func (opp *CreateAccountsProcessor) Process( // nolint:dupl
 	for i := range opp.sb {
 		v, ok := opp.sb[i].Value().(BalanceStateValue)
 		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("failed to process create account"), nil
+			return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", opp.sb[i].Value()), nil
 		}
 		stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[i][0]).Sub(opp.required[i][1])))
 		sts = append(sts, NewBalanceStateMergeValue(opp.sb[i].Key(), stv))

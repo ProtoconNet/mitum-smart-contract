@@ -135,15 +135,15 @@ func (opp *TransfersProcessor) PreProcess(
 ) (context.Context, base.OperationProcessReasonError, error) {
 	fact, ok := op.Fact().(TransfersFact)
 	if !ok {
-		return ctx, nil, errors.Errorf("expected TransfersFact, not %T", op.Fact())
+		return ctx, base.NewBaseOperationProcessReasonError("expected TransfersFact, not %T", op.Fact()), nil
 	}
 
 	if err := checkExistsState(StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, nil, err
+		return ctx, base.NewBaseOperationProcessReasonError("failed to check existence of sender %v : %w", fact.sender, err), nil
 	}
 
 	if err := checkFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
-		return ctx, nil, errors.Wrap(err, "invalid signing")
+		return ctx, base.NewBaseOperationProcessReasonError("invalid signing :  %w", err), nil
 	}
 
 	return ctx, nil, nil
@@ -153,17 +153,15 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringErrorFunc("failed to preprocess for Transfers")
-
 	fact, ok := op.Fact().(TransfersFact)
 	if !ok {
-		return nil, nil, e(errors.Errorf("expected TransfersFact, not %T", op.Fact()), "")
+		return nil, base.NewBaseOperationProcessReasonError("expected TransfersFact, not %T", op.Fact()), nil
 	}
 
 	if required, err := opp.calculateItemsFee(op, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %w", err), nil
 	} else if sb, err := CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
-		return nil, nil, err
+		return nil, base.NewBaseOperationProcessReasonError("failed to check enough balance: %w", err), nil
 	} else {
 		opp.required = required
 		opp.sb = sb
@@ -174,14 +172,14 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 		cip := transfersItemProcessorPool.Get()
 		c, ok := cip.(*TransfersItemProcessor)
 		if !ok {
-			return nil, nil, e(errors.Errorf("expected TransfersItemProcessor, not %T", cip), "")
+			return nil, base.NewBaseOperationProcessReasonError("expected TransfersItemProcessor, not %T", cip), nil
 		}
 
 		c.h = op.Hash()
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, nil, e(err, "")
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess transfer item: %w", err), nil
 		}
 
 		ns[i] = c
