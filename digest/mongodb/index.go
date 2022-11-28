@@ -100,13 +100,13 @@ var blockdataMapIndexModels = []mongo.IndexModel{
 }
 
 var defaultIndexes = map[string] /* collection */ []mongo.IndexModel{
-	ColNameManifest:        manifestIndexModels,
-	ColNameOperation:       operationIndexModels,
-	ColNameProposal:        proposalIndexModels,
-	ColNameStagedOperation: stagedOperationIndexModels,
-	ColNameState:           stateIndexModels,
-	ColNameVoteproof:       voteproofIndexModels,
-	ColNameBlockdataMap:    blockdataMapIndexModels,
+	ColNameManifest: manifestIndexModels,
+	// ColNameOperation: operationIndexModels,
+	// ColNameProposal:  proposalIndexModels,
+	// ColNameStagedOperation: stagedOperationIndexModels,
+	// ColNameState:        stateIndexModels,
+	// ColNameVoteproof:    voteproofIndexModels,
+	ColNameBlockdataMap: blockdataMapIndexModels,
 }
 
 func indexName(s string) string {

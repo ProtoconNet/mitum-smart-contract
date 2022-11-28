@@ -33,9 +33,9 @@ facts:
         genesis_account:
         policy:
           _hint: mitum-currency-currency-policy-v0.0.1
-          new_account_min_balance: "10"
+          new_account_min_balance: "1"
           feeer:
             _hint: mitum-currency-fixed-feeer-v0.0.1
             receiver: 2E5qNuz9HsXydeTTdG1a3SZtj1iBWNUyVyfHYNcs4gSgmca
-            amount: "10000000000000000000"
+            amount: "1"
         aggregate: "1000000000000000000000000000"

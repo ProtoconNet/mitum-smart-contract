@@ -3,9 +3,7 @@ package currency
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
 	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
 	"github.com/spikeekips/mitum/util/hint"
 )
@@ -37,14 +35,5 @@ func (po *CurrencyPolicy) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	po.newAccountMinBalance = upo.MN
-
-	var feeer Feeer
-	err := encoder.Decode(enc, upo.FE, &feeer)
-	if err != nil {
-		return errors.WithMessage(err, "failed to decode feeer")
-	}
-	po.feeer = feeer
-
-	return nil
+	return po.unpack(enc, upo.MN, upo.FE)
 }

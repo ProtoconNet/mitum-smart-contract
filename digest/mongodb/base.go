@@ -20,24 +20,24 @@ import (
 )
 
 const (
-	ColNameInfo            = "info"
-	ColNameManifest        = "manifest"
-	ColNameOperation       = "operation"
-	ColNameStagedOperation = "staged_operation"
-	ColNameProposal        = "proposal"
-	ColNameState           = "state"
-	ColNameVoteproof       = "voteproof"
-	ColNameBlockdataMap    = "blockdata_map"
+	ColNameInfo     = "info"
+	ColNameManifest = "manifest"
+	// ColNameOperation = "operation"
+	// ColNameStagedOperation = "staged_operation"
+	// ColNameProposal     = "proposal"
+	// ColNameState        = "state"
+	// ColNameVoteproof    = "voteproof"
+	ColNameBlockdataMap = "blockdata_map"
 )
 
 var allCollections = []string{
 	ColNameInfo,
 	ColNameManifest,
-	ColNameOperation,
-	ColNameStagedOperation,
-	ColNameProposal,
-	ColNameState,
-	ColNameVoteproof,
+	// ColNameOperation,
+	// ColNameStagedOperation,
+	// ColNameProposal,
+	// ColNameState,
+	// ColNameVoteproof,
 	ColNameBlockdataMap,
 }
 

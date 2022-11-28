@@ -3,10 +3,8 @@ package currency
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
 	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
 	"github.com/spikeekips/mitum/util/hint"
 )
@@ -44,28 +42,5 @@ func (de *CurrencyDesign) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	var am Amount
-	if err := encoder.Decode(enc, ude.AM, &am); err != nil {
-		return errors.WithMessage(err, "failed to decode amount")
-	}
-
-	de.amount = am
-
-	switch ad, err := base.DecodeAddress(ude.GA, enc); {
-	case err != nil:
-		return e(err, "")
-	default:
-		de.genesisAccount = ad
-	}
-
-	var policy CurrencyPolicy
-
-	if err := encoder.Decode(enc, ude.PO, &policy); err != nil {
-		return errors.WithMessage(err, "failed to decode currency policy")
-	}
-
-	de.policy = policy
-	de.aggregate = ude.AG
-
-	return nil
+	return de.unpack(enc, ude.AM, ude.GA, ude.PO, ude.AG)
 }

@@ -49,24 +49,5 @@ func (ac *Account) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	switch ad, err := base.DecodeAddress(uac.AD, enc); {
-	case err != nil:
-		return e(err, "")
-	default:
-		ac.address = ad
-	}
-
-	ac.h = uac.H.Hash()
-	k, err := enc.Decode(uac.KS)
-	if err != nil {
-		return e(err, "")
-	} else if k != nil {
-		v, ok := k.(BaseAccountKeys)
-		if !ok {
-			return util.ErrWrongType.Errorf("expected Keys, not %T", k)
-		}
-		ac.keys = v
-	}
-
-	return nil
+	return ac.unpack(enc, uac.H, uac.AD, uac.KS)
 }
