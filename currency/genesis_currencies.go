@@ -119,7 +119,7 @@ func NewGenesisCurrencies(
 }
 
 func (op GenesisCurrencies) IsValid(networkID []byte) error {
-	if err := op.IsValid(networkID); err != nil {
+	if err := op.BaseOperation.IsValid(networkID); err != nil {
 		return err
 	}
 
