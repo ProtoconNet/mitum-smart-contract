@@ -56,7 +56,13 @@ func (opp *TransfersItemProcessor) PreProcess(
 		if err != nil {
 			return err
 		}
-		rb[am.Currency()] = NewBalanceStateMergeValue(st.Key(), NewBalanceStateValue(am))
+
+		balance, err := StateBalanceValue(st)
+		if err != nil {
+			return err
+		}
+
+		rb[am.Currency()] = NewBalanceStateMergeValue(st.Key(), NewBalanceStateValue(balance))
 	}
 
 	opp.rb = rb
