@@ -6,11 +6,13 @@ import (
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
+	"github.com/spikeekips/mitum/util/hint"
 )
 
 func (fact CreateAccountsFact) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
-		bsonenc.MergeBSONM(bsonenc.NewHintedDoc(fact.Hint()),
+		bsonenc.MergeBSONM(
+			bsonenc.NewHintedDoc(fact.Hint()),
 			bson.M{
 				"sender": fact.sender,
 				"items":  fact.items,
@@ -20,8 +22,9 @@ func (fact CreateAccountsFact) MarshalBSON() ([]byte, error) {
 }
 
 type CreateAccountsFactBSONUnmarshaler struct {
-	SD string   `bson:"sender"`
-	IT bson.Raw `bson:"items"`
+	HT hint.Hint `bson:"_hint"`
+	SD string    `bson:"sender"`
+	IT bson.Raw  `bson:"items"`
 }
 
 func (fact *CreateAccountsFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -39,6 +42,7 @@ func (fact *CreateAccountsFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error
 		return e(err, "")
 	}
 
+	fact.BaseHinter = hint.NewBaseHinter(ucaf.HT)
 	switch a, err := base.DecodeAddress(ucaf.SD, enc); {
 	case err != nil:
 		return e(err, "")

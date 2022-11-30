@@ -5,6 +5,7 @@ import (
 
 	"github.com/spikeekips/mitum/util"
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
+	"github.com/spikeekips/mitum/util/hint"
 	"github.com/spikeekips/mitum/util/valuehash"
 )
 
@@ -19,8 +20,9 @@ func (ky BaseAccountKey) MarshalBSON() ([]byte, error) {
 }
 
 type KeyBSONUnmarshaler struct {
-	W uint   `bson:"weight"`
-	K string `bson:"key"`
+	HT hint.Hint `bson:"_hint"`
+	W  uint      `bson:"weight"`
+	K  string    `bson:"key"`
 }
 
 func (ky *BaseAccountKey) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -31,7 +33,7 @@ func (ky *BaseAccountKey) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return ky.unpack(enc, uk.W, uk.K)
+	return ky.unpack(enc, uk.HT, uk.W, uk.K)
 }
 
 func (ks BaseAccountKeys) MarshalBSON() ([]byte, error) {
@@ -46,6 +48,7 @@ func (ks BaseAccountKeys) MarshalBSON() ([]byte, error) {
 }
 
 type KeysBSONUnmarshaler struct {
+	HT hint.Hint       `bson:"_hint"`
 	H  valuehash.Bytes `bson:"hash"`
 	KS bson.Raw        `bson:"keys"`
 	TH uint            `bson:"threshold"`
@@ -59,6 +62,7 @@ func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
+	ks.BaseHinter = hint.NewBaseHinter(uks.HT)
 	hks, err := enc.DecodeSlice(uks.KS)
 	if err != nil {
 		return err

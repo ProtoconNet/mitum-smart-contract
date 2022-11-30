@@ -1,8 +1,8 @@
 module github.com/spikeekips/mitum-currency
 
-go 1.18
+go 1.19
 
-replace github.com/spikeekips/mitum => /Users/soonkukkang/go/src/github.com/spikeekips/mitum2
+replace github.com/spikeekips/mitum => /Volumes/backup/go/src/github.com/soonkuk/mitum2
 
 require (
 	github.com/alecthomas/kong v0.7.1

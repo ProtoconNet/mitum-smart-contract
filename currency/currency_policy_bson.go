@@ -4,6 +4,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
+	"github.com/spikeekips/mitum/util/hint"
 )
 
 func (po CurrencyPolicy) MarshalBSON() ([]byte, error) {
@@ -17,8 +18,9 @@ func (po CurrencyPolicy) MarshalBSON() ([]byte, error) {
 }
 
 type CurrencyPolicyBSONUnmarshaler struct {
-	MN Big      `bson:"new_account_min_balance"`
-	FE bson.Raw `bson:"feeer"`
+	HT hint.Hint `bson:"_hint"`
+	MN Big       `bson:"new_account_min_balance"`
+	FE bson.Raw  `bson:"feeer"`
 }
 
 func (po *CurrencyPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -27,5 +29,5 @@ func (po *CurrencyPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return err
 	}
 
-	return po.unpack(enc, upo.MN, upo.FE)
+	return po.unpack(enc, upo.HT, upo.MN, upo.FE)
 }

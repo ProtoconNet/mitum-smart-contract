@@ -25,8 +25,9 @@ func (ky BaseAccountKey) MarshalJSON() ([]byte, error) {
 }
 
 type KeyJSONUnmarshaler struct {
-	W uint   `json:"weight"`
-	K string `json:"key"`
+	HT hint.Hint `json:"_hint"`
+	W  uint      `json:"weight"`
+	K  string    `json:"key"`
 }
 
 func (ky *BaseAccountKey) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -37,7 +38,7 @@ func (ky *BaseAccountKey) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return ky.unpack(enc, uk.W, uk.K)
+	return ky.unpack(enc, uk.HT, uk.W, uk.K)
 }
 
 type KeysJSONMarshaler struct {
@@ -57,6 +58,7 @@ func (ks BaseAccountKeys) MarshalJSON() ([]byte, error) {
 }
 
 type KeysJSONUnMarshaler struct {
+	HT hint.Hint             `json:"_hint"`
 	H  valuehash.HashDecoder `json:"hash"`
 	KS json.RawMessage       `json:"keys"`
 	TH uint                  `json:"threshold"`
@@ -70,6 +72,7 @@ func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
+	ks.BaseHinter = hint.NewBaseHinter(uks.HT)
 	hks, err := enc.DecodeSlice(uks.KS)
 	if err != nil {
 		return err

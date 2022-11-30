@@ -26,3 +26,4 @@ tests/*/*/coverage/
 /mc-blockfs
 /.vscode
 /mitum-data
+/yml

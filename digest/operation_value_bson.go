@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util/encoder"
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
+	"github.com/spikeekips/mitum/util/hint"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -24,8 +24,9 @@ func (va OperationValue) MarshalBSON() ([]byte, error) {
 }
 
 type OperationValueBSONUnmarshaler struct {
+	HT hint.Hint   `bson:"_hint"`
 	OP bson.Raw    `bson:"op"`
-	HT base.Height `bson:"height"`
+	H  base.Height `bson:"height"`
 	CT time.Time   `bson:"confirmed_at"`
 	IN bool        `bson:"in_state"`
 	RS bson.Raw    `bson:"reason"`
@@ -38,18 +39,24 @@ func (va *OperationValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return err
 	}
 
-	if err := encoder.Decode(enc, uva.OP, &va.op); err != nil {
+	va.BaseHinter = hint.NewBaseHinter(uva.HT)
+
+	var op base.BaseOperation
+	if err := op.DecodeBSON(uva.OP, enc); err != nil {
+		return err
+	}
+	va.op = op
+
+	var reason base.BaseOperationProcessReasonError
+
+	if err := reason.DecodeBSON(uva.RS, enc); err != nil {
 		return err
 	}
 
-	if err := encoder.Decode(enc, uva.RS, &va.reason); err != nil {
-		return err
-	}
-
-	va.height = uva.HT
+	va.height = uva.H
 	va.confirmedAt = uva.CT
 	va.inState = uva.IN
 	va.index = uva.ID
-
+	va.reason = reason
 	return nil
 }

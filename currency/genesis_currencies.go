@@ -107,15 +107,13 @@ func (fact GenesisCurrenciesFact) Currencies() []CurrencyDesign {
 }
 
 type GenesisCurrencies struct {
-	base.BaseOperation
+	BaseOperation
 }
 
 func NewGenesisCurrencies(
 	fact GenesisCurrenciesFact,
 ) GenesisCurrencies {
-	return GenesisCurrencies{
-		BaseOperation: base.NewBaseOperation(GenesisCurrenciesHint, fact),
-	}
+	return GenesisCurrencies{BaseOperation: NewBaseOperationFromFact(GenesisCurrenciesHint, fact, "")}
 }
 
 func (op GenesisCurrencies) IsValid(networkID []byte) error {

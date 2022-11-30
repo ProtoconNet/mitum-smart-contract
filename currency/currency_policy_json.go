@@ -23,6 +23,7 @@ func (po CurrencyPolicy) MarshalJSON() ([]byte, error) {
 }
 
 type CurrencyPolicyJSONUnmarshaler struct {
+	HT hint.Hint       `json:"_hint"`
 	MN Big             `json:"new_account_min_balance"`
 	FE json.RawMessage `json:"feeer"`
 }
@@ -35,5 +36,5 @@ func (po *CurrencyPolicy) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return po.unpack(enc, upo.MN, upo.FE)
+	return po.unpack(enc, upo.HT, upo.MN, upo.FE)
 }

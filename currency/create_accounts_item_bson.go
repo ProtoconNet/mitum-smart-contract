@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/util"
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
+	"github.com/spikeekips/mitum/util/hint"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -18,8 +19,9 @@ func (it BaseCreateAccountsItem) MarshalBSON() ([]byte, error) {
 }
 
 type CreateAccountsItemBSONUnmarshaler struct {
-	KS bson.Raw `bson:"keys"`
-	AM bson.Raw `bson:"amounts"`
+	HT hint.Hint `bson:"_hint"`
+	KS bson.Raw  `bson:"keys"`
+	AM bson.Raw  `bson:"amounts"`
 }
 
 func (it *BaseCreateAccountsItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -29,6 +31,8 @@ func (it *BaseCreateAccountsItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) err
 	if err := bson.Unmarshal(b, &uca); err != nil {
 		return e(err, "")
 	}
+
+	it.BaseHinter = hint.NewBaseHinter(uca.HT)
 
 	if hinter, err := enc.Decode(uca.KS); err != nil {
 		return err

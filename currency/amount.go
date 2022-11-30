@@ -62,7 +62,7 @@ func (am Amount) IsValid([]byte) error {
 		am.cid,
 		am.big,
 	); err != nil {
-		return util.ErrInvalid.Errorf("invalid Balance: %w", err)
+		return util.ErrInvalid.Errorf("failed to validation check of Amount: %w", err)
 	}
 
 	return nil

@@ -67,6 +67,7 @@ func (op GenesisCurrencies) Process(
 		if !ok {
 			return nil, base.NewBaseOperationProcessReasonError("invalid BalanceState value found, %T", gas[c.amount.Currency()].Value()), nil
 		}
+
 		gst := NewBalanceStateMergeValue(gas[c.amount.Currency()].Key(), NewBalanceStateValue(v.Amount.WithBig(v.Amount.big.Add(c.amount.Big()))))
 		dst := NewCurrencyDesignStateMergeValue(sts[c.amount.Currency()].Key(), NewCurrencyDesignStateValue(c))
 		smvs = append(smvs, gst, dst)

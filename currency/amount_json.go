@@ -7,9 +7,9 @@ import (
 )
 
 type AmountJSONMarshaler struct {
-	hint.BaseHinter
 	BG Big        `json:"amount"`
 	CR CurrencyID `json:"currency"`
+	hint.BaseHinter
 }
 
 func (am Amount) MarshalJSON() ([]byte, error) {
@@ -21,8 +21,9 @@ func (am Amount) MarshalJSON() ([]byte, error) {
 }
 
 type AmountJSONUnmarshaler struct {
-	BG Big    `json:"amount"`
-	CR string `json:"currency"`
+	BG Big       `json:"amount"`
+	CR string    `json:"currency"`
+	HT hint.Hint `json:"_hint"`
 }
 
 func (am *Amount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -33,6 +34,7 @@ func (am *Amount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
+	am.BaseHinter = hint.NewBaseHinter(uam.HT)
 	am.big = uam.BG
 	am.cid = CurrencyID(uam.CR)
 

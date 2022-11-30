@@ -23,6 +23,7 @@ func (it BaseCreateAccountsItem) MarshalJSON() ([]byte, error) {
 }
 
 type CreateAccountsItemJSONUnMarshaler struct {
+	HT hint.Hint       `json:"_hint"`
 	KS json.RawMessage `json:"keys"`
 	AM json.RawMessage `json:"amounts"`
 }
@@ -34,6 +35,8 @@ func (it *BaseCreateAccountsItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) err
 	if err := enc.Unmarshal(b, &uca); err != nil {
 		return e(err, "")
 	}
+
+	it.BaseHinter = hint.NewBaseHinter(uca.HT)
 
 	if hinter, err := enc.Decode(uca.KS); err != nil {
 		return err
