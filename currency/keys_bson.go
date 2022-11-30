@@ -3,8 +3,8 @@ package currency
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
-	bsonenc "github.com/spikeekips/mitum-currency/digest/bson"
 	"github.com/spikeekips/mitum/util"
+	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/valuehash"
 )
 
@@ -13,7 +13,7 @@ func (ky BaseAccountKey) MarshalBSON() ([]byte, error) {
 		bsonenc.NewHintedDoc(ky.Hint()),
 		bson.M{
 			"weight": ky.w,
-			"key":    ky.k,
+			"key":    ky.k.String(),
 		},
 	))
 }
@@ -46,9 +46,9 @@ func (ks BaseAccountKeys) MarshalBSON() ([]byte, error) {
 }
 
 type KeysBSONUnmarshaler struct {
-	H  valuehash.HashDecoder `bson:"hash"`
-	KS bson.Raw              `bson:"keys"`
-	TH uint                  `bson:"threshold"`
+	H  valuehash.Bytes `bson:"hash"`
+	KS bson.Raw        `bson:"keys"`
+	TH uint            `bson:"threshold"`
 }
 
 func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -59,5 +59,24 @@ func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return ks.unpack(enc, uks.H, uks.KS, uks.TH)
+	hks, err := enc.DecodeSlice(uks.KS)
+	if err != nil {
+		return err
+	}
+
+	keys := make([]AccountKey, len(hks))
+	for i := range hks {
+		j, ok := hks[i].(BaseAccountKey)
+		if !ok {
+			return util.ErrWrongType.Errorf("expected Key, not %T", hks[i])
+		}
+
+		keys[i] = j
+	}
+	ks.keys = keys
+
+	ks.h = uks.H
+	ks.threshold = uks.TH
+
+	return nil
 }

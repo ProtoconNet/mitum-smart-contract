@@ -1,7 +1,7 @@
 package currency
 
 import (
-	bsonenc "github.com/spikeekips/mitum-currency/digest/bson"
+	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 )

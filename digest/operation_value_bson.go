@@ -3,8 +3,9 @@ package digest
 import (
 	"time"
 
-	bsonenc "github.com/spikeekips/mitum-currency/digest/bson"
 	"github.com/spikeekips/mitum/base"
+	"github.com/spikeekips/mitum/util/encoder"
+	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -37,11 +38,11 @@ func (va *OperationValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return err
 	}
 
-	if err := enc.Unmarshal(uva.OP, &va.op); err != nil {
+	if err := encoder.Decode(enc, uva.OP, &va.op); err != nil {
 		return err
 	}
 
-	if err := enc.Unmarshal(uva.RS, &va.reason); err != nil {
+	if err := encoder.Decode(enc, uva.RS, &va.reason); err != nil {
 		return err
 	}
 

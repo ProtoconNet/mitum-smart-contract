@@ -8,21 +8,21 @@ import (
 	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
 )
 
-type TransferFactJSONPacker struct {
+type TransferFactJSONMarshaler struct {
 	base.BaseFactJSONMarshaler
 	SD base.Address    `json:"sender"`
 	IT []TransfersItem `json:"items"`
 }
 
 func (fact TransfersFact) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(TransferFactJSONPacker{
+	return util.MarshalJSON(TransferFactJSONMarshaler{
 		BaseFactJSONMarshaler: fact.BaseFact.JSONMarshaler(),
 		SD:                    fact.sender,
 		IT:                    fact.items,
 	})
 }
 
-type TransfersFactJSONUnMarshaler struct {
+type TransfersFactJSONUnmarshaler struct {
 	base.BaseFactJSONUnmarshaler
 	SD string          `json:"sender"`
 	IT json.RawMessage `json:"items"`
@@ -31,7 +31,7 @@ type TransfersFactJSONUnMarshaler struct {
 func (fact *TransfersFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode TransfersFact")
 
-	var ufact TransfersFactJSONUnMarshaler
+	var ufact TransfersFactJSONUnmarshaler
 
 	if err := enc.Unmarshal(b, &ufact); err != nil {
 		return e(err, "")

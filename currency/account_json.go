@@ -36,6 +36,7 @@ func (ac Account) MarshalJSON() ([]byte, error) {
 }
 
 type AccountJSONUnmarshaler struct {
+	HT hint.Hint             `json:"_hint"`
 	H  valuehash.HashDecoder `json:"hash"`
 	AD string                `json:"address"`
 	KS json.RawMessage       `json:"keys"`
@@ -49,5 +50,27 @@ func (ac *Account) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return ac.unpack(enc, uac.H, uac.AD, uac.KS)
+	ac.BaseHinter = hint.NewBaseHinter(uac.HT)
+
+	switch ad, err := base.DecodeAddress(uac.AD, enc); {
+	case err != nil:
+		return e(err, "")
+	default:
+		ac.address = ad
+	}
+
+	k, err := enc.Decode(uac.KS)
+	if err != nil {
+		return e(err, "")
+	} else if k != nil {
+		v, ok := k.(BaseAccountKeys)
+		if !ok {
+			return util.ErrWrongType.Errorf("expected Keys, not %T", k)
+		}
+		ac.keys = v
+	}
+
+	ac.h = uac.H.Hash()
+
+	return nil
 }

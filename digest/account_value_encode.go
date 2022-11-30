@@ -6,9 +6,12 @@ import (
 	"github.com/spikeekips/mitum/util"
 	mitumutil "github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
+	"github.com/spikeekips/mitum/util/hint"
 )
 
-func (va *AccountValue) unpack(enc encoder.Encoder, bac []byte, bl []byte, height base.Height) error {
+func (va *AccountValue) unpack(enc encoder.Encoder, ht hint.Hint, bac []byte, bl []byte, height base.Height) error {
+	va.BaseHinter = hint.NewBaseHinter(ht)
+
 	ac, err := enc.Decode(bac)
 	switch {
 	case err != nil:

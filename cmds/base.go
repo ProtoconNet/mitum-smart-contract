@@ -68,8 +68,16 @@ func PAddHinters(ctx context.Context) (context.Context, error) {
 	if err := util.LoadFromContextOK(ctx, launch.EncoderContextKey, &enc); err != nil {
 		return ctx, e(err, "")
 	}
+	var benc encoder.Encoder
+	if err := util.LoadFromContextOK(ctx, BEncoderContextKey, &benc); err != nil {
+		return ctx, e(err, "")
+	}
 
 	if err := LoadHinters(enc); err != nil {
+		return ctx, e(err, "")
+	}
+
+	if err := LoadHinters(benc); err != nil {
 		return ctx, e(err, "")
 	}
 

@@ -70,5 +70,24 @@ func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return ks.unpack(enc, uks.H, uks.KS, uks.TH)
+	hks, err := enc.DecodeSlice(uks.KS)
+	if err != nil {
+		return err
+	}
+
+	keys := make([]AccountKey, len(hks))
+	for i := range hks {
+		j, ok := hks[i].(BaseAccountKey)
+		if !ok {
+			return util.ErrWrongType.Errorf("expected Key, not %T", hks[i])
+		}
+
+		keys[i] = j
+	}
+	ks.keys = keys
+
+	ks.h = uks.H.Hash()
+	ks.threshold = uks.TH
+
+	return nil
 }

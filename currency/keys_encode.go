@@ -4,7 +4,6 @@ import (
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
-	"github.com/spikeekips/mitum/util/valuehash"
 )
 
 func (ky *BaseAccountKey) unpack(enc encoder.Encoder, w uint, kd string) error {
@@ -21,7 +20,7 @@ func (ky *BaseAccountKey) unpack(enc encoder.Encoder, w uint, kd string) error {
 	return nil
 }
 
-func (ks *BaseAccountKeys) unpack(enc encoder.Encoder, h valuehash.HashDecoder, bks []byte, th uint) error {
+func (ks *BaseAccountKeys) unpack(enc encoder.Encoder /*h valuehash.HashDecoder, */, bks []byte, th uint) error {
 	hks, err := enc.DecodeSlice(bks)
 	if err != nil {
 		return err
@@ -38,7 +37,7 @@ func (ks *BaseAccountKeys) unpack(enc encoder.Encoder, h valuehash.HashDecoder, 
 	}
 	ks.keys = keys
 
-	ks.h = h.Hash()
+	// ks.h = h.Hash()
 	ks.threshold = th
 
 	return nil

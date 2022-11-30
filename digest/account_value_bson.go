@@ -1,8 +1,9 @@
 package digest
 
 import (
-	bsonenc "github.com/spikeekips/mitum-currency/digest/bson"
 	"github.com/spikeekips/mitum/base"
+	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
+	"github.com/spikeekips/mitum/util/hint"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -18,9 +19,10 @@ func (va AccountValue) MarshalBSON() ([]byte, error) {
 }
 
 type AccountValueBSONUnmarshaler struct {
+	HT hint.Hint   `bson:"_hint"`
 	AC bson.Raw    `bson:"ac"`
 	BL bson.Raw    `bson:"balance"`
-	HT base.Height `bson:"height"`
+	H  base.Height `bson:"height"`
 }
 
 func (va *AccountValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -29,5 +31,5 @@ func (va *AccountValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return err
 	}
 
-	return va.unpack(enc, uva.AC, uva.BL, uva.HT)
+	return va.unpack(enc, uva.HT, uva.AC, uva.BL, uva.H)
 }

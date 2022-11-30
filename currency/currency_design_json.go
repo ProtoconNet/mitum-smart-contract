@@ -28,6 +28,7 @@ func (de CurrencyDesign) MarshalJSON() ([]byte, error) {
 }
 
 type CurrencyDesignJSONUnmarshaler struct {
+	HT hint.Hint       `json:"_hint"`
 	AM json.RawMessage `json:"amount"`
 	GA string          `json:"genesis_account"`
 	PO json.RawMessage `json:"policy"`
@@ -42,5 +43,5 @@ func (de *CurrencyDesign) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return de.unpack(enc, ude.AM, ude.GA, ude.PO, ude.AG)
+	return de.unpack(enc, ude.HT, ude.AM, ude.GA, ude.PO, ude.AG)
 }

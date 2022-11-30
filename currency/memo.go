@@ -12,7 +12,7 @@ func IsValidMemo(s string) error {
 	return nil
 }
 
-type MemoBSONUnpacker struct {
+type MemoBSONUnmarshaler struct {
 	Memo string `bson:"memo"`
 }
 

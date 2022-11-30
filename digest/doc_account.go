@@ -3,10 +3,10 @@ package digest
 import (
 	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum-currency/currency"
-	bsonenc "github.com/spikeekips/mitum-currency/digest/bson"
 	mongodbstorage "github.com/spikeekips/mitum-currency/digest/mongodb"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util/encoder"
+	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 )
 
 type AccountDoc struct {

@@ -3,7 +3,7 @@ package currency
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
-	bsonenc "github.com/spikeekips/mitum-currency/digest/bson"
+	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 )
 
 func (po CurrencyPolicy) MarshalBSON() ([]byte, error) {

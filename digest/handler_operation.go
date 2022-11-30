@@ -15,18 +15,19 @@ import (
 )
 
 func (hd *Handlers) handleOperation(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(">>>>>>> handleOperation 1")
 	cachekey := CacheKeyPath(r)
 	if err := LoadFromCache(hd.cache, cachekey, w); err == nil {
 		return
 	}
-
+	fmt.Println(">>>>>>> handleOperation 2")
 	h, err := parseHashFromPath(mux.Vars(r)["hash"])
 	if err != nil {
 		HTTP2ProblemWithError(w, errors.Wrap(err, "invalid hash for operation by hash"), http.StatusBadRequest)
 
 		return
 	}
-
+	fmt.Println(">>>>>>> handleOperation 3")
 	if v, err, shared := hd.rg.Do(cachekey, func() (interface{}, error) {
 		return hd.handleOperationInGroup(h)
 	}); err != nil {
@@ -41,19 +42,23 @@ func (hd *Handlers) handleOperation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hd *Handlers) handleOperationInGroup(h mitumutil.Hash) ([]byte, error) {
+	fmt.Println(">>>>>>> handleOperationInGroup 1")
 	switch va, found, err := hd.database.Operation(h, true); {
 	case err != nil:
+		fmt.Println(">>>>>>> handleOperationInGroup 2", err)
 		return nil, err
 	case !found:
+		fmt.Println(">>>>>>> handleOperationInGroup 3")
 		return nil, mitumutil.ErrNotFound.Errorf("operation not found")
 	default:
+		fmt.Println(">>>>>>> handleOperationInGroup 4")
 		hal, err := hd.buildOperationHal(va)
 		if err != nil {
 			return nil, err
 		}
 		hal = hal.AddLink("operation:{hash}", NewHalLink(HandlerPathOperation, nil).SetTemplated())
 		hal = hal.AddLink("block:{height}", NewHalLink(HandlerPathBlockByHeight, nil).SetTemplated())
-
+		fmt.Println(">>>>>>> handleOperationInGroup 3", hal)
 		return hd.enc.Marshal(hal)
 	}
 }
@@ -208,25 +213,26 @@ func (hd *Handlers) handleOperationsByHeightInGroup(
 
 func (hd *Handlers) buildOperationHal(va OperationValue) (Hal, error) {
 	var hal Hal
-
+	fmt.Println(">>>>>> buildOperationHal 1", va)
 	h, err := hd.combineURL(HandlerPathOperation, "hash", va.Operation().Fact().Hash().String())
 	if err != nil {
 		return nil, err
 	}
 	hal = NewBaseHal(va, NewHalLink(h, nil))
-
+	fmt.Println(">>>>>> buildOperationHal 2")
 	h, err = hd.combineURL(HandlerPathBlockByHeight, "height", va.Height().String())
 	if err != nil {
 		return nil, err
 	}
 	hal = hal.AddLink("block", NewHalLink(h, nil))
-
+	fmt.Println(">>>>>> buildOperationHal 3", va.Height().String())
 	h, err = hd.combineURL(HandlerPathManifestByHeight, "height", va.Height().String())
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(">>>>>> buildOperationHal 4")
 	hal = hal.AddLink("manifest", NewHalLink(h, nil))
-
+	fmt.Println(">>>>>> buildOperationHal 5")
 	if va.InState() {
 		if t, ok := va.Operation().(currency.CreateAccounts); ok {
 			items := t.Fact().(currency.CreateAccountsFact).Items()

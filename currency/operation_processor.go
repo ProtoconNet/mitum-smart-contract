@@ -144,8 +144,12 @@ func (opr *OperationProcessor) New(
 		nopr.duplicated = make(map[string]DuplicationType)
 	}
 
+	// if nopr.duplicatedNewAddress == nil {
+	// 	nopr.duplicatedNewAddress = opr.duplicatedNewAddress
+	// }
+
 	if nopr.duplicatedNewAddress == nil {
-		nopr.duplicatedNewAddress = opr.duplicatedNewAddress
+		nopr.duplicatedNewAddress = make(map[string]struct{})
 	}
 
 	if nopr.Logging == nil {
@@ -186,7 +190,7 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation
 	var sp base.OperationProcessor
 	switch i, known, err := opr.getNewProcessor(op); {
 	case err != nil:
-		return ctx, nil, base.NewBaseOperationProcessReasonError(err.Error())
+		return ctx, base.NewBaseOperationProcessReasonError(err.Error()), nil
 	case !known:
 		return ctx, nil, e(nil, "failed to getNewProcessor, %T", op)
 	default:

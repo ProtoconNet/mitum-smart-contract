@@ -1,12 +1,10 @@
 package mongodbstorage
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
-	bsonenc "github.com/spikeekips/mitum-currency/digest/bson"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
+	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/hint"
 	"github.com/spikeekips/mitum/util/valuehash"
 	"go.mongodb.org/mongo-driver/bson"
@@ -65,8 +63,7 @@ func LoadDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id */, inter
 		return nil, nil, err
 	}
 
-	// enc := encs.Find(bd.E)
-	enc := encs.Find(bsonenc.BSONEncoderHint)
+	enc := encs.Find(bd.E)
 	if enc == nil {
 		return nil, nil, util.ErrNotFound.Errorf("encoder not found for %q", bsonenc.BSONEncoderHint)
 	}
@@ -79,7 +76,7 @@ func LoadDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id */, inter
 	if !ok {
 		return nil, nil, errors.Errorf("hinted should be mongodb Document")
 	}
-	fmt.Println("LoadDataFromDoc Hint not found")
+
 	var data interface{}
 	if i, err := enc.Decode([]byte(doc)); err != nil {
 		return nil, nil, err

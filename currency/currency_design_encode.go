@@ -5,10 +5,13 @@ import (
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
+	"github.com/spikeekips/mitum/util/hint"
 )
 
-func (de *CurrencyDesign) unpack(enc encoder.Encoder, bam []byte, sga string, bpo []byte, ag Big) error {
+func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, bam []byte, sga string, bpo []byte, ag Big) error {
 	e := util.StringErrorFunc("failed to unmarshal CurrencyDesign")
+
+	de.BaseHinter = hint.NewBaseHinter(ht)
 
 	var am Amount
 	if err := encoder.Decode(enc, bam, &am); err != nil {

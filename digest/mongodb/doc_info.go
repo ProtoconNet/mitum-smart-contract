@@ -3,9 +3,9 @@ package mongodbstorage
 import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/pkg/errors"
-	bsonenc "github.com/spikeekips/mitum-currency/digest/bson"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util/encoder"
+	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/sha3"
 )

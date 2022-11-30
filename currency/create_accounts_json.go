@@ -29,7 +29,7 @@ type CreateAccountsFactJSONUnMarshaler struct {
 }
 
 func (fact *CreateAccountsFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode CreateAccountsFact")
+	e := util.StringErrorFunc("failed to decode json of CreateAccountsFact")
 
 	var uca CreateAccountsFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uca); err != nil {
@@ -37,6 +37,7 @@ func (fact *CreateAccountsFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uca.BaseFactJSONUnmarshaler)
+
 	switch a, err := base.DecodeAddress(uca.SD, enc); {
 	case err != nil:
 		return e(err, "")

@@ -3,7 +3,6 @@ package currency
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/util"
 	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
 	"github.com/spikeekips/mitum/util/hint"
@@ -29,7 +28,7 @@ type CreateAccountsItemJSONUnMarshaler struct {
 }
 
 func (it *BaseCreateAccountsItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode BaseCreateAccountsItem")
+	e := util.StringErrorFunc("failed to decode json of BaseCreateAccountsItem")
 
 	var uca CreateAccountsItemJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uca); err != nil {
@@ -39,7 +38,7 @@ func (it *BaseCreateAccountsItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) err
 	if hinter, err := enc.Decode(uca.KS); err != nil {
 		return err
 	} else if k, ok := hinter.(AccountKeys); !ok {
-		return errors.Errorf("not Keys: %T", hinter)
+		return e(util.ErrWrongType.Errorf("expected AccountsKeys not %T,", hinter), "")
 	} else {
 		it.keys = k
 	}
@@ -53,7 +52,7 @@ func (it *BaseCreateAccountsItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) err
 	for i := range ham {
 		j, ok := ham[i].(Amount)
 		if !ok {
-			return util.ErrWrongType.Errorf("expected Amount, not %T", ham[i])
+			return e(util.ErrWrongType.Errorf("expected Amount, not %T", ham[i]), "")
 		}
 
 		amounts[i] = j
