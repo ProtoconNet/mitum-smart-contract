@@ -29,8 +29,8 @@ type OperationValueBSONUnmarshaler struct {
 	H  base.Height `bson:"height"`
 	CT time.Time   `bson:"confirmed_at"`
 	IN bool        `bson:"in_state"`
-	RS bson.Raw    `bson:"reason"`
-	ID uint64      `bson:"index"`
+	//RS bson.Raw    `bson:"reason"`
+	ID uint64 `bson:"index"`
 }
 
 func (va *OperationValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -47,16 +47,16 @@ func (va *OperationValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	}
 	va.op = op
 
-	var reason base.BaseOperationProcessReasonError
+	// var reason base.BaseOperationProcessReasonError
 
-	if err := reason.DecodeBSON(uva.RS, enc); err != nil {
-		return err
-	}
+	// if err := reason.DecodeBSON(uva.RS, enc); err != nil {
+	// 	return err
+	// }
 
 	va.height = uva.H
 	va.confirmedAt = uva.CT
 	va.inState = uva.IN
 	va.index = uva.ID
-	va.reason = reason
+	// va.reason = reason
 	return nil
 }
