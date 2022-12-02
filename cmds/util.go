@@ -1841,7 +1841,7 @@ func PStartTimeSyncer(ctx context.Context) (context.Context, error) {
 	if err := ts.Start(); err != nil {
 		return ctx, e(err, "")
 	}
-	fmt.Println(ts)
+
 	return context.WithValue(ctx, launch.TimeSyncerContextKey, ts), nil
 }
 

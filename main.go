@@ -87,6 +87,7 @@ func main() {
 		kctx.FatalIfErrorf(err)
 	}
 
+	log.Log().Debug().Interface("flags", os.Args).Msg("flags")
 	log.Log().Debug().Interface("main_process", pss.Verbose()).Msg("processed")
 
 	if err := func() error {

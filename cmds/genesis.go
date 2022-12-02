@@ -2,7 +2,6 @@ package cmds
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -215,11 +214,8 @@ func (g *GenesisBlockGenerator) newProposal(ops []util.Hash) error {
 
 	nops := make([]util.Hash, len(ops)+len(g.ops))
 	copy(nops[:len(ops)], ops)
-	fmt.Println(len(nops))
-	fmt.Println(len(g.ops))
 
 	for i := range g.ops {
-		fmt.Printf("%q\n", g.ops[i])
 		nops[i+len(ops)] = g.ops[i].Hash()
 	}
 
