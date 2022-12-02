@@ -18,6 +18,7 @@ func DefaultRunPS() *ps.PS {
 	_ = pps.
 		AddOK(launch.PNameEncoder, PEncoder, nil).
 		AddOK(launch.PNameDesign, PLoadDesign, nil, launch.PNameEncoder).
+		AddOK(launch.PNameTimeSyncer, launch.PStartTimeSyncer, launch.PCloseTimeSyncer, launch.PNameDesign).
 		AddOK(launch.PNameLocal, PLocal, nil, launch.PNameDesign).
 		AddOK(launch.PNameStorage, launch.PStorage, nil, launch.PNameLocal).
 		AddOK(launch.PNameProposalMaker, launch.PProposalMaker, nil, launch.PNameStorage).
@@ -58,6 +59,7 @@ func DefaultRunPS() *ps.PS {
 		PreAddOK(launch.PNameLoadDatabase, PLoadDatabase).
 		PostAddOK(launch.PNameCheckLeveldbStorage, launch.PCheckLeveldbStorage).
 		PostAddOK(launch.PNameCheckLoadFromDatabase, PLoadFromDatabase).
+		PostAddOK(launch.PNameGetSuffrageFromDatabaseeFunc, launch.PGetSuffrageFromDatabaseeFunc).
 		PostAddOK(launch.PNameNodeInfo, PNodeInfo).
 		PostAddOK(launch.PNameBallotbox, launch.PBallotbox)
 

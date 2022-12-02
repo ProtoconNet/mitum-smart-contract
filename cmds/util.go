@@ -147,15 +147,20 @@ func POperationProcessorsMap(ctx context.Context) (context.Context, error) {
 
 	var params *isaac.LocalParams
 	var db isaac.Database
-	var set *hint.CompatibleSet
 
 	if err := util.LoadFromContextOK(ctx,
 		launch.LocalParamsContextKey, &params,
 		launch.CenterDatabaseContextKey, &db,
-		launch.OperationProcessorsMapContextKey, &set,
 	); err != nil {
 		return ctx, err
 	}
+
+	limiterf, err := launch.NewSuffrageCandidateLimiterFunc(ctx)
+	if err != nil {
+		return ctx, err
+	}
+
+	set := hint.NewCompatibleSet()
 
 	opr := currency.NewOperationProcessor()
 	opr.SetProcessor(currency.CreateAccountsHint, currency.NewCreateAccountsProcessor())
@@ -182,6 +187,50 @@ func POperationProcessorsMap(ctx context.Context) (context.Context, error) {
 
 	_ = set.Add(currency.CurrencyRegisterHint, func(height base.Height) (base.OperationProcessor, error) {
 		return opr.New(
+			height,
+			db.State,
+			nil,
+			nil,
+		)
+	})
+
+	_ = set.Add(isaacoperation.SuffrageCandidateHint, func(height base.Height) (base.OperationProcessor, error) {
+		policy := db.LastNetworkPolicy()
+		if policy == nil { // NOTE Usually it means empty block data
+			return nil, nil
+		}
+
+		return isaacoperation.NewSuffrageCandidateProcessor(
+			height,
+			db.State,
+			limiterf,
+			nil,
+			policy.SuffrageCandidateLifespan(),
+		)
+	})
+
+	_ = set.Add(isaacoperation.SuffrageJoinHint, func(height base.Height) (base.OperationProcessor, error) {
+		policy := db.LastNetworkPolicy()
+		if policy == nil { // NOTE Usually it means empty block data
+			return nil, nil
+		}
+
+		return isaacoperation.NewSuffrageJoinProcessor(
+			height,
+			params.Threshold(),
+			db.State,
+			nil,
+			nil,
+		)
+	})
+
+	_ = set.Add(isaac.SuffrageWithdrawOperationHint, func(height base.Height) (base.OperationProcessor, error) {
+		policy := db.LastNetworkPolicy()
+		if policy == nil { // NOTE Usually it means empty block data
+			return nil, nil
+		}
+
+		return isaacoperation.NewSuffrageWithdrawProcessor(
 			height,
 			db.State,
 			nil,
@@ -676,7 +725,7 @@ func PNetwork(ctx context.Context) (context.Context, error) {
 
 	quicconfig := launch.DefaultQuicConfig()
 	quicconfig.RequireAddressValidation = func(net.Addr) bool {
-		return true // FIXME NOTE manage blacklist
+		return true // TODO NOTE manage blacklist
 	}
 
 	server := quicstream.NewServer(
@@ -944,7 +993,7 @@ func memberlistConfig(
 
 			if !node.Address().Equal(local.Address()) {
 				nci := isaacnetwork.NewNodeConnInfoFromMemberlistNode(node)
-				added := syncSourcePool.Add(nci)
+				added := syncSourcePool.AddNonFixed(nci)
 
 				l.Debug().
 					Bool("added", added).
@@ -962,7 +1011,7 @@ func memberlistConfig(
 			}
 
 			nci := isaacnetwork.NewNodeConnInfoFromMemberlistNode(node)
-			if syncSourcePool.RemoveNonFixed(nci.Address(), nci.String()) {
+			if syncSourcePool.RemoveNonFixed(nci) {
 				l.Debug().Msg("node removed from sync source pool")
 			}
 		},

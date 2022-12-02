@@ -94,7 +94,7 @@ type OperationFlags struct {
 
 func (op *OperationFlags) IsValid([]byte) error {
 	if len(op.Token) < 1 {
-		op.Token = localtime.UTCNow().String()
+		op.Token = localtime.Now().UTC().String()
 	}
 
 	return op.NetworkID.NetworkID().IsValid(nil)
