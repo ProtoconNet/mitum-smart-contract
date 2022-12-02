@@ -38,6 +38,7 @@ import (
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
 	"github.com/spikeekips/mitum/util/hint"
+	"github.com/spikeekips/mitum/util/localtime"
 	"github.com/spikeekips/mitum/util/logging"
 	"github.com/spikeekips/mitum/util/ps"
 )
@@ -1809,6 +1810,39 @@ func UpdateSyncSources(
 
 		return nil
 	}
+}
+
+func PStartTimeSyncer(ctx context.Context) (context.Context, error) {
+	e := util.StringErrorFunc("failed to prepare time syncer")
+
+	var log *logging.Logging
+	var design NodeDesign
+
+	if err := util.LoadFromContextOK(ctx,
+		launch.LoggingContextKey, &log,
+		launch.DesignContextKey, &design,
+	); err != nil {
+		return ctx, e(err, "")
+	}
+
+	if len(design.TimeServer) < 1 {
+		log.Log().Debug().Msg("no time server given")
+
+		return ctx, nil
+	}
+
+	ts, err := localtime.NewTimeSyncer(design.TimeServer, design.TimeServerPort, launch.DefaultTimeSyncerInterval)
+	if err != nil {
+		return ctx, e(err, "")
+	}
+
+	_ = ts.SetLogging(log)
+
+	if err := ts.Start(); err != nil {
+		return ctx, e(err, "")
+	}
+	fmt.Println(ts)
+	return context.WithValue(ctx, launch.TimeSyncerContextKey, ts), nil
 }
 
 func ProcessDatabase(ctx context.Context) (context.Context, error) {

@@ -4,10 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	consulapi "github.com/hashicorp/consul/api"
 	vault "github.com/hashicorp/vault/api"
@@ -392,14 +395,16 @@ func (no *DigestDesign) Database() config.BaseDatabase {
 }
 
 type NodeDesign struct {
-	Address     base.Address
-	Privatekey  base.Privatekey
-	Storage     launch.NodeStorageDesign
-	Network     launch.NodeNetworkDesign
-	NetworkID   base.NetworkID
-	Digest      DigestDesign
-	LocalParams *isaac.LocalParams
-	SyncSources launch.SyncSourcesDesign
+	Address        base.Address
+	Privatekey     base.Privatekey
+	Storage        launch.NodeStorageDesign
+	Network        launch.NodeNetworkDesign
+	NetworkID      base.NetworkID
+	Digest         DigestDesign
+	LocalParams    *isaac.LocalParams
+	SyncSources    launch.SyncSourcesDesign
+	TimeServerPort int
+	TimeServer     string
 }
 
 func NodeDesignFromFile(f string, enc *jsonenc.Encoder) (d NodeDesign, _ []byte, _ error) {
@@ -481,6 +486,36 @@ func NodeDesignFromConsul(addr, key string, enc *jsonenc.Encoder) (design NodeDe
 func (d *NodeDesign) IsValid([]byte) error {
 	e := mitumutil.ErrInvalid.Errorf("invalid NodeDesign")
 
+	if len(d.TimeServer) > 0 {
+		switch i, err := url.Parse("http://" + d.TimeServer); {
+		case err != nil:
+			return e.Wrapf(err, "invalid time server, %q", d.TimeServer)
+		case len(i.Hostname()) < 1:
+			return e.Errorf("invalid time server, %q", d.TimeServer)
+		case i.Host != d.TimeServer && len(i.Port()) < 1:
+			return e.Errorf("invalid time server, %q", d.TimeServer)
+		default:
+			s := d.TimeServer
+			if len(i.Port()) < 1 {
+				s = net.JoinHostPort(d.TimeServer, "123")
+			}
+
+			if _, err := net.ResolveUDPAddr("udp", s); err != nil {
+				return e.Wrapf(err, "invalid time server, %q", d.TimeServer)
+			}
+
+			if len(i.Port()) > 0 {
+				p, err := strconv.ParseInt(i.Port(), 10, 64)
+				if err != nil {
+					return e.Wrapf(err, "invalid time server, %q", d.TimeServer)
+				}
+
+				d.TimeServer = i.Hostname()
+				d.TimeServerPort = int(p)
+			}
+		}
+	}
+
 	if err := mitumutil.CheckIsValiders(nil, false, d.Address, d.Privatekey, d.NetworkID); err != nil {
 		return e.Wrap(err)
 	}
@@ -533,6 +568,7 @@ type NodeDesignYAMLMarshaler struct {
 	Privatekey  base.Privatekey          `yaml:"privatekey"`
 	Storage     launch.NodeStorageDesign `yaml:"storage"`
 	NetworkID   string                   `yaml:"network_id"`
+	TimeServer  string                   `yaml:"time_server,omitempty"`
 	Network     launch.NodeNetworkDesign `yaml:"network"`
 	Digest      DigestDesign             `yaml:"digest"`
 	LocalParams *isaac.LocalParams       `yaml:"parameters"` //nolint:tagliatelle //...
@@ -545,6 +581,7 @@ type NodeDesignYAMLUnmarshaler struct {
 	Address     string                                `yaml:"address"`
 	Privatekey  string                                `yaml:"privatekey"`
 	NetworkID   string                                `yaml:"network_id"`
+	TimeServer  string                                `yaml:"time_server,omitempty"`
 	LocalParams map[string]interface{}                `yaml:"parameters"` //nolint:tagliatelle //...
 	Network     launch.NodeNetworkDesignYAMLMarshaler `yaml:"network"`
 	Digest      DigestDesign                          `yaml:"digest"`
@@ -559,6 +596,7 @@ func (d NodeDesign) MarshalYAML() (interface{}, error) {
 		Storage:     d.Storage,
 		LocalParams: d.LocalParams,
 		Digest:      d.Digest,
+		TimeServer:  d.TimeServer,
 	}, nil
 }
 
@@ -624,6 +662,8 @@ func (d *NodeDesign) DecodeYAML(b []byte, enc *jsonenc.Encoder) error {
 
 		d.LocalParams.BaseHinter = hint.NewBaseHinter(isaac.LocalParamsHint)
 	}
+
+	d.TimeServer = strings.TrimSpace(u.TimeServer)
 
 	dd, err := mitumutil.MarshalJSON(u.Digest)
 	if err != nil {

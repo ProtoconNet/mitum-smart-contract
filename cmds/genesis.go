@@ -2,9 +2,11 @@ package cmds
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"github.com/spikeekips/mitum-currency/currency"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/isaac"
 	isaacblock "github.com/spikeekips/mitum/isaac/block"
@@ -119,6 +121,11 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 			}
 
 			g.ops[i], err = g.networkPolicyOperation(fact)
+		case ht.IsCompatible(currency.GenesisCurrenciesFactHint):
+			if _, found := types[ht.String()]; found {
+				return errors.Errorf("multiple GenesisCurrencies operation found")
+			}
+			g.ops[i], err = g.genesisCurrenciesOperation(fact, g.networkID)
 		}
 
 		if err != nil {
@@ -179,13 +186,40 @@ func (g *GenesisBlockGenerator) networkPolicyOperation(i base.Fact) (base.Operat
 	return op, nil
 }
 
+func (g *GenesisBlockGenerator) genesisCurrenciesOperation(i base.Fact, token []byte) (base.Operation, error) {
+	e := util.StringErrorFunc("failed to make genesisCurrencies operation")
+
+	basefact, ok := i.(currency.GenesisCurrenciesFact)
+	if !ok {
+		return nil, e(nil, "expected GenesisCurrenciesFact, not %T", i)
+	}
+	acks, err := currency.NewBaseAccountKeys(basefact.Keys().Keys(), basefact.Keys().Threshold())
+	if err != nil {
+		return nil, e(err, "")
+	}
+	fact := currency.NewGenesisCurrenciesFact(token, basefact.GenesisNodeKey(), acks, basefact.Currencies())
+	if err := fact.IsValid(g.networkID); err != nil {
+		return nil, e(err, "")
+	}
+	op := currency.NewGenesisCurrencies(fact)
+	if err := op.Sign(g.local.Privatekey(), g.networkID); err != nil {
+		return nil, e(err, "")
+	}
+	g.Log().Debug().Interface("operation", op).Msg("genesis join operation created")
+
+	return op, nil
+}
+
 func (g *GenesisBlockGenerator) newProposal(ops []util.Hash) error {
 	e := util.StringErrorFunc("failed to make genesis proposal")
 
 	nops := make([]util.Hash, len(ops)+len(g.ops))
 	copy(nops[:len(ops)], ops)
+	fmt.Println(len(nops))
+	fmt.Println(len(g.ops))
 
 	for i := range g.ops {
+		fmt.Printf("%q\n", g.ops[i])
 		nops[i+len(ops)] = g.ops[i].Hash()
 	}
 
