@@ -343,13 +343,17 @@ func PLoadDesign(ctx context.Context) (context.Context, error) {
 			design = d
 		}
 
-		if i, err := design.Digest.Set(ctx); err != nil {
-			return ctx, err
-		} else {
-			ctx = i
+		if (design.Digest != DigestDesign{}) {
+			if i, err := design.Digest.Set(ctx); err != nil {
+				return ctx, err
+			} else {
+				ctx = i
+			}
+
+			digestDesign = design.Digest
+			ctx = context.WithValue(ctx, ContextValueDigestDesign, digestDesign)
 		}
 
-		digestDesign = design.Digest
 		// switch di, _, err := DigestDesignFromFile(flag.URL().Path, enc); {
 		// case err != nil:
 		// 	return ctx, e(err, "")
@@ -387,8 +391,7 @@ func PLoadDesign(ctx context.Context) (context.Context, error) {
 		design.Privatekey = priv
 	}
 
-	ctx = context.WithValue(ctx, launch.DesignContextKey, design)        //revive:disable-line:modifies-parameter
-	ctx = context.WithValue(ctx, ContextValueDigestDesign, digestDesign) //revive:disable-line:modifies-parameter
+	ctx = context.WithValue(ctx, launch.DesignContextKey, design) //revive:disable-line:modifies-parameter//revive:disable-line:modifies-parameter
 
 	return ctx, nil
 }
@@ -1849,6 +1852,10 @@ func ProcessDatabase(ctx context.Context) (context.Context, error) {
 	var l DigestDesign
 	if err := util.LoadFromContext(ctx, ContextValueDigestDesign, &l); err != nil {
 		return ctx, err
+	}
+
+	if (l == DigestDesign{}) {
+		return ctx, nil
 	}
 	conf := l.Database()
 

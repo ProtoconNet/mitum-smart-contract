@@ -582,7 +582,7 @@ func (st *Database) balance(a base.Address) ([]currency.Amount, base.Height, err
 			},
 			options.FindOne().SetSort(util.NewBSONFilter("height", -1).D()),
 		); err != nil {
-			if errors.Is(err, mitumutil.NewError("not found")) {
+			if err.Error() == mitumutil.NewError("mongo: no documents in result").Error() {
 				break
 			}
 

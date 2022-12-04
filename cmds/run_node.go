@@ -190,30 +190,52 @@ func (cmd *RunCommand) pWhenNewBlockSavedInConsensusStateFunc(pctx context.Conte
 		launch.LocalParamsContextKey, &params,
 		launch.BallotboxContextKey, &ballotbox,
 		launch.NodeInfoContextKey, &nodeinfo,
-		ContextValueDigester, &di,
 	); err != nil {
 		return pctx, err
 	}
-	g := cmd.whenBlockSaved(db, di)
 
-	f := func(height base.Height) {
-		launch.WhenNewBlockSavedInConsensusStateFunc(params, ballotbox, db, nodeinfo)(height)
-		g(pctx)
+	if err := util.LoadFromContext(pctx, ContextValueDigester, &di); err != nil {
+		return pctx, err
+	}
 
-		l := log.Log().With().Interface("height", height).Logger()
-		l.Debug().Msg("new block saved")
+	if di != nil {
+		g := cmd.whenBlockSaved(db, di)
 
-		if cmd.Hold.IsSet() && height == cmd.Hold.Height() {
-			l.Debug().Msg("will be stopped by hold")
+		f := func(height base.Height) {
+			launch.WhenNewBlockSavedInConsensusStateFunc(params, ballotbox, db, nodeinfo)(height)
+			g(pctx)
 
-			cmd.exitf(errHoldStop.Call())
+			l := log.Log().With().Interface("height", height).Logger()
+			l.Debug().Msg("new block saved")
 
-			return
+			if cmd.Hold.IsSet() && height == cmd.Hold.Height() {
+				l.Debug().Msg("will be stopped by hold")
+
+				cmd.exitf(errHoldStop.Call())
+
+				return
+			}
 		}
+		pctx = context.WithValue(pctx, launch.WhenNewBlockSavedInConsensusStateFuncContextKey, f)
+	} else {
+		f := func(height base.Height) {
+			launch.WhenNewBlockSavedInConsensusStateFunc(params, ballotbox, db, nodeinfo)(height)
+
+			l := log.Log().With().Interface("height", height).Logger()
+			l.Debug().Msg("new block saved")
+
+			if cmd.Hold.IsSet() && height == cmd.Hold.Height() {
+				l.Debug().Msg("will be stopped by hold")
+
+				cmd.exitf(errHoldStop.Call())
+
+				return
+			}
+		}
+		pctx = context.WithValue(pctx, launch.WhenNewBlockSavedInConsensusStateFuncContextKey, f)
 	}
 
 	//revive:disable-next-line:modifies-parameter
-	pctx = context.WithValue(pctx, launch.WhenNewBlockSavedInConsensusStateFuncContextKey, f)
 
 	return pctx, nil
 }
@@ -300,6 +322,10 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return nil, err
 	}
 
+	if (design == DigestDesign{}) {
+		return ctx, nil
+	}
+
 	cache, err := cmd.loadCache(ctx, design)
 	if err != nil {
 		return ctx, err
@@ -381,14 +407,27 @@ func (cmd *RunCommand) setDigestSendHandler(
 		return nil, err
 	}
 
-	client := launch.NewNetworkClient( //nolint:gomnd //...
-		encs, enc, time.Second*2,
-		base.NetworkID([]byte(params.NetworkID())),
-	)
+	// client := launch.NewNetworkClient( //nolint:gomnd //...
+	// 	encs, enc, time.Second*2,
+	// 	base.NetworkID([]byte(params.NetworkID())),
+	// )
+
+	// defer func() {
+	// 	client.Close()
+	// }()
 
 	handlers = handlers.SetSend(
-		NewSendHandler(local.Privatekey(), params.NetworkID(), func() (*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
-			return client, memberlist, nil
+		NewSendHandler(local.Privatekey(), params.NetworkID(), func() ([]*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
+			var clientpool []*isaacnetwork.QuicstreamClient
+			for i := 0; i < memberlist.MembersLen(); i++ {
+				client := launch.NewNetworkClient( //nolint:gomnd //...
+					encs, enc, time.Second*2,
+					base.NetworkID([]byte(params.NetworkID())),
+				)
+				clientpool = append(clientpool, client)
+			}
+
+			return clientpool, memberlist, nil
 		}),
 	)
 

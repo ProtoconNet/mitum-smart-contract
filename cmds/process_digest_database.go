@@ -20,6 +20,10 @@ func ProcessDigestDatabase(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 
+	if (design == DigestDesign{}) {
+		return ctx, nil
+	}
+
 	var mst *isaacdatabase.Center
 	if err := util.LoadFromContextOK(ctx, launch.CenterDatabaseContextKey, &mst); err != nil {
 		return ctx, err

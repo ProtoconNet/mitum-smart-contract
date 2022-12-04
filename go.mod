@@ -2,7 +2,7 @@ module github.com/spikeekips/mitum-currency
 
 go 1.19
 
-replace github.com/spikeekips/mitum => /Volumes/backup/go/src/github.com/soonkuk/mitum2
+replace github.com/spikeekips/mitum => /WorkingDirectory/mitum2
 
 require (
 	github.com/alecthomas/kong v0.7.1

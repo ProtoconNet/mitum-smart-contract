@@ -7,11 +7,13 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum-currency/digest"
 	"github.com/spikeekips/mitum/base"
 	isaacnetwork "github.com/spikeekips/mitum/isaac/network"
 	"github.com/spikeekips/mitum/launch"
 	"github.com/spikeekips/mitum/network/quicmemberlist"
+	"github.com/spikeekips/mitum/network/quicstream"
 	"github.com/spikeekips/mitum/util"
 	mitumutil "github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/logging"
@@ -27,6 +29,9 @@ func ProcessStartDigestAPI(ctx context.Context) (context.Context, error) {
 	var nt *digest.HTTP2Server
 	if err := mitumutil.LoadFromContext(ctx, ContextValueDigestNetwork, &nt); err != nil {
 		return ctx, err
+	}
+	if nt == nil {
+		return ctx, nil
 	}
 
 	return ctx, nt.Start()
@@ -86,91 +91,163 @@ func ProcessDigestAPI(ctx context.Context) (context.Context, error) {
 	return context.WithValue(ctx, ContextValueDigestNetwork, nt), nil
 }
 
+// func NewSendHandler(
+// 	priv base.Privatekey,
+// 	networkID base.NetworkID,
+// 	f func() (*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error),
+// ) func(interface{}) (base.Operation, error) {
+// 	return func(v interface{}) (base.Operation, error) {
+// 		fmt.Println(time.Now(), " >>>> digest NewSendHandler 1")
+// 		op, ok := v.(base.Operation)
+// 		if !ok {
+// 			return nil, util.ErrWrongType.Errorf("expected Operation, not %T", v)
+// 		}
+// 		fmt.Println(time.Now(), " >>>> digest NewSendHandler 2", op.Hash())
+// 		buf := bytes.NewBuffer(nil)
+// 		if err := json.NewEncoder(buf).Encode(op); err != nil {
+// 			return nil, err
+// 		} else if buf == nil {
+// 			return nil, errors.Errorf("buffer from json encoding operation is nil")
+// 		}
+
+// 		var header = isaacnetwork.NewSendOperationRequestHeader()
+
+// 		client, memberlist, err := f()
+
+// 		errchan := make(chan error, memberlist.MembersLen())
+// 		switch {
+// 		case err != nil:
+// 			return nil, err
+
+// 			// ci, ok := connInfo.(quicstream.UDPConnInfo)
+// 			// if !ok {
+// 			// 	return nil, util.ErrWrongType.Errorf("expected quicstream.UDPConnInfo, not %T", v)
+// 			// }
+
+// 		default:
+// 			// memberlist.Broadcast(quicmemberlist.NewBroadcast(i, id, notifych)
+// 			// memberlist.Members(func(node quicmemberlist.Node) bool {
+// 			// 	client.SendOperation()
+// 			// 	ci = node.UDPConnInfo()
+// 			// 	return true
+// 			// })
+
+// 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+// 			defer cancel()
+
+// 			worker := util.NewErrgroupWorker(ctx, int64(memberlist.MembersLen()))
+// 			defer worker.Close()
+// 			go func() {
+// 				defer worker.Done()
+
+// 				memberlist.Members(func(node quicmemberlist.Node) bool {
+// 					ci := node.UDPConnInfo()
+// 					return worker.NewJob(func(ctx context.Context, _ uint64) error {
+// 						cctx, cancel := context.WithTimeout(ctx, time.Second*2) //nolint:gomnd //...
+// 						defer cancel()
+// 						if err := util.Retry(ctx, func() (bool, error) {
+// 							fmt.Println(time.Now(), " >>>> digest NewSendHandler request", ci)
+// 							response, _, cancelrequest, err := client.Request(cctx, ci, header, buf)
+// 							switch {
+// 							case err != nil:
+// 								fmt.Println(time.Now(), " >>>> digest NewSendHandler 3 Client Request response", ci, err)
+// 								return false, err
+// 							case response.Err() != nil:
+// 								fmt.Println(time.Now(), " >>>> digest NewSendHandler 7", ci, response.Err())
+// 								return true, response.Err()
+// 							}
+
+// 							defer func() {
+// 								_ = cancelrequest()
+// 							}()
+
+// 							return false, nil
+// 						}, 1, time.Second*1); err != nil {
+// 							fmt.Println(time.Now(), " >>>> digest NewSendHandler 8 errchan used")
+// 							errchan <- err
+// 						}
+
+// 						return nil
+// 					}) == nil
+// 				})
+// 			}()
+
+// 			worker.Wait()
+// 			close(errchan)
+
+// 		}
+// 		fmt.Println(time.Now(), " >>>> digest NewSendHandler 9")
+// 		var success bool
+// 		var failed error
+// 		for err := range errchan {
+// 			if !success && err == nil {
+// 				success = true
+// 			} else {
+// 				fmt.Println(time.Now(), " >>>> digest NewSendHandler 10", err)
+// 				failed = err
+// 			}
+// 		}
+
+// 		if success {
+// 			fmt.Println(time.Now(), " >>>> digest NewSendHandler 11")
+// 			return op, nil
+// 		}
+// 		fmt.Println(time.Now(), " >>>> digest NewSendHandler 12")
+// 		return op, failed
+// 	}
+// }
+
 func NewSendHandler(
 	priv base.Privatekey,
 	networkID base.NetworkID,
-	f func() (*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error),
+	f func() ([]*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error),
 ) func(interface{}) (base.Operation, error) {
 	return func(v interface{}) (base.Operation, error) {
 		op, ok := v.(base.Operation)
 		if !ok {
 			return nil, util.ErrWrongType.Errorf("expected Operation, not %T", v)
 		}
-		buf := bytes.NewBuffer(nil)
-		if err := json.NewEncoder(buf).Encode(op); err != nil {
-			return nil, err
-		}
+
 		var header = isaacnetwork.NewSendOperationRequestHeader()
 
-		client, memberlist, err := f()
-		errchan := make(chan error, memberlist.MembersLen())
+		clientpool, memberlist, err := f()
+
 		switch {
 		case err != nil:
 			return nil, err
 
-			// ci, ok := connInfo.(quicstream.UDPConnInfo)
-			// if !ok {
-			// 	return nil, util.ErrWrongType.Errorf("expected quicstream.UDPConnInfo, not %T", v)
-			// }
-
 		default:
-			// memberlist.Broadcast(quicmemberlist.NewBroadcast(i, id, notifych)
-			// memberlist.Members(func(node quicmemberlist.Node) bool {
-			// 	client.SendOperation()
-			// 	ci = node.UDPConnInfo()
-			// 	return true
-			// })
-
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 
-			worker := util.NewErrgroupWorker(ctx, int64(memberlist.MembersLen()))
-			defer worker.Close()
-			go func() {
-				defer worker.Done()
+			var nodelist []quicstream.UDPConnInfo
+			memberlist.Members(func(node quicmemberlist.Node) bool {
+				nodelist = append(nodelist, node.UDPConnInfo())
+				return true
+			})
 
-				memberlist.Members(func(node quicmemberlist.Node) bool {
-					ci := node.UDPConnInfo()
-					return worker.NewJob(func(ctx context.Context, _ uint64) error {
-						cctx, cancel := context.WithTimeout(ctx, time.Second*2) //nolint:gomnd //...
-						defer cancel()
-						response, _, cancelrequest, err := client.Request(cctx, ci, header, buf)
-						switch {
-						case err != nil:
-							errchan <- err
-						case response.Err() != nil:
-							errchan <- response.Err()
-						}
+			for i := range nodelist {
+				buf := bytes.NewBuffer(nil)
+				if err := json.NewEncoder(buf).Encode(op); err != nil {
+					return nil, err
+				} else if buf == nil {
+					return nil, errors.Errorf("buffer from json encoding operation is nil")
+				}
 
-						defer func() {
-							_ = cancelrequest()
-						}()
-
-						return nil
-					}) == nil
-				})
-			}()
-
-			worker.Wait()
-			close(errchan)
-
-		}
-
-		var success bool
-		var failed error
-		for err := range errchan {
-			if !success && err == nil {
-				success = true
-			} else {
-				failed = err
+				response, _, cancelrequest, err := clientpool[i].Request(ctx, nodelist[i], header, buf)
+				if err != nil {
+					return op, err
+				}
+				if response.Err() != nil {
+					return op, response.Err()
+				}
+				defer func() {
+					_ = cancelrequest()
+				}()
 			}
 		}
 
-		if success {
-			return op, nil
-		}
-
-		return op, failed
+		return op, nil
 	}
 }
 

@@ -609,8 +609,6 @@ func (d *NodeDesign) DecodeYAML(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	d.Digest = u.Digest
-
 	switch address, err := base.DecodeAddress(u.Address, enc); {
 	case err != nil:
 		return e(err, "invalid address")
@@ -674,16 +672,18 @@ func (d *NodeDesign) DecodeYAML(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	d.Digest.CacheYAML = u.Digest.CacheYAML
+	if (u.Digest != DigestDesign{}) {
+		d.Digest = u.Digest
+		d.Digest.CacheYAML = u.Digest.CacheYAML
+		d.Digest.NetworkYAML = &LocalNetwork{}
 
-	d.Digest.NetworkYAML = &LocalNetwork{}
-
-	switch lb, err := mitumutil.MarshalJSON(u.Digest.NetworkYAML); {
-	case err != nil:
-		return e(err, "")
-	default:
-		if err := mitumutil.UnmarshalJSON(lb, d.Digest.NetworkYAML); err != nil {
+		switch lb, err := mitumutil.MarshalJSON(u.Digest.NetworkYAML); {
+		case err != nil:
 			return e(err, "")
+		default:
+			if err := mitumutil.UnmarshalJSON(lb, d.Digest.NetworkYAML); err != nil {
+				return e(err, "")
+			}
 		}
 	}
 

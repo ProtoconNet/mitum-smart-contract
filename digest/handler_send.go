@@ -26,7 +26,6 @@ func (hd *Handlers) handleSend(w http.ResponseWriter, r *http.Request) {
 	body := &bytes.Buffer{}
 	if _, err := io.Copy(body, r.Body); err != nil {
 		HTTP2ProblemWithError(w, err, http.StatusInternalServerError)
-
 		return
 	}
 
@@ -35,11 +34,9 @@ func (hd *Handlers) handleSend(w http.ResponseWriter, r *http.Request) {
 	if err := Unmarshal(body.Bytes(), &v); err != nil {
 		if hinter, err := hd.enc.Decode(body.Bytes()); err != nil {
 			HTTP2ProblemWithError(w, err, http.StatusBadRequest)
-
 			return
 		} else if h, err := hd.sendItem(hinter); err != nil {
 			HTTP2ProblemWithError(w, err, http.StatusBadRequest)
-
 			return
 		} else {
 			hal = h

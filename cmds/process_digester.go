@@ -33,6 +33,10 @@ func ProcessDigester(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 
+	if st == nil {
+		return ctx, nil
+	}
+
 	var design NodeDesign
 	if err := util.LoadFromContext(ctx, launch.DesignContextKey, &design); err != nil {
 		return ctx, err
@@ -48,8 +52,10 @@ func ProcessDigester(ctx context.Context) (context.Context, error) {
 func ProcessStartDigester(ctx context.Context) (context.Context, error) {
 	var di *digest.Digester
 	if err := util.LoadFromContext(ctx, ContextValueDigester, &di); err != nil {
-
 		return ctx, err
+	}
+	if di == nil {
+		return ctx, nil
 	}
 
 	return ctx, di.Start()
@@ -69,8 +75,11 @@ func PdigesterFollowUp(ctx context.Context) (context.Context, error) {
 	}
 
 	var st *digest.Database
-	if err := util.LoadFromContextOK(ctx, ContextValueDigestDatabase, &st); err != nil {
+	if err := util.LoadFromContext(ctx, ContextValueDigestDatabase, &st); err != nil {
 		return ctx, err
+	}
+	if st == nil {
+		return ctx, nil
 	}
 
 	switch m, found, err := mst.LastBlockMap(); {
