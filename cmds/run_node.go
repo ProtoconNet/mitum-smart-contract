@@ -407,40 +407,16 @@ func (cmd *RunCommand) setDigestSendHandler(
 		return nil, err
 	}
 
-	// client := launch.NewNetworkClient( //nolint:gomnd //...
-	// 	encs, enc, time.Second*2,
-	// 	base.NetworkID([]byte(params.NetworkID())),
-	// )
-
-	// defer func() {
-	// 	client.Close()
-	// }()
-
-	handlers = handlers.SetSend(
-		NewSendHandler(local.Privatekey(), params.NetworkID(), func() ([]*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
-			var clientpool []*isaacnetwork.QuicstreamClient
-			for i := 0; i < memberlist.MembersLen(); i++ {
-				client := launch.NewNetworkClient( //nolint:gomnd //...
-					encs, enc, time.Second*2,
-					base.NetworkID([]byte(params.NetworkID())),
-				)
-				clientpool = append(clientpool, client)
-			}
-
-			return clientpool, memberlist, nil
-		}),
+	client := launch.NewNetworkClient( //nolint:gomnd //...
+		encs, enc, time.Second*2,
+		base.NetworkID([]byte(params.NetworkID())),
 	)
 
-	// var memberlist *quicmemberlist.Memberlist
-	// if err := util.LoadFromContextOK(ctx, launch.MemberlistContextKey, &memberlist); err != nil {
-	// 	return nil, err
-	// }
-
-	// handlers = handlers.SetSend(
-	// 	NewSendHandler(local.Privatekey(), params.NetworkID(), func() (*quicmemberlist.Memberlist, error) { // nolint:contextcheck
-	// 		return memberlist, nil
-	// 	}),
-	// )
+	handlers = handlers.SetSend(
+		NewSendHandler(local.Privatekey(), params.NetworkID(), func() (*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
+			return client, memberlist, nil
+		}),
+	)
 
 	cmd.log.Debug().Msg("send handler attached")
 
