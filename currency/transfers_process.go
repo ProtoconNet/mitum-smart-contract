@@ -207,7 +207,8 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 		if !ok {
 			return nil, base.NewBaseOperationProcessReasonError("failed to process transfer"), nil
 		}
-		stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(rq[0]).Sub(rq[1])))
+		stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(rq[0])))
+		// stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(rq[0]).Sub(rq[1])))
 		sts = append(sts, NewBalanceStateMergeValue(opp.sb[k].Key(), stv))
 	}
 

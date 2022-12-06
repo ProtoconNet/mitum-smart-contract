@@ -12,7 +12,7 @@ var (
 	CreateAccountsHint     = hint.MustNewHint("mitum-currency-create-accounts-operation-v0.0.1")
 )
 
-var MaxCreateAccountsItems uint = 10
+var MaxCreateAccountsItems uint = 1000
 
 type AmountsItem interface {
 	Amounts() []Amount

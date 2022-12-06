@@ -231,7 +231,8 @@ func (opp *CreateAccountsProcessor) Process( // nolint:dupl
 		if !ok {
 			return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", opp.sb[i].Value()), nil
 		}
-		stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[i][0]).Sub(opp.required[i][1])))
+		stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[i][0])))
+		// stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[i][0]).Sub(opp.required[i][1])))
 		sts = append(sts, NewBalanceStateMergeValue(opp.sb[i].Key(), stv))
 	}
 
