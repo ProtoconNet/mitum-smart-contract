@@ -217,7 +217,7 @@ func NewSendHandler(
 			return nil, err
 
 		default:
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 			defer cancel()
 
 			var nodelist []quicstream.UDPConnInfo
