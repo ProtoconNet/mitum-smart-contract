@@ -27,3 +27,4 @@ tests/*/*/coverage/
 /.vscode
 /mitum-data
 /yml
+.envrc

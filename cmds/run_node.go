@@ -19,6 +19,7 @@ import (
 	isaacstates "github.com/spikeekips/mitum/isaac/states"
 	"github.com/spikeekips/mitum/launch"
 	"github.com/spikeekips/mitum/network/quicmemberlist"
+	"github.com/spikeekips/mitum/network/quicstream"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/logging"
 	"github.com/spikeekips/mitum/util/ps"
@@ -147,7 +148,7 @@ func (cmd *RunCommand) run(pctx context.Context) error {
 }
 
 func (cmd *RunCommand) runStates(ctx, pctx context.Context) (func(), error) {
-	var discoveries *util.Locked
+	var discoveries *util.Locked[[]quicstream.UDPConnInfo]
 	var states *isaacstates.States
 
 	if err := util.LoadFromContextOK(pctx,

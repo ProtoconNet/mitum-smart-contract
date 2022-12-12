@@ -1648,7 +1648,7 @@ func newSyncerFunc(
 			}
 		}
 
-		conninfocache := util.NewShardedMap(cachesize)
+		conninfocache, _ := util.NewShardedMap(base.NilHeight, quicstream.UDPConnInfo{}, 1<<9) //nolint:gomnd //...
 
 		syncer, err := isaacstates.NewSyncer(
 			design.Storage.Base,
@@ -1746,7 +1746,7 @@ func WatchUpdateFuncs(ctx context.Context) (map[string]func(string) error, error
 	var enc *jsonenc.Encoder
 	var design NodeDesign
 	var params *isaac.LocalParams
-	var discoveries *util.Locked
+	var discoveries *util.Locked[[]quicstream.UDPConnInfo]
 	var syncSourceChecker *isaacnetwork.SyncSourceChecker
 
 	if err := util.LoadFromContextOK(ctx,
