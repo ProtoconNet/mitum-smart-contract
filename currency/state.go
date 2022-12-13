@@ -146,6 +146,20 @@ func (c CurrencyDesignStateValue) HashBytes() []byte {
 	return c.CurrencyDesign.Bytes()
 }
 
+func StateCurrencyDesignValue(st base.State) (CurrencyDesign, error) {
+	v := st.Value()
+	if v == nil {
+		return CurrencyDesign{}, util.ErrNotFound.Errorf("currency design not found in State")
+	}
+
+	de, ok := v.(CurrencyDesignStateValue)
+	if !ok {
+		return CurrencyDesign{}, errors.Errorf("invalid currency design value found, %T", v)
+	}
+
+	return de.CurrencyDesign, nil
+}
+
 func StateBalanceKeyPrefix(a base.Address, cid CurrencyID) string {
 	return fmt.Sprintf("%s-%s", a.String(), cid)
 }

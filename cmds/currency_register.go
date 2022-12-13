@@ -132,6 +132,8 @@ type CurrencyRegisterCommand struct {
 	baseCommand
 	OperationFlags
 	CurrencyDesignFlags
+	Node AddressFlag `arg:"" name:"node" help:"node address" required:"true"`
+	node base.Address
 }
 
 func NewCurrencyRegisterCommand() CurrencyRegisterCommand {
@@ -188,6 +190,12 @@ func (cmd *CurrencyRegisterCommand) parseFlags() error {
 		return err
 	}
 
+	a, err := cmd.Node.Encode(enc)
+	if err != nil {
+		return errors.Wrapf(err, "invalid node format, %q", cmd.Node.String())
+	}
+	cmd.node = a
+
 	cmd.log.Debug().Interface("currency-design", cmd.CurrencyDesignFlags.currencyDesign).Msg("currency design loaded")
 
 	return nil
@@ -199,6 +207,11 @@ func (cmd *CurrencyRegisterCommand) createOperation() (currency.CurrencyRegister
 	op, err := currency.NewCurrencyRegister(fact)
 	if err != nil {
 		return currency.CurrencyRegister{}, err
+	}
+
+	err = op.NodeSign(cmd.Privatekey, cmd.NetworkID.NetworkID(), cmd.node)
+	if err != nil {
+		return currency.CurrencyRegister{}, errors.Wrap(err, "failed to create currency-register operation")
 	}
 
 	return op, nil
