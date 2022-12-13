@@ -72,7 +72,7 @@ func (fact FeeOperationFact) IsValid([]byte) error {
 }
 
 func (fact FeeOperationFact) Token() base.Token {
-	return fact.Token()
+	return fact.BaseFact.Token()
 }
 
 func (fact FeeOperationFact) Amounts() []Amount {

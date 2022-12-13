@@ -57,7 +57,7 @@ func (fact CurrencyRegisterFact) GenerateHash() util.Hash {
 }
 
 func (fact CurrencyRegisterFact) Token() base.Token {
-	return fact.Token()
+	return fact.BaseFact.Token()
 }
 
 func (fact CurrencyRegisterFact) Currency() CurrencyDesign {
