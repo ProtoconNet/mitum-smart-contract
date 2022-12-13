@@ -270,6 +270,18 @@ func (opr *OperationProcessor) checkDuplication(op base.Operation) error {
 		newAddresses = as
 		// did = fact.Sender().String()
 		// didtype = DuplicationTypeSender
+	case KeyUpdater:
+		fact, ok := t.Fact().(KeyUpdaterFact)
+		if !ok {
+			return errors.Errorf("expected KeyUpdaterFact, not %T", t.Fact())
+		}
+		as, err := fact.Addresses()
+		if err != nil {
+			return errors.Errorf("failed to get Addresses")
+		}
+		newAddresses = as
+		// did = fact.Target().String()
+		// didtype = DuplicationTypeSender
 	// case Transfers:
 	// 	fact, ok := t.Fact().(TransfersFact)
 	// 	if !ok {
@@ -373,6 +385,7 @@ func (opr *OperationProcessor) getNewProcessor(op base.Operation) (base.Operatio
 
 	switch t := op.(type) {
 	case CreateAccounts,
+		KeyUpdater,
 		Transfers,
 		CurrencyRegister:
 		return nil, false, errors.Errorf("%T needs SetProcessor", t)

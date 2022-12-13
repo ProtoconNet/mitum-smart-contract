@@ -14,7 +14,6 @@ import (
 	"github.com/spikeekips/mitum/launch"
 	"github.com/spikeekips/mitum/network/quicmemberlist"
 	"github.com/spikeekips/mitum/network/quicstream"
-	"github.com/spikeekips/mitum/util"
 	mitumutil "github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/logging"
 )
@@ -99,7 +98,7 @@ func NewSendHandler(
 	return func(v interface{}) (base.Operation, error) {
 		op, ok := v.(base.Operation)
 		if !ok {
-			return nil, util.ErrWrongType.Errorf("expected Operation, not %T", v)
+			return nil, mitumutil.ErrWrongType.Errorf("expected Operation, not %T", v)
 		}
 
 		var header = isaacnetwork.NewSendOperationRequestHeader()

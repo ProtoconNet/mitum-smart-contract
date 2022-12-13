@@ -165,10 +165,20 @@ func POperationProcessorsMap(ctx context.Context) (context.Context, error) {
 
 	opr := currency.NewOperationProcessor()
 	opr.SetProcessor(currency.CreateAccountsHint, currency.NewCreateAccountsProcessor())
+	opr.SetProcessor(currency.KeyUpdaterHint, currency.NewKeyUpdaterProcessor())
 	opr.SetProcessor(currency.TransfersHint, currency.NewTransfersProcessor())
 	opr.SetProcessor(currency.CurrencyRegisterHint, currency.NewCurrencyRegisterProcessor(params.Threshold()))
 
 	_ = set.Add(currency.CreateAccountsHint, func(height base.Height) (base.OperationProcessor, error) {
+		return opr.New(
+			height,
+			db.State,
+			nil,
+			nil,
+		)
+	})
+
+	_ = set.Add(currency.KeyUpdaterHint, func(height base.Height) (base.OperationProcessor, error) {
 		return opr.New(
 			height,
 			db.State,

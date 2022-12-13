@@ -19,6 +19,7 @@ var hinters = []encoder.DecodeDetail{
 	{Hint: currency.CreateAccountsItemMultiAmountsHint, Instance: currency.CreateAccountsItemMultiAmounts{}},
 	{Hint: currency.CreateAccountsItemSingleAmountHint, Instance: currency.CreateAccountsItemSingleAmount{}},
 	{Hint: currency.CreateAccountsHint, Instance: currency.CreateAccounts{}},
+	{Hint: currency.KeyUpdaterHint, Instance: currency.KeyUpdater{}},
 	{Hint: currency.CurrencyDesignHint, Instance: currency.CurrencyDesign{}},
 	{Hint: currency.CurrencyPolicyHint, Instance: currency.CurrencyPolicy{}},
 	{Hint: currency.CurrencyRegisterHint, Instance: currency.CurrencyRegister{}},
@@ -43,6 +44,7 @@ var hinters = []encoder.DecodeDetail{
 
 var supportedProposalOperationFactHinters = []encoder.DecodeDetail{
 	{Hint: currency.CreateAccountsFactHint, Instance: currency.CreateAccountsFact{}},
+	{Hint: currency.KeyUpdaterFactHint, Instance: currency.KeyUpdaterFact{}},
 	{Hint: currency.CurrencyRegisterFactHint, Instance: currency.CurrencyRegisterFact{}},
 	{Hint: currency.TransfersFactHint, Instance: currency.TransfersFact{}},
 }

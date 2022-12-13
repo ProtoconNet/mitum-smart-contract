@@ -27,7 +27,7 @@ func (it TransfersItemMultiAmounts) IsValid([]byte) error {
 		return err
 	}
 
-	if n := len(it.amounts); n > maxCurenciesCreateAccountsItemMultiAmounts {
+	if n := len(it.amounts); n > maxCurenciesTransfersItemMultiAmounts {
 		return util.ErrInvalid.Errorf("amounts over allowed; %d > %d", n, maxCurenciesTransfersItemMultiAmounts)
 	}
 
