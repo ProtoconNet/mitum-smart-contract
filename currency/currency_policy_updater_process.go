@@ -27,7 +27,6 @@ type CurrencyPolicyUpdaterProcessor struct {
 	*base.BaseOperationProcessor
 	suffrage  base.Suffrage
 	threshold base.Threshold
-	de        base.StateMergeValue
 }
 
 func NewCurrencyPolicyUpdaterProcessor(threshold base.Threshold) GetNewProcessor {
@@ -52,7 +51,6 @@ func NewCurrencyPolicyUpdaterProcessor(threshold base.Threshold) GetNewProcessor
 
 		opp.BaseOperationProcessor = b
 		opp.threshold = threshold
-		opp.de = nil
 
 		switch i, found, err := getStateFunc(isaac.SuffrageStateKey); {
 		case err != nil:
@@ -104,13 +102,8 @@ func (opp *CurrencyPolicyUpdaterProcessor) PreProcess(
 		}
 	}
 
-	switch st, found, err := getStateFunc(StateKeyCurrencyDesign(fact.currency)); {
-	case err != nil:
-		return ctx, nil, err
-	case !found:
+	if err := checkExistsState(StateKeyCurrencyDesign(fact.currency), getStateFunc); err != nil {
 		return ctx, nil, base.NewBaseOperationProcessReasonError("currency not found, %q", fact.currency)
-	default:
-		opp.de = NewCurrencyDesignStateMergeValue(st.Key(), st.Value())
 	}
 
 	return ctx, nil, nil
@@ -127,20 +120,20 @@ func (opp *CurrencyPolicyUpdaterProcessor) Process(
 
 	sts := make([]base.StateMergeValue, 1)
 
-	var de CurrencyDesign
-	if st, err := existsState(StateKeyCurrencyDesign(fact.currency), "currency design", getStateFunc); err != nil {
+	st, err := existsState(StateKeyCurrencyDesign(fact.currency), "currency design", getStateFunc)
+	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of currency %w : %v", fact.currency, err), nil
-	} else if d, err := StateCurrencyDesignValue(st); err != nil {
+	}
+
+	de, err := StateCurrencyDesignValue(st)
+	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to get currency design of %w : %v", fact.currency, err), nil
-	} else {
-		de = d
-		opp.de = NewCurrencyDesignStateMergeValue(st.Key(), st.Value())
 	}
 
 	de.policy = fact.policy
 
 	c := NewCurrencyDesignStateMergeValue(
-		opp.de.Key(),
+		st.Key(),
 		NewCurrencyDesignStateValue(de),
 	)
 	sts[0] = c
@@ -151,7 +144,6 @@ func (opp *CurrencyPolicyUpdaterProcessor) Process(
 func (opp *CurrencyPolicyUpdaterProcessor) Close() error {
 	opp.suffrage = nil
 	opp.threshold = 0
-	opp.de = nil
 
 	currencyPolicyUpdaterProcessorPool.Put(opp)
 
