@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -508,10 +509,12 @@ func (d *NodeDesign) IsValid([]byte) error {
 				p, err := strconv.ParseInt(i.Port(), 10, 64)
 				if err != nil {
 					return e.Wrapf(err, "invalid time server, %q", d.TimeServer)
+				} else if p > 0 && p < math.MaxInt {
+					d.TimeServer = i.Hostname()
+					d.TimeServerPort = int(p)
+				} else {
+					return e.Wrapf(err, "invalid time server port, %v", p)
 				}
-
-				d.TimeServer = i.Hostname()
-				d.TimeServerPort = int(p)
 			}
 		}
 	}
