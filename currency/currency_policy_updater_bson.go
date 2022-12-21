@@ -59,12 +59,12 @@ func (fact *CurrencyPolicyUpdaterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder
 }
 
 func (op *CurrencyPolicyUpdater) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	var ubo base.BaseOperation
+	var ubo base.BaseNodeOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {
 		return err
 	}
 
-	op.BaseOperation = ubo
+	op.BaseNodeOperation = ubo
 
 	return nil
 }
