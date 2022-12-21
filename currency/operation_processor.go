@@ -395,7 +395,8 @@ func (opr *OperationProcessor) getNewProcessor(op base.Operation) (base.Operatio
 		KeyUpdater,
 		Transfers,
 		CurrencyRegister,
-		CurrencyPolicyUpdater:
+		CurrencyPolicyUpdater,
+		SuffrageInflation:
 		return nil, false, errors.Errorf("%T needs SetProcessor", t)
 	default:
 		return nil, false, nil
