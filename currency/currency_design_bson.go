@@ -14,7 +14,7 @@ func (de CurrencyDesign) MarshalBSON() ([]byte, error) {
 			"amount":          de.amount,
 			"genesis_account": de.genesisAccount,
 			"policy":          de.policy,
-			"aggregate":       de.aggregate,
+			"aggregate":       de.aggregate.String(),
 		}),
 	)
 }
@@ -24,7 +24,7 @@ type CurrencyDesignBSONUnmarshaler struct {
 	AM bson.Raw  `bson:"amount"`
 	GA string    `bson:"genesis_account"`
 	PO bson.Raw  `bson:"policy"`
-	AG Big       `bson:"aggregate"`
+	AG string    `bson:"aggregate"`
 }
 
 func (de *CurrencyDesign) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {

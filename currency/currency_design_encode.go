@@ -8,7 +8,7 @@ import (
 	"github.com/spikeekips/mitum/util/hint"
 )
 
-func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, bam []byte, sga string, bpo []byte, ag Big) error {
+func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, bam []byte, sga string, bpo []byte, ag string) error {
 	e := util.StringErrorFunc("failed to unmarshal CurrencyDesign")
 
 	de.BaseHinter = hint.NewBaseHinter(ht)
@@ -34,7 +34,12 @@ func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, bam []byte, 
 	}
 
 	de.policy = policy
-	de.aggregate = ag
+
+	if big, err := NewBigFromString(ag); err != nil {
+		return errors.WithMessage(err, "failed to decode currency policy")
+	} else {
+		de.aggregate = big
+	}
 
 	return nil
 }

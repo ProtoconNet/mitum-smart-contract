@@ -10,21 +10,21 @@ import (
 
 type CurrencyPolicyJSONMarshaler struct {
 	hint.BaseHinter
-	MN Big   `json:"new_account_min_balance"`
-	FE Feeer `json:"feeer"`
+	MN string `json:"new_account_min_balance"`
+	FE Feeer  `json:"feeer"`
 }
 
 func (po CurrencyPolicy) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(CurrencyPolicyJSONMarshaler{
 		BaseHinter: po.BaseHinter,
-		MN:         po.newAccountMinBalance,
+		MN:         po.newAccountMinBalance.String(),
 		FE:         po.feeer,
 	})
 }
 
 type CurrencyPolicyJSONUnmarshaler struct {
 	HT hint.Hint       `json:"_hint"`
-	MN Big             `json:"new_account_min_balance"`
+	MN string          `json:"new_account_min_balance"`
 	FE json.RawMessage `json:"feeer"`
 }
 

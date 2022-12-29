@@ -7,7 +7,7 @@ import (
 )
 
 type AmountJSONMarshaler struct {
-	BG Big        `json:"amount"`
+	BG string     `json:"amount"`
 	CR CurrencyID `json:"currency"`
 	hint.BaseHinter
 }
@@ -15,13 +15,13 @@ type AmountJSONMarshaler struct {
 func (am Amount) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(AmountJSONMarshaler{
 		BaseHinter: am.BaseHinter,
-		BG:         am.big,
+		BG:         am.big.String(),
 		CR:         am.cid,
 	})
 }
 
 type AmountJSONUnmarshaler struct {
-	BG Big       `json:"amount"`
+	BG string    `json:"amount"`
 	CR string    `json:"currency"`
 	HT hint.Hint `json:"_hint"`
 }
@@ -35,8 +35,13 @@ func (am *Amount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	}
 
 	am.BaseHinter = hint.NewBaseHinter(uam.HT)
-	am.big = uam.BG
 	am.cid = CurrencyID(uam.CR)
+
+	if big, err := NewBigFromString(uam.BG); err != nil {
+		return e(err, "")
+	} else {
+		am.big = big
+	}
 
 	return nil
 }

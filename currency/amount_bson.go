@@ -12,7 +12,7 @@ func (am Amount) MarshalBSON() ([]byte, error) {
 		bsonenc.NewHintedDoc(am.Hint()),
 		bson.M{
 			"currency": am.cid,
-			"amount":   am.big,
+			"amount":   am.big.String(),
 		}),
 	)
 }
@@ -20,7 +20,7 @@ func (am Amount) MarshalBSON() ([]byte, error) {
 type AmountBSONUnmarshaler struct {
 	HT hint.Hint `bson:"_hint"`
 	CR string    `bson:"currency"`
-	BG Big       `bson:"amount"`
+	BG string    `bson:"amount"`
 }
 
 func (am *Amount) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -32,8 +32,13 @@ func (am *Amount) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	}
 
 	am.BaseHinter = hint.NewBaseHinter(uam.HT)
-	am.big = uam.BG
 	am.cid = CurrencyID(uam.CR)
+
+	if big, err := NewBigFromString(uam.BG); err != nil {
+		return e(err, "")
+	} else {
+		am.big = big
+	}
 
 	return nil
 }

@@ -11,7 +11,7 @@ func (po CurrencyPolicy) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(bsonenc.MergeBSONM(
 		bsonenc.NewHintedDoc(po.Hint()),
 		bson.M{
-			"new_account_min_balance": po.newAccountMinBalance,
+			"new_account_min_balance": po.newAccountMinBalance.String(),
 			"feeer":                   po.feeer,
 		}),
 	)
@@ -19,7 +19,7 @@ func (po CurrencyPolicy) MarshalBSON() ([]byte, error) {
 
 type CurrencyPolicyBSONUnmarshaler struct {
 	HT hint.Hint `bson:"_hint"`
-	MN Big       `bson:"new_account_min_balance"`
+	MN string    `bson:"new_account_min_balance"`
 	FE bson.Raw  `bson:"feeer"`
 }
 

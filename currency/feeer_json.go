@@ -27,20 +27,20 @@ func (fa *NilFeeer) UnmarsahlJSON(b []byte) error {
 type FixedFeeerJSONMarshaler struct {
 	hint.BaseHinter
 	RC base.Address `json:"receiver"`
-	AM Big          `json:"amount"`
+	AM string       `json:"amount"`
 }
 
 func (fa FixedFeeer) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(FixedFeeerJSONMarshaler{
 		BaseHinter: fa.BaseHinter,
 		RC:         fa.receiver,
-		AM:         fa.amount,
+		AM:         fa.amount.String(),
 	})
 }
 
 type FixedFeeerJSONUnmarshaler struct {
 	RC string `json:"receiver"`
-	AM Big    `json:"amount"`
+	AM string `json:"amount"`
 }
 
 func (fa *FixedFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -57,7 +57,12 @@ func (fa *FixedFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	default:
 		fa.receiver = ad
 	}
-	fa.amount = ufa.AM
+
+	if big, err := NewBigFromString(ufa.AM); err != nil {
+		return e(err, "")
+	} else {
+		fa.amount = big
+	}
 
 	return nil
 }
@@ -66,8 +71,8 @@ type RatioFeeerJSONMarshaler struct {
 	hint.BaseHinter
 	RC base.Address `json:"receiver"`
 	RA float64      `json:"ratio"`
-	MI Big          `json:"min"`
-	MA Big          `json:"max"`
+	MI string       `json:"min"`
+	MA string       `json:"max"`
 }
 
 func (fa RatioFeeer) MarshalJSON() ([]byte, error) {
@@ -75,16 +80,16 @@ func (fa RatioFeeer) MarshalJSON() ([]byte, error) {
 		BaseHinter: fa.BaseHinter,
 		RC:         fa.receiver,
 		RA:         fa.ratio,
-		MI:         fa.min,
-		MA:         fa.max,
+		MI:         fa.min.String(),
+		MA:         fa.max.String(),
 	})
 }
 
 type RatioFeeerJSONUnmarshaler struct {
 	RC string  `json:"receiver"`
 	RA float64 `json:"ratio"`
-	MI Big     `json:"min"`
-	MA Big     `json:"max"`
+	MI string  `json:"min"`
+	MA string  `json:"max"`
 }
 
 func (fa *RatioFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {

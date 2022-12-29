@@ -27,14 +27,14 @@ func (fa FixedFeeer) MarshalBSON() ([]byte, error) {
 		bsonenc.NewHintedDoc(fa.Hint()),
 		bson.M{
 			"receiver": fa.receiver,
-			"amount":   fa.amount,
+			"amount":   fa.amount.String(),
 		}),
 	)
 }
 
 type FixedFeeerBSONUnpacker struct {
 	RC string `bson:"receiver"`
-	AM Big    `bson:"amount"`
+	AM string `bson:"amount"`
 }
 
 func (fa *FixedFeeer) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -52,8 +52,8 @@ func (fa RatioFeeer) MarshalBSON() ([]byte, error) {
 		bson.M{
 			"receiver": fa.receiver,
 			"ratio":    fa.ratio,
-			"min":      fa.min,
-			"max":      fa.max,
+			"min":      fa.min.String(),
+			"max":      fa.max.String(),
 		}),
 	)
 }
@@ -61,8 +61,8 @@ func (fa RatioFeeer) MarshalBSON() ([]byte, error) {
 type RatioFeeerBSONUnpacker struct {
 	RC string  `bson:"receiver"`
 	RA float64 `bson:"ratio"`
-	MI Big     `bson:"min"`
-	MA Big     `bson:"max"`
+	MI string  `bson:"min"`
+	MA string  `bson:"max"`
 }
 
 func (fa *RatioFeeer) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {

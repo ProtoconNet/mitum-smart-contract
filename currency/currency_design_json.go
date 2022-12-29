@@ -14,7 +14,7 @@ type CurrencyDesignJSONMarshaler struct {
 	AM Amount         `json:"amount"`
 	GA base.Address   `json:"genesis_account"`
 	PO CurrencyPolicy `json:"policy"`
-	AG Big            `json:"aggregate"`
+	AG string         `json:"aggregate"`
 }
 
 func (de CurrencyDesign) MarshalJSON() ([]byte, error) {
@@ -23,7 +23,7 @@ func (de CurrencyDesign) MarshalJSON() ([]byte, error) {
 		AM:         de.amount,
 		GA:         de.genesisAccount,
 		PO:         de.policy,
-		AG:         de.aggregate,
+		AG:         de.aggregate.String(),
 	})
 }
 
@@ -32,7 +32,7 @@ type CurrencyDesignJSONUnmarshaler struct {
 	AM json.RawMessage `json:"amount"`
 	GA string          `json:"genesis_account"`
 	PO json.RawMessage `json:"policy"`
-	AG Big             `json:"aggregate"`
+	AG string          `json:"aggregate"`
 }
 
 func (de *CurrencyDesign) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
