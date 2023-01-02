@@ -19,7 +19,7 @@ type CurrencyRegisterFact struct {
 
 func NewCurrencyRegisterFact(token []byte, de CurrencyDesign) CurrencyRegisterFact {
 	fact := CurrencyRegisterFact{
-		BaseFact: base.NewBaseFact(CurrencyRegisterHint, token),
+		BaseFact: base.NewBaseFact(CurrencyRegisterFactHint, token),
 		currency: de,
 	}
 
