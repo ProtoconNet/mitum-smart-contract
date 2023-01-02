@@ -7,10 +7,10 @@ import (
 	"github.com/spikeekips/mitum/util/valuehash"
 )
 
-func (ac *Account) unpack(enc encoder.Encoder, h valuehash.HashDecoder, sad string, bks []byte) error {
+func (ac *Account) unpack(enc encoder.Encoder, h valuehash.HashDecoder, ad string, bks []byte) error {
 	e := util.StringErrorFunc("failed to unmarshal Account")
 
-	switch ad, err := base.DecodeAddress(sad, enc); {
+	switch ad, err := base.DecodeAddress(ad, enc); {
 	case err != nil:
 		return e(err, "")
 	default:
@@ -23,7 +23,7 @@ func (ac *Account) unpack(enc encoder.Encoder, h valuehash.HashDecoder, sad stri
 	} else if k != nil {
 		v, ok := k.(BaseAccountKeys)
 		if !ok {
-			return util.ErrWrongType.Errorf("expected Keys, not %T", k)
+			return util.ErrWrongType.Errorf("expected BaseAccountKeys, not %T", k)
 		}
 		ac.keys = v
 	}

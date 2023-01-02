@@ -31,7 +31,7 @@ type KeyJSONUnmarshaler struct {
 }
 
 func (ky *BaseAccountKey) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to unmarshal json of BaseAccountKey")
+	e := util.StringErrorFunc("failed to decode json of BaseAccountKey")
 
 	var uk KeyJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uk); err != nil {
@@ -65,32 +65,13 @@ type KeysJSONUnMarshaler struct {
 }
 
 func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to unmarshal json of Account")
+	e := util.StringErrorFunc("failed to decode json of BaseAccountKeys")
 
 	var uks KeysJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uks); err != nil {
 		return e(err, "")
 	}
 
-	ks.BaseHinter = hint.NewBaseHinter(uks.HT)
-	hks, err := enc.DecodeSlice(uks.KS)
-	if err != nil {
-		return err
-	}
+	return ks.unpack(enc, uks.HT, uks.H, uks.KS, uks.TH)
 
-	keys := make([]AccountKey, len(hks))
-	for i := range hks {
-		j, ok := hks[i].(BaseAccountKey)
-		if !ok {
-			return util.ErrWrongType.Errorf("expected Key, not %T", hks[i])
-		}
-
-		keys[i] = j
-	}
-	ks.keys = keys
-
-	ks.h = uks.H.Hash()
-	ks.threshold = uks.TH
-
-	return nil
 }

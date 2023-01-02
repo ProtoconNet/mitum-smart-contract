@@ -1,14 +1,16 @@
 package currency
 
 import (
-	"github.com/pkg/errors"
+	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
 	"github.com/spikeekips/mitum/util/hint"
 )
 
 func (po *CurrencyPolicy) unpack(enc encoder.Encoder, ht hint.Hint, mn string, bfe []byte) error {
+	e := util.StringErrorFunc("failed to unmarshal CurrencyPolicy")
+
 	if big, err := NewBigFromString(mn); err != nil {
-		return errors.WithMessage(err, "failed to decode feeer")
+		return e(err, "")
 	} else {
 		po.newAccountMinBalance = big
 	}
@@ -17,7 +19,7 @@ func (po *CurrencyPolicy) unpack(enc encoder.Encoder, ht hint.Hint, mn string, b
 	var feeer Feeer
 	err := encoder.Decode(enc, bfe, &feeer)
 	if err != nil {
-		return errors.WithMessage(err, "failed to decode feeer")
+		return e(err, "failed to decode feeer")
 	}
 	po.feeer = feeer
 

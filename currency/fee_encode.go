@@ -7,13 +7,13 @@ import (
 
 func (fact *FeeOperationFact) unpack(
 	enc encoder.Encoder,
-	ufact FeeOperationFactJSONUnMarshaler,
+	bam []byte,
 ) error {
-	fact.BaseFact.SetJSONUnmarshaler(ufact.BaseFactJSONUnmarshaler)
+	e := util.StringErrorFunc("failed to unmarshal FeeOperationFact")
 
-	ham, err := enc.DecodeSlice(ufact.AM)
+	ham, err := enc.DecodeSlice(bam)
 	if err != nil {
-		return err
+		return e(err, "")
 	}
 
 	amounts := make([]Amount, len(ham))

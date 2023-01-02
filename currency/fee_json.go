@@ -26,12 +26,14 @@ type FeeOperationFactJSONUnMarshaler struct {
 }
 
 func (fact *FeeOperationFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode FeeOperationFact")
+	e := util.StringErrorFunc("failed to decode json of FeeOperationFact")
 
-	var uft FeeOperationFactJSONUnMarshaler
-	if err := enc.Unmarshal(b, &uft); err != nil {
+	var uf FeeOperationFactJSONUnMarshaler
+	if err := enc.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	return fact.unpack(enc, uft)
+	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
+
+	return fact.unpack(enc, uf.AM)
 }

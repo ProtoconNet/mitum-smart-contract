@@ -24,7 +24,7 @@ type AmountBSONUnmarshaler struct {
 }
 
 func (am *Amount) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to unmarshal bson of Amount")
+	e := util.StringErrorFunc("failed to decode bson of Amount")
 
 	var uam AmountBSONUnmarshaler
 	if err := enc.Unmarshal(b, &uam); err != nil {
@@ -32,13 +32,6 @@ func (am *Amount) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	}
 
 	am.BaseHinter = hint.NewBaseHinter(uam.HT)
-	am.cid = CurrencyID(uam.CR)
 
-	if big, err := NewBigFromString(uam.BG); err != nil {
-		return e(err, "")
-	} else {
-		am.big = big
-	}
-
-	return nil
+	return am.unpack(enc, uam.CR, uam.BG)
 }

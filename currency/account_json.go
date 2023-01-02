@@ -43,7 +43,7 @@ type AccountJSONUnmarshaler struct {
 }
 
 func (ac *Account) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to unmarshal json of Account")
+	e := util.StringErrorFunc("failed to decode json of Account")
 
 	var uac AccountJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uac); err != nil {
@@ -52,25 +52,5 @@ func (ac *Account) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 	ac.BaseHinter = hint.NewBaseHinter(uac.HT)
 
-	switch ad, err := base.DecodeAddress(uac.AD, enc); {
-	case err != nil:
-		return e(err, "")
-	default:
-		ac.address = ad
-	}
-
-	k, err := enc.Decode(uac.KS)
-	if err != nil {
-		return e(err, "")
-	} else if k != nil {
-		v, ok := k.(BaseAccountKeys)
-		if !ok {
-			return util.ErrWrongType.Errorf("expected Keys, not %T", k)
-		}
-		ac.keys = v
-	}
-
-	ac.h = uac.H.Hash()
-
-	return nil
+	return ac.unpack(enc, uac.H, uac.AD, uac.KS)
 }

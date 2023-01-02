@@ -6,10 +6,10 @@ import (
 	"github.com/spikeekips/mitum/util/encoder"
 )
 
-func (fa *FixedFeeer) unpack(enc encoder.Encoder, src string, am string) error {
+func (fa *FixedFeeer) unpack(enc encoder.Encoder, rc string, am string) error {
 	e := util.StringErrorFunc("failed to unmarshal FixedFeeer")
 
-	switch ad, err := base.DecodeAddress(src, enc); {
+	switch ad, err := base.DecodeAddress(rc, enc); {
 	case err != nil:
 		return e(err, "")
 	default:
@@ -27,13 +27,13 @@ func (fa *FixedFeeer) unpack(enc encoder.Encoder, src string, am string) error {
 
 func (fa *RatioFeeer) unpack(
 	enc encoder.Encoder,
-	src string,
+	rc string,
 	ratio float64,
 	min, max string,
 ) error {
 	e := util.StringErrorFunc("failed to unmarshal RatioFeeer")
 
-	switch ad, err := base.DecodeAddress(src, enc); {
+	switch ad, err := base.DecodeAddress(rc, enc); {
 	case err != nil:
 		return e(err, "")
 	default:

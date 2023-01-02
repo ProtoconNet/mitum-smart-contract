@@ -3,6 +3,7 @@ package currency
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
+	"github.com/spikeekips/mitum/util"
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/hint"
 )
@@ -24,9 +25,11 @@ type CurrencyPolicyBSONUnmarshaler struct {
 }
 
 func (po *CurrencyPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringErrorFunc("failed to decode bson of CurrencyPolicy")
+
 	var upo CurrencyPolicyBSONUnmarshaler
 	if err := enc.Unmarshal(b, &upo); err != nil {
-		return err
+		return e(err, "")
 	}
 
 	return po.unpack(enc, upo.HT, upo.MN, upo.FE)

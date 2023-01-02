@@ -27,7 +27,7 @@ type AmountJSONUnmarshaler struct {
 }
 
 func (am *Amount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to unmarshal json of Amount")
+	e := util.StringErrorFunc("failed to decode json of Amount")
 
 	var uam AmountJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uam); err != nil {
@@ -35,13 +35,6 @@ func (am *Amount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	}
 
 	am.BaseHinter = hint.NewBaseHinter(uam.HT)
-	am.cid = CurrencyID(uam.CR)
 
-	if big, err := NewBigFromString(uam.BG); err != nil {
-		return e(err, "")
-	} else {
-		am.big = big
-	}
-
-	return nil
+	return am.unpack(enc, uam.CR, uam.BG)
 }

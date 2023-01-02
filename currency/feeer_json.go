@@ -14,9 +14,11 @@ func (fa NilFeeer) MarshalJSON() ([]byte, error) {
 }
 
 func (fa *NilFeeer) UnmarsahlJSON(b []byte) error {
+	e := util.StringErrorFunc("failed to unmarshal json of NilFeeer")
+
 	var ht hint.BaseHinter
 	if err := util.UnmarshalJSON(b, &ht); err != nil {
-		return err
+		return e(err, "")
 	}
 
 	fa.BaseHinter = ht
@@ -44,27 +46,14 @@ type FixedFeeerJSONUnmarshaler struct {
 }
 
 func (fa *FixedFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to unmarshal json of FixedFeeer")
+	e := util.StringErrorFunc("failed to decode json of FixedFeeer")
 
 	var ufa FixedFeeerJSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {
 		return e(err, "")
 	}
 
-	switch ad, err := base.DecodeAddress(ufa.RC, enc); {
-	case err != nil:
-		return e(err, "")
-	default:
-		fa.receiver = ad
-	}
-
-	if big, err := NewBigFromString(ufa.AM); err != nil {
-		return e(err, "")
-	} else {
-		fa.amount = big
-	}
-
-	return nil
+	return fa.unpack(enc, ufa.RC, ufa.AM)
 }
 
 type RatioFeeerJSONMarshaler struct {
@@ -93,9 +82,11 @@ type RatioFeeerJSONUnmarshaler struct {
 }
 
 func (fa *RatioFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+	e := util.StringErrorFunc("failed to decode json of RatioFeeer")
+
 	var ufa RatioFeeerJSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {
-		return err
+		return e(err, "")
 	}
 
 	return fa.unpack(enc, ufa.RC, ufa.RA, ufa.MI, ufa.MA)
