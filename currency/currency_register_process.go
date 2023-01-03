@@ -27,8 +27,6 @@ type CurrencyRegisterProcessor struct {
 	*base.BaseOperationProcessor
 	suffrage  base.Suffrage
 	threshold base.Threshold
-	ga        base.StateMergeValue
-	de        base.StateMergeValue
 }
 
 func NewCurrencyRegisterProcessor(threshold base.Threshold) GetNewProcessor {
@@ -53,8 +51,6 @@ func NewCurrencyRegisterProcessor(threshold base.Threshold) GetNewProcessor {
 
 		opp.BaseOperationProcessor = b
 		opp.threshold = threshold
-		opp.ga = nil
-		opp.de = nil
 
 		switch i, found, err := getStateFunc(isaac.SuffrageStateKey); {
 		case err != nil:
@@ -112,22 +108,20 @@ func (opp *CurrencyRegisterProcessor) PreProcess(
 		}
 	}
 
-	switch st, found, err := getStateFunc(StateKeyCurrencyDesign(item.amount.Currency())); {
+	switch _, found, err := getStateFunc(StateKeyCurrencyDesign(item.amount.Currency())); {
 	case err != nil:
 		return ctx, nil, err
 	case found:
 		return ctx, nil, base.NewBaseOperationProcessReasonError("currency already registered, %q", item.amount.Currency())
 	default:
-		opp.de = NewCurrencyDesignStateMergeValue(st.Key(), st.Value())
 	}
 
-	switch st, found, err := getStateFunc(StateKeyBalance(item.GenesisAccount(), item.amount.Currency())); {
+	switch _, found, err := getStateFunc(StateKeyBalance(item.GenesisAccount(), item.amount.Currency())); {
 	case err != nil:
 		return ctx, nil, err
 	case found:
 		return ctx, nil, base.NewBaseOperationProcessReasonError("genesis account has already the currency, %q", item.amount.Currency())
 	default:
-		opp.ga = NewBalanceStateMergeValue(st.Key(), NewBalanceStateValue(NewZeroAmount(item.amount.Currency())))
 	}
 
 	return ctx, nil, nil
@@ -143,22 +137,20 @@ func (opp *CurrencyRegisterProcessor) Process(
 	}
 
 	sts := make([]base.StateMergeValue, 4)
-	v, ok := opp.ga.Value().(BalanceStateValue)
-	if !ok {
-		return nil, base.NewBaseOperationProcessReasonError("invalid BalanceStateValue found, %T", opp.ga.Value()), nil
-	}
+
+	item := fact.currency
+
+	ba := NewBalanceStateValue(item.amount)
 	sts[0] = NewBalanceStateMergeValue(
-		opp.ga.Key(),
-		NewBalanceStateValue(v.Amount.WithBig(v.Amount.big.Add(fact.currency.amount.Big()))),
+		StateKeyBalance(item.genesisAccount, item.amount.cid),
+		ba,
 	)
-	c := NewCurrencyDesignStateMergeValue(
-		opp.de.Key(),
-		NewCurrencyDesignStateValue(fact.currency),
-	)
-	sts[1] = c
+
+	de := NewCurrencyDesignStateValue(item)
+	sts[1] = NewCurrencyDesignStateMergeValue(StateKeyCurrencyDesign(item.amount.cid), de)
 
 	{
-		l, err := createZeroAccount(fact.currency.amount.Currency(), getStateFunc)
+		l, err := createZeroAccount(item.amount.Currency(), getStateFunc)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -198,8 +190,6 @@ func createZeroAccount(
 func (opp *CurrencyRegisterProcessor) Close() error {
 	opp.suffrage = nil
 	opp.threshold = 0
-	opp.ga = nil
-	opp.de = nil
 
 	currencyRegisterProcessorPool.Put(opp)
 
