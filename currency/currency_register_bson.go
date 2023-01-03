@@ -5,7 +5,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
@@ -33,27 +32,19 @@ func (fact *CurrencyRegisterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) err
 
 	var ubf base.BaseFact
 	if err := ubf.DecodeBSON(b, enc); err != nil {
-		return err
+		return e(err, "")
 	}
 
 	fact.BaseFact = ubf
 
-	var ucrf CurrencyRegisterFactBSONUnmarshaler
-	if err := bson.Unmarshal(b, &ucrf); err != nil {
+	var uf CurrencyRegisterFactBSONUnmarshaler
+	if err := bson.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseHinter = hint.NewBaseHinter(ucrf.HT)
+	fact.BaseHinter = hint.NewBaseHinter(uf.HT)
 
-	if hinter, err := enc.Decode(ucrf.CR); err != nil {
-		return err
-	} else if cr, ok := hinter.(CurrencyDesign); !ok {
-		return e(errors.Errorf("expected CurrencyDesign not %T,", hinter), "")
-	} else {
-		fact.currency = cr
-	}
-
-	return nil
+	return fact.unpack(enc, uf.CR)
 }
 
 func (op *CurrencyRegister) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {

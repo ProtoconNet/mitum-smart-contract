@@ -37,36 +37,14 @@ func (fact *TransfersFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	fact.BaseFact = ubf
 
-	var utf TransfersFactBSONUnmarshaler
-	if err := bson.Unmarshal(b, &utf); err != nil {
+	var uf TransfersFactBSONUnmarshaler
+	if err := bson.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseHinter = hint.NewBaseHinter(utf.HT)
-	switch a, err := base.DecodeAddress(utf.SD, enc); {
-	case err != nil:
-		return e(err, "")
-	default:
-		fact.sender = a
-	}
+	fact.BaseHinter = hint.NewBaseHinter(uf.HT)
 
-	hit, err := enc.DecodeSlice(utf.IT)
-	if err != nil {
-		return e(err, "")
-	}
-
-	items := make([]TransfersItem, len(hit))
-	for i := range hit {
-		j, ok := hit[i].(TransfersItem)
-		if !ok {
-			return util.ErrWrongType.Errorf("expected TransfersItem, not %T", hit[i])
-		}
-
-		items[i] = j
-	}
-	fact.items = items
-
-	return nil
+	return fact.unpack(enc, uf.SD, uf.IT)
 }
 
 func (op *Transfers) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {

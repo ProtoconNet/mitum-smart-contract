@@ -24,41 +24,18 @@ func (it BaseTransfersItem) MarshalJSON() ([]byte, error) {
 }
 
 type BaseTransfersItemJSONUnpacker struct {
+	HT hint.Hint       `json:"_hint"`
 	RC string          `json:"receiver"`
 	AM json.RawMessage `json:"amounts"`
 }
 
 func (it *BaseTransfersItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode BaseTransfersItem")
+	e := util.StringErrorFunc("failed to decode json of BaseTransfersItem")
 
-	var utf BaseTransfersItemJSONUnpacker
-	if err := enc.Unmarshal(b, &utf); err != nil {
+	var uit BaseTransfersItemJSONUnpacker
+	if err := enc.Unmarshal(b, &uit); err != nil {
 		return e(err, "")
 	}
 
-	switch a, err := base.DecodeAddress(utf.RC, enc); {
-	case err != nil:
-		return e(err, "")
-	default:
-		it.receiver = a
-	}
-
-	ham, err := enc.DecodeSlice(utf.AM)
-	if err != nil {
-		return err
-	}
-
-	amounts := make([]Amount, len(ham))
-	for i := range ham {
-		j, ok := ham[i].(Amount)
-		if !ok {
-			return util.ErrWrongType.Errorf("expected Amount, not %T", ham[i])
-		}
-
-		amounts[i] = j
-	}
-
-	it.amounts = amounts
-
-	return nil
+	return it.unpack(enc, uit.HT, uit.RC, uit.AM)
 }

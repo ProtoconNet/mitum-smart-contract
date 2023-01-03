@@ -1,14 +1,23 @@
 package currency
 
 import (
+	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
 )
 
 func (fact *CurrencyRegisterFact) unpack(
 	enc encoder.Encoder,
-	ufact CurrencyRegisterFactJSONUnMarshaler,
+	bcr []byte,
 ) error {
-	fact.BaseFact.SetJSONUnmarshaler(ufact.BaseFactJSONUnmarshaler)
+	e := util.StringErrorFunc("failed to unmarshal CurrencyRegisterFact")
 
-	return encoder.Decode(enc, ufact.CR, &fact.currency)
+	if hinter, err := enc.Decode(bcr); err != nil {
+		return e(err, "")
+	} else if cr, ok := hinter.(CurrencyDesign); !ok {
+		return util.ErrWrongType.Errorf("expected CurrencyDesign not %T,", hinter)
+	} else {
+		fact.currency = cr
+	}
+
+	return nil
 }

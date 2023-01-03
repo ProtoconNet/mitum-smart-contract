@@ -1,7 +1,6 @@
 package currency // nolint:dupl
 
 import (
-	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"go.mongodb.org/mongo-driver/bson"
@@ -30,20 +29,5 @@ func (it *SuffrageInflationItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) erro
 		return e(err, "")
 	}
 
-	switch a, err := base.DecodeAddress(uit.RC, enc); {
-	case err != nil:
-		return err
-	default:
-		it.receiver = a
-	}
-
-	if hinter, err := enc.Decode(uit.AM); err != nil {
-		return err
-	} else if am, ok := hinter.(Amount); !ok {
-		return e(util.ErrWrongType.Errorf("expected Amount not %T,", hinter), "")
-	} else {
-		it.amount = am
-	}
-
-	return nil
+	return it.unpack(enc, uit.RC, uit.AM)
 }

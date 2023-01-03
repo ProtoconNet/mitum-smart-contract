@@ -3,7 +3,6 @@ package currency // nolint: dupl
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
@@ -35,35 +34,19 @@ func (fact *KeyUpdaterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	var ubf base.BaseFact
 	if err := ubf.DecodeBSON(b, enc); err != nil {
-		return err
+		return e(err, "")
 	}
 
 	fact.BaseFact = ubf
 
-	var ukuf KeyUpdaterFactBSONUnmarshaler
-	if err := bson.Unmarshal(b, &ukuf); err != nil {
+	var uf KeyUpdaterFactBSONUnmarshaler
+	if err := bson.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseHinter = hint.NewBaseHinter(ukuf.HT)
-	switch a, err := base.DecodeAddress(ukuf.TG, enc); {
-	case err != nil:
-		return e(err, "")
-	default:
-		fact.target = a
-	}
+	fact.BaseHinter = hint.NewBaseHinter(uf.HT)
 
-	if hinter, err := enc.Decode(ukuf.KS); err != nil {
-		return err
-	} else if k, ok := hinter.(AccountKeys); !ok {
-		return e(errors.Errorf("expected AccountsKeys not %T,", hinter), "")
-	} else {
-		fact.keys = k
-	}
-
-	fact.currency = CurrencyID(ukuf.CR)
-
-	return nil
+	return fact.unpack(enc, uf.TG, uf.KS, uf.CR)
 }
 
 func (op *KeyUpdater) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {

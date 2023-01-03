@@ -37,36 +37,14 @@ func (fact *CreateAccountsFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error
 
 	fact.BaseFact = ubf
 
-	var ucaf CreateAccountsFactBSONUnmarshaler
-	if err := bson.Unmarshal(b, &ucaf); err != nil {
+	var uf CreateAccountsFactBSONUnmarshaler
+	if err := bson.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseHinter = hint.NewBaseHinter(ucaf.HT)
-	switch a, err := base.DecodeAddress(ucaf.SD, enc); {
-	case err != nil:
-		return e(err, "")
-	default:
-		fact.sender = a
-	}
+	fact.BaseHinter = hint.NewBaseHinter(uf.HT)
 
-	hit, err := enc.DecodeSlice(ucaf.IT)
-	if err != nil {
-		return e(err, "")
-	}
-
-	items := make([]CreateAccountsItem, len(hit))
-	for i := range hit {
-		j, ok := hit[i].(CreateAccountsItem)
-		if !ok {
-			return util.ErrWrongType.Errorf("expected CreateAccountsItem, not %T", hit[i])
-		}
-
-		items[i] = j
-	}
-	fact.items = items
-
-	return nil
+	return fact.unpack(enc, uf.SD, uf.IT)
 }
 
 func (op *CreateAccounts) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {

@@ -3,7 +3,6 @@ package currency // nolint: dupl
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
@@ -33,29 +32,19 @@ func (fact *CurrencyPolicyUpdaterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder
 
 	var ubf base.BaseFact
 	if err := ubf.DecodeBSON(b, enc); err != nil {
-		return err
+		return e(err, "")
 	}
 
 	fact.BaseFact = ubf
 
-	var ucpu CurrencyPolicyUpdaterFactBSONUnmarshaler
-	if err := bson.Unmarshal(b, &ucpu); err != nil {
+	var uf CurrencyPolicyUpdaterFactBSONUnmarshaler
+	if err := bson.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseHinter = hint.NewBaseHinter(ucpu.HT)
+	fact.BaseHinter = hint.NewBaseHinter(uf.HT)
 
-	if hinter, err := enc.Decode(ucpu.PO); err != nil {
-		return err
-	} else if po, ok := hinter.(CurrencyPolicy); !ok {
-		return e(errors.Errorf("expected CurrencyPolicy not %T,", hinter), "")
-	} else {
-		fact.policy = po
-	}
-
-	fact.currency = CurrencyID(ucpu.CR)
-
-	return nil
+	return fact.unpack(enc, uf.CR, uf.PO)
 }
 
 func (op *CurrencyPolicyUpdater) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {

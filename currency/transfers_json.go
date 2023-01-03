@@ -29,38 +29,15 @@ type TransfersFactJSONUnmarshaler struct {
 }
 
 func (fact *TransfersFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode TransfersFact")
+	e := util.StringErrorFunc("failed to decode json of TransfersFact")
 
-	var ufact TransfersFactJSONUnmarshaler
+	var uf TransfersFactJSONUnmarshaler
 
-	if err := enc.Unmarshal(b, &ufact); err != nil {
+	if err := enc.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseFact.SetJSONUnmarshaler(ufact.BaseFactJSONUnmarshaler)
+	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	switch a, err := base.DecodeAddress(ufact.SD, enc); {
-	case err != nil:
-		return e(err, "")
-	default:
-		fact.sender = a
-	}
-
-	hit, err := enc.DecodeSlice(ufact.IT)
-	if err != nil {
-		return e(err, "")
-	}
-
-	items := make([]TransfersItem, len(hit))
-	for i := range hit {
-		j, ok := hit[i].(TransfersItem)
-		if !ok {
-			return util.ErrWrongType.Errorf("expected TransfersItem, not %T", hit[i])
-		}
-
-		items[i] = j
-	}
-	fact.items = items
-
-	return nil
+	return fact.unpack(enc, uf.SD, uf.IT)
 }

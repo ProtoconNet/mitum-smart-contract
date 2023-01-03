@@ -3,7 +3,6 @@ package currency
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
@@ -32,24 +31,14 @@ type CurrencyPolicyUpdaterFactJSONUnMarshaler struct {
 func (fact *CurrencyPolicyUpdaterFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode json of CurrencyPolicyUpdaterFact")
 
-	var ucpu CurrencyPolicyUpdaterFactJSONUnMarshaler
-	if err := enc.Unmarshal(b, &ucpu); err != nil {
+	var uf CurrencyPolicyUpdaterFactJSONUnMarshaler
+	if err := enc.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseFact.SetJSONUnmarshaler(ucpu.BaseFactJSONUnmarshaler)
+	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	fact.currency = CurrencyID(ucpu.CR)
-
-	if hinter, err := enc.Decode(ucpu.PO); err != nil {
-		return err
-	} else if po, ok := hinter.(CurrencyPolicy); !ok {
-		return e(errors.Errorf("expected CurrencyPolicy not %T,", hinter), "")
-	} else {
-		fact.policy = po
-	}
-
-	return nil
+	return fact.unpack(enc, uf.CR, uf.PO)
 }
 
 func (op *CurrencyPolicyUpdater) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {

@@ -1,7 +1,6 @@
 package currency
 
 import (
-	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
@@ -29,58 +28,23 @@ type GenesisCurrenciesFactBSONUnMarshaler struct {
 }
 
 func (fact *GenesisCurrenciesFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode GenesisCurrenciesFact")
+	e := util.StringErrorFunc("failed to decode bson of GenesisCurrenciesFact")
 
 	var ubf base.BaseFact
 	if err := ubf.DecodeBSON(b, enc); err != nil {
-		return err
+		return e(err, "")
 	}
 
 	fact.BaseFact = ubf
 
-	var ugcf GenesisCurrenciesFactBSONUnMarshaler
-	if err := bson.Unmarshal(b, &ugcf); err != nil {
+	var uf GenesisCurrenciesFactBSONUnMarshaler
+	if err := bson.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseHinter = hint.NewBaseHinter(ugcf.HT)
+	fact.BaseHinter = hint.NewBaseHinter(uf.HT)
 
-	switch pk, err := base.DecodePublickeyFromString(ugcf.GK, enc); {
-	case err != nil:
-		return err
-	default:
-		fact.genesisNodeKey = pk
-	}
-
-	var keys AccountKeys
-	hinter, err := enc.Decode(ugcf.KS)
-	if err != nil {
-		return err
-	} else if k, ok := hinter.(AccountKeys); !ok {
-		return errors.Errorf("not Keys: %T", hinter)
-	} else {
-		keys = k
-	}
-
-	fact.keys = keys
-
-	hcs, err := enc.DecodeSlice(ugcf.CS)
-	if err != nil {
-		return err
-	}
-
-	cs := make([]CurrencyDesign, len(hcs))
-	for i := range hcs {
-		j, ok := hcs[i].(CurrencyDesign)
-		if !ok {
-			return util.ErrWrongType.Errorf("expected CurrencyDesign, not %T", hcs[i])
-		}
-
-		cs[i] = j
-	}
-	fact.cs = cs
-
-	return nil
+	return fact.unpack(enc, uf.GK, uf.KS, uf.CS)
 }
 
 func (op *GenesisCurrencies) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {

@@ -31,37 +31,14 @@ type CreateAccountsFactJSONUnMarshaler struct {
 func (fact *CreateAccountsFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode json of CreateAccountsFact")
 
-	var uca CreateAccountsFactJSONUnMarshaler
-	if err := enc.Unmarshal(b, &uca); err != nil {
+	var uf CreateAccountsFactJSONUnMarshaler
+	if err := enc.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseFact.SetJSONUnmarshaler(uca.BaseFactJSONUnmarshaler)
+	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	switch a, err := base.DecodeAddress(uca.SD, enc); {
-	case err != nil:
-		return e(err, "")
-	default:
-		fact.sender = a
-	}
-
-	hit, err := enc.DecodeSlice(uca.IT)
-	if err != nil {
-		return e(err, "")
-	}
-
-	items := make([]CreateAccountsItem, len(hit))
-	for i := range hit {
-		j, ok := hit[i].(CreateAccountsItem)
-		if !ok {
-			return util.ErrWrongType.Errorf("expected CreateAccountsItem, not %T", hit[i])
-		}
-
-		items[i] = j
-	}
-	fact.items = items
-
-	return nil
+	return fact.unpack(enc, uf.SD, uf.IT)
 }
 
 func (op *CreateAccounts) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {

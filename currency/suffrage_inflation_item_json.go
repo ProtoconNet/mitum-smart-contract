@@ -31,23 +31,8 @@ func (it *SuffrageInflationItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) erro
 
 	var uit SuffrageInflationItemJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uit); err != nil {
-		return err
+		return e(err, "")
 	}
 
-	switch a, err := base.DecodeAddress(uit.RC, enc); {
-	case err != nil:
-		return err
-	default:
-		it.receiver = a
-	}
-
-	if hinter, err := enc.Decode(uit.AM); err != nil {
-		return err
-	} else if am, ok := hinter.(Amount); !ok {
-		return e(util.ErrWrongType.Errorf("expected Amount not %T,", hinter), "")
-	} else {
-		it.amount = am
-	}
-
-	return nil
+	return it.unpack(enc, uit.RC, uit.AM)
 }

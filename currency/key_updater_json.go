@@ -34,31 +34,14 @@ type KeyUpdaterFactJSONUnMarshaler struct {
 func (fact *KeyUpdaterFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode json of KeyUpdaterFact")
 
-	var uku KeyUpdaterFactJSONUnMarshaler
-	if err := enc.Unmarshal(b, &uku); err != nil {
+	var uf KeyUpdaterFactJSONUnMarshaler
+	if err := enc.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseFact.SetJSONUnmarshaler(uku.BaseFactJSONUnmarshaler)
+	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	switch a, err := base.DecodeAddress(uku.TG, enc); {
-	case err != nil:
-		return e(err, "")
-	default:
-		fact.target = a
-	}
-
-	if hinter, err := enc.Decode(uku.KS); err != nil {
-		return err
-	} else if k, ok := hinter.(AccountKeys); !ok {
-		return e(util.ErrWrongType.Errorf("expected AccountsKeys not %T,", hinter), "")
-	} else {
-		fact.keys = k
-	}
-
-	fact.currency = CurrencyID(uku.CR)
-
-	return nil
+	return fact.unpack(enc, uf.TG, uf.KS, uf.CR)
 }
 
 func (op *KeyUpdater) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {

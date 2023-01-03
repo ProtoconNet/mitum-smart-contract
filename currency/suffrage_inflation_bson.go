@@ -30,22 +30,22 @@ func (fact *SuffrageInflationFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 
 	var ubf base.BaseFact
 	if err := ubf.DecodeBSON(b, enc); err != nil {
-		return err
+		return e(err, "")
 	}
 
 	fact.BaseFact = ubf
 
-	var usif SuffrageInflationFactBSONUnmarshaler
-	if err := bson.Unmarshal(b, &usif); err != nil {
+	var uf SuffrageInflationFactBSONUnmarshaler
+	if err := bson.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseHinter = hint.NewBaseHinter(usif.HT)
+	fact.BaseHinter = hint.NewBaseHinter(uf.HT)
 
-	items := make([]SuffrageInflationItem, len(usif.IT))
-	for i := range usif.IT {
+	items := make([]SuffrageInflationItem, len(uf.IT))
+	for i := range uf.IT {
 		item := SuffrageInflationItem{}
-		if err := item.DecodeBSON(usif.IT[i], enc); err != nil {
+		if err := item.DecodeBSON(uf.IT[i], enc); err != nil {
 			return e(err, "")
 		}
 		items[i] = item

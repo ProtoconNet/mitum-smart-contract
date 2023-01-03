@@ -28,12 +28,14 @@ type CurrencyRegisterFactJSONUnMarshaler struct {
 func (fact *CurrencyRegisterFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode CurrencyRegisterFact")
 
-	var ufact CurrencyRegisterFactJSONUnMarshaler
-	if err := enc.Unmarshal(b, &ufact); err != nil {
+	var uf CurrencyRegisterFactJSONUnMarshaler
+	if err := enc.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	return fact.unpack(enc, ufact)
+	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
+
+	return fact.unpack(enc, uf.CR)
 }
 
 func (op *CurrencyRegister) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {

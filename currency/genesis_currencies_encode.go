@@ -1,7 +1,6 @@
 package currency
 
 import (
-	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
@@ -9,32 +8,34 @@ import (
 
 func (fact *GenesisCurrenciesFact) unpack(
 	enc encoder.Encoder,
-	ufact GenesisCurrenciesFactJSONUnMarshaler,
+	gk string,
+	bks []byte,
+	bcs []byte,
 ) error {
-	fact.BaseFact.SetJSONUnmarshaler(ufact.BaseFactJSONUnmarshaler)
+	e := util.StringErrorFunc("failed to unmarshal GenesisCurrenciesFact")
 
-	switch pk, err := base.DecodePublickeyFromString(ufact.GK, enc); {
+	switch pk, err := base.DecodePublickeyFromString(gk, enc); {
 	case err != nil:
-		return err
+		return e(err, "")
 	default:
 		fact.genesisNodeKey = pk
 	}
 
 	var keys AccountKeys
-	hinter, err := enc.Decode(ufact.KS)
+	hinter, err := enc.Decode(bks)
 	if err != nil {
-		return err
+		return e(err, "")
 	} else if k, ok := hinter.(AccountKeys); !ok {
-		return errors.Errorf("not Keys: %T", hinter)
+		return util.ErrWrongType.Errorf("expected AccountKeys, not %T", hinter)
 	} else {
 		keys = k
 	}
 
 	fact.keys = keys
 
-	hcs, err := enc.DecodeSlice(ufact.CS)
+	hcs, err := enc.DecodeSlice(bcs)
 	if err != nil {
-		return err
+		return e(err, "")
 	}
 
 	cs := make([]CurrencyDesign, len(hcs))
