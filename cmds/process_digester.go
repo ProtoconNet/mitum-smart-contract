@@ -58,7 +58,7 @@ func ProcessStartDigester(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	}
 
-	return ctx, di.Start()
+	return ctx, di.Start(ctx)
 }
 
 func PdigesterFollowUp(ctx context.Context) (context.Context, error) {

@@ -33,7 +33,7 @@ func ProcessStartDigestAPI(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	}
 
-	return ctx, nt.Start()
+	return ctx, nt.Start(ctx)
 }
 
 func ProcessDigestAPI(ctx context.Context) (context.Context, error) {

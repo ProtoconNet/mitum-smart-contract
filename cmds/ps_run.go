@@ -59,9 +59,8 @@ func DefaultRunPS() *ps.PS {
 		PreAddOK(launch.PNameLoadDatabase, PLoadDatabase).
 		PostAddOK(launch.PNameCheckLeveldbStorage, launch.PCheckLeveldbStorage).
 		PostAddOK(launch.PNameCheckLoadFromDatabase, PLoadFromDatabase).
-		PostAddOK(launch.PNameGetSuffrageFromDatabaseeFunc, launch.PGetSuffrageFromDatabaseeFunc).
-		PostAddOK(launch.PNameNodeInfo, PNodeInfo).
-		PostAddOK(launch.PNameBallotbox, launch.PBallotbox)
+		PostAddOK(launch.PNameGetSuffrageFromDatabaseeFunc, launch.PGetSuffrageFromDatabaseFunc).
+		PostAddOK(launch.PNameNodeInfo, PNodeInfo)
 
 	_ = pps.POK(launch.PNameNetwork).
 		PreAddOK(launch.PNameQuicstreamClient, launch.PQuicstreamClient).
@@ -70,11 +69,13 @@ func DefaultRunPS() *ps.PS {
 
 	_ = pps.POK(launch.PNameMemberlist).
 		PreAddOK(launch.PNameLastConsensusNodesWatcher, launch.PLastConsensusNodesWatcher).
+		PostAddOK(launch.PNameBallotbox, launch.PBallotbox).
 		PostAddOK(launch.PNameLongRunningMemberlistJoin, launch.PLongRunningMemberlistJoin).
 		PostAddOK(launch.PNameCallbackBroadcaster, PCallbackBroadcaster).
 		PostAddOK(launch.PNameSuffrageVoting, launch.PSuffrageVoting)
 
 	_ = pps.POK(launch.PNameStates).
+		PreAddOK(launch.PNameProposerSelector, launch.PProposerSelector).
 		PreAddOK(launch.PNameOperationProcessorsMap, POperationProcessorsMap).
 		PreAddOK(launch.PNameNetworkHandlers, PNetworkHandlers).
 		PreAddOK(launch.PNameNodeInConsensusNodesFunc, launch.PNodeInConsensusNodesFunc).
