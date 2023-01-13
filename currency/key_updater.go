@@ -88,6 +88,10 @@ func (fact KeyUpdaterFact) Keys() AccountKeys {
 	return fact.keys
 }
 
+func (fact KeyUpdaterFact) Currency() CurrencyID {
+	return fact.currency
+}
+
 func (fact KeyUpdaterFact) Rebuild() KeyUpdaterFact {
 	fact.SetHash(fact.Hash())
 	return fact
