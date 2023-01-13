@@ -121,7 +121,7 @@ func (opp *KeyUpdaterProcessor) Process( // nolint:dupl
 	switch b, err := StateBalanceValue(bst); {
 	case err != nil:
 		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of target balance %v,%v : %w", fact.currency, fact.target, err), nil
-	case b.Big().Compare(opp.fee) < 0:
+	case b.Big().Compare(fee) < 0:
 		return nil, base.NewBaseOperationProcessReasonError("insufficient balance with fee %v,%v", fact.currency, fact.target), nil
 	default:
 		opp.fee = fee
