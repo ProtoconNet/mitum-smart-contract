@@ -129,13 +129,13 @@ func (opp *SuffrageInflationProcessor) Process(
 		k := StateKeyBalance(item.receiver, item.amount.cid)
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
-			return nil, base.NewBaseOperationProcessReasonError("failed to find balance state %w : %v", k, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to find balance state %v: %w", k, err), nil
 		case !found:
 			ab = NewZeroAmount(item.amount.cid)
 		default:
 			b, err := StateBalanceValue(st)
 			if err != nil {
-				return nil, base.NewBaseOperationProcessReasonError("failed to get balance %w : %v", k, err), nil
+				return nil, base.NewBaseOperationProcessReasonError("failed to get balance %v: %w", k, err), nil
 			}
 			ab = b
 		}
@@ -155,20 +155,20 @@ func (opp *SuffrageInflationProcessor) Process(
 		k := StateKeyCurrencyDesign(cid)
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
-			return nil, base.NewBaseOperationProcessReasonError("failed to find currency design state %w : %v", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to find currency design state %v: %w", cid, err), nil
 		case !found:
-			return nil, base.NewBaseOperationProcessReasonError("currency design not found %w : %v", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("currency design not found %v: %w", cid, err), nil
 		default:
 			d, err := StateCurrencyDesignValue(st)
 			if err != nil {
-				return nil, base.NewBaseOperationProcessReasonError("failed to get currency design %w : %v", cid, err), nil
+				return nil, base.NewBaseOperationProcessReasonError("failed to get currency design %v: %w", cid, err), nil
 			}
 			de = d
 		}
 
 		ade, err := de.AddAggregate(big)
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("failed to add aggregate, %w : %v", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to add aggregate, %v: %w", cid, err), nil
 		}
 
 		sts = append(sts, NewCurrencyDesignStateMergeValue(k, NewCurrencyDesignStateValue(ade)))
@@ -181,7 +181,7 @@ func (opp *SuffrageInflationProcessor) Close() error {
 	opp.suffrage = nil
 	opp.threshold = 0
 
-	currencyPolicyUpdaterProcessorPool.Put(opp)
+	suffrageInflationProcessorPool.Put(opp)
 
 	return nil
 }

@@ -26,6 +26,14 @@ func (it SuffrageInflationItem) Bytes() []byte {
 	return util.ConcatBytesSlice(br, it.amount.Bytes())
 }
 
+func (it SuffrageInflationItem) Receiver() base.Address {
+	return it.receiver
+}
+
+func (it SuffrageInflationItem) Amount() Amount {
+	return it.amount
+}
+
 func (it SuffrageInflationItem) IsValid([]byte) error {
 	if err := util.CheckIsValiders(nil, false, it.receiver, it.amount); err != nil {
 		return err
