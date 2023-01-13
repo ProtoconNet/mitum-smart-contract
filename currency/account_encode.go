@@ -21,9 +21,9 @@ func (ac *Account) unpack(enc encoder.Encoder, h valuehash.HashDecoder, ad strin
 	if err != nil {
 		return e(err, "")
 	} else if k != nil {
-		v, ok := k.(BaseAccountKeys)
+		v, ok := k.(AccountKeys)
 		if !ok {
-			return util.ErrWrongType.Errorf("expected BaseAccountKeys, not %T", k)
+			return util.ErrWrongType.Errorf("expected AccountKeys, not %T", k)
 		}
 		ac.keys = v
 	}
