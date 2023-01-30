@@ -6,7 +6,8 @@ type SealCommand struct {
 	Transfer              TransferCommand              `cmd:"" name:"transfer" help:"transfer"`
 	CurrencyRegister      CurrencyRegisterCommand      `cmd:"" name:"currency-register" help:"register new currency"`
 	CurrencyPolicyUpdater CurrencyPolicyUpdaterCommand `cmd:"" name:"currency-policy-updater" help:"update currency policy"`
-	SuffrageInflation     SuffrageInflationCommand     `cmd:"" name:"suffrage-inflation" help:"suffrage inflation operation"` // revive:disable-line:line-length-limit
+	SuffrageInflation     SuffrageInflationCommand     `cmd:"" name:"suffrage-inflation" help:"suffrage inflation operation"`
+	SuffrageCandidate     SuffrageCandidateCommand     `cmd:"" name:"suffrage-candidate" help:"suffrage candidate operation"`
 }
 
 func NewSealCommand() SealCommand {
@@ -17,5 +18,6 @@ func NewSealCommand() SealCommand {
 		CurrencyRegister:      NewCurrencyRegisterCommand(),
 		CurrencyPolicyUpdater: NewCurrencyPolicyUpdaterCommand(),
 		SuffrageInflation:     NewSuffrageInflationCommand(),
+		SuffrageCandidate:     NewSuffrageCandidateCommand(),
 	}
 }

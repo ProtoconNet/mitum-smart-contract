@@ -106,6 +106,29 @@ func (v *PrivatekeyFlag) UnmarshalText(b []byte) error {
 	return nil
 }
 
+type PublickeyFlag struct {
+	base.Publickey
+	notEmpty bool
+}
+
+func (v PublickeyFlag) Empty() bool {
+	return !v.notEmpty
+}
+
+func (v *PublickeyFlag) UnmarshalText(b []byte) error {
+	if k, err := base.DecodePublickeyFromString(string(b), enc); err != nil {
+		return errors.Wrapf(err, "invalid public key, %q", string(b))
+	} else if err := k.IsValid(nil); err != nil {
+		return err
+	} else {
+		*v = PublickeyFlag{Publickey: k}
+	}
+
+	v.notEmpty = true
+
+	return nil
+}
+
 type AddressFlag struct {
 	s string
 }
