@@ -107,7 +107,7 @@ func (v *PrivatekeyFlag) UnmarshalText(b []byte) error {
 }
 
 type PublickeyFlag struct {
-	base.Publickey
+	base.MPublickey
 	notEmpty bool
 }
 
@@ -116,12 +116,12 @@ func (v PublickeyFlag) Empty() bool {
 }
 
 func (v *PublickeyFlag) UnmarshalText(b []byte) error {
-	if k, err := base.DecodePublickeyFromString(string(b), enc); err != nil {
+	if k, err := base.ParseMPublickey(string(b)); err != nil {
 		return errors.Wrapf(err, "invalid public key, %q", string(b))
 	} else if err := k.IsValid(nil); err != nil {
 		return err
 	} else {
-		*v = PublickeyFlag{Publickey: k}
+		*v = PublickeyFlag{MPublickey: k}
 	}
 
 	v.notEmpty = true
