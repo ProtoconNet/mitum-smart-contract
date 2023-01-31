@@ -66,7 +66,7 @@ func (cmd *SuffrageCandidateCommand) parseFlags() error {
 }
 
 func (cmd *SuffrageCandidateCommand) createOperation() (isaac.SuffrageCandidate, error) {
-	fact := isaac.NewSuffrageCandidateFact([]byte(cmd.Token), cmd.node, cmd.PublicKey)
+	fact := isaac.NewSuffrageCandidateFact([]byte(cmd.Token), cmd.node, cmd.PublicKey.Publickey)
 
 	op := isaac.NewSuffrageCandidate(fact)
 	if err := op.NodeSign(cmd.Privatekey, cmd.NetworkID.NetworkID(), cmd.node); err != nil {
