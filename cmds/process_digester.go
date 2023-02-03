@@ -37,7 +37,7 @@ func ProcessDigester(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	}
 
-	var design NodeDesign
+	var design launch.NodeDesign
 	if err := util.LoadFromContext(ctx, launch.DesignContextKey, &design); err != nil {
 		return ctx, err
 	}
@@ -112,7 +112,7 @@ func digestFollowup(ctx context.Context, height base.Height) error {
 		return err
 	}
 
-	var design NodeDesign
+	var design launch.NodeDesign
 	if err := util.LoadFromContext(ctx, launch.DesignContextKey, &design); err != nil {
 		return err
 	}

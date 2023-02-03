@@ -10,9 +10,10 @@ func DefaultINITPS() *ps.PS {
 
 	_ = pps.
 		AddOK(launch.PNameEncoder, PEncoder, nil).
-		AddOK(launch.PNameDesign, PLoadDesign, nil, launch.PNameEncoder).
-		AddOK(launch.PNameTimeSyncer, PStartTimeSyncer /*launch.PCloseTimeSyncer, */, nil, launch.PNameDesign).
-		AddOK(launch.PNameLocal, PLocal, nil, launch.PNameDesign).
+		AddOK(launch.PNameDesign, launch.PLoadDesign, nil, launch.PNameEncoder).
+		AddOK(PNameDigestDesign, PLoadDigestDesign, nil, launch.PNameEncoder).
+		AddOK(launch.PNameTimeSyncer, launch.PStartTimeSyncer /*launch.PCloseTimeSyncer, */, nil, launch.PNameDesign).
+		AddOK(launch.PNameLocal, launch.PLocal, nil, launch.PNameDesign).
 		AddOK(launch.PNameStorage, launch.PStorage, launch.PCloseStorage, launch.PNameLocal).
 		AddOK(PNameGenerateGenesis, PGenerateGenesis, nil, launch.PNameStorage)
 
@@ -20,13 +21,13 @@ func DefaultINITPS() *ps.PS {
 		PostAddOK(launch.PNameAddHinters, PAddHinters)
 
 	_ = pps.POK(launch.PNameDesign).
-		PostAddOK(launch.PNameCheckDesign, PCheckDesign).
+		PostAddOK(launch.PNameCheckDesign, launch.PCheckDesign).
 		PostAddOK(launch.PNameGenesisDesign, launch.PGenesisDesign)
 
 	_ = pps.POK(launch.PNameStorage).
-		PreAddOK(launch.PNameCleanStorage, PCleanStorage).
-		PreAddOK(launch.PNameCreateLocalFS, PCreateLocalFS).
-		PreAddOK(launch.PNameLoadDatabase, PLoadDatabase)
+		PreAddOK(launch.PNameCleanStorage, launch.PCleanStorage).
+		PreAddOK(launch.PNameCreateLocalFS, launch.PCreateLocalFS).
+		PreAddOK(launch.PNameLoadDatabase, launch.PLoadDatabase)
 
 	return pps
 }

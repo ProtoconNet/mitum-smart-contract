@@ -17,13 +17,14 @@ func DefaultRunPS() *ps.PS {
 
 	_ = pps.
 		AddOK(launch.PNameEncoder, PEncoder, nil).
-		AddOK(launch.PNameDesign, PLoadDesign, nil, launch.PNameEncoder).
-		AddOK(launch.PNameTimeSyncer, PStartTimeSyncer /*launch.PCloseTimeSyncer, */, nil, launch.PNameDesign).
-		AddOK(launch.PNameLocal, PLocal, nil, launch.PNameDesign).
+		AddOK(launch.PNameDesign, launch.PLoadDesign, nil, launch.PNameEncoder).
+		AddOK(PNameDigestDesign, PLoadDigestDesign, nil, launch.PNameEncoder).
+		AddOK(launch.PNameTimeSyncer, launch.PStartTimeSyncer /*launch.PCloseTimeSyncer, */, nil, launch.PNameDesign).
+		AddOK(launch.PNameLocal, launch.PLocal, nil, launch.PNameDesign).
 		AddOK(launch.PNameStorage, launch.PStorage, nil, launch.PNameLocal).
 		AddOK(launch.PNameProposalMaker, launch.PProposalMaker, nil, launch.PNameStorage).
-		AddOK(launch.PNameNetwork, PNetwork, nil, launch.PNameStorage).
-		AddOK(launch.PNameMemberlist, PMemberlist, nil, launch.PNameNetwork).
+		AddOK(launch.PNameNetwork, launch.PNetwork, nil, launch.PNameStorage).
+		AddOK(launch.PNameMemberlist, launch.PMemberlist, nil, launch.PNameNetwork).
 		AddOK(launch.PNameStartNetwork, launch.PStartNetwork, launch.PCloseNetwork, launch.PNameStates).
 		AddOK(launch.PNameStartStorage, launch.PStartStorage, launch.PCloseStorage, launch.PNameStartNetwork).
 		AddOK(launch.PNameStartMemberlist, launch.PStartMemberlist, launch.PCloseMemberlist, launch.PNameStartNetwork).
@@ -38,10 +39,10 @@ func DefaultRunPS() *ps.PS {
 			launch.PNameStartMemberlist,
 			launch.PNameStartNetwork,
 			launch.PNameStates).
-		AddOK(PNameMongoDBsDataBase, ProcessDatabase, nil, launch.PNameDesign, launch.PNameStorage).
+		AddOK(PNameMongoDBsDataBase, ProcessDatabase, nil, PNameDigestDesign, launch.PNameStorage).
 		AddOK(PNameDigestDataBase, ProcessDigestDatabase, nil, PNameMongoDBsDataBase).
 		AddOK(PNameDigester, ProcessDigester, nil, PNameDigestDataBase).
-		AddOK(PNameDigest, ProcessDigestAPI, nil, launch.PNameDesign, PNameDigestDataBase, launch.PNameMemberlist).
+		AddOK(PNameDigest, ProcessDigestAPI, nil, PNameDigestDesign, PNameDigestDataBase, launch.PNameMemberlist).
 		AddOK(PNameDigestStart, ProcessStartDigestAPI, nil, PNameDigest).
 		AddOK(PNameStartDigester, ProcessStartDigester, nil, PNameDigestStart)
 
@@ -49,29 +50,29 @@ func DefaultRunPS() *ps.PS {
 		PostAddOK(launch.PNameAddHinters, PAddHinters)
 
 	_ = pps.POK(launch.PNameDesign).
-		PostAddOK(launch.PNameCheckDesign, PCheckDesign)
+		PostAddOK(launch.PNameCheckDesign, launch.PCheckDesign)
 
 	_ = pps.POK(launch.PNameLocal).
 		PostAddOK(launch.PNameDiscoveryFlag, launch.PDiscoveryFlag)
 
 	_ = pps.POK(launch.PNameStorage).
-		PreAddOK(launch.PNameCheckLocalFS, PCheckLocalFS).
-		PreAddOK(launch.PNameLoadDatabase, PLoadDatabase).
+		PreAddOK(launch.PNameCheckLocalFS, launch.PCheckLocalFS).
+		PreAddOK(launch.PNameLoadDatabase, launch.PLoadDatabase).
 		PostAddOK(launch.PNameCheckLeveldbStorage, launch.PCheckLeveldbStorage).
-		PostAddOK(launch.PNameCheckLoadFromDatabase, PLoadFromDatabase).
+		PostAddOK(launch.PNameCheckLoadFromDatabase, launch.PLoadFromDatabase).
 		PostAddOK(launch.PNameGetSuffrageFromDatabaseeFunc, launch.PGetSuffrageFromDatabaseFunc).
-		PostAddOK(launch.PNameNodeInfo, PNodeInfo)
+		PostAddOK(launch.PNameNodeInfo, launch.PNodeInfo)
 
 	_ = pps.POK(launch.PNameNetwork).
 		PreAddOK(launch.PNameQuicstreamClient, launch.PQuicstreamClient).
-		PostAddOK(launch.PNameSyncSourceChecker, PSyncSourceChecker).
+		PostAddOK(launch.PNameSyncSourceChecker, launch.PSyncSourceChecker).
 		PostAddOK(launch.PNameSuffrageCandidateLimiterSet, launch.PSuffrageCandidateLimiterSet)
 
 	_ = pps.POK(launch.PNameMemberlist).
 		PreAddOK(launch.PNameLastConsensusNodesWatcher, launch.PLastConsensusNodesWatcher).
 		PostAddOK(launch.PNameBallotbox, launch.PBallotbox).
 		PostAddOK(launch.PNameLongRunningMemberlistJoin, launch.PLongRunningMemberlistJoin).
-		PostAddOK(launch.PNameCallbackBroadcaster, PCallbackBroadcaster).
+		PostAddOK(launch.PNameCallbackBroadcaster, launch.PCallbackBroadcaster).
 		PostAddOK(launch.PNameSuffrageVoting, launch.PSuffrageVoting)
 
 	_ = pps.POK(launch.PNameStates).
@@ -79,10 +80,11 @@ func DefaultRunPS() *ps.PS {
 		PreAddOK(launch.PNameOperationProcessorsMap, POperationProcessorsMap).
 		PreAddOK(launch.PNameNetworkHandlers, PNetworkHandlers).
 		PreAddOK(launch.PNameNodeInConsensusNodesFunc, launch.PNodeInConsensusNodesFunc).
-		PreAddOK(launch.PNameProposalProcessors, PProposalProcessors).
+		PreAddOK(launch.PNameProposalProcessors, launch.PProposalProcessors).
+		PreAddOK(launch.PNameBallotStuckResolver, launch.PBallotStuckResolver).
 		PostAddOK(launch.PNamePatchLastConsensusNodesWatcher, launch.PPatchLastConsensusNodesWatcher).
-		PostAddOK(launch.PNameStatesSetHandlers, PStatesSetHandlers).
-		PostAddOK(launch.PNameWatchDesign, PWatchDesign).
+		PostAddOK(launch.PNameStatesSetHandlers, launch.PStatesSetHandlers).
+		PostAddOK(launch.PNameWatchDesign, launch.PWatchDesign).
 		PostAddOK(launch.PNamePatchMemberlist, launch.PPatchMemberlist)
 
 	return pps
