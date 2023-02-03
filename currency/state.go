@@ -243,7 +243,7 @@ func notExistsState(
 	case found:
 		return nil, base.NewBaseOperationProcessReasonError("%s already exists", name)
 	case !found:
-		st = base.NewBaseState(base.NilHeight, k, nil, nil, nil)
+		st = NewBaseState(base.NilHeight, k, nil, nil, nil)
 	}
 	return st, nil
 }
@@ -266,43 +266,43 @@ func existsCurrencyPolicy(cid CurrencyID, getStateFunc base.GetStateFunc) (Curre
 }
 
 type AccountStateValueMerger struct {
-	*base.BaseStateValueMerger
+	*BaseStateValueMerger
 }
 
 func NewAccountStateValueMerger(height base.Height, key string, st base.State) *AccountStateValueMerger {
 	s := &AccountStateValueMerger{
-		BaseStateValueMerger: base.NewBaseStateValueMerger(height, key, st),
+		BaseStateValueMerger: NewBaseStateValueMerger(height, key, st),
 	}
 
 	return s
 }
 
 type BalanceStateValueMerger struct {
-	*base.BaseStateValueMerger
+	*BaseStateValueMerger
 }
 
 func NewBalanceStateValueMerger(height base.Height, key string, st base.State) *BalanceStateValueMerger {
 	s := &BalanceStateValueMerger{
-		BaseStateValueMerger: base.NewBaseStateValueMerger(height, key, st),
+		BaseStateValueMerger: NewBaseStateValueMerger(height, key, st),
 	}
 
 	return s
 }
 
 type CurrencyDesignStateValueMerger struct {
-	*base.BaseStateValueMerger
+	*BaseStateValueMerger
 }
 
 func NewCurrencyDesignStateValueMerger(height base.Height, key string, st base.State) *CurrencyDesignStateValueMerger {
 	s := &CurrencyDesignStateValueMerger{
-		BaseStateValueMerger: base.NewBaseStateValueMerger(height, key, st),
+		BaseStateValueMerger: NewBaseStateValueMerger(height, key, st),
 	}
 
 	return s
 }
 
 func NewBalanceStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
-	return base.NewBaseStateMergeValue(
+	return NewBaseStateMergeValue(
 		key,
 		stv,
 		func(height base.Height, st base.State) base.StateValueMerger {
@@ -312,7 +312,7 @@ func NewBalanceStateMergeValue(key string, stv base.StateValue) base.StateMergeV
 }
 
 func NewAccountStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
-	return base.NewBaseStateMergeValue(
+	return NewBaseStateMergeValue(
 		key,
 		stv,
 		func(height base.Height, st base.State) base.StateValueMerger {
@@ -322,7 +322,7 @@ func NewAccountStateMergeValue(key string, stv base.StateValue) base.StateMergeV
 }
 
 func NewCurrencyDesignStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
-	return base.NewBaseStateMergeValue(
+	return NewBaseStateMergeValue(
 		key,
 		stv,
 		func(height base.Height, st base.State) base.StateValueMerger {

@@ -13,6 +13,7 @@ var SupportedProposalOperationFactHinters []encoder.DecodeDetail
 
 var hinters = []encoder.DecodeDetail{
 	// revive:disable-next-line:line-length-limit
+	{Hint: currency.BaseStateHint, Instance: currency.BaseState{}},
 	{Hint: currency.AccountHint, Instance: currency.Account{}},
 	{Hint: currency.AddressHint, Instance: currency.Address{}},
 	{Hint: currency.AmountHint, Instance: currency.Amount{}},
