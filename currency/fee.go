@@ -84,7 +84,7 @@ type FeeOperation struct {
 }
 
 func NewFeeOperation(fact FeeOperationFact) (FeeOperation, error) {
-	return FeeOperation{BaseOperation: NewBaseOperationFromFact(FeeOperationHint, fact, "")}, nil
+	return FeeOperation{BaseOperation: NewBaseOperation(FeeOperationHint, fact)}, nil
 }
 
 func (op *FeeOperation) HashSign(priv base.Privatekey, networkID base.NetworkID) error {

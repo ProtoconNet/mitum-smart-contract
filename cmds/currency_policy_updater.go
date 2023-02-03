@@ -107,7 +107,7 @@ func (cmd *CurrencyPolicyUpdaterCommand) parseFlags() error {
 func (cmd *CurrencyPolicyUpdaterCommand) createOperation() (currency.CurrencyPolicyUpdater, error) {
 	fact := currency.NewCurrencyPolicyUpdaterFact([]byte(cmd.Token), cmd.Currency.CID, cmd.po)
 
-	op, err := currency.NewCurrencyPolicyUpdater(fact)
+	op, err := currency.NewCurrencyPolicyUpdater(fact, "")
 	if err != nil {
 		return currency.CurrencyPolicyUpdater{}, err
 	}

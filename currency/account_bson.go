@@ -3,28 +3,29 @@ package currency
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
+	bsonenc "github.com/spikeekips/mitum-currency/digest/util/bson"
+	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
-	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/hint"
 	"github.com/spikeekips/mitum/util/valuehash"
 )
 
 func (ac Account) MarshalBSON() ([]byte, error) {
-	return bsonenc.Marshal(bsonenc.MergeBSONM(
-		bsonenc.NewHintedDoc(ac.Hint()),
+	return bsonenc.Marshal(
 		bson.M{
+			"_hint":   ac.Hint().String(),
 			"hash":    ac.h,
 			"address": ac.address,
 			"keys":    ac.keys,
 		},
-	))
+	)
 }
 
 type AccountBSONUnmarshaler struct {
-	HT hint.Hint             `bson:"_hint"`
-	H  valuehash.HashDecoder `bson:"hash"`
-	AD string                `bson:"address"`
-	KS bson.Raw              `bson:"keys"`
+	HT string          `bson:"_hint"`
+	H  valuehash.Bytes `bson:"hash"`
+	AD string          `bson:"address"`
+	KS bson.Raw        `bson:"keys"`
 }
 
 func (ac *Account) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -35,7 +36,31 @@ func (ac *Account) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ac.BaseHinter = hint.NewBaseHinter(uac.HT)
+	ht, err := hint.ParseHint(uac.HT)
+	if err != nil {
+		return e(err, "")
+	}
 
-	return ac.unpack(enc, uac.H, uac.AD, uac.KS)
+	ac.h = valuehash.NewHashFromBytes(uac.H)
+
+	ac.BaseHinter = hint.NewBaseHinter(ht)
+	switch ad, err := base.DecodeAddress(uac.AD, enc); {
+	case err != nil:
+		return e(err, "")
+	default:
+		ac.address = ad
+	}
+
+	k, err := enc.Decode(uac.KS)
+	if err != nil {
+		return e(err, "")
+	} else if k != nil {
+		v, ok := k.(AccountKeys)
+		if !ok {
+			return util.ErrWrongType.Errorf("expected BaseAccountKeys, not %T", k)
+		}
+		ac.keys = v
+	}
+
+	return nil
 }

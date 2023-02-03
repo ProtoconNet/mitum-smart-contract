@@ -41,8 +41,9 @@ func (fa FixedFeeer) MarshalJSON() ([]byte, error) {
 }
 
 type FixedFeeerJSONUnmarshaler struct {
-	RC string `json:"receiver"`
-	AM string `json:"amount"`
+	HT hint.Hint `json:"_hint"`
+	RC string    `json:"receiver"`
+	AM string    `json:"amount"`
 }
 
 func (fa *FixedFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -53,7 +54,7 @@ func (fa *FixedFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return fa.unpack(enc, ufa.RC, ufa.AM)
+	return fa.unpack(enc, ufa.HT, ufa.RC, ufa.AM)
 }
 
 type RatioFeeerJSONMarshaler struct {
@@ -75,10 +76,11 @@ func (fa RatioFeeer) MarshalJSON() ([]byte, error) {
 }
 
 type RatioFeeerJSONUnmarshaler struct {
-	RC string  `json:"receiver"`
-	RA float64 `json:"ratio"`
-	MI string  `json:"min"`
-	MA string  `json:"max"`
+	HT hint.Hint `json:"_hint"`
+	RC string    `json:"receiver"`
+	RA float64   `json:"ratio"`
+	MI string    `json:"min"`
+	MA string    `json:"max"`
 }
 
 func (fa *RatioFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -89,5 +91,5 @@ func (fa *RatioFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return fa.unpack(enc, ufa.RC, ufa.RA, ufa.MI, ufa.MA)
+	return fa.unpack(enc, ufa.HT, ufa.RC, ufa.RA, ufa.MI, ufa.MA)
 }

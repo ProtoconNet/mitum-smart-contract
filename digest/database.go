@@ -467,13 +467,13 @@ func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, er
 	}
 
 	// NOTE load balance
-	switch am, lastHeight, err := st.balance(a); {
-	case err != nil:
-		return rs, false, err
-	default:
-		rs = rs.SetBalance(am).
-			SetHeight(lastHeight)
-	}
+	// switch am, lastHeight, err := st.balance(a); {
+	// case err != nil:
+	// 	return rs, false, err
+	// default:
+	// 	rs = rs.SetBalance(am).
+	// 		SetHeight(lastHeight)
+	// }
 
 	return rs, true, nil
 }

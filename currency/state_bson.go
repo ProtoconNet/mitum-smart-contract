@@ -1,24 +1,24 @@
 package currency
 
 import (
+	bsonenc "github.com/spikeekips/mitum-currency/digest/util/bson"
 	"github.com/spikeekips/mitum/util"
-	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/hint"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func (s AccountStateValue) MarshalBSON() ([]byte, error) {
-	return bsonenc.Marshal(bsonenc.MergeBSONM(
-		bsonenc.NewHintedDoc(s.Hint()),
+	return bsonenc.Marshal(
 		bson.M{
+			"_hint":   s.Hint().String(),
 			"account": s.Account,
 		},
-	))
+	)
 }
 
 type AccountStateValueBSONUnmarshaler struct {
-	HT hint.Hint `bson:"_hint"`
-	AC bson.Raw  `bson:"account"`
+	HT string   `bson:"_hint"`
+	AC bson.Raw `bson:"account"`
 }
 
 func (s *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -29,7 +29,12 @@ func (s *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	s.BaseHinter = hint.NewBaseHinter(u.HT)
+	ht, err := hint.ParseHint(u.HT)
+	if err != nil {
+		return e(err, "")
+	}
+
+	s.BaseHinter = hint.NewBaseHinter(ht)
 
 	var ac Account
 	if err := ac.DecodeBSON(u.AC, enc); err != nil {
@@ -43,17 +48,16 @@ func (s *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 func (s BalanceStateValue) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
-		bsonenc.MergeBSONM(
-			bsonenc.NewHintedDoc(s.Hint()),
-			bson.M{
-				"amount": s.Amount,
-			},
-		))
+		bson.M{
+			"_hint":  s.Hint().String(),
+			"amount": s.Amount,
+		},
+	)
 }
 
 type BalanceStateValueBSONUnmarshaler struct {
-	HT hint.Hint `bson:"_hint"`
-	AM bson.Raw  `bson:"amount"`
+	HT string   `bson:"_hint"`
+	AM bson.Raw `bson:"amount"`
 }
 
 func (s *BalanceStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -64,7 +68,11 @@ func (s *BalanceStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	s.BaseHinter = hint.NewBaseHinter(u.HT)
+	ht, err := hint.ParseHint(u.HT)
+	if err != nil {
+		return e(err, "")
+	}
+	s.BaseHinter = hint.NewBaseHinter(ht)
 
 	var am Amount
 	if err := am.DecodeBSON(u.AM, enc); err != nil {
@@ -78,18 +86,16 @@ func (s *BalanceStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 func (s CurrencyDesignStateValue) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
-		bsonenc.MergeBSONM(
-			bsonenc.NewHintedDoc(s.Hint()),
-			bson.M{
-				"currencydesign": s.CurrencyDesign,
-			},
-		))
-
+		bson.M{
+			"_hint":          s.Hint().String(),
+			"currencydesign": s.CurrencyDesign,
+		},
+	)
 }
 
 type CurrencyDesignStateValueBSONUnmarshaler struct {
-	HT hint.Hint `bson:"_hint"`
-	CD bson.Raw  `bson:"currencydesign"`
+	HT string   `bson:"_hint"`
+	CD bson.Raw `bson:"currencydesign"`
 }
 
 func (s *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -100,7 +106,11 @@ func (s *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 		return e(err, "")
 	}
 
-	s.BaseHinter = hint.NewBaseHinter(u.HT)
+	ht, err := hint.ParseHint(u.HT)
+	if err != nil {
+		return e(err, "")
+	}
+	s.BaseHinter = hint.NewBaseHinter(ht)
 
 	var cd CurrencyDesign
 	if err := cd.DecodeBSON(u.CD, enc); err != nil {

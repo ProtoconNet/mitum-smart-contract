@@ -4,9 +4,10 @@ import (
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
+	"github.com/spikeekips/mitum/util/hint"
 )
 
-func (it *SuffrageInflationItem) unpack(enc encoder.Encoder, rc string, bam []byte) error {
+func (it *SuffrageInflationItem) unpack(enc encoder.Encoder, ht hint.Hint, rc string, bam []byte) error {
 	e := util.StringErrorFunc("failed to unmarshal SuffrageInflationItem")
 
 	switch ad, err := base.DecodeAddress(rc, enc); {
@@ -23,6 +24,7 @@ func (it *SuffrageInflationItem) unpack(enc encoder.Encoder, rc string, bam []by
 	} else {
 		it.amount = am
 	}
+	it.BaseHinter = hint.NewBaseHinter(ht)
 
 	return nil
 }

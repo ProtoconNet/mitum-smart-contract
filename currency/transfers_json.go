@@ -41,3 +41,34 @@ func (fact *TransfersFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 	return fact.unpack(enc, uf.SD, uf.IT)
 }
+
+type transfersMarshaler struct {
+	BaseOperationJSONMarshaler
+	Memo string `json:memo`
+}
+
+func (op Transfers) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(transfersMarshaler{
+		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
+		Memo:                       op.Memo,
+	})
+}
+
+func (op *Transfers) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+	e := util.StringErrorFunc("failed to decode Transfers")
+
+	var ubo BaseOperation
+	if err := ubo.DecodeJSON(b, enc); err != nil {
+		return e(err, "")
+	}
+
+	var m MemoJSONUnMarshaler
+	if err := enc.Unmarshal(b, &m); err != nil {
+		return e(err, "")
+	}
+
+	op.BaseOperation = ubo
+	op.Memo = m.Memo
+
+	return nil
+}

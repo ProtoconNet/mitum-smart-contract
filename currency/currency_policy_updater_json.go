@@ -41,13 +41,33 @@ func (fact *CurrencyPolicyUpdaterFact) DecodeJSON(b []byte, enc *jsonenc.Encoder
 	return fact.unpack(enc, uf.CR, uf.PO)
 }
 
+type currencyPolicyUpdaterMarshaler struct {
+	BaseOperationJSONMarshaler
+	Memo string `json:memo`
+}
+
+func (op CurrencyPolicyUpdater) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(currencyPolicyUpdaterMarshaler{
+		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
+		Memo:                       op.Memo,
+	})
+}
+
 func (op *CurrencyPolicyUpdater) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	var ubo base.BaseNodeOperation
+	e := util.StringErrorFunc("failed to decode CurrencyPolicyUpdater")
+
+	var ubo BaseNodeOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
 		return err
 	}
 
+	var m MemoJSONUnMarshaler
+	if err := enc.Unmarshal(b, &m); err != nil {
+		return e(err, "")
+	}
+
 	op.BaseNodeOperation = ubo
+	op.Memo = m.Memo
 
 	return nil
 }

@@ -4,12 +4,14 @@ import (
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
+	"github.com/spikeekips/mitum/util/hint"
 	"github.com/spikeekips/mitum/util/valuehash"
 )
 
-func (ac *Account) unpack(enc encoder.Encoder, h valuehash.HashDecoder, ad string, bks []byte) error {
+func (ac *Account) unpack(enc encoder.Encoder, ht hint.Hint, h valuehash.HashDecoder, ad string, bks []byte) error {
 	e := util.StringErrorFunc("failed to unmarshal Account")
 
+	ac.BaseHinter = hint.NewBaseHinter(ht)
 	switch ad, err := base.DecodeAddress(ad, enc); {
 	case err != nil:
 		return e(err, "")

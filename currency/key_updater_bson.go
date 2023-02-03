@@ -3,59 +3,85 @@ package currency // nolint: dupl
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/spikeekips/mitum/base"
+	bsonenc "github.com/spikeekips/mitum-currency/digest/util/bson"
 	"github.com/spikeekips/mitum/util"
-	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/hint"
+	"github.com/spikeekips/mitum/util/valuehash"
 )
 
 func (fact KeyUpdaterFact) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
-		bsonenc.MergeBSONM(
-			bsonenc.NewHintedDoc(fact.Hint()),
-			bson.M{
-				"target":   fact.target,
-				"keys":     fact.keys,
-				"currency": fact.currency,
-			},
-			fact.BaseFact.BSONM(),
-		))
+		bson.M{
+			"_hint":    fact.Hint().String(),
+			"target":   fact.target,
+			"keys":     fact.keys,
+			"currency": fact.currency,
+			"hash":     fact.BaseFact.Hash().String(),
+			"token":    fact.BaseFact.Token(),
+		},
+	)
 }
 
 type KeyUpdaterFactBSONUnmarshaler struct {
-	HT hint.Hint `bson:"_hint"`
-	TG string    `bson:"target"`
-	KS bson.Raw  `bson:"keys"`
-	CR string    `bson:"currency"`
+	HT string   `bson:"_hint"`
+	TG string   `bson:"target"`
+	KS bson.Raw `bson:"keys"`
+	CR string   `bson:"currency"`
 }
 
 func (fact *KeyUpdaterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of KeyUpdaterFact")
 
-	var ubf base.BaseFact
-	if err := ubf.DecodeBSON(b, enc); err != nil {
+	var u BaseFactBSONUnmarshaler
+
+	err := enc.Unmarshal(b, &u)
+	if err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseFact = ubf
+	fact.BaseFact.SetHash(valuehash.NewBytesFromString(u.Hash))
+	fact.BaseFact.SetToken(u.Token)
 
 	var uf KeyUpdaterFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseHinter = hint.NewBaseHinter(uf.HT)
+	ht, err := hint.ParseHint(uf.HT)
+	if err != nil {
+		return e(err, "")
+	}
+	fact.BaseHinter = hint.NewBaseHinter(ht)
 
 	return fact.unpack(enc, uf.TG, uf.KS, uf.CR)
 }
 
+func (op KeyUpdater) MarshalBSON() ([]byte, error) {
+	return bsonenc.Marshal(
+		bson.M{
+			"_hint": op.Hint().String(),
+			"hash":  op.Hash(),
+			"fact":  op.Fact(),
+			"signs": op.Signs(),
+			"memo":  op.Memo,
+		})
+}
+
 func (op *KeyUpdater) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringErrorFunc("failed to decode bson of KeyUpdater")
+
 	var ubo BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {
 		return err
 	}
 
+	var um MemoBSONUnmarshaler
+	if err := enc.Unmarshal(b, &um); err != nil {
+		return e(err, "")
+	}
+
 	op.BaseOperation = ubo
+	op.Memo = um.Memo
 
 	return nil
 }

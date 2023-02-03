@@ -7,23 +7,27 @@ import (
 	"github.com/spikeekips/mitum/util"
 
 	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
+	"github.com/spikeekips/mitum/util/hint"
 )
 
 type SuffrageInflationItemJSONMarshaler struct {
-	RC base.Address `bson:"receiver" json:"receiver"`
-	AM Amount       `bson:"amount" json:"amount"`
+	hint.BaseHinter
+	RC base.Address `json:"receiver"`
+	AM Amount       `json:"amount"`
 }
 
 func (it SuffrageInflationItem) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(SuffrageInflationItemJSONMarshaler{
-		RC: it.receiver,
-		AM: it.amount,
+		BaseHinter: it.BaseHinter,
+		RC:         it.receiver,
+		AM:         it.amount,
 	})
 }
 
 type SuffrageInflationItemJSONUnmarshaler struct {
-	RC string          `bson:"receiver" json:"receiver"`
-	AM json.RawMessage `bson:"amount" json:"amount"`
+	HT hint.Hint       `json:"_hint"`
+	RC string          `json:"receiver"`
+	AM json.RawMessage `json:"amount"`
 }
 
 func (it *SuffrageInflationItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -34,5 +38,5 @@ func (it *SuffrageInflationItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) erro
 		return e(err, "")
 	}
 
-	return it.unpack(enc, uit.RC, uit.AM)
+	return it.unpack(enc, uit.HT, uit.RC, uit.AM)
 }

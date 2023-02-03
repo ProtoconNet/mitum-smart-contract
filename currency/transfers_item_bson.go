@@ -1,26 +1,26 @@
 package currency // nolint:dupl
 
 import (
+	bsonenc "github.com/spikeekips/mitum-currency/digest/util/bson"
 	"github.com/spikeekips/mitum/util"
-	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/hint"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func (it BaseTransfersItem) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
-		bsonenc.MergeBSONM(bsonenc.NewHintedDoc(it.Hint()),
-			bson.M{
-				"receiver": it.receiver,
-				"amounts":  it.amounts,
-			}),
+		bson.M{
+			"_hint":    it.Hint().String(),
+			"receiver": it.receiver,
+			"amounts":  it.amounts,
+		},
 	)
 }
 
 type TransfersItemBSONUnmarshaler struct {
-	HT hint.Hint `bson:"_hint"`
-	RC string    `bson:"receiver"`
-	AM bson.Raw  `bson:"amounts"`
+	HT string   `bson:"_hint"`
+	RC string   `bson:"receiver"`
+	AM bson.Raw `bson:"amounts"`
 }
 
 func (it *BaseTransfersItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -31,5 +31,10 @@ func (it *BaseTransfersItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return it.unpack(enc, uit.HT, uit.RC, uit.AM)
+	ht, err := hint.ParseHint(uit.HT)
+	if err != nil {
+		return e(err, "")
+	}
+
+	return it.unpack(enc, ht, uit.RC, uit.AM)
 }

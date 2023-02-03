@@ -51,7 +51,7 @@ func (fact *SuffrageInflationFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) er
 }
 
 func (op *SuffrageInflation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	var ubo base.BaseNodeOperation
+	var ubo BaseNodeOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
 		return err
 	}

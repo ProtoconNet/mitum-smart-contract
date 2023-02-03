@@ -50,7 +50,5 @@ func (ac *Account) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ac.BaseHinter = hint.NewBaseHinter(uac.HT)
-
-	return ac.unpack(enc, uac.H, uac.AD, uac.KS)
+	return ac.unpack(enc, uac.HT, uac.H, uac.AD, uac.KS)
 }

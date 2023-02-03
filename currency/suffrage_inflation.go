@@ -87,11 +87,11 @@ func (fact SuffrageInflationFact) Items() []SuffrageInflationItem {
 }
 
 type SuffrageInflation struct {
-	base.BaseNodeOperation
+	BaseNodeOperation
 }
 
 func NewSuffrageInflation(
 	fact SuffrageInflationFact,
 ) (SuffrageInflation, error) {
-	return SuffrageInflation{BaseNodeOperation: base.NewBaseNodeOperation(SuffrageInflationHint, fact)}, nil
+	return SuffrageInflation{BaseNodeOperation: NewBaseNodeOperation(SuffrageInflationHint, fact)}, nil
 }

@@ -3,17 +3,24 @@ package currency
 import (
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
+	"github.com/spikeekips/mitum/util/hint"
+)
+
+var (
+	SuffrageInflationItemHint = hint.MustNewHint("mitum-currency-suffrage-inflation-item-v0.0.1")
 )
 
 type SuffrageInflationItem struct {
+	hint.BaseHinter
 	receiver base.Address
 	amount   Amount
 }
 
 func NewSuffrageInflationItem(receiver base.Address, amount Amount) SuffrageInflationItem {
 	return SuffrageInflationItem{
-		receiver: receiver,
-		amount:   amount,
+		BaseHinter: hint.NewBaseHinter(SuffrageInflationItemHint),
+		receiver:   receiver,
+		amount:     amount,
 	}
 }
 

@@ -2,9 +2,9 @@ package mongodbstorage
 
 import (
 	"github.com/pkg/errors"
+	bsonenc "github.com/spikeekips/mitum-currency/digest/util/bson"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
-	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/hint"
 	"github.com/spikeekips/mitum/util/valuehash"
 	"go.mongodb.org/mongo-driver/bson"
@@ -38,7 +38,7 @@ func (do BaseDoc) ID() interface{} {
 
 func (do BaseDoc) M() (bson.M, error) {
 	m := bson.M{
-		"_e":      do.encoderHint,
+		"_e":      do.encoderHint.String(),
 		"_hinted": do.isHinted,
 		"d":       do.data,
 	}
@@ -52,7 +52,7 @@ func (do BaseDoc) M() (bson.M, error) {
 
 type BaseDocUnpacker struct {
 	I bson.Raw      `bson:"_id,omitempty"`
-	E hint.Hint     `bson:"_e"`
+	E string        `bson:"_e"`
 	D bson.RawValue `bson:"d"`
 	H bool          `bson:"_hinted"`
 }
@@ -63,7 +63,12 @@ func LoadDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id */, inter
 		return nil, nil, err
 	}
 
-	enc := encs.Find(bd.E)
+	ht, err := hint.ParseHint(bd.E)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	enc := encs.Find(ht)
 	if enc == nil {
 		return nil, nil, util.ErrNotFound.Errorf("encoder not found for %q", bsonenc.BSONEncoderHint)
 	}

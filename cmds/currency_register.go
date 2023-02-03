@@ -204,7 +204,7 @@ func (cmd *CurrencyRegisterCommand) parseFlags() error {
 func (cmd *CurrencyRegisterCommand) createOperation() (currency.CurrencyRegister, error) {
 	fact := currency.NewCurrencyRegisterFact([]byte(cmd.Token), cmd.currencyDesign)
 
-	op, err := currency.NewCurrencyRegister(fact)
+	op, err := currency.NewCurrencyRegister(fact, "")
 	if err != nil {
 		return currency.CurrencyRegister{}, err
 	}

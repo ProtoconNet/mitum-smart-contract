@@ -2,7 +2,7 @@ module github.com/spikeekips/mitum-currency
 
 go 1.19
 
-replace github.com/spikeekips/mitum => /WorkingDirectory/mitum2
+replace github.com/spikeekips/mitum => /Users/soonkukkang/go/src/github.com/spikeekips/mitum2
 
 require (
 	github.com/alecthomas/kong v0.7.1
@@ -12,7 +12,6 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul/api v1.16.0
-	github.com/hashicorp/memberlist v0.5.0
 	github.com/hashicorp/vault/api v1.8.2
 	github.com/json-iterator/go v1.1.12
 	github.com/justinas/alice v1.2.0
@@ -70,6 +69,7 @@ require (
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/hashicorp/vault/sdk v0.6.1 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect

@@ -3,25 +3,25 @@ package currency
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
+	bsonenc "github.com/spikeekips/mitum-currency/digest/util/bson"
 	"github.com/spikeekips/mitum/util"
-	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/hint"
 )
 
 func (po CurrencyPolicy) MarshalBSON() ([]byte, error) {
-	return bsonenc.Marshal(bsonenc.MergeBSONM(
-		bsonenc.NewHintedDoc(po.Hint()),
+	return bsonenc.Marshal(
 		bson.M{
+			"_hint":                   po.Hint().String(),
 			"new_account_min_balance": po.newAccountMinBalance.String(),
 			"feeer":                   po.feeer,
-		}),
+		},
 	)
 }
 
 type CurrencyPolicyBSONUnmarshaler struct {
-	HT hint.Hint `bson:"_hint"`
-	MN string    `bson:"new_account_min_balance"`
-	FE bson.Raw  `bson:"feeer"`
+	HT string   `bson:"_hint"`
+	MN string   `bson:"new_account_min_balance"`
+	FE bson.Raw `bson:"feeer"`
 }
 
 func (po *CurrencyPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -32,5 +32,10 @@ func (po *CurrencyPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return po.unpack(enc, upo.HT, upo.MN, upo.FE)
+	ht, err := hint.ParseHint(upo.HT)
+	if err != nil {
+		return e(err, "")
+	}
+
+	return po.unpack(enc, ht, upo.MN, upo.FE)
 }

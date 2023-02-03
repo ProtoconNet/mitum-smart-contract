@@ -147,7 +147,7 @@ func HTTP2WritePoblem(w http.ResponseWriter, pr Problem, status int) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
 	var output []byte
-	if b, err := Marshal(pr); err != nil {
+	if b, err := Marshal(pr.title); err != nil {
 		output = unknownProblemJSON
 	} else {
 		output = b

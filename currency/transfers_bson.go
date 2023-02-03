@@ -3,57 +3,83 @@ package currency // nolint: dupl
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/spikeekips/mitum/base"
+	bsonenc "github.com/spikeekips/mitum-currency/digest/util/bson"
 	"github.com/spikeekips/mitum/util"
-	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/hint"
+	"github.com/spikeekips/mitum/util/valuehash"
 )
 
 func (fact TransfersFact) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
-		bsonenc.MergeBSONM(
-			bsonenc.NewHintedDoc(fact.Hint()),
-			bson.M{
-				"sender": fact.sender,
-				"items":  fact.items,
-			},
-			fact.BaseFact.BSONM(),
-		))
+		bson.M{
+			"_hint":  fact.Hint().String(),
+			"sender": fact.sender,
+			"items":  fact.items,
+			"hash":   fact.BaseFact.Hash().String(),
+			"token":  fact.BaseFact.Token(),
+		},
+	)
 }
 
 type TransfersFactBSONUnmarshaler struct {
-	HT hint.Hint `bson:"_hint"`
-	SD string    `bson:"sender"`
-	IT bson.Raw  `bson:"items"`
+	HT string   `bson:"_hint"`
+	SD string   `bson:"sender"`
+	IT bson.Raw `bson:"items"`
 }
 
 func (fact *TransfersFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of TransfersFact")
 
-	var ubf base.BaseFact
-	if err := ubf.DecodeBSON(b, enc); err != nil {
-		return err
+	var u BaseFactBSONUnmarshaler
+
+	err := enc.Unmarshal(b, &u)
+	if err != nil {
+		return e(err, "")
 	}
 
-	fact.BaseFact = ubf
+	fact.BaseFact.SetHash(valuehash.NewBytesFromString(u.Hash))
+	fact.BaseFact.SetToken(u.Token)
 
 	var uf TransfersFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseHinter = hint.NewBaseHinter(uf.HT)
+	ht, err := hint.ParseHint(uf.HT)
+	if err != nil {
+		return e(err, "")
+	}
+	fact.BaseHinter = hint.NewBaseHinter(ht)
 
 	return fact.unpack(enc, uf.SD, uf.IT)
 }
 
+func (op Transfers) MarshalBSON() ([]byte, error) {
+	return bsonenc.Marshal(
+		bson.M{
+			"_hint": op.Hint().String(),
+			"hash":  op.Hash(),
+			"fact":  op.Fact(),
+			"signs": op.Signs(),
+			"memo":  op.Memo,
+		})
+}
+
 func (op *Transfers) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringErrorFunc("failed to decode bson of Transfers")
+
 	var ubo BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {
-		return err
+		return e(err, "")
+	}
+
+	var um MemoBSONUnmarshaler
+	if err := enc.Unmarshal(b, &um); err != nil {
+		return e(err, "")
 	}
 
 	op.BaseOperation = ubo
+	op.Memo = um.Memo
 
 	return nil
 }

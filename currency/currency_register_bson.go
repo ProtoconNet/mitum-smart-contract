@@ -1,59 +1,84 @@
 package currency // nolint: dupl
 
 import (
-	"encoding/json"
-
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/spikeekips/mitum/base"
+	bsonenc "github.com/spikeekips/mitum-currency/digest/util/bson"
 	"github.com/spikeekips/mitum/util"
-	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/hint"
+	"github.com/spikeekips/mitum/util/valuehash"
 )
 
 func (fact CurrencyRegisterFact) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
-		bsonenc.MergeBSONM(
-			bsonenc.NewHintedDoc(fact.Hint()),
-			bson.M{
-				"currency": fact.currency,
-			},
-			fact.BaseFact.BSONM(),
-		))
+		bson.M{
+			"_hint":    fact.Hint().String(),
+			"currency": fact.currency,
+			"hash":     fact.BaseFact.Hash().String(),
+			"token":    fact.BaseFact.Token(),
+		},
+	)
 }
 
 type CurrencyRegisterFactBSONUnmarshaler struct {
-	HT hint.Hint       `bson:"_hint"`
-	CR json.RawMessage `bson:"currency"`
+	HT string   `bson:"_hint"`
+	CR bson.Raw `bson:"currency"`
 }
 
 func (fact *CurrencyRegisterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of CurrencyRegisterFact")
 
-	var ubf base.BaseFact
-	if err := ubf.DecodeBSON(b, enc); err != nil {
+	var u BaseFactBSONUnmarshaler
+
+	err := enc.Unmarshal(b, &u)
+	if err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseFact = ubf
+	fact.BaseFact.SetHash(valuehash.NewBytesFromString(u.Hash))
+	fact.BaseFact.SetToken(u.Token)
 
 	var uf CurrencyRegisterFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
 		return e(err, "")
 	}
 
-	fact.BaseHinter = hint.NewBaseHinter(uf.HT)
+	ht, err := hint.ParseHint(uf.HT)
+	if err != nil {
+		return e(err, "")
+	}
+
+	fact.BaseHinter = hint.NewBaseHinter(ht)
 
 	return fact.unpack(enc, uf.CR)
 }
 
+func (op CurrencyRegister) MarshalBSON() ([]byte, error) {
+	return bsonenc.Marshal(
+		bson.M{
+			"_hint": op.Hint().String(),
+			"hash":  op.Hash(),
+			"fact":  op.Fact(),
+			"signs": op.Signs(),
+			"memo":  op.Memo,
+		})
+}
+
 func (op *CurrencyRegister) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	var ubo base.BaseNodeOperation
+	e := util.StringErrorFunc("failed to decode bson of CurrencyRegister")
+
+	var ubo BaseNodeOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {
 		return err
 	}
 
+	var um MemoBSONUnmarshaler
+	if err := enc.Unmarshal(b, &um); err != nil {
+		return e(err, "")
+	}
+
 	op.BaseNodeOperation = ubo
+	op.Memo = um.Memo
 
 	return nil
 }

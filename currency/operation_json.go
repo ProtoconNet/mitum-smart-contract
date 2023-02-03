@@ -1,37 +1,76 @@
 package currency
 
 import (
+	"encoding/json"
+
+	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
+	"github.com/spikeekips/mitum/util/encoder"
 	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
+	"github.com/spikeekips/mitum/util/hint"
+	"github.com/spikeekips/mitum/util/valuehash"
 )
 
+type BaseOperationJSONMarshaler struct {
+	Hash  util.Hash   `json:"hash"`
+	Fact  base.Fact   `json:"fact"`
+	Signs []base.Sign `json:"signs"`
+	hint.BaseHinter
+}
+
+func (op BaseOperation) JSONMarshaler() BaseOperationJSONMarshaler {
+	return BaseOperationJSONMarshaler{
+		BaseHinter: op.BaseHinter,
+		Hash:       op.h,
+		Fact:       op.fact,
+		Signs:      op.signs,
+	}
+}
+
 func (op BaseOperation) MarshalJSON() ([]byte, error) {
-	m := map[string]interface{}{
-		"_hint": op.Hint(),
-		"hash":  op.Hash(),
-		"fact":  op.Fact(),
-		"signs": op.Signs(),
-		"memo":  op.Memo,
+	return util.MarshalJSON(op.JSONMarshaler())
+}
+
+type BaseOperationJSONUnmarshaler struct {
+	Hash  valuehash.HashDecoder `json:"hash"`
+	Fact  json.RawMessage       `json:"fact"`
+	Signs []json.RawMessage     `json:"signs"`
+}
+
+func (op *BaseOperation) decodeJSON(b []byte, enc *jsonenc.Encoder, u *BaseOperationJSONUnmarshaler) error {
+	if err := enc.Unmarshal(b, u); err != nil {
+		return err
 	}
 
-	return util.MarshalJSON(m)
+	op.h = u.Hash.Hash()
+
+	if err := encoder.Decode(enc, u.Fact, &op.fact); err != nil {
+		return errors.WithMessage(err, "failed to decode fact")
+	}
+
+	return nil
 }
 
 func (op *BaseOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	var ubo base.BaseOperation
-	err := ubo.DecodeJSON(b, enc)
-	if err != nil {
-		return err
+	e := util.StringErrorFunc("failed to decode BaseOperation")
+
+	var u BaseOperationJSONUnmarshaler
+
+	if err := op.decodeJSON(b, enc, &u); err != nil {
+		return e(err, "")
 	}
 
-	op.BaseOperation = ubo
+	op.signs = make([]base.Sign, len(u.Signs))
 
-	var um MemoJSONUnMarshaler
-	if err := enc.Unmarshal(b, &um); err != nil {
-		return err
+	for i := range u.Signs {
+		var ub base.BaseSign
+		if err := ub.DecodeJSON(u.Signs[i], enc); err != nil {
+			return e(err, "failed to decode sign")
+		}
+
+		op.signs[i] = ub
 	}
-	op.Memo = um.Memo
 
 	return nil
 }

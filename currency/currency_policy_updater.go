@@ -71,11 +71,13 @@ func (fact CurrencyPolicyUpdaterFact) Policy() CurrencyPolicy {
 }
 
 type CurrencyPolicyUpdater struct {
-	base.BaseNodeOperation
+	BaseNodeOperation
+	Memo string
 }
 
-func NewCurrencyPolicyUpdater(
-	fact CurrencyPolicyUpdaterFact,
-) (CurrencyPolicyUpdater, error) {
-	return CurrencyPolicyUpdater{BaseNodeOperation: base.NewBaseNodeOperation(CurrencyPolicyUpdaterHint, fact)}, nil
+func NewCurrencyPolicyUpdater(fact CurrencyPolicyUpdaterFact, memo string) (CurrencyPolicyUpdater, error) {
+	return CurrencyPolicyUpdater{
+		BaseNodeOperation: NewBaseNodeOperation(CurrencyPolicyUpdaterHint, fact),
+		Memo:              memo,
+	}, nil
 }

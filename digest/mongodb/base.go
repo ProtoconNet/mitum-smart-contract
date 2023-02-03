@@ -9,10 +9,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/spikeekips/mitum-currency/digest/util"
+	bsonenc "github.com/spikeekips/mitum-currency/digest/util/bson"
 	"github.com/spikeekips/mitum/base"
 	mitumutil "github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
-	bsonenc "github.com/spikeekips/mitum/util/encoder/bson"
 	"github.com/spikeekips/mitum/util/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -57,7 +57,6 @@ type Database struct {
 
 func NewDatabase(client *Client, encs *encoder.Encoders, enc encoder.Encoder) (*Database, error) {
 	// NOTE call Initialize() later.
-
 	if enc == nil {
 		e := encs.Find(bsonenc.BSONEncoderHint)
 		if e != nil {

@@ -99,10 +99,11 @@ func (fact KeyUpdaterFact) Rebuild() KeyUpdaterFact {
 
 type KeyUpdater struct {
 	BaseOperation
+	Memo string
 }
 
 func NewKeyUpdater(fact KeyUpdaterFact, memo string) (KeyUpdater, error) {
-	return KeyUpdater{BaseOperation: NewBaseOperationFromFact(KeyUpdaterHint, fact, memo)}, nil
+	return KeyUpdater{BaseOperation: NewBaseOperation(KeyUpdaterHint, fact), Memo: memo}, nil
 }
 
 func (op *KeyUpdater) HashSign(priv base.Privatekey, networkID base.NetworkID) error {

@@ -65,11 +65,13 @@ func (fact CurrencyRegisterFact) Currency() CurrencyDesign {
 }
 
 type CurrencyRegister struct {
-	base.BaseNodeOperation
+	BaseNodeOperation
+	Memo string
 }
 
-func NewCurrencyRegister(fact CurrencyRegisterFact) (CurrencyRegister, error) {
+func NewCurrencyRegister(fact CurrencyRegisterFact, memo string) (CurrencyRegister, error) {
 	return CurrencyRegister{
-		BaseNodeOperation: base.NewBaseNodeOperation(CurrencyRegisterHint, fact),
+		BaseNodeOperation: NewBaseNodeOperation(CurrencyRegisterHint, fact),
+		Memo:              memo,
 	}, nil
 }
