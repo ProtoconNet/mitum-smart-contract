@@ -29,6 +29,7 @@ type BlockSession struct {
 	operationModels []mongo.WriteModel
 	accountModels   []mongo.WriteModel
 	balanceModels   []mongo.WriteModel
+	currencyModels  []mongo.WriteModel
 	statesValue     *sync.Map
 }
 
@@ -64,6 +65,10 @@ func (bs *BlockSession) Prepare() error {
 		return err
 	}
 
+	if err := bs.prepareCurrencies(); err != nil {
+		return err
+	}
+
 	return bs.prepareAccounts()
 }
 
@@ -79,6 +84,10 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 	}()
 
 	if err := bs.writeModels(ctx, defaultColNameOperation, bs.operationModels); err != nil {
+		return err
+	}
+
+	if err := bs.writeModels(ctx, defaultColNameCurrency, bs.currencyModels); err != nil {
 		return err
 	}
 
@@ -164,6 +173,7 @@ func (bs *BlockSession) prepareAccounts() error {
 	var balanceModels []mongo.WriteModel
 	for i := range bs.sts {
 		st := bs.sts[i]
+
 		switch {
 		case currency.IsStateAccountKey(st.Key()):
 			j, err := bs.handleAccountState(st)
@@ -188,6 +198,31 @@ func (bs *BlockSession) prepareAccounts() error {
 	return nil
 }
 
+func (bs *BlockSession) prepareCurrencies() error {
+	if len(bs.sts) < 1 {
+		return nil
+	}
+
+	var currencyModels []mongo.WriteModel
+	for i := range bs.sts {
+		st := bs.sts[i]
+		switch {
+		case currency.IsStateCurrencyDesignKey(st.Key()):
+			j, err := bs.handleCurrencyState(st)
+			if err != nil {
+				return err
+			}
+			currencyModels = append(currencyModels, j...)
+		default:
+			continue
+		}
+	}
+
+	bs.currencyModels = currencyModels
+
+	return nil
+}
+
 func (bs *BlockSession) handleAccountState(st base.State) ([]mongo.WriteModel, error) {
 	if rs, err := NewAccountValue(st); err != nil {
 		return nil, err
@@ -200,6 +235,14 @@ func (bs *BlockSession) handleAccountState(st base.State) ([]mongo.WriteModel, e
 
 func (bs *BlockSession) handleBalanceState(st base.State) ([]mongo.WriteModel, error) {
 	doc, err := NewBalanceDoc(st, bs.st.database.Encoder())
+	if err != nil {
+		return nil, err
+	}
+	return []mongo.WriteModel{mongo.NewInsertOneModel().SetDocument(doc)}, nil
+}
+
+func (bs *BlockSession) handleCurrencyState(st base.State) ([]mongo.WriteModel, error) {
+	doc, err := NewCurrencyDoc(st, bs.st.database.Encoder())
 	if err != nil {
 		return nil, err
 	}
@@ -253,6 +296,7 @@ func (bs *BlockSession) writeModelsChunk(ctx context.Context, col string, models
 func (bs *BlockSession) close() error {
 	bs.block = nil
 	bs.operationModels = nil
+	bs.currencyModels = nil
 	bs.accountModels = nil
 	bs.balanceModels = nil
 

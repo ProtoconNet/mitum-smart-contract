@@ -76,6 +76,10 @@ func (de CurrencyDesign) GenesisAccount() base.Address {
 	return de.genesisAccount
 }
 
+func (de CurrencyDesign) Currency() CurrencyID {
+	return de.amount.cid
+}
+
 func (de CurrencyDesign) Policy() CurrencyPolicy {
 	return de.policy
 }

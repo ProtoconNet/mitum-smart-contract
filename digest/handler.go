@@ -161,10 +161,10 @@ func (hd *Handlers) Handler() http.Handler {
 }
 
 func (hd *Handlers) setHandlers() {
-	// _ = hd.setHandler(HandlerPathCurrencies, hd.handleCurrencies, true).
-	// 	Methods(http.MethodOptions, "GET")
-	// _ = hd.setHandler(HandlerPathCurrency, hd.handleCurrency, true).
-	// 	Methods(http.MethodOptions, "GET")
+	_ = hd.setHandler(HandlerPathCurrencies, hd.handleCurrencies, true).
+		Methods(http.MethodOptions, "GET")
+	_ = hd.setHandler(HandlerPathCurrency, hd.handleCurrency, true).
+		Methods(http.MethodOptions, "GET")
 	// _ = hd.setHandler(HandlerPathManifests, hd.handleManifests, true).
 	// 	Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathOperations, hd.handleOperations, true).

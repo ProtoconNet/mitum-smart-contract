@@ -29,12 +29,14 @@ var maxLimit int64 = 50
 var (
 	defaultColNameAccount   = "digest_ac"
 	defaultColNameBalance   = "digest_bl"
+	defaultColNameCurrency  = "digest_cr"
 	defaultColNameOperation = "digest_op"
 )
 
 var AllCollections = []string{
 	defaultColNameAccount,
 	defaultColNameBalance,
+	defaultColNameCurrency,
 	defaultColNameOperation,
 }
 
@@ -193,6 +195,7 @@ func (st *Database) clean(ctx context.Context) error {
 	for _, col := range []string{
 		defaultColNameAccount,
 		defaultColNameBalance,
+		defaultColNameCurrency,
 		defaultColNameOperation,
 	} {
 		if err := st.database.Client().Collection(col).Drop(ctx); err != nil {
@@ -233,6 +236,7 @@ func (st *Database) cleanByHeight(ctx context.Context, height base.Height) error
 	for _, col := range []string{
 		defaultColNameAccount,
 		defaultColNameBalance,
+		defaultColNameCurrency,
 		defaultColNameOperation,
 	} {
 		res, err := st.database.Client().Collection(col).BulkWrite(
@@ -467,13 +471,13 @@ func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, er
 	}
 
 	// NOTE load balance
-	// switch am, lastHeight, err := st.balance(a); {
-	// case err != nil:
-	// 	return rs, false, err
-	// default:
-	// 	rs = rs.SetBalance(am).
-	// 		SetHeight(lastHeight)
-	// }
+	switch am, lastHeight, err := st.balance(a); {
+	case err != nil:
+		return rs, false, err
+	default:
+		rs = rs.SetBalance(am).
+			SetHeight(lastHeight)
+	}
 
 	return rs, true, nil
 }
@@ -610,6 +614,92 @@ func (st *Database) balance(a base.Address) ([]currency.Amount, base.Height, err
 	}
 
 	return ams, lastHeight, nil
+}
+
+func (st *Database) currencies() ([]string, error) {
+	var cids []string
+
+	for {
+		filter := util.EmptyBSONFilter()
+
+		var q primitive.D
+		if len(cids) < 1 {
+			q = filter.D()
+		} else {
+			q = filter.Add("currency", bson.M{"$nin": cids}).D()
+		}
+
+		opt := options.FindOne().SetSort(
+			util.NewBSONFilter("height", -1).D(),
+		)
+		var sta base.State
+		if err := st.database.Client().GetByFilter(
+			defaultColNameCurrency,
+			q,
+			func(res *mongo.SingleResult) error {
+				i, err := LoadCurrency(res.Decode, st.database.Encoders())
+				if err != nil {
+					return err
+				}
+				sta = i
+				return nil
+			},
+			opt,
+		); err != nil {
+			if err.Error() == mitumutil.NewError("mongo: no documents in result").Error() {
+				break
+			}
+
+			return nil, err
+		}
+
+		if sta != nil {
+			i, err := currency.StateCurrencyDesignValue(sta)
+			if err != nil {
+				return nil, err
+			}
+			cids = append(cids, i.Currency().String())
+		} else {
+			return nil, errors.Errorf("state is nil")
+		}
+
+	}
+
+	return cids, nil
+}
+
+func (st *Database) currency(cid string) (currency.CurrencyDesign, base.State, error) {
+	q := util.NewBSONFilter("currency", cid).D()
+
+	opt := options.FindOne().SetSort(
+		util.NewBSONFilter("height", -1).D(),
+	)
+	var sta base.State
+	if err := st.database.Client().GetByFilter(
+		defaultColNameCurrency,
+		q,
+		func(res *mongo.SingleResult) error {
+			i, err := LoadCurrency(res.Decode, st.database.Encoders())
+			if err != nil {
+				return err
+			}
+			sta = i
+			return nil
+		},
+		opt,
+	); err != nil {
+		return currency.CurrencyDesign{}, nil, err
+	}
+
+	if sta != nil {
+		de, err := currency.StateCurrencyDesignValue(sta)
+		if err != nil {
+			return currency.CurrencyDesign{}, nil, err
+		}
+		return de, sta, nil
+	} else {
+		return currency.CurrencyDesign{}, nil, errors.Errorf("state is nil")
+	}
 }
 
 func (st *Database) topHeightByPublickey(pub base.Publickey) (base.Height, error) {

@@ -2,7 +2,6 @@ package bsonenc
 
 import (
 	"encoding"
-	"fmt"
 	"io"
 	"reflect"
 
@@ -80,7 +79,6 @@ func (enc *Encoder) Decode(b []byte) (interface{}, error) {
 
 	ht, err := enc.guessHint(b)
 	if err != nil {
-		fmt.Printf("%s", b)
 		return nil, errors.WithMessage(err, "failed to guess hint in bson decoders")
 	}
 
