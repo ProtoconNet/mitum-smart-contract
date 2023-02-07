@@ -14,7 +14,7 @@ import (
 func (va OperationValue) MarshalBSON() ([]byte, error) {
 	op := map[string]interface{}{
 		"_hint": va.op.Hint().String(),
-		"hash":  va.op.Hash(),
+		"hash":  va.op.Hash().String(),
 		"fact":  va.op.Fact(),
 		"signs": va.op.Signs(),
 	}

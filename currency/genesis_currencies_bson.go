@@ -56,13 +56,7 @@ func (fact *GenesisCurrenciesFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 }
 
 func (op GenesisCurrencies) MarshalBSON() ([]byte, error) {
-	return bsonenc.Marshal(
-		bson.M{
-			"_hint": op.Hint().String(),
-			"hash":  op.Hash().String(),
-			"fact":  op.Fact(),
-			"signs": op.Signs(),
-		})
+	return bsonenc.Marshal(op.BaseOperation)
 }
 
 func (op *GenesisCurrencies) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {

@@ -6,7 +6,6 @@ import (
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
 	"github.com/spikeekips/mitum/util/hint"
-	"github.com/spikeekips/mitum/util/valuehash"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -90,10 +89,4 @@ func LoadDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id */, inter
 	}
 
 	return bd.I, data, nil
-}
-
-type HashIDDoc struct {
-	I bson.Raw        `bson:"_id"`
-	E hint.Hint       `bson:"_e"`
-	H valuehash.Bytes `bson:"hash"`
 }
