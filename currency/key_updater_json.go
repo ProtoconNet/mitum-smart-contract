@@ -46,7 +46,6 @@ func (fact *KeyUpdaterFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 type keyUpdaterMarshaler struct {
 	BaseOperationJSONMarshaler
-	Memo string `json:memo`
 }
 
 func (op *KeyUpdater) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -54,16 +53,10 @@ func (op *KeyUpdater) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 	var ubo BaseOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
-		return err
-	}
-
-	var m MemoJSONUnMarshaler
-	if err := enc.Unmarshal(b, &m); err != nil {
 		return e(err, "")
 	}
 
 	op.BaseOperation = ubo
-	op.Memo = m.Memo
 
 	return nil
 }

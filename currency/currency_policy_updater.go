@@ -72,12 +72,10 @@ func (fact CurrencyPolicyUpdaterFact) Policy() CurrencyPolicy {
 
 type CurrencyPolicyUpdater struct {
 	BaseNodeOperation
-	Memo string
 }
 
 func NewCurrencyPolicyUpdater(fact CurrencyPolicyUpdaterFact, memo string) (CurrencyPolicyUpdater, error) {
 	return CurrencyPolicyUpdater{
 		BaseNodeOperation: NewBaseNodeOperation(CurrencyPolicyUpdaterHint, fact),
-		Memo:              memo,
 	}, nil
 }

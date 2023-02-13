@@ -19,9 +19,10 @@ var pnameImportBlocks = ps.Name("import-blocks")
 
 type ImportCommand struct { //nolint:govet //...
 	launch.DesignFlag
-	From  string `arg:"" name:"from directory" help:"block data directory to import" type:"existingdir"`
-	Vault string `name:"vault" help:"privatekey path of vault"`
-	log   *zerolog.Logger
+	From            string `arg:"" name:"from directory" help:"block data directory to import" type:"existingdir"`
+	Vault           string `name:"vault" help:"privatekey path of vault"`
+	log             *zerolog.Logger
+	launch.DevFlags `embed:"" prefix:"dev."`
 }
 
 func NewImportCommand() ImportCommand {
@@ -38,6 +39,7 @@ func (cmd *ImportCommand) Run(pctx context.Context) error {
 
 	//revive:disable:modifies-parameter
 	pctx = context.WithValue(pctx, launch.DesignFlagContextKey, cmd.DesignFlag)
+	pctx = context.WithValue(pctx, launch.DevFlagsContextKey, cmd.DevFlags)
 	pctx = context.WithValue(pctx, launch.VaultContextKey, cmd.Vault)
 	//revive:enable:modifies-parameter
 
@@ -80,7 +82,6 @@ func (cmd *ImportCommand) importBlocks(ctx context.Context) (context.Context, er
 	var local base.LocalNode
 	var params *isaac.LocalParams
 	var db isaac.Database
-	var perm isaac.PermanentDatabase
 
 	if err := util.LoadFromContextOK(ctx,
 		launch.EncodersContextKey, &encs,
@@ -89,7 +90,6 @@ func (cmd *ImportCommand) importBlocks(ctx context.Context) (context.Context, er
 		launch.LocalContextKey, &local,
 		launch.LocalParamsContextKey, &params,
 		launch.CenterDatabaseContextKey, &db,
-		launch.PermanentDatabaseContextKey, &perm,
 	); err != nil {
 		return ctx, e(err, "")
 	}
@@ -102,13 +102,12 @@ func (cmd *ImportCommand) importBlocks(ctx context.Context) (context.Context, er
 		encs,
 		enc,
 		db,
-		perm,
 		params,
 	); err != nil {
 		return ctx, e(err, "")
 	}
 
-	if err := cmd.validateImported(last, enc, design, params, perm); err != nil {
+	if err := cmd.validateImported(last, enc, design, params, db); err != nil {
 		return ctx, e(err, "")
 	}
 
@@ -120,7 +119,7 @@ func (cmd *ImportCommand) validateImported(
 	enc encoder.Encoder,
 	design launch.NodeDesign,
 	params *isaac.LocalParams,
-	perm isaac.PermanentDatabase,
+	db isaac.Database,
 ) error {
 	e := util.StringErrorFunc("failed to validate imported")
 
@@ -149,7 +148,7 @@ func (cmd *ImportCommand) validateImported(
 		return e(err, "")
 	}
 
-	if err := cmd.validateImportedBlocks(root, last, enc, params, perm); err != nil {
+	if err := cmd.validateImportedBlocks(root, last, enc, params, db); err != nil {
 		return e(err, "")
 	}
 
@@ -205,7 +204,7 @@ func (*ImportCommand) validateImportedBlocks(
 	last base.Height,
 	enc encoder.Encoder,
 	params *isaac.LocalParams,
-	perm isaac.PermanentDatabase,
+	db isaac.Database,
 ) error {
 	e := util.StringErrorFunc("failed to validate imported blocks")
 
@@ -218,7 +217,7 @@ func (*ImportCommand) validateImportedBlocks(
 		},
 		func(_ context.Context, i, _ uint64) error {
 			return launch.ValidateBlockFromLocalFS(
-				base.Height(int64(i)), root, enc, params.NetworkID(), perm)
+				base.Height(int64(i)), root, enc, params.NetworkID(), db)
 		},
 	); err != nil {
 		return e(err, "")

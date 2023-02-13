@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	isaacoperation "github.com/spikeekips/mitum-currency/isaac"
 	"github.com/spikeekips/mitum/base"
-	isaac "github.com/spikeekips/mitum/isaac/operation"
 )
 
 type SuffrageCandidateCommand struct {
@@ -65,12 +65,12 @@ func (cmd *SuffrageCandidateCommand) parseFlags() error {
 	return nil
 }
 
-func (cmd *SuffrageCandidateCommand) createOperation() (isaac.SuffrageCandidate, error) {
-	fact := isaac.NewSuffrageCandidateFact([]byte(cmd.Token), cmd.node, cmd.PublicKey.Publickey)
+func (cmd *SuffrageCandidateCommand) createOperation() (isaacoperation.SuffrageCandidate, error) {
+	fact := isaacoperation.NewSuffrageCandidateFact([]byte(cmd.Token), cmd.node, cmd.PublicKey.Publickey)
 
-	op := isaac.NewSuffrageCandidate(fact)
+	op := isaacoperation.NewSuffrageCandidate(fact)
 	if err := op.NodeSign(cmd.Privatekey, cmd.NetworkID.NetworkID(), cmd.node); err != nil {
-		return isaac.SuffrageCandidate{}, errors.Wrap(err, "failed to create suffrage-candidate operation")
+		return isaacoperation.SuffrageCandidate{}, errors.Wrap(err, "failed to create suffrage-candidate operation")
 	}
 
 	return op, nil

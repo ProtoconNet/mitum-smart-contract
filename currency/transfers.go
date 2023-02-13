@@ -144,11 +144,10 @@ func (fact TransfersFact) Addresses() ([]base.Address, error) {
 
 type Transfers struct {
 	BaseOperation
-	Memo string
 }
 
-func NewTransfers(fact TransfersFact, memo string) (Transfers, error) {
-	return Transfers{BaseOperation: NewBaseOperation(TransfersHint, fact), Memo: memo}, nil
+func NewTransfers(fact TransfersFact) (Transfers, error) {
+	return Transfers{BaseOperation: NewBaseOperation(TransfersHint, fact)}, nil
 }
 
 func (op *Transfers) HashSign(priv base.Privatekey, networkID base.NetworkID) error {

@@ -19,7 +19,7 @@ func DefaultRunPS() *ps.PS {
 		AddOK(launch.PNameEncoder, PEncoder, nil).
 		AddOK(launch.PNameDesign, launch.PLoadDesign, nil, launch.PNameEncoder).
 		AddOK(PNameDigestDesign, PLoadDigestDesign, nil, launch.PNameEncoder).
-		AddOK(launch.PNameTimeSyncer, launch.PStartTimeSyncer /*launch.PCloseTimeSyncer, */, nil, launch.PNameDesign).
+		AddOK(launch.PNameTimeSyncer, launch.PStartTimeSyncer, launch.PCloseTimeSyncer, launch.PNameDesign).
 		AddOK(launch.PNameLocal, launch.PLocal, nil, launch.PNameDesign).
 		AddOK(launch.PNameStorage, launch.PStorage, nil, launch.PNameLocal).
 		AddOK(launch.PNameProposalMaker, launch.PProposalMaker, nil, launch.PNameStorage).
@@ -60,7 +60,6 @@ func DefaultRunPS() *ps.PS {
 		PreAddOK(launch.PNameLoadDatabase, launch.PLoadDatabase).
 		PostAddOK(launch.PNameCheckLeveldbStorage, launch.PCheckLeveldbStorage).
 		PostAddOK(launch.PNameCheckLoadFromDatabase, launch.PLoadFromDatabase).
-		PostAddOK(launch.PNameGetSuffrageFromDatabaseeFunc, launch.PGetSuffrageFromDatabaseFunc).
 		PostAddOK(launch.PNameNodeInfo, launch.PNodeInfo)
 
 	_ = pps.POK(launch.PNameNetwork).

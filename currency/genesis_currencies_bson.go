@@ -22,10 +22,10 @@ func (fact GenesisCurrenciesFact) MarshalBSON() ([]byte, error) {
 }
 
 type GenesisCurrenciesFactBSONUnMarshaler struct {
-	HT string   `bson:"_hint"`
-	GK string   `bson:"genesis_node_key"`
-	KS bson.Raw `bson:"keys"`
-	CS bson.Raw `bson:"currencies"`
+	HT             string   `bson:"_hint"`
+	GenesisNodeKey string   `bson:"genesis_node_key"`
+	Keys           bson.Raw `bson:"keys"`
+	Currencies     bson.Raw `bson:"currencies"`
 }
 
 func (fact *GenesisCurrenciesFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -52,7 +52,7 @@ func (fact *GenesisCurrenciesFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
-	return fact.unpack(enc, uf.GK, uf.KS, uf.CS)
+	return fact.unpack(enc, uf.GenesisNodeKey, uf.Keys, uf.Currencies)
 }
 
 func (op GenesisCurrencies) MarshalBSON() ([]byte, error) {

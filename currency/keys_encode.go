@@ -8,11 +8,11 @@ import (
 	"github.com/spikeekips/mitum/util/valuehash"
 )
 
-func (ky *BaseAccountKey) unpack(enc encoder.Encoder, ht hint.Hint, w uint, kd string) error {
+func (ky *BaseAccountKey) unpack(enc encoder.Encoder, ht hint.Hint, w uint, sk string) error {
 	e := util.StringErrorFunc("failed to unmarshal BaseAccountKey")
 
 	ky.BaseHinter = hint.NewBaseHinter(ht)
-	switch pk, err := base.DecodePublickeyFromString(kd, enc); {
+	switch pk, err := base.DecodePublickeyFromString(sk, enc); {
 	case err != nil:
 		return e(err, "")
 	default:

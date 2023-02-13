@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/spikeekips/mitum-currency/currency"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/isaac"
 	isaacnetwork "github.com/spikeekips/mitum/isaac/network"
@@ -32,7 +33,7 @@ var (
 func init() {
 	headerExamples = map[string]isaac.NetworkHeader{
 		isaacnetwork.HandlerPrefixRequestProposal: isaacnetwork.NewRequestProposalRequestHeader(
-			base.RawPoint(33, 1), base.NewStringAddress("proposer")), //nolint:gomnd //...
+			base.RawPoint(33, 1), currency.NewStringAddress("proposer")), //nolint:gomnd //...
 		isaacnetwork.HandlerPrefixProposal: isaacnetwork.NewProposalRequestHeader(
 			valuehash.RandomSHA256()),
 		isaacnetwork.HandlerPrefixLastSuffrageProof: isaacnetwork.NewLastSuffrageProofRequestHeader(
@@ -73,7 +74,7 @@ func init() {
 	})
 }
 
-type ClientCommand struct { //nolint:govet //...
+type NetworkClientCommand struct { //nolint:govet //...
 	baseCommand
 	Header    string              `arg:"" help:"request header; 'example' will print example headers"`
 	NetworkID string              `arg:"" name:"network-id" help:"network-id" default:""`
@@ -85,14 +86,14 @@ type ClientCommand struct { //nolint:govet //...
 	remote    quicstream.UDPConnInfo
 }
 
-func NewClientCommand() ClientCommand {
+func NewNetworkClientCommand() NetworkClientCommand {
 	cmd := NewbaseCommand()
-	return ClientCommand{
+	return NetworkClientCommand{
 		baseCommand: *cmd,
 	}
 }
 
-func (cmd *ClientCommand) Run(pctx context.Context) error {
+func (cmd *NetworkClientCommand) Run(pctx context.Context) error {
 	if cmd.Header == "example" {
 		_, _ = fmt.Fprintln(os.Stdout, "example headers:")
 
@@ -142,7 +143,7 @@ func (cmd *ClientCommand) Run(pctx context.Context) error {
 	return cmd.response(header)
 }
 
-func (cmd *ClientCommand) response(header isaac.NetworkHeader) error {
+func (cmd *NetworkClientCommand) response(header isaac.NetworkHeader) error {
 	client := launch.NewNetworkClient( //nolint:gomnd //...
 		cmd.encs, cmd.enc, cmd.Timeout,
 		base.NetworkID([]byte(cmd.NetworkID)),
@@ -195,7 +196,7 @@ func (cmd *ClientCommand) response(header isaac.NetworkHeader) error {
 	return nil
 }
 
-func (cmd *ClientCommand) prepare(pctx context.Context) error {
+func (cmd *NetworkClientCommand) prepare(pctx context.Context) error {
 	if _, err := cmd.baseCommand.prepare(pctx); err != nil {
 		return err
 	}
@@ -224,7 +225,7 @@ func (cmd *ClientCommand) prepare(pctx context.Context) error {
 	return nil
 }
 
-func (cmd *ClientCommand) dryRun(header isaac.NetworkHeader) error {
+func (cmd *NetworkClientCommand) dryRun(header isaac.NetworkHeader) error {
 	hb, err := util.MarshalJSONIndent(header)
 	if err != nil {
 		return err

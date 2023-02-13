@@ -44,13 +44,11 @@ func (fact *TransfersFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 type transfersMarshaler struct {
 	BaseOperationJSONMarshaler
-	Memo string `json:memo`
 }
 
 func (op Transfers) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(transfersMarshaler{
 		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
-		Memo:                       op.Memo,
 	})
 }
 
@@ -62,13 +60,7 @@ func (op *Transfers) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	var m MemoJSONUnMarshaler
-	if err := enc.Unmarshal(b, &m); err != nil {
-		return e(err, "")
-	}
-
 	op.BaseOperation = ubo
-	op.Memo = m.Memo
 
 	return nil
 }

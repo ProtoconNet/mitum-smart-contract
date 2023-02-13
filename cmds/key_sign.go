@@ -161,18 +161,21 @@ func (cmd *KeySignCommand) updateToken(ptr interface{}) error {
 		if len(token) < 1 {
 			return errors.Errorf("empty token")
 		}
-	case bytes.Equal([]byte(cmd.Token), token):
+		token = base.Token([]byte(cmd.Token))
+	case len(cmd.Token) > 0:
+		if !bytes.Equal([]byte(cmd.Token), token) {
+			return errors.Errorf("different token found")
+		}
+
 		cmd.log.Debug().Msg("same token given")
-	case len(token) > 0:
-		return errors.Errorf("different token found")
 	}
 
 	if i, ok := ptr.(base.TokenSetter); ok {
-		if err := i.SetToken(base.Token([]byte(cmd.Token))); err != nil {
+		if err := i.SetToken(token); err != nil {
 			return err
 		}
 
-		cmd.log.Debug().Str("new_token", cmd.Token).Msg("token updated")
+		cmd.log.Debug().Interface("new_token", token).Msg("token updated")
 	}
 
 	return nil

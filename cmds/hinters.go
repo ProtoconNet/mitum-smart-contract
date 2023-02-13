@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum-currency/currency"
 	"github.com/spikeekips/mitum-currency/digest"
+	isaacoperation "github.com/spikeekips/mitum-currency/isaac"
 	"github.com/spikeekips/mitum/launch"
 	"github.com/spikeekips/mitum/util/encoder"
 )
@@ -14,6 +15,7 @@ var SupportedProposalOperationFactHinters []encoder.DecodeDetail
 var hinters = []encoder.DecodeDetail{
 	// revive:disable-next-line:line-length-limit
 	{Hint: currency.BaseStateHint, Instance: currency.BaseState{}},
+	{Hint: currency.NodeHint, Instance: currency.BaseNode{}},
 	{Hint: currency.AccountHint, Instance: currency.Account{}},
 	{Hint: currency.AddressHint, Instance: currency.Address{}},
 	{Hint: currency.AmountHint, Instance: currency.Amount{}},
@@ -43,9 +45,23 @@ var hinters = []encoder.DecodeDetail{
 	{Hint: currency.CurrencyDesignStateValueHint, Instance: currency.CurrencyDesignStateValue{}},
 	{Hint: digest.AccountValueHint, Instance: digest.AccountValue{}},
 	{Hint: digest.OperationValueHint, Instance: digest.OperationValue{}},
+	{Hint: isaacoperation.GenesisNetworkPolicyFactHint, Instance: isaacoperation.GenesisNetworkPolicyFact{}},
+	{Hint: isaacoperation.GenesisNetworkPolicyHint, Instance: isaacoperation.GenesisNetworkPolicy{}},
+	{Hint: isaacoperation.SuffrageCandidateHint, Instance: isaacoperation.SuffrageCandidate{}},
+	{Hint: isaacoperation.SuffrageGenesisJoinHint, Instance: isaacoperation.SuffrageGenesisJoin{}},
+	{Hint: isaacoperation.SuffrageDisjoinHint, Instance: isaacoperation.SuffrageDisjoin{}},
+	{Hint: isaacoperation.SuffrageJoinHint, Instance: isaacoperation.SuffrageJoin{}},
+	{Hint: isaacoperation.NetworkPolicyHint, Instance: isaacoperation.NetworkPolicy{}},
+	{Hint: isaacoperation.NetworkPolicyStateValueHint, Instance: isaacoperation.NetworkPolicyStateValue{}},
+	{Hint: isaacoperation.FixedSuffrageCandidateLimiterRuleHint, Instance: isaacoperation.FixedSuffrageCandidateLimiterRule{}},
+	{Hint: isaacoperation.MajoritySuffrageCandidateLimiterRuleHint, Instance: isaacoperation.MajoritySuffrageCandidateLimiterRule{}},
 }
 
 var supportedProposalOperationFactHinters = []encoder.DecodeDetail{
+	{Hint: isaacoperation.SuffrageCandidateFactHint, Instance: isaacoperation.SuffrageCandidateFact{}},
+	{Hint: isaacoperation.SuffrageDisjoinFactHint, Instance: isaacoperation.SuffrageDisjoinFact{}},
+	{Hint: isaacoperation.SuffrageJoinFactHint, Instance: isaacoperation.SuffrageJoinFact{}},
+	{Hint: isaacoperation.SuffrageGenesisJoinFactHint, Instance: isaacoperation.SuffrageGenesisJoinFact{}},
 	{Hint: currency.CreateAccountsFactHint, Instance: currency.CreateAccountsFact{}},
 	{Hint: currency.KeyUpdaterFactHint, Instance: currency.KeyUpdaterFact{}},
 	{Hint: currency.TransfersFactHint, Instance: currency.TransfersFact{}},

@@ -12,12 +12,12 @@ import (
 )
 
 type NetworkCommand struct {
-	Client ClientCommand `cmd:"" help:"network client"`
+	Client NetworkClientCommand `cmd:"" help:"network client"`
 }
 
 func NewNetworkCommand() NetworkCommand {
 	return NetworkCommand{
-		Client: NewClientCommand(),
+		Client: NewNetworkClientCommand(),
 	}
 }
 

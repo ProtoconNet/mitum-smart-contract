@@ -54,3 +54,30 @@ func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	return nil
 }
+
+func (op *BaseNodeOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringErrorFunc("failed to decode bson of BaseNodeOperation")
+
+	var u BaseOperationBSONUnmarshaler
+
+	if err := enc.Unmarshal(b, &u); err != nil {
+		return e(err, "")
+	}
+
+	ht, err := hint.ParseHint(u.HT)
+	if err != nil {
+		return e(err, "")
+	}
+
+	op.BaseOperation.BaseHinter = hint.NewBaseHinter(ht)
+	op.BaseOperation.h = valuehash.NewBytesFromString(u.Hash)
+
+	var fact base.Fact
+	if err := encoder.Decode(enc, u.Fact, &fact); err != nil {
+		return e(err, "failed to decode fact")
+	}
+
+	op.BaseOperation.SetFact(fact)
+
+	return nil
+}

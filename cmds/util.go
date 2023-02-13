@@ -26,6 +26,7 @@ import (
 	isaacdatabase "github.com/spikeekips/mitum/isaac/database"
 	isaacnetwork "github.com/spikeekips/mitum/isaac/network"
 	isaacoperation "github.com/spikeekips/mitum/isaac/operation"
+	isaacstates "github.com/spikeekips/mitum/isaac/states"
 	"github.com/spikeekips/mitum/launch"
 	"github.com/spikeekips/mitum/network/quicmemberlist"
 	"github.com/spikeekips/mitum/network/quicstream"
@@ -141,7 +142,6 @@ func PrettyPrint(out io.Writer, i interface{}) {
 }
 
 func POperationProcessorsMap(ctx context.Context) (context.Context, error) {
-
 	var params *isaac.LocalParams
 	var db isaac.Database
 
@@ -389,9 +389,10 @@ func PLoadDigestDesign(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }
 
-func PNetworkHandlers(ctx context.Context) (context.Context, error) {
+func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 	e := util.StringErrorFunc("failed to prepare network handlers")
 
+	var log *logging.Logging
 	var encs *encoder.Encoders
 	var enc encoder.Encoder
 	var design launch.NodeDesign
@@ -406,8 +407,11 @@ func PNetworkHandlers(ctx context.Context) (context.Context, error) {
 	var nodeinfo *isaacnetwork.NodeInfoUpdater
 	var svvotef isaac.SuffrageVoteFunc
 	var cb *isaacnetwork.CallbackBroadcaster
+	var ballotbox *isaacstates.Ballotbox
+	var filternotifymsg launch.FilterMemberlistNotifyMsgFunc
 
-	if err := util.LoadFromContextOK(ctx,
+	if err := util.LoadFromContextOK(pctx,
+		launch.LoggingContextKey, &log,
 		launch.EncodersContextKey, &encs,
 		launch.EncoderContextKey, &enc,
 		launch.DesignContextKey, &design,
@@ -422,13 +426,15 @@ func PNetworkHandlers(ctx context.Context) (context.Context, error) {
 		launch.NodeInfoContextKey, &nodeinfo,
 		launch.SuffrageVotingVoteFuncContextKey, &svvotef,
 		launch.CallbackBroadcasterContextKey, &cb,
+		launch.BallotboxContextKey, &ballotbox,
+		launch.FilterMemberlistNotifyMsgFuncContextKey, &filternotifymsg,
 	); err != nil {
-		return ctx, e(err, "")
+		return pctx, e(err, "")
 	}
 
-	sendOperationFilterf, err := SendOperationFilterFunc(ctx)
+	sendOperationFilterf, err := SendOperationFilterFunc(pctx)
 	if err != nil {
-		return ctx, e(err, "")
+		return pctx, e(err, "")
 	}
 
 	idletimeout := time.Second * 2 //nolint:gomnd //...
@@ -560,9 +566,37 @@ func PNetworkHandlers(ctx context.Context) (context.Context, error) {
 		Add(isaacnetwork.HandlerPrefixCallbackMessage,
 			isaacnetwork.QuicstreamHandlerCallbackMessage(encs, idletimeout, cb),
 		).
+		Add(isaacnetwork.HandlerPrefixSendBallots,
+			isaacnetwork.QuicstreamHandlerSendBallots(
+				encs, idletimeout, params,
+				func(bl base.BallotSignFact) error {
+					switch passed, err := filternotifymsg(bl); {
+					case err != nil:
+						log.Log().Trace().
+							Str("module", "filter-notify-msg-send-ballots").
+							Err(err).
+							Interface("message", bl).
+							Msg("filter error")
+
+						fallthrough
+					case !passed:
+						log.Log().Trace().
+							Str("module", "filter-notify-msg-send-ballots").
+							Interface("message", bl).
+							Msg("filtered")
+
+						return nil
+					}
+
+					_, err := ballotbox.VoteSignFact(bl, params.Threshold())
+
+					return err
+				},
+			),
+		).
 		Add(launch.HandlerPrefixPprof, launch.NetworkHandlerPprofFunc(encs))
 
-	return ctx, nil
+	return pctx, nil
 }
 
 func SendOperationFilterFunc(ctx context.Context) (
@@ -586,7 +620,7 @@ func SendOperationFilterFunc(ctx context.Context) (
 		case !ok:
 			return false, nil
 		case !operationfilterf(hinter.Hint()):
-			return false, nil
+			return false, errors.Errorf("Not supported operation")
 		}
 
 		var height base.Height

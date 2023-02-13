@@ -119,7 +119,7 @@ func (cmd *CreateAccountCommand) createOperation() (base.Operation, error) { // 
 
 	fact := currency.NewCreateAccountsFact([]byte(cmd.Token), cmd.sender, items)
 
-	op, err := currency.NewCreateAccounts(fact, cmd.Memo)
+	op, err := currency.NewCreateAccounts(fact)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create create-account operation")
 	}

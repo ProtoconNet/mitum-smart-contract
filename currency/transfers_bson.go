@@ -61,7 +61,6 @@ func (op Transfers) MarshalBSON() ([]byte, error) {
 			"hash":  op.Hash(),
 			"fact":  op.Fact(),
 			"signs": op.Signs(),
-			"memo":  op.Memo,
 		})
 }
 
@@ -73,13 +72,7 @@ func (op *Transfers) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	var um MemoBSONUnmarshaler
-	if err := enc.Unmarshal(b, &um); err != nil {
-		return e(err, "")
-	}
-
 	op.BaseOperation = ubo
-	op.Memo = um.Memo
 
 	return nil
 }

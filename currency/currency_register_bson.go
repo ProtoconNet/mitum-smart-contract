@@ -60,7 +60,6 @@ func (op CurrencyRegister) MarshalBSON() ([]byte, error) {
 			"hash":  op.Hash(),
 			"fact":  op.Fact(),
 			"signs": op.Signs(),
-			"memo":  op.Memo,
 		})
 }
 
@@ -69,16 +68,10 @@ func (op *CurrencyRegister) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	var ubo BaseNodeOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {
-		return err
-	}
-
-	var um MemoBSONUnmarshaler
-	if err := enc.Unmarshal(b, &um); err != nil {
 		return e(err, "")
 	}
 
 	op.BaseNodeOperation = ubo
-	op.Memo = um.Memo
 
 	return nil
 }

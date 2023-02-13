@@ -96,7 +96,7 @@ func (cmd *KeyUpdaterCommand) parseFlags() error {
 func (cmd *KeyUpdaterCommand) createOperation() (base.Operation, error) { // nolint:dupl}
 	fact := currency.NewKeyUpdaterFact([]byte(cmd.Token), cmd.target, cmd.keys, cmd.Currency.CID)
 
-	op, err := currency.NewKeyUpdater(fact, cmd.Memo)
+	op, err := currency.NewKeyUpdater(fact)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create key-updater operation")
 	}

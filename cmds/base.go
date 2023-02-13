@@ -88,7 +88,6 @@ type OperationFlags struct {
 	Privatekey PrivatekeyFlag `arg:"" name:"privatekey" help:"privatekey to sign operation" required:"true"`
 	Token      string         `help:"token for operation" optional:""`
 	NetworkID  NetworkIDFlag  `name:"network-id" help:"network-id" required:"true"`
-	Memo       string         `name:"memo" help:"memo"`
 	Pretty     bool           `name:"pretty" help:"pretty format"`
 }
 

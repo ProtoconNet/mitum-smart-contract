@@ -169,11 +169,10 @@ func (fact CreateAccountsFact) Rebuild() CreateAccountsFact {
 
 type CreateAccounts struct {
 	BaseOperation
-	Memo string
 }
 
-func NewCreateAccounts(fact CreateAccountsFact, memo string) (CreateAccounts, error) {
-	return CreateAccounts{BaseOperation: NewBaseOperation(CreateAccountsHint, fact), Memo: memo}, nil
+func NewCreateAccounts(fact CreateAccountsFact) (CreateAccounts, error) {
+	return CreateAccounts{BaseOperation: NewBaseOperation(CreateAccountsHint, fact)}, nil
 }
 
 func (op *CreateAccounts) HashSign(priv base.Privatekey, networkID base.NetworkID) error {

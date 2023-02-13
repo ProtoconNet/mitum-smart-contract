@@ -74,8 +74,9 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 	pps := DefaultRunPS()
 
 	_ = pps.POK(launch.PNameStorage).PostAddOK(ps.Name("check-hold"), cmd.pCheckHold)
-	_ = pps.POK(launch.PNameStates).PreAddOK(
-		ps.Name("when-new-block-saved-in-consensus-state-func"), cmd.pWhenNewBlockSavedInConsensusStateFunc)
+	_ = pps.POK(launch.PNameStates).
+		PreAddOK(ps.Name("when-new-block-saved-in-consensus-state-func"), cmd.pWhenNewBlockSavedInConsensusStateFunc).
+		PreAddOK(ps.Name("when-new-block-confirmed-func"), cmd.pWhenNewBlockConfirmed)
 	_ = pps.POK(launch.PNameStates).
 		PreAddOK(PNameOperationProcessorsMap, POperationProcessorsMap)
 	_ = pps.POK(PNameDigest).
@@ -179,18 +180,39 @@ func (cmd *RunCommand) runStates(ctx, pctx context.Context) (func(), error) {
 
 func (cmd *RunCommand) pWhenNewBlockSavedInConsensusStateFunc(pctx context.Context) (context.Context, error) {
 	var log *logging.Logging
+
+	if err := util.LoadFromContextOK(pctx,
+		launch.LoggingContextKey, &log,
+	); err != nil {
+		return pctx, err
+	}
+
+	f := func(height base.Height) {
+		l := log.Log().With().Interface("height", height).Logger()
+
+		if cmd.Hold.IsSet() && height == cmd.Hold.Height() {
+			l.Debug().Msg("will be stopped by hold")
+
+			cmd.exitf(errHoldStop.Call())
+
+			return
+		}
+	}
+
+	pctx = context.WithValue(pctx, launch.WhenNewBlockSavedInConsensusStateFuncContextKey, f)
+	//revive:disable-next-line:modifies-parameter
+
+	return pctx, nil
+}
+
+func (cmd *RunCommand) pWhenNewBlockConfirmed(pctx context.Context) (context.Context, error) {
+	var log *logging.Logging
 	var db isaac.Database
-	var params *isaac.LocalParams
-	var ballotbox *isaacstates.Ballotbox
-	var nodeinfo *isaacnetwork.NodeInfoUpdater
 	var di *digest.Digester
 
 	if err := util.LoadFromContextOK(pctx,
 		launch.LoggingContextKey, &log,
 		launch.CenterDatabaseContextKey, &db,
-		launch.LocalParamsContextKey, &params,
-		launch.BallotboxContextKey, &ballotbox,
-		launch.NodeInfoContextKey, &nodeinfo,
 	); err != nil {
 		return pctx, err
 	}
@@ -199,46 +221,37 @@ func (cmd *RunCommand) pWhenNewBlockSavedInConsensusStateFunc(pctx context.Conte
 		return pctx, err
 	}
 
+	var f func(height base.Height)
 	if di != nil {
 		g := cmd.whenBlockSaved(db, di)
 
-		f := func(height base.Height) {
-			launch.WhenNewBlockSavedInConsensusStateFunc(params, ballotbox, db, nodeinfo)(height)
+		f = func(height base.Height) {
 			g(pctx)
-
 			l := log.Log().With().Interface("height", height).Logger()
-			l.Debug().Msg("new block saved")
 
 			if cmd.Hold.IsSet() && height == cmd.Hold.Height() {
 				l.Debug().Msg("will be stopped by hold")
-
 				cmd.exitf(errHoldStop.Call())
 
 				return
 			}
 		}
-		pctx = context.WithValue(pctx, launch.WhenNewBlockSavedInConsensusStateFuncContextKey, f)
 	} else {
-		f := func(height base.Height) {
-			launch.WhenNewBlockSavedInConsensusStateFunc(params, ballotbox, db, nodeinfo)(height)
-
+		f = func(height base.Height) {
 			l := log.Log().With().Interface("height", height).Logger()
-			l.Debug().Msg("new block saved")
 
 			if cmd.Hold.IsSet() && height == cmd.Hold.Height() {
 				l.Debug().Msg("will be stopped by hold")
-
 				cmd.exitf(errHoldStop.Call())
 
 				return
 			}
 		}
-		pctx = context.WithValue(pctx, launch.WhenNewBlockSavedInConsensusStateFuncContextKey, f)
 	}
 
-	//revive:disable-next-line:modifies-parameter
-
-	return pctx, nil
+	return context.WithValue(pctx,
+		launch.WhenNewBlockConfirmedFuncContextKey, f,
+	), nil
 }
 
 func (cmd *RunCommand) whenBlockSaved(

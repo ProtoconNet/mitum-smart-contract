@@ -1,6 +1,6 @@
 package cmds
 
-type SealCommand struct {
+type OperationCommand struct {
 	CreateAccount         CreateAccountCommand         `cmd:"" name:"create-account" help:"create new account"`
 	KeyUpdater            KeyUpdaterCommand            `cmd:"" name:"key-updater" help:"update account keys"`
 	Transfer              TransferCommand              `cmd:"" name:"transfer" help:"transfer"`
@@ -12,8 +12,8 @@ type SealCommand struct {
 	SuffrageDisjoin       SuffrageDisjoinCommand       `cmd:"" name:"suffrage-disjoin" help:"suffrage disjoin operation"` // revive:disable-line:line-length-limit
 }
 
-func NewSealCommand() SealCommand {
-	return SealCommand{
+func NewOperationCommand() OperationCommand {
+	return OperationCommand{
 		CreateAccount:         NewCreateAccountCommand(),
 		KeyUpdater:            NewKeyUpdaterCommand(),
 		Transfer:              NewTransferCommand(),

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	isaacoperation "github.com/spikeekips/mitum-currency/isaac"
 	"github.com/spikeekips/mitum/base"
-	isaac "github.com/spikeekips/mitum/isaac/operation"
 )
 
 type SuffrageDisjoinCommand struct {
@@ -65,12 +65,12 @@ func (cmd *SuffrageDisjoinCommand) parseFlags() error {
 	return nil
 }
 
-func (cmd *SuffrageDisjoinCommand) createOperation() (isaac.SuffrageDisjoin, error) {
-	fact := isaac.NewSuffrageDisjoinFact([]byte(cmd.Token), cmd.node, cmd.Start)
+func (cmd *SuffrageDisjoinCommand) createOperation() (isaacoperation.SuffrageDisjoin, error) {
+	fact := isaacoperation.NewSuffrageDisjoinFact([]byte(cmd.Token), cmd.node, cmd.Start)
 
-	op := isaac.NewSuffrageDisjoin(fact)
+	op := isaacoperation.NewSuffrageDisjoin(fact)
 	if err := op.NodeSign(cmd.Privatekey, cmd.NetworkID.NetworkID(), cmd.node); err != nil {
-		return isaac.SuffrageDisjoin{}, errors.Wrap(err, "failed to create suffrage-disjoin operation")
+		return isaacoperation.SuffrageDisjoin{}, errors.Wrap(err, "failed to create suffrage-disjoin operation")
 	}
 
 	return op, nil

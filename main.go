@@ -25,13 +25,13 @@ var (
 //revive:disable:nested-structs
 type CLI struct { //nolint:govet //...
 	launch.BaseFlags
-	Import  cmds.ImportCommand  `cmd:"" help:"import from block data"`
-	Init    cmds.INITCommand    `cmd:"" help:"init node"`
-	Run     cmds.RunCommand     `cmd:"" help:"run node"`
-	Seal    cmds.SealCommand    `cmd:"" help:"seal"`
-	Network cmds.NetworkCommand `cmd:"" help:"network"`
-	Key     cmds.KeyCommand     `cmd:"" help:"key"`
-	Version struct{}            `cmd:"" help:"version"`
+	Import    cmds.ImportCommand    `cmd:"" help:"import from block data"`
+	Init      cmds.INITCommand      `cmd:"" help:"init node"`
+	Run       cmds.RunCommand       `cmd:"" help:"run node"`
+	Operation cmds.OperationCommand `cmd:"" help:"create operation"`
+	Network   cmds.NetworkCommand   `cmd:"" help:"network"`
+	Key       cmds.KeyCommand       `cmd:"" help:"key"`
+	Version   struct{}              `cmd:"" help:"version"`
 }
 
 //revive:enable:nested-structs
@@ -48,12 +48,12 @@ var flagDefaults = kong.Vars{
 
 func main() {
 	cli := CLI{
-		Import:  cmds.NewImportCommand(),
-		Init:    cmds.NewINITCommand(),
-		Run:     cmds.NewRunCommand(),
-		Seal:    cmds.NewSealCommand(),
-		Network: cmds.NewNetworkCommand(),
-		Key:     cmds.NewKeyCommand(),
+		Import:    cmds.NewImportCommand(),
+		Init:      cmds.NewINITCommand(),
+		Run:       cmds.NewRunCommand(),
+		Operation: cmds.NewOperationCommand(),
+		Network:   cmds.NewNetworkCommand(),
+		Key:       cmds.NewKeyCommand(),
 	}
 	kctx := kong.Parse(&cli, flagDefaults)
 

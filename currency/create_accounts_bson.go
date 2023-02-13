@@ -66,7 +66,6 @@ func (op CreateAccounts) MarshalBSON() ([]byte, error) {
 			"hash":  op.Hash().String(),
 			"fact":  op.Fact(),
 			"signs": op.Signs(),
-			"memo":  op.Memo,
 		})
 }
 
@@ -75,16 +74,10 @@ func (op *CreateAccounts) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	var ubo BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {
-		return err
-	}
-
-	var um MemoBSONUnmarshaler
-	if err := enc.Unmarshal(b, &um); err != nil {
 		return e(err, "")
 	}
 
 	op.BaseOperation = ubo
-	op.Memo = um.Memo
 
 	return nil
 }
