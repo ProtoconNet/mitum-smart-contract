@@ -27,9 +27,9 @@ func (fact CreateAccountsFact) MarshalBSON() ([]byte, error) {
 }
 
 type CreateAccountsFactBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	SD string   `bson:"sender"`
-	IT bson.Raw `bson:"items"`
+	Hint   string   `bson:"_hint"`
+	Sender string   `bson:"sender"`
+	Items  bson.Raw `bson:"items"`
 }
 
 func (fact *CreateAccountsFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -50,13 +50,13 @@ func (fact *CreateAccountsFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uf.HT)
+	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
-	return fact.unpack(enc, uf.SD, uf.IT)
+	return fact.unpack(enc, uf.Sender, uf.Items)
 }
 
 func (op CreateAccounts) MarshalBSON() ([]byte, error) {

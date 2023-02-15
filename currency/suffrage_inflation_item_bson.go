@@ -18,9 +18,9 @@ func (it SuffrageInflationItem) MarshalBSON() ([]byte, error) {
 }
 
 type SuffrageInflationItemBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	RC string   `bson:"receiver"`
-	AM bson.Raw `bson:"amount"`
+	Hint     string   `bson:"_hint"`
+	Receiver string   `bson:"receiver"`
+	Amount   bson.Raw `bson:"amount"`
 }
 
 func (it *SuffrageInflationItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -30,10 +30,10 @@ func (it *SuffrageInflationItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) erro
 	if err := bson.Unmarshal(b, &uit); err != nil {
 		return e(err, "")
 	}
-	ht, err := hint.ParseHint(uit.HT)
+	ht, err := hint.ParseHint(uit.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 
-	return it.unpack(enc, ht, uit.RC, uit.AM)
+	return it.unpack(enc, ht, uit.Receiver, uit.Amount)
 }

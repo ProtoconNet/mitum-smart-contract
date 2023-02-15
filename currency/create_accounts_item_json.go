@@ -10,22 +10,22 @@ import (
 
 type CreateAccountsItemJSONMarshaler struct {
 	hint.BaseHinter
-	KS AccountKeys `json:"keys"`
-	AS []Amount    `json:"amounts"`
+	Keys    AccountKeys `json:"keys"`
+	Amounts []Amount    `json:"amounts"`
 }
 
 func (it BaseCreateAccountsItem) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(CreateAccountsItemJSONMarshaler{
 		BaseHinter: it.BaseHinter,
-		KS:         it.keys,
-		AS:         it.amounts,
+		Keys:       it.keys,
+		Amounts:    it.amounts,
 	})
 }
 
 type CreateAccountsItemJSONUnMarshaler struct {
-	HT hint.Hint       `json:"_hint"`
-	KS json.RawMessage `json:"keys"`
-	AM json.RawMessage `json:"amounts"`
+	Hint    hint.Hint       `json:"_hint"`
+	Keys    json.RawMessage `json:"keys"`
+	Amounts json.RawMessage `json:"amounts"`
 }
 
 func (it *BaseCreateAccountsItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -36,5 +36,5 @@ func (it *BaseCreateAccountsItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) err
 		return e(err, "")
 	}
 
-	return it.unpack(enc, uit.HT, uit.KS, uit.AM)
+	return it.unpack(enc, uit.Hint, uit.Keys, uit.Amounts)
 }

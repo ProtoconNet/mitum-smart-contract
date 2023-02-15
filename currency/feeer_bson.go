@@ -41,26 +41,26 @@ func (fa FixedFeeer) MarshalBSON() ([]byte, error) {
 
 }
 
-type FixedFeeerBSONUnpacker struct {
-	HT string `bson:"_hint"`
-	RC string `bson:"receiver"`
-	AM string `bson:"amount"`
+type FixedFeeerBSONUnmarshaler struct {
+	Hint     string `bson:"_hint"`
+	Receiver string `bson:"receiver"`
+	Amount   string `bson:"amount"`
 }
 
 func (fa *FixedFeeer) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of FixedFeeer")
 
-	var ufa FixedFeeerBSONUnpacker
+	var ufa FixedFeeerBSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(ufa.HT)
+	ht, err := hint.ParseHint(ufa.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 
-	return fa.unpack(enc, ht, ufa.RC, ufa.AM)
+	return fa.unpack(enc, ht, ufa.Receiver, ufa.Amount)
 }
 
 func (fa RatioFeeer) MarshalBSON() ([]byte, error) {
@@ -75,25 +75,25 @@ func (fa RatioFeeer) MarshalBSON() ([]byte, error) {
 	)
 }
 
-type RatioFeeerBSONUnpacker struct {
-	HT string  `bson:"_hint"`
-	RC string  `bson:"receiver"`
-	RA float64 `bson:"ratio"`
-	MI string  `bson:"min"`
-	MA string  `bson:"max"`
+type RatioFeeerBSONUnmarshaler struct {
+	Hint     string  `bson:"_hint"`
+	Receiver string  `bson:"receiver"`
+	Ratio    float64 `bson:"ratio"`
+	Min      string  `bson:"min"`
+	Max      string  `bson:"max"`
 }
 
 func (fa *RatioFeeer) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of RatioFeeer")
 
-	var ufa RatioFeeerBSONUnpacker
+	var ufa RatioFeeerBSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {
 		return e(err, "")
 	}
-	ht, err := hint.ParseHint(ufa.HT)
+	ht, err := hint.ParseHint(ufa.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 
-	return fa.unpack(enc, ht, ufa.RC, ufa.RA, ufa.MI, ufa.MA)
+	return fa.unpack(enc, ht, ufa.Receiver, ufa.Ratio, ufa.Min, ufa.Max)
 }

@@ -17,7 +17,7 @@ func (l FixedSuffrageCandidateLimiterRule) MarshalBSON() ([]byte, error) {
 }
 
 type FixedSuffrageCandidateLimiterRuleBSONUnMarshaler struct {
-	HT    string `bson:"_hint"`
+	Hint  string `bson:"_hint"`
 	Limit uint64 `bson:"limit"`
 }
 
@@ -31,7 +31,7 @@ func (l *FixedSuffrageCandidateLimiterRule) DecodeBSON(b []byte, enc *bsonenc.En
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(u.HT)
+	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
 		return e(err, "")
 	}
@@ -54,7 +54,7 @@ func (l MajoritySuffrageCandidateLimiterRule) MarshalBSON() ([]byte, error) {
 }
 
 type MajoritySuffrageCandidateLimiterRuleBSONUnMarshaler struct {
-	HT    string  `bson:"_hint"`
+	Hint  string  `bson:"_hint"`
 	Ratio float64 `bson:"ratio"`
 	Max   uint64  `bson:"max"`
 	Min   uint64  `bson:"min"`
@@ -70,7 +70,7 @@ func (l *MajoritySuffrageCandidateLimiterRule) DecodeBSON(b []byte, enc *bsonenc
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(u.HT)
+	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
 		return e(err, "")
 	}

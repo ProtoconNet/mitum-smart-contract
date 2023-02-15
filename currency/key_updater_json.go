@@ -10,25 +10,25 @@ import (
 
 type KeyUpdaterFactJSONMarshaler struct {
 	base.BaseFactJSONMarshaler
-	TG base.Address `json:"target"`
-	KS AccountKeys  `json:"keys"`
-	CR CurrencyID   `json:"currency"`
+	Target   base.Address `json:"target"`
+	Keys     AccountKeys  `json:"keys"`
+	Currency CurrencyID   `json:"currency"`
 }
 
 func (fact KeyUpdaterFact) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(KeyUpdaterFactJSONMarshaler{
 		BaseFactJSONMarshaler: fact.BaseFact.JSONMarshaler(),
-		TG:                    fact.target,
-		KS:                    fact.keys,
-		CR:                    fact.currency,
+		Target:                fact.target,
+		Keys:                  fact.keys,
+		Currency:              fact.currency,
 	})
 }
 
 type KeyUpdaterFactJSONUnMarshaler struct {
 	base.BaseFactJSONUnmarshaler
-	TG string          `json:"target"`
-	KS json.RawMessage `json:"keys"`
-	CR string          `json:"currency"`
+	Target   string          `json:"target"`
+	Keys     json.RawMessage `json:"keys"`
+	Currency string          `json:"currency"`
 }
 
 func (fact *KeyUpdaterFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -41,7 +41,7 @@ func (fact *KeyUpdaterFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	return fact.unpack(enc, uf.TG, uf.KS, uf.CR)
+	return fact.unpack(enc, uf.Target, uf.Keys, uf.Currency)
 }
 
 type keyUpdaterMarshaler struct {

@@ -21,11 +21,11 @@ func (de CurrencyDesign) MarshalBSON() ([]byte, error) {
 }
 
 type CurrencyDesignBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	AM bson.Raw `bson:"amount"`
-	GA string   `bson:"genesis_account"`
-	PO bson.Raw `bson:"policy"`
-	AG string   `bson:"aggregate"`
+	Hint      string   `bson:"_hint"`
+	Amount    bson.Raw `bson:"amount"`
+	Genesis   string   `bson:"genesis_account"`
+	Policy    bson.Raw `bson:"policy"`
+	Aggregate string   `bson:"aggregate"`
 }
 
 func (de *CurrencyDesign) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -36,10 +36,10 @@ func (de *CurrencyDesign) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(ude.HT)
+	ht, err := hint.ParseHint(ude.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 
-	return de.unpack(enc, ht, ude.AM, ude.GA, ude.PO, ude.AG)
+	return de.unpack(enc, ht, ude.Amount, ude.Genesis, ude.Policy, ude.Aggregate)
 }

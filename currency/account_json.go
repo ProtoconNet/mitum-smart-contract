@@ -12,34 +12,34 @@ import (
 
 type AccountJSONMarshaler struct {
 	hint.BaseHinter
-	H  util.Hash    `json:"hash"`
-	AD base.Address `json:"address"`
-	KS AccountKeys  `json:"keys"`
+	Hint    util.Hash    `json:"hash"`
+	Address base.Address `json:"address"`
+	Keys    AccountKeys  `json:"keys"`
 }
 
 func (ac Account) EncodeJSON() AccountJSONMarshaler {
 	return AccountJSONMarshaler{
 		BaseHinter: ac.BaseHinter,
-		H:          ac.h,
-		AD:         ac.address,
-		KS:         ac.keys,
+		Hint:       ac.h,
+		Address:    ac.address,
+		Keys:       ac.keys,
 	}
 }
 
 func (ac Account) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(AccountJSONMarshaler{
 		BaseHinter: ac.BaseHinter,
-		H:          ac.h,
-		AD:         ac.address,
-		KS:         ac.keys,
+		Hint:       ac.h,
+		Address:    ac.address,
+		Keys:       ac.keys,
 	})
 }
 
 type AccountJSONUnmarshaler struct {
-	HT hint.Hint             `json:"_hint"`
-	H  valuehash.HashDecoder `json:"hash"`
-	AD string                `json:"address"`
-	KS json.RawMessage       `json:"keys"`
+	Hint    hint.Hint             `json:"_hint"`
+	Hash    valuehash.HashDecoder `json:"hash"`
+	Address string                `json:"address"`
+	Keys    json.RawMessage       `json:"keys"`
 }
 
 func (ac *Account) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -50,5 +50,5 @@ func (ac *Account) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return ac.unpack(enc, uac.HT, uac.H, uac.AD, uac.KS)
+	return ac.unpack(enc, uac.Hint, uac.Hash, uac.Address, uac.Keys)
 }

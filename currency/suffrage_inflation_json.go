@@ -10,19 +10,19 @@ import (
 
 type SuffrageInflationFactJSONMarshaler struct {
 	base.BaseFactJSONMarshaler
-	IT []SuffrageInflationItem `json:"items"`
+	Items []SuffrageInflationItem `json:"items"`
 }
 
 func (fact SuffrageInflationFact) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(SuffrageInflationFactJSONMarshaler{
 		BaseFactJSONMarshaler: fact.BaseFact.JSONMarshaler(),
-		IT:                    fact.items,
+		Items:                 fact.items,
 	})
 }
 
 type SuffrageInflationFactJSONUnmarshaler struct {
 	base.BaseFactJSONUnmarshaler
-	IT []json.RawMessage `json:"items"`
+	Items []json.RawMessage `json:"items"`
 }
 
 func (fact *SuffrageInflationFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -36,10 +36,10 @@ func (fact *SuffrageInflationFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) er
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	items := make([]SuffrageInflationItem, len(uf.IT))
-	for i := range uf.IT {
+	items := make([]SuffrageInflationItem, len(uf.Items))
+	for i := range uf.Items {
 		item := SuffrageInflationItem{}
-		if err := item.DecodeJSON(uf.IT[i], enc); err != nil {
+		if err := item.DecodeJSON(uf.Items[i], enc); err != nil {
 			return e(err, "")
 		}
 		items[i] = item

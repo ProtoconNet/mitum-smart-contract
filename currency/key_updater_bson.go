@@ -23,10 +23,10 @@ func (fact KeyUpdaterFact) MarshalBSON() ([]byte, error) {
 }
 
 type KeyUpdaterFactBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	TG string   `bson:"target"`
-	KS bson.Raw `bson:"keys"`
-	CR string   `bson:"currency"`
+	Hint     string   `bson:"_hint"`
+	Target   string   `bson:"target"`
+	Keys     bson.Raw `bson:"keys"`
+	Currency string   `bson:"currency"`
 }
 
 func (fact *KeyUpdaterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -47,13 +47,13 @@ func (fact *KeyUpdaterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uf.HT)
+	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
-	return fact.unpack(enc, uf.TG, uf.KS, uf.CR)
+	return fact.unpack(enc, uf.Target, uf.Keys, uf.Currency)
 }
 
 func (op KeyUpdater) MarshalBSON() ([]byte, error) {

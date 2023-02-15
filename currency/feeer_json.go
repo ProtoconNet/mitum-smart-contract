@@ -28,22 +28,22 @@ func (fa *NilFeeer) UnmarsahlJSON(b []byte) error {
 
 type FixedFeeerJSONMarshaler struct {
 	hint.BaseHinter
-	RC base.Address `json:"receiver"`
-	AM string       `json:"amount"`
+	Receiver base.Address `json:"receiver"`
+	Amount   string       `json:"amount"`
 }
 
 func (fa FixedFeeer) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(FixedFeeerJSONMarshaler{
 		BaseHinter: fa.BaseHinter,
-		RC:         fa.receiver,
-		AM:         fa.amount.String(),
+		Receiver:   fa.receiver,
+		Amount:     fa.amount.String(),
 	})
 }
 
 type FixedFeeerJSONUnmarshaler struct {
-	HT hint.Hint `json:"_hint"`
-	RC string    `json:"receiver"`
-	AM string    `json:"amount"`
+	Hint     hint.Hint `json:"_hint"`
+	Receiver string    `json:"receiver"`
+	Amount   string    `json:"amount"`
 }
 
 func (fa *FixedFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -54,33 +54,33 @@ func (fa *FixedFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return fa.unpack(enc, ufa.HT, ufa.RC, ufa.AM)
+	return fa.unpack(enc, ufa.Hint, ufa.Receiver, ufa.Amount)
 }
 
 type RatioFeeerJSONMarshaler struct {
 	hint.BaseHinter
-	RC base.Address `json:"receiver"`
-	RA float64      `json:"ratio"`
-	MI string       `json:"min"`
-	MA string       `json:"max"`
+	Receiver base.Address `json:"receiver"`
+	Ratio    float64      `json:"ratio"`
+	Min      string       `json:"min"`
+	Max      string       `json:"max"`
 }
 
 func (fa RatioFeeer) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(RatioFeeerJSONMarshaler{
 		BaseHinter: fa.BaseHinter,
-		RC:         fa.receiver,
-		RA:         fa.ratio,
-		MI:         fa.min.String(),
-		MA:         fa.max.String(),
+		Receiver:   fa.receiver,
+		Ratio:      fa.ratio,
+		Min:        fa.min.String(),
+		Max:        fa.max.String(),
 	})
 }
 
 type RatioFeeerJSONUnmarshaler struct {
-	HT hint.Hint `json:"_hint"`
-	RC string    `json:"receiver"`
-	RA float64   `json:"ratio"`
-	MI string    `json:"min"`
-	MA string    `json:"max"`
+	Hint     hint.Hint `json:"_hint"`
+	Receiver string    `json:"receiver"`
+	Ratio    float64   `json:"ratio"`
+	Min      string    `json:"min"`
+	Max      string    `json:"max"`
 }
 
 func (fa *RatioFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -91,5 +91,5 @@ func (fa *RatioFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return fa.unpack(enc, ufa.HT, ufa.RC, ufa.RA, ufa.MI, ufa.MA)
+	return fa.unpack(enc, ufa.Hint, ufa.Receiver, ufa.Ratio, ufa.Min, ufa.Max)
 }

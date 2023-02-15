@@ -22,7 +22,7 @@ func (fact GenesisNetworkPolicyFact) MarshalBSON() ([]byte, error) {
 }
 
 type GenesisNetworkPolicyFactBSONUnMarshaler struct {
-	HT     string   `bson:"_hint"`
+	Hint   string   `bson:"_hint"`
 	Policy bson.Raw `bson:"policy"`
 }
 
@@ -44,7 +44,7 @@ func (fact *GenesisNetworkPolicyFact) DecodeBSON(b []byte, enc *bsonenc.Encoder)
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uf.HT)
+	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
 		return e(err, "")
 	}

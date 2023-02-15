@@ -18,9 +18,9 @@ func (it BaseTransfersItem) MarshalBSON() ([]byte, error) {
 }
 
 type TransfersItemBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	RC string   `bson:"receiver"`
-	AM bson.Raw `bson:"amounts"`
+	Hint     string   `bson:"_hint"`
+	Receiver string   `bson:"receiver"`
+	Amounts  bson.Raw `bson:"amounts"`
 }
 
 func (it *BaseTransfersItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -31,10 +31,10 @@ func (it *BaseTransfersItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uit.HT)
+	ht, err := hint.ParseHint(uit.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 
-	return it.unpack(enc, ht, uit.RC, uit.AM)
+	return it.unpack(enc, ht, uit.Receiver, uit.Amounts)
 }

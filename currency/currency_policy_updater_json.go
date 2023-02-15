@@ -10,22 +10,22 @@ import (
 
 type CurrencyPolicyUpdaterFactJSONMarshaler struct {
 	base.BaseFactJSONMarshaler
-	CR CurrencyID     `json:"currency"`
-	PO CurrencyPolicy `json:"policy"`
+	Currency CurrencyID     `json:"currency"`
+	Policy   CurrencyPolicy `json:"policy"`
 }
 
 func (fact CurrencyPolicyUpdaterFact) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(CurrencyPolicyUpdaterFactJSONMarshaler{
 		BaseFactJSONMarshaler: fact.BaseFact.JSONMarshaler(),
-		CR:                    fact.currency,
-		PO:                    fact.policy,
+		Currency:              fact.currency,
+		Policy:                fact.policy,
 	})
 }
 
 type CurrencyPolicyUpdaterFactJSONUnMarshaler struct {
 	base.BaseFactJSONUnmarshaler
-	CR string          `json:"currency"`
-	PO json.RawMessage `json:"policy"`
+	Currency string          `json:"currency"`
+	Policy   json.RawMessage `json:"policy"`
 }
 
 func (fact *CurrencyPolicyUpdaterFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -38,7 +38,7 @@ func (fact *CurrencyPolicyUpdaterFact) DecodeJSON(b []byte, enc *jsonenc.Encoder
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	return fact.unpack(enc, uf.CR, uf.PO)
+	return fact.unpack(enc, uf.Currency, uf.Policy)
 }
 
 type currencyPolicyUpdaterMarshaler struct {

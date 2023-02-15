@@ -22,7 +22,7 @@ func (fact SuffrageCandidateFact) MarshalBSON() ([]byte, error) {
 }
 
 type SuffrageCandidateFactBSONUnMarshaler struct {
-	HT        string `bson:"_hint"`
+	Hint      string `bson:"_hint"`
 	Address   string `bson:"address"`
 	Publickey string `bson:"publickey"`
 }
@@ -45,7 +45,7 @@ func (fact *SuffrageCandidateFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uf.HT)
+	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
 		return e(err, "")
 	}

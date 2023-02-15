@@ -10,13 +10,13 @@ import (
 
 type FeeOperationFactJSONMarshaler struct {
 	base.BaseFactJSONMarshaler
-	AM []Amount `json:"amounts"`
+	Amounts []Amount `json:"amounts"`
 }
 
 func (fact FeeOperationFact) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(FeeOperationFactJSONMarshaler{
 		BaseFactJSONMarshaler: fact.BaseFact.JSONMarshaler(),
-		AM:                    fact.amounts,
+		Amounts:               fact.amounts,
 	})
 }
 

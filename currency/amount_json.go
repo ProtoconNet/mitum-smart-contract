@@ -7,23 +7,23 @@ import (
 )
 
 type AmountJSONMarshaler struct {
-	BG string     `json:"amount"`
-	CR CurrencyID `json:"currency"`
+	AmountBig string     `json:"amount"`
+	Currency  CurrencyID `json:"currency"`
 	hint.BaseHinter
 }
 
 func (am Amount) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(AmountJSONMarshaler{
 		BaseHinter: am.BaseHinter,
-		BG:         am.big.String(),
-		CR:         am.cid,
+		AmountBig:  am.big.String(),
+		Currency:   am.cid,
 	})
 }
 
 type AmountJSONUnmarshaler struct {
-	BG string    `json:"amount"`
-	CR string    `json:"currency"`
-	HT hint.Hint `json:"_hint"`
+	AmountBig string    `json:"amount"`
+	Currency  string    `json:"currency"`
+	Hint      hint.Hint `json:"_hint"`
 }
 
 func (am *Amount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -34,7 +34,7 @@ func (am *Amount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	am.BaseHinter = hint.NewBaseHinter(uam.HT)
+	am.BaseHinter = hint.NewBaseHinter(uam.Hint)
 
-	return am.unpack(enc, uam.CR, uam.BG)
+	return am.unpack(enc, uam.Currency, uam.AmountBig)
 }

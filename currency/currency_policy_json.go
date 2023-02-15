@@ -10,22 +10,22 @@ import (
 
 type CurrencyPolicyJSONMarshaler struct {
 	hint.BaseHinter
-	MN string `json:"new_account_min_balance"`
-	FE Feeer  `json:"feeer"`
+	NewAccountMin string `json:"new_account_min_balance"`
+	Feeer         Feeer  `json:"feeer"`
 }
 
 func (po CurrencyPolicy) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(CurrencyPolicyJSONMarshaler{
-		BaseHinter: po.BaseHinter,
-		MN:         po.newAccountMinBalance.String(),
-		FE:         po.feeer,
+		BaseHinter:    po.BaseHinter,
+		NewAccountMin: po.newAccountMinBalance.String(),
+		Feeer:         po.feeer,
 	})
 }
 
 type CurrencyPolicyJSONUnmarshaler struct {
-	HT hint.Hint       `json:"_hint"`
-	MN string          `json:"new_account_min_balance"`
-	FE json.RawMessage `json:"feeer"`
+	Hint          hint.Hint       `json:"_hint"`
+	NewAccountMin string          `json:"new_account_min_balance"`
+	Feeer         json.RawMessage `json:"feeer"`
 }
 
 func (po *CurrencyPolicy) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -36,5 +36,5 @@ func (po *CurrencyPolicy) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return po.unpack(enc, upo.HT, upo.MN, upo.FE)
+	return po.unpack(enc, upo.Hint, upo.NewAccountMin, upo.Feeer)
 }

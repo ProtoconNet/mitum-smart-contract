@@ -18,9 +18,9 @@ func (it BaseCreateAccountsItem) MarshalBSON() ([]byte, error) {
 }
 
 type CreateAccountsItemBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	KS bson.Raw `bson:"keys"`
-	AM bson.Raw `bson:"amounts"`
+	Hint   string   `bson:"_hint"`
+	Keys   bson.Raw `bson:"keys"`
+	Amount bson.Raw `bson:"amounts"`
 }
 
 func (it *BaseCreateAccountsItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -31,10 +31,10 @@ func (it *BaseCreateAccountsItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) err
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uit.HT)
+	ht, err := hint.ParseHint(uit.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 
-	return it.unpack(enc, ht, uit.KS, uit.AM)
+	return it.unpack(enc, ht, uit.Keys, uit.Amount)
 }

@@ -22,10 +22,10 @@ func (ac Account) MarshalBSON() ([]byte, error) {
 }
 
 type AccountBSONUnmarshaler struct {
-	HT string          `bson:"_hint"`
-	H  valuehash.Bytes `bson:"hash"`
-	AD string          `bson:"address"`
-	KS bson.Raw        `bson:"keys"`
+	Hint    string          `bson:"_hint"`
+	Hash    valuehash.Bytes `bson:"hash"`
+	Address string          `bson:"address"`
+	Keys    bson.Raw        `bson:"keys"`
 }
 
 func (ac *Account) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -36,22 +36,22 @@ func (ac *Account) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uac.HT)
+	ht, err := hint.ParseHint(uac.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 
-	ac.h = valuehash.NewHashFromBytes(uac.H)
+	ac.h = valuehash.NewHashFromBytes(uac.Hash)
 
 	ac.BaseHinter = hint.NewBaseHinter(ht)
-	switch ad, err := base.DecodeAddress(uac.AD, enc); {
+	switch ad, err := base.DecodeAddress(uac.Address, enc); {
 	case err != nil:
 		return e(err, "")
 	default:
 		ac.address = ad
 	}
 
-	k, err := enc.Decode(uac.KS)
+	k, err := enc.Decode(uac.Keys)
 	if err != nil {
 		return e(err, "")
 	} else if k != nil {

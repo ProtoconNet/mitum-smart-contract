@@ -17,8 +17,8 @@ func (s AccountStateValue) MarshalBSON() ([]byte, error) {
 }
 
 type AccountStateValueBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	AC bson.Raw `bson:"account"`
+	Hint    string   `bson:"_hint"`
+	Account bson.Raw `bson:"account"`
 }
 
 func (s *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -29,7 +29,7 @@ func (s *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(u.HT)
+	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
 		return e(err, "")
 	}
@@ -37,7 +37,7 @@ func (s *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
 	var ac Account
-	if err := ac.DecodeBSON(u.AC, enc); err != nil {
+	if err := ac.DecodeBSON(u.Account, enc); err != nil {
 		return e(err, "")
 	}
 
@@ -56,8 +56,8 @@ func (s BalanceStateValue) MarshalBSON() ([]byte, error) {
 }
 
 type BalanceStateValueBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	AM bson.Raw `bson:"amount"`
+	Hint   string   `bson:"_hint"`
+	Amount bson.Raw `bson:"amount"`
 }
 
 func (s *BalanceStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -68,14 +68,14 @@ func (s *BalanceStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(u.HT)
+	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
 	var am Amount
-	if err := am.DecodeBSON(u.AM, enc); err != nil {
+	if err := am.DecodeBSON(u.Amount, enc); err != nil {
 		return e(err, "")
 	}
 
@@ -94,8 +94,8 @@ func (s CurrencyDesignStateValue) MarshalBSON() ([]byte, error) {
 }
 
 type CurrencyDesignStateValueBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	CD bson.Raw `bson:"currencydesign"`
+	Hint           string   `bson:"_hint"`
+	CurrencyDesign bson.Raw `bson:"currencydesign"`
 }
 
 func (s *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -106,14 +106,14 @@ func (s *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(u.HT)
+	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
 	var cd CurrencyDesign
-	if err := cd.DecodeBSON(u.CD, enc); err != nil {
+	if err := cd.DecodeBSON(u.CurrencyDesign, enc); err != nil {
 		return e(err, "")
 	}
 

@@ -10,22 +10,22 @@ import (
 
 type TransferFactJSONMarshaler struct {
 	base.BaseFactJSONMarshaler
-	SD base.Address    `json:"sender"`
-	IT []TransfersItem `json:"items"`
+	Sender base.Address    `json:"sender"`
+	Items  []TransfersItem `json:"items"`
 }
 
 func (fact TransfersFact) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(TransferFactJSONMarshaler{
 		BaseFactJSONMarshaler: fact.BaseFact.JSONMarshaler(),
-		SD:                    fact.sender,
-		IT:                    fact.items,
+		Sender:                fact.sender,
+		Items:                 fact.items,
 	})
 }
 
 type TransfersFactJSONUnmarshaler struct {
 	base.BaseFactJSONUnmarshaler
-	SD string          `json:"sender"`
-	IT json.RawMessage `json:"items"`
+	Sender string          `json:"sender"`
+	Items  json.RawMessage `json:"items"`
 }
 
 func (fact *TransfersFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -39,7 +39,7 @@ func (fact *TransfersFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	return fact.unpack(enc, uf.SD, uf.IT)
+	return fact.unpack(enc, uf.Sender, uf.Items)
 }
 
 type transfersMarshaler struct {

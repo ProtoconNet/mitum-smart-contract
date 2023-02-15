@@ -19,9 +19,9 @@ func (po CurrencyPolicy) MarshalBSON() ([]byte, error) {
 }
 
 type CurrencyPolicyBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	MN string   `bson:"new_account_min_balance"`
-	FE bson.Raw `bson:"feeer"`
+	Hint          string   `bson:"_hint"`
+	NewAccountMin string   `bson:"new_account_min_balance"`
+	Feeer         bson.Raw `bson:"feeer"`
 }
 
 func (po *CurrencyPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -32,10 +32,10 @@ func (po *CurrencyPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(upo.HT)
+	ht, err := hint.ParseHint(upo.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 
-	return po.unpack(enc, ht, upo.MN, upo.FE)
+	return po.unpack(enc, ht, upo.NewAccountMin, upo.Feeer)
 }

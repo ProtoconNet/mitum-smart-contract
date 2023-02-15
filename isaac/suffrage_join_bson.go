@@ -23,7 +23,7 @@ func (fact SuffrageJoinFact) MarshalBSON() ([]byte, error) {
 }
 
 type SuffrageJoinFactBSONUnMarshaler struct {
-	HT        string      `bson:"_hint"`
+	Hint      string      `bson:"_hint"`
 	Candidate string      `bson:"candidate"`
 	Start     base.Height `bson:"start"`
 }
@@ -46,7 +46,7 @@ func (fact *SuffrageJoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uf.HT)
+	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
 		return e(err, "")
 	}
@@ -81,7 +81,7 @@ func (fact SuffrageGenesisJoinFact) MarshalBSON() ([]byte, error) {
 }
 
 type SuffrageGenesisJoinFactBSONUnMarshaler struct {
-	HT    string   `bson:"_hint"`
+	Hint  string   `bson:"_hint"`
 	Nodes bson.Raw `bson:"nodes"`
 }
 
@@ -103,7 +103,7 @@ func (fact *SuffrageGenesisJoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) 
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uf.HT)
+	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
 		return e(err, "")
 	}

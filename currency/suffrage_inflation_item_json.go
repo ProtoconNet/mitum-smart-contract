@@ -12,22 +12,22 @@ import (
 
 type SuffrageInflationItemJSONMarshaler struct {
 	hint.BaseHinter
-	RC base.Address `json:"receiver"`
-	AM Amount       `json:"amount"`
+	Receiver base.Address `json:"receiver"`
+	Amount   Amount       `json:"amount"`
 }
 
 func (it SuffrageInflationItem) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(SuffrageInflationItemJSONMarshaler{
 		BaseHinter: it.BaseHinter,
-		RC:         it.receiver,
-		AM:         it.amount,
+		Receiver:   it.receiver,
+		Amount:     it.amount,
 	})
 }
 
 type SuffrageInflationItemJSONUnmarshaler struct {
-	HT hint.Hint       `json:"_hint"`
-	RC string          `json:"receiver"`
-	AM json.RawMessage `json:"amount"`
+	HT       hint.Hint       `json:"_hint"`
+	Receiver string          `json:"receiver"`
+	Amount   json.RawMessage `json:"amount"`
 }
 
 func (it *SuffrageInflationItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -38,5 +38,5 @@ func (it *SuffrageInflationItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) erro
 		return e(err, "")
 	}
 
-	return it.unpack(enc, uit.HT, uit.RC, uit.AM)
+	return it.unpack(enc, uit.HT, uit.Receiver, uit.Amount)
 }

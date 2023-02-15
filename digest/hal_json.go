@@ -14,9 +14,9 @@ var HALJSONConfigDefault = jsoniter.Config{
 
 type BaseHalJSONMarshaler struct {
 	hint.BaseHinter
-	I  interface{}            `json:"_embedded,omitempty"`
-	LS map[string]HalLink     `json:"_links,omitempty"`
-	EX map[string]interface{} `json:"_extra,omitempty"`
+	Embedded interface{}            `json:"_embedded,omitempty"`
+	Links    map[string]HalLink     `json:"_links,omitempty"`
+	Extra    map[string]interface{} `json:"_extra,omitempty"`
 }
 
 func (hal BaseHal) MarshalJSON() ([]byte, error) {
@@ -25,16 +25,16 @@ func (hal BaseHal) MarshalJSON() ([]byte, error) {
 
 	return util.MarshalJSON(BaseHalJSONMarshaler{
 		BaseHinter: hal.BaseHinter,
-		I:          hal.i,
-		LS:         ls,
-		EX:         hal.extras,
+		Embedded:   hal.i,
+		Links:      ls,
+		Extra:      hal.extras,
 	})
 }
 
 type BaseHalJSONUnpacker struct {
-	R  json.RawMessage        `json:"_embedded,omitempty"`
-	LS map[string]HalLink     `json:"_links,omitempty"`
-	EX map[string]interface{} `json:"_extra,omitempty"`
+	Embedded json.RawMessage        `json:"_embedded,omitempty"`
+	Links    map[string]HalLink     `json:"_links,omitempty"`
+	Extra    map[string]interface{} `json:"_extra,omitempty"`
 }
 
 func (hal *BaseHal) UnmarshalJSON(b []byte) error {
@@ -43,9 +43,9 @@ func (hal *BaseHal) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	hal.raw = uh.R
-	hal.links = uh.LS
-	hal.extras = uh.EX
+	hal.raw = uh.Embedded
+	hal.links = uh.Links
+	hal.extras = uh.Extra
 
 	return nil
 }
@@ -63,8 +63,8 @@ func (hl HalLink) MarshalJSON() ([]byte, error) {
 }
 
 type HalLinkJSONUnpacker struct {
-	HR string                 `json:"href"`
-	PR map[string]interface{} `json:"properties,omitempty"`
+	Href       string                 `json:"href"`
+	Properties map[string]interface{} `json:"properties,omitempty"`
 }
 
 func (hl *HalLink) UnmarshalJSON(b []byte) error {
@@ -73,8 +73,8 @@ func (hl *HalLink) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	hl.href = uh.HR
-	hl.properties = uh.PR
+	hl.href = uh.Href
+	hl.properties = uh.Properties
 
 	return nil
 }

@@ -23,7 +23,7 @@ func (fact SuffrageDisjoinFact) MarshalBSON() ([]byte, error) {
 }
 
 type SuffrageDisjoinFactBSONUnMarshaler struct {
-	HT    string      `bson:"_hint"`
+	Hint  string      `bson:"_hint"`
 	Node  string      `bson:"node"`
 	Start base.Height `bson:"start"`
 }
@@ -46,7 +46,7 @@ func (fact *SuffrageDisjoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) erro
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uf.HT)
+	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
 		return e(err, "")
 	}

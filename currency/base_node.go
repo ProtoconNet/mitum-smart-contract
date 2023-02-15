@@ -107,7 +107,7 @@ func (n BaseNode) MarshalBSON() ([]byte, error) {
 }
 
 type BaseNodeBSONUnMarshaler struct {
-	HT        string `bson:"_hint"`
+	Hint      string `bson:"_hint"`
 	Address   string `bson:"address"`
 	Publickey string `bson:"publickey"`
 }
@@ -122,7 +122,7 @@ func (n *BaseNode) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(u.HT)
+	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
 		return e(err, "")
 	}

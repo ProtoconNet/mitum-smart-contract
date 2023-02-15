@@ -11,7 +11,7 @@ import (
 )
 
 type BaseOperationBSONUnmarshaler struct {
-	HT   string   `bson:"_hint"`
+	Hint string   `bson:"_hint"`
 	Hash string   `bson:"hash"`
 	Fact bson.Raw `bson:"fact"`
 	// Signs []bson.Raw      `bson:"signs"`
@@ -37,7 +37,7 @@ func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(u.HT)
+	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
 		return e(err, "")
 	}
@@ -64,7 +64,7 @@ func (op *BaseNodeOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(u.HT)
+	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
 		return e(err, "")
 	}

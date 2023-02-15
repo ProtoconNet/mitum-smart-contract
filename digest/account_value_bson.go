@@ -20,10 +20,10 @@ func (va AccountValue) MarshalBSON() ([]byte, error) {
 }
 
 type AccountValueBSONUnmarshaler struct {
-	HT string      `bson:"_hint"`
-	AC bson.Raw    `bson:"ac"`
-	BL bson.Raw    `bson:"balance"`
-	H  base.Height `bson:"height"`
+	Hint    string      `bson:"_hint"`
+	Account bson.Raw    `bson:"ac"`
+	Balance bson.Raw    `bson:"balance"`
+	Height  base.Height `bson:"height"`
 }
 
 func (va *AccountValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -34,10 +34,10 @@ func (va *AccountValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uva.HT)
+	ht, err := hint.ParseHint(uva.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 
-	return va.unpack(enc, ht, uva.AC, uva.BL, uva.H)
+	return va.unpack(enc, ht, uva.Account, uva.Balance, uva.Height)
 }

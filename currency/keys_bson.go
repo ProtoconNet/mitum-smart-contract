@@ -20,9 +20,9 @@ func (ky BaseAccountKey) MarshalBSON() ([]byte, error) {
 }
 
 type KeyBSONUnmarshaler struct {
-	HT string `bson:"_hint"`
-	W  uint   `bson:"weight"`
-	K  string `bson:"key"`
+	Hint   string `bson:"_hint"`
+	Weight uint   `bson:"weight"`
+	Keys   string `bson:"key"`
 }
 
 func (ky *BaseAccountKey) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -32,12 +32,12 @@ func (ky *BaseAccountKey) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	if err := bson.Unmarshal(b, &uk); err != nil {
 		return e(err, "")
 	}
-	ht, err := hint.ParseHint(uk.HT)
+	ht, err := hint.ParseHint(uk.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 
-	return ky.unpack(enc, ht, uk.W, uk.K)
+	return ky.unpack(enc, ht, uk.Weight, uk.Keys)
 }
 
 func (ks BaseAccountKeys) MarshalBSON() ([]byte, error) {
@@ -52,10 +52,10 @@ func (ks BaseAccountKeys) MarshalBSON() ([]byte, error) {
 }
 
 type KeysBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	HS string   `bson:"hash"`
-	KS bson.Raw `bson:"keys"`
-	TH uint     `bson:"threshold"`
+	Hint      string   `bson:"_hint"`
+	Hash      string   `bson:"hash"`
+	Keys      bson.Raw `bson:"keys"`
+	Threshold uint     `bson:"threshold"`
 }
 
 func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -66,16 +66,16 @@ func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uks.HT)
+	ht, err := hint.ParseHint(uks.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 
 	var vh valuehash.HashDecoder
-	err = vh.UnmarshalText(valuehash.NewBytesFromString(uks.HS))
+	err = vh.UnmarshalText(valuehash.NewBytesFromString(uks.Hash))
 	if err != nil {
 		return e(err, "")
 	}
 
-	return ks.unpack(enc, ht, vh, uks.KS, uks.TH)
+	return ks.unpack(enc, ht, vh, uks.Keys, uks.Threshold)
 }

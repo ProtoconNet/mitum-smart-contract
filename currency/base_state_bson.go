@@ -28,7 +28,7 @@ func (s BaseState) MarshalBSON() ([]byte, error) {
 }
 
 type BaseStateBSONUnmarshaler struct {
-	HT         string            `bson:"_hint"`
+	Hint       string            `bson:"_hint"`
 	Hash       valuehash.Bytes   `bson:"hash"`
 	Previous   valuehash.Bytes   `bson:"previous"`
 	Key        string            `bson:"key"`
@@ -45,7 +45,7 @@ func (s *BaseState) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(u.HT)
+	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
 		return e(err, "")
 	}

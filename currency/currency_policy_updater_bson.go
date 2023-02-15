@@ -22,9 +22,9 @@ func (fact CurrencyPolicyUpdaterFact) MarshalBSON() ([]byte, error) {
 }
 
 type CurrencyPolicyUpdaterFactBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	CR string   `bson:"currency"`
-	PO bson.Raw `bson:"policy"`
+	Hint     string   `bson:"_hint"`
+	Currency string   `bson:"currency"`
+	Policy   bson.Raw `bson:"policy"`
 }
 
 func (fact *CurrencyPolicyUpdaterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -45,13 +45,13 @@ func (fact *CurrencyPolicyUpdaterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uf.HT)
+	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
-	return fact.unpack(enc, uf.CR, uf.PO)
+	return fact.unpack(enc, uf.Currency, uf.Policy)
 }
 
 func (op CurrencyPolicyUpdater) MarshalBSON() ([]byte, error) {

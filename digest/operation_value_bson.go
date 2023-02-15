@@ -32,13 +32,13 @@ func (va OperationValue) MarshalBSON() ([]byte, error) {
 }
 
 type OperationValueBSONUnmarshaler struct {
-	HT string      `bson:"_hint"`
-	OP bson.Raw    `bson:"op"`
-	H  base.Height `bson:"height"`
-	CT time.Time   `bson:"confirmed_at"`
-	IN bool        `bson:"in_state"`
+	Hint        string      `bson:"_hint"`
+	OP          bson.Raw    `bson:"op"`
+	Height      base.Height `bson:"height"`
+	ConfirmedAt time.Time   `bson:"confirmed_at"`
+	InState     bool        `bson:"in_state"`
 	//RS bson.Raw    `bson:"reason"`
-	ID uint64 `bson:"index"`
+	Index uint64 `bson:"index"`
 }
 
 func (va *OperationValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -48,7 +48,7 @@ func (va *OperationValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uva.HT)
+	ht, err := hint.ParseHint(uva.Hint)
 	if err != nil {
 		return e(err, "")
 	}
@@ -68,10 +68,10 @@ func (va *OperationValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	// 	return err
 	// }
 
-	va.height = uva.H
-	va.confirmedAt = uva.CT
-	va.inState = uva.IN
-	va.index = uva.ID
+	va.height = uva.Height
+	va.confirmedAt = uva.ConfirmedAt
+	va.inState = uva.InState
+	va.index = uva.Index
 	// va.reason = reason
 	return nil
 }

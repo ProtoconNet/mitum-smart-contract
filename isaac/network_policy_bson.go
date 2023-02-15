@@ -23,7 +23,7 @@ func (p NetworkPolicy) MarshalBSON() ([]byte, error) {
 }
 
 type NetworkPolicyBSONUnMarshaler struct {
-	HT                           string      `bson:"_hint"`
+	Hint                         string      `bson:"_hint"`
 	SuffrageCandidateLimiterRule bson.Raw    `bson:"suffrage_candidate_limiter"`
 	MaxOperationsInProposal      uint64      `bson:"max_operations_in_proposal"`
 	SuffrageCandidateLifespan    base.Height `bson:"suffrage_candidate_lifespan"`
@@ -39,7 +39,7 @@ func (p *NetworkPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(u.HT)
+	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
 		return e(err, "")
 	}
@@ -58,7 +58,7 @@ func (s NetworkPolicyStateValue) MarshalBSON() ([]byte, error) {
 }
 
 type NetworkPolicyStateValueBSONUnmarshaler struct {
-	HT     string   `bson:"_hint"`
+	Hint   string   `bson:"_hint"`
 	Policy bson.Raw `bson:"policy"`
 }
 
@@ -70,7 +70,7 @@ func (s *NetworkPolicyStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) err
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(u.HT)
+	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
 		return e(err, "")
 	}

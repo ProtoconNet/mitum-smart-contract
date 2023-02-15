@@ -12,22 +12,22 @@ import (
 
 type KeyJSONMarshaler struct {
 	hint.BaseHinter
-	W uint           `json:"weight"`
-	K base.Publickey `json:"key"`
+	Weight uint           `json:"weight"`
+	Key    base.Publickey `json:"key"`
 }
 
 func (ky BaseAccountKey) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(KeyJSONMarshaler{
 		BaseHinter: ky.BaseHinter,
-		W:          ky.w,
-		K:          ky.k,
+		Weight:     ky.w,
+		Key:        ky.k,
 	})
 }
 
 type KeyJSONUnmarshaler struct {
-	HT hint.Hint `json:"_hint"`
-	W  uint      `json:"weight"`
-	K  string    `json:"key"`
+	Hint   hint.Hint `json:"_hint"`
+	Weight uint      `json:"weight"`
+	Key    string    `json:"key"`
 }
 
 func (ky *BaseAccountKey) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -38,30 +38,30 @@ func (ky *BaseAccountKey) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return ky.unpack(enc, uk.HT, uk.W, uk.K)
+	return ky.unpack(enc, uk.Hint, uk.Weight, uk.Key)
 }
 
 type KeysJSONMarshaler struct {
 	hint.BaseHinter
-	H  util.Hash    `json:"hash"`
-	KS []AccountKey `json:"keys"`
-	TH uint         `json:"threshold"`
+	Hash      util.Hash    `json:"hash"`
+	Keys      []AccountKey `json:"keys"`
+	Threshold uint         `json:"threshold"`
 }
 
 func (ks BaseAccountKeys) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(KeysJSONMarshaler{
 		BaseHinter: ks.BaseHinter,
-		H:          ks.h,
-		KS:         ks.keys,
-		TH:         ks.threshold,
+		Hash:       ks.h,
+		Keys:       ks.keys,
+		Threshold:  ks.threshold,
 	})
 }
 
 type KeysJSONUnMarshaler struct {
-	HT hint.Hint             `json:"_hint"`
-	H  valuehash.HashDecoder `json:"hash"`
-	KS json.RawMessage       `json:"keys"`
-	TH uint                  `json:"threshold"`
+	Hint      hint.Hint             `json:"_hint"`
+	Hash      valuehash.HashDecoder `json:"hash"`
+	Keys      json.RawMessage       `json:"keys"`
+	Threshold uint                  `json:"threshold"`
 }
 
 func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -72,6 +72,6 @@ func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return ks.unpack(enc, uks.HT, uks.H, uks.KS, uks.TH)
+	return ks.unpack(enc, uks.Hint, uks.Hash, uks.Keys, uks.Threshold)
 
 }

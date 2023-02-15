@@ -13,23 +13,23 @@ import (
 type AccountValueJSONMarshaler struct {
 	hint.BaseHinter
 	currency.AccountJSONMarshaler
-	BL []currency.Amount `json:"balance,omitempty"`
-	HT base.Height       `json:"height"`
+	Balance []currency.Amount `json:"balance,omitempty"`
+	Height  base.Height       `json:"height"`
 }
 
 func (va AccountValue) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(AccountValueJSONMarshaler{
 		BaseHinter:           va.BaseHinter,
 		AccountJSONMarshaler: va.ac.EncodeJSON(),
-		BL:                   va.balance,
-		HT:                   va.height,
+		Balance:              va.balance,
+		Height:               va.height,
 	})
 }
 
 type AccountValueJSONUnmarshaler struct {
-	HT hint.Hint
-	BL json.RawMessage `json:"balance"`
-	H  base.Height     `json:"height"`
+	Hint    hint.Hint
+	Balance json.RawMessage `json:"balance"`
+	Height  base.Height     `json:"height"`
 }
 
 func (va *AccountValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -39,7 +39,7 @@ func (va *AccountValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	}
 
 	ac := new(currency.Account)
-	if err := va.unpack(enc, uva.HT, nil, uva.BL, uva.H); err != nil {
+	if err := va.unpack(enc, uva.Hint, nil, uva.Balance, uva.Height); err != nil {
 		return err
 	} else if err := ac.DecodeJSON(b, enc); err != nil {
 		return err

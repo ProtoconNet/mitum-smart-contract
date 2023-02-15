@@ -10,22 +10,22 @@ import (
 
 type CreateAccountsFactJSONMarshaler struct {
 	base.BaseFactJSONMarshaler
-	SD base.Address         `json:"sender"`
-	IT []CreateAccountsItem `json:"items"`
+	Sender base.Address         `json:"sender"`
+	Items  []CreateAccountsItem `json:"items"`
 }
 
 func (fact CreateAccountsFact) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(CreateAccountsFactJSONMarshaler{
 		BaseFactJSONMarshaler: fact.BaseFact.JSONMarshaler(),
-		SD:                    fact.sender,
-		IT:                    fact.items,
+		Sender:                fact.sender,
+		Items:                 fact.items,
 	})
 }
 
 type CreateAccountsFactJSONUnMarshaler struct {
 	base.BaseFactJSONUnmarshaler
-	SD string          `json:"sender"`
-	IT json.RawMessage `json:"items"`
+	Sender string          `json:"sender"`
+	Items  json.RawMessage `json:"items"`
 }
 
 func (fact *CreateAccountsFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -38,7 +38,7 @@ func (fact *CreateAccountsFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	return fact.unpack(enc, uf.SD, uf.IT)
+	return fact.unpack(enc, uf.Sender, uf.Items)
 }
 
 type createAccountsMarshaler struct {

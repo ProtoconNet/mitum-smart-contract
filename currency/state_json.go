@@ -10,13 +10,13 @@ import (
 
 type AccountStateValueJSONMarshaler struct {
 	hint.BaseHinter
-	AC Account `json:"account"`
+	Account Account `json:"account"`
 }
 
 func (s AccountStateValue) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(AccountStateValueJSONMarshaler{
 		BaseHinter: s.BaseHinter,
-		AC:         s.Account,
+		Account:    s.Account,
 	})
 }
 
@@ -45,13 +45,13 @@ func (s *AccountStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 type BalanceStateValueJSONMarshaler struct {
 	hint.BaseHinter
-	AM Amount `json:"amount"`
+	Amount Amount `json:"amount"`
 }
 
 func (s BalanceStateValue) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(BalanceStateValueJSONMarshaler{
 		BaseHinter: s.BaseHinter,
-		AM:         s.Amount,
+		Amount:     s.Amount,
 	})
 }
 
@@ -80,13 +80,13 @@ func (s *BalanceStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 type CurrencyDesignStateValueJSONMarshaler struct {
 	hint.BaseHinter
-	CD CurrencyDesign `json:"currencydesign"`
+	CurrencyDesign CurrencyDesign `json:"currencydesign"`
 }
 
 func (s CurrencyDesignStateValue) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(CurrencyDesignStateValueJSONMarshaler{
-		BaseHinter: s.BaseHinter,
-		CD:         s.CurrencyDesign,
+		BaseHinter:     s.BaseHinter,
+		CurrencyDesign: s.CurrencyDesign,
 	})
 }
 

@@ -11,22 +11,22 @@ import (
 
 type TransfersItemJSONPacker struct {
 	hint.BaseHinter
-	RC base.Address `json:"receiver"`
-	AM []Amount     `json:"amounts"`
+	Receiver base.Address `json:"receiver"`
+	Amounts  []Amount     `json:"amounts"`
 }
 
 func (it BaseTransfersItem) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(TransfersItemJSONPacker{
 		BaseHinter: it.BaseHinter,
-		RC:         it.receiver,
-		AM:         it.amounts,
+		Receiver:   it.receiver,
+		Amounts:    it.amounts,
 	})
 }
 
 type BaseTransfersItemJSONUnpacker struct {
-	HT hint.Hint       `json:"_hint"`
-	RC string          `json:"receiver"`
-	AM json.RawMessage `json:"amounts"`
+	Hint     hint.Hint       `json:"_hint"`
+	Receiver string          `json:"receiver"`
+	Amounts  json.RawMessage `json:"amounts"`
 }
 
 func (it *BaseTransfersItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -37,5 +37,5 @@ func (it *BaseTransfersItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	return it.unpack(enc, uit.HT, uit.RC, uit.AM)
+	return it.unpack(enc, uit.Hint, uit.Receiver, uit.Amounts)
 }

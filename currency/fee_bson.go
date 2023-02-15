@@ -21,8 +21,8 @@ func (fact FeeOperationFact) MarshalBSON() ([]byte, error) {
 }
 
 type FeeOperationFactBSONUnmarshaler struct {
-	HT string   `bson:"_hint"`
-	AM bson.Raw `bson:"amounts"`
+	Hint    string   `bson:"_hint"`
+	Amounts bson.Raw `bson:"amounts"`
 }
 
 func (fact *FeeOperationFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -43,13 +43,13 @@ func (fact *FeeOperationFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uf.HT)
+	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
-	return fact.unpack(enc, uf.AM)
+	return fact.unpack(enc, uf.Amounts)
 }
 
 func (op *FeeOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {

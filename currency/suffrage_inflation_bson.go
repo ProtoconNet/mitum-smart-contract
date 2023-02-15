@@ -21,8 +21,8 @@ func (fact SuffrageInflationFact) MarshalBSON() ([]byte, error) {
 }
 
 type SuffrageInflationFactBSONUnmarshaler struct {
-	HT string     `bson:"_hint"`
-	IT []bson.Raw `bson:"items"`
+	Hint  string     `bson:"_hint"`
+	Items []bson.Raw `bson:"items"`
 }
 
 func (fact *SuffrageInflationFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -43,16 +43,16 @@ func (fact *SuffrageInflationFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 		return e(err, "")
 	}
 
-	ht, err := hint.ParseHint(uf.HT)
+	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
 		return e(err, "")
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
-	items := make([]SuffrageInflationItem, len(uf.IT))
-	for i := range uf.IT {
+	items := make([]SuffrageInflationItem, len(uf.Items))
+	for i := range uf.Items {
 		item := SuffrageInflationItem{}
-		if err := item.DecodeBSON(uf.IT[i], enc); err != nil {
+		if err := item.DecodeBSON(uf.Items[i], enc); err != nil {
 			return e(err, "")
 		}
 		items[i] = item
