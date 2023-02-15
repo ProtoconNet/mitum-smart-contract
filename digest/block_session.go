@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/spikeekips/mitum-currency/currency"
+	"github.com/spikeekips/mitum-currency/digest/isaac"
 	"github.com/spikeekips/mitum/base"
 	mitumutil "github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/fixedtree"
@@ -26,6 +27,7 @@ type BlockSession struct {
 	sts             []base.State
 	st              *Database
 	opsTreeNodes    map[string]base.OperationFixedtreeNode
+	blockModels     []mongo.WriteModel
 	operationModels []mongo.WriteModel
 	accountModels   []mongo.WriteModel
 	balanceModels   []mongo.WriteModel
@@ -61,6 +63,10 @@ func (bs *BlockSession) Prepare() error {
 		return err
 	}
 
+	if err := bs.prepareBlock(); err != nil {
+		return err
+	}
+
 	if err := bs.prepareOperations(); err != nil {
 		return err
 	}
@@ -82,6 +88,10 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 
 		_ = bs.close()
 	}()
+
+	if err := bs.writeModels(ctx, defaultColNameBlock, bs.blockModels); err != nil {
+		return err
+	}
 
 	if err := bs.writeModels(ctx, defaultColNameOperation, bs.operationModels); err != nil {
 		return err
@@ -118,6 +128,32 @@ func (bs *BlockSession) prepareOperationsTree() error {
 	}
 
 	bs.opsTreeNodes = nodes
+
+	return nil
+}
+
+func (bs *BlockSession) prepareBlock() error {
+	if bs.block == nil {
+		return nil
+	}
+
+	bs.blockModels = make([]mongo.WriteModel, 1)
+
+	manifest := isaac.NewManifest(
+		bs.block.Manifest().Height(),
+		bs.block.Manifest().Previous(),
+		bs.block.Manifest().Proposal(),
+		bs.block.Manifest().OperationsTree(),
+		bs.block.Manifest().StatesTree(),
+		bs.block.Manifest().Suffrage(),
+		bs.block.Manifest().ProposedAt(),
+	)
+
+	doc, err := NewManifestDoc(manifest, bs.st.database.Encoder(), bs.block.Manifest().Height(), bs.block.SignedAt())
+	if err != nil {
+		return err
+	}
+	bs.blockModels[0] = mongo.NewInsertOneModel().SetDocument(doc)
 
 	return nil
 }

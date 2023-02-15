@@ -1,6 +1,5 @@
 package digest
 
-/*
 import (
 	"net/http"
 	"time"
@@ -8,8 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/base/block"
-	mitumutil "github.com/spikeekips/mitum/util"
+	"github.com/spikeekips/mitum/util"
 )
 
 func (hd *Handlers) handleManifestByHeight(w http.ResponseWriter, r *http.Request) {
@@ -30,9 +28,28 @@ func (hd *Handlers) handleManifestByHeight(w http.ResponseWriter, r *http.Reques
 		height = h
 	}
 
-	hd.handleManifest(w, r, func() (block.Manifest, bool, error) {
-		return hd.database.BlockMap(height)
-	})
+	v, err := hd.handleManifestByHeightInGroup(height)
+	if err != nil {
+		HTTP2HandleError(w, err)
+	} else {
+		HTTP2WriteHalBytes(hd.enc, w, v, http.StatusOK)
+	}
+}
+
+func (hd *Handlers) handleManifestByHeightInGroup(
+	height base.Height,
+) ([]byte, error) {
+	m, err := hd.database.Manifest(height)
+	if err != nil {
+		return nil, err
+	}
+
+	hal, err := hd.buildManifestHal(m)
+	if err != nil {
+		return nil, err
+	}
+	b, err := hd.enc.Marshal(hal)
+	return b, err
 }
 
 /*
@@ -53,41 +70,29 @@ func (hd *Handlers) handleManifestByHash(w http.ResponseWriter, r *http.Request)
 		return hd.database.Manifest(h)
 	})
 }
+*/
 
-func (hd *Handlers) handleManifest(w http.ResponseWriter, r *http.Request, get func() (block.Manifest, bool, error)) {
-	cachekey := CacheKeyPath(r)
-	if v, err, shared := hd.rg.Do(cachekey, func() (interface{}, error) {
-		return hd.handleManifestInGroup(get)
-	}); err != nil {
-		HTTP2HandleError(w, err)
-	} else {
-		HTTP2WriteHalBytes(hd.enc, w, v.([]byte), http.StatusOK)
-
-		if !shared {
-			HTTP2WriteCache(w, cachekey, time.Hour*30)
-		}
-	}
-}
-
-func (hd *Handlers) handleManifestInGroup(get func() (block.Manifest, bool, error)) ([]byte, error) {
-	var manifest block.Manifest
-	switch m, found, err := get(); {
-	case err != nil:
-		return nil, err
-	case !found:
-		return nil, mitumutil.ErrNotFound.Errorf("manifest not found")
-	default:
-		manifest = m
+/*
+func (hd *Handlers) handleManifestByHash(w http.ResponseWriter, r *http.Request) {
+	if err := LoadFromCache(hd.cache, CacheKeyPath(r), w); err == nil {
+		return
 	}
 
-	i, err := hd.buildManifestHal(manifest)
+	var h mitumutil.Hash
+	h, err := parseHashFromPath(mux.Vars(r)["hash"])
 	if err != nil {
-		return nil, err
-	}
-	return hd.enc.Marshal(i)
-}
+		HTTP2ProblemWithError(w, errors.Wrap(err, "invalid hash for manifest by hash"), http.StatusBadRequest)
 
-func (hd *Handlers) buildManifestHal(manifest block.Manifest) (Hal, error) {
+		return
+	}
+
+	hd.handleManifest(w, r, func() (block.Manifest, bool, error) {
+		return hd.database.Manifest(h)
+	})
+}
+*/
+
+func (hd *Handlers) buildManifestHal(manifest base.Manifest) (Hal, error) {
 	height := manifest.Height()
 
 	var hal Hal
@@ -97,11 +102,11 @@ func (hd *Handlers) buildManifestHal(manifest block.Manifest) (Hal, error) {
 	}
 	hal = NewBaseHal(manifest, NewHalLink(h, nil))
 
-	h, err = hd.combineURL(HandlerPathManifestByHash, "hash", manifest.Hash().String())
-	if err != nil {
-		return nil, err
-	}
-	hal = hal.AddLink("alternate", NewHalLink(h, nil))
+	// h, err = hd.combineURL(HandlerPathManifestByHash, "hash", manifest.Hash().String())
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// hal = hal.AddLink("alternate", NewHalLink(h, nil))
 
 	h, err = hd.combineURL(HandlerPathManifestByHeight, "height", (height + 1).String())
 	if err != nil {
@@ -122,9 +127,9 @@ func (hd *Handlers) buildManifestHal(manifest block.Manifest) (Hal, error) {
 	return hal, nil
 }
 
-/*
 func (hd *Handlers) handleManifests(w http.ResponseWriter, r *http.Request) {
-	offset := parseOffsetQuery(r.URL.Query().Get("offset"))
+	limit := parseLimitQuery(r.URL.Query().Get("limit"))
+	offset := parseStringQuery(r.URL.Query().Get("offset"))
 	reverse := parseBoolQuery(r.URL.Query().Get("reverse"))
 
 	cachekey := CacheKey(r.URL.Path, stringOffsetQuery(offset), stringBoolQuery("reverse", reverse))
@@ -144,7 +149,7 @@ func (hd *Handlers) handleManifests(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if v, err, shared := hd.rg.Do(cachekey, func() (interface{}, error) {
-		i, filled, err := hd.handleManifestsInGroup(height, offset, reverse)
+		i, filled, err := hd.handleManifestsInGroup(height, offset, reverse, limit)
 
 		return []interface{}{i, filled}, err
 	}); err != nil {
@@ -171,13 +176,23 @@ func (hd *Handlers) handleManifests(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (hd *Handlers) handleManifestsInGroup(height base.Height, offset string, reverse bool) ([]byte, bool, error) {
-	limit := hd.itemsLimiter("manifests")
+func (hd *Handlers) handleManifestsInGroup(
+	height base.Height,
+	offset string,
+	reverse bool,
+	l int64,
+) ([]byte, bool, error) {
+	var limit int64
+	if l < 0 {
+		limit = hd.itemsLimiter("manifests")
+	} else {
+		limit = l
+	}
 
 	var vas []Hal
 	if err := hd.database.Manifests(
 		true, reverse, height, limit,
-		func(height base.Height, _ valuehash.Hash, va block.Manifest) (bool, error) {
+		func(height base.Height, va base.Manifest) (bool, error) {
 			if height <= base.GenesisHeight {
 				return !reverse, nil
 			}
@@ -193,7 +208,7 @@ func (hd *Handlers) handleManifestsInGroup(height base.Height, offset string, re
 	); err != nil {
 		return nil, false, err
 	} else if len(vas) < 1 {
-		return nil, false, mitumutil.ErrNotFound.Errorf("manifests not found")
+		return nil, false, util.ErrNotFound.Errorf("manifests not found")
 	}
 
 	i, err := hd.buildManifestsHAL(vas, offset, reverse)
@@ -221,7 +236,7 @@ func (hd *Handlers) buildManifestsHAL(vas []Hal, offset string, reverse bool) (H
 
 	var nextoffset string
 	if len(vas) > 0 {
-		va := vas[len(vas)-1].Interface().(block.Manifest)
+		va := vas[len(vas)-1].Interface().(base.Manifest)
 		nextoffset = va.Height().String()
 	}
 
@@ -242,4 +257,3 @@ func (hd *Handlers) buildManifestsHAL(vas []Hal, offset string, reverse bool) (H
 
 	return hal, nil
 }
-*/

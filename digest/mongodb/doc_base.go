@@ -49,7 +49,7 @@ func (do BaseDoc) M() (bson.M, error) {
 	return m, nil
 }
 
-type BaseDocUnpacker struct {
+type BaseDocBSONUnMarshaler struct {
 	I bson.Raw      `bson:"_id,omitempty"`
 	E string        `bson:"_e"`
 	D bson.RawValue `bson:"d"`
@@ -57,7 +57,7 @@ type BaseDocUnpacker struct {
 }
 
 func LoadDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id */, interface{} /* data */, error) {
-	var bd BaseDocUnpacker
+	var bd BaseDocBSONUnMarshaler
 	if err := bsonenc.Unmarshal(b, &bd); err != nil {
 		return nil, nil, err
 	}

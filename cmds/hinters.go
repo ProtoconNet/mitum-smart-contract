@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum-currency/currency"
 	"github.com/spikeekips/mitum-currency/digest"
+	digestisaac "github.com/spikeekips/mitum-currency/digest/isaac"
 	isaacoperation "github.com/spikeekips/mitum-currency/isaac"
 	"github.com/spikeekips/mitum/launch"
 	"github.com/spikeekips/mitum/util/encoder"
@@ -43,6 +44,7 @@ var hinters = []encoder.DecodeDetail{
 	{Hint: currency.AccountStateValueHint, Instance: currency.AccountStateValue{}},
 	{Hint: currency.BalanceStateValueHint, Instance: currency.BalanceStateValue{}},
 	{Hint: currency.CurrencyDesignStateValueHint, Instance: currency.CurrencyDesignStateValue{}},
+	{Hint: digestisaac.ManifestHint, Instance: digestisaac.Manifest{}},
 	{Hint: digest.AccountValueHint, Instance: digest.AccountValue{}},
 	{Hint: digest.OperationValueHint, Instance: digest.OperationValue{}},
 	{Hint: isaacoperation.GenesisNetworkPolicyHint, Instance: isaacoperation.GenesisNetworkPolicy{}},

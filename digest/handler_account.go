@@ -112,7 +112,7 @@ func (hd *Handlers) handleAccountOperations(w http.ResponseWriter, r *http.Reque
 		address = a
 	}
 
-	offset := parseOffsetQuery(r.URL.Query().Get("offset"))
+	offset := parseStringQuery(r.URL.Query().Get("offset"))
 	reverse := parseBoolQuery(r.URL.Query().Get("reverse"))
 
 	cachekey := CacheKey(r.URL.Path, stringOffsetQuery(offset), stringBoolQuery("reverse", reverse))
@@ -234,7 +234,7 @@ func (hd *Handlers) buildAccountOperationsHal(
 }
 
 func (hd *Handlers) handleAccounts(w http.ResponseWriter, r *http.Request) {
-	offset := parseOffsetQuery(r.URL.Query().Get("offset"))
+	offset := parseStringQuery(r.URL.Query().Get("offset"))
 
 	var pub base.Publickey
 	offsetHeight := base.NilHeight

@@ -31,6 +31,7 @@ var (
 	defaultColNameBalance   = "digest_bl"
 	defaultColNameCurrency  = "digest_cr"
 	defaultColNameOperation = "digest_op"
+	defaultColNameBlock     = "digest_bm"
 )
 
 var AllCollections = []string{
@@ -38,6 +39,7 @@ var AllCollections = []string{
 	defaultColNameBalance,
 	defaultColNameCurrency,
 	defaultColNameOperation,
+	defaultColNameBlock,
 }
 
 var DigestStorageLastBlockKey = "digest_last_block"
@@ -197,6 +199,7 @@ func (st *Database) clean(ctx context.Context) error {
 		defaultColNameBalance,
 		defaultColNameCurrency,
 		defaultColNameOperation,
+		defaultColNameBlock,
 	} {
 		if err := st.database.Client().Collection(col).Drop(ctx); err != nil {
 			return err
@@ -238,6 +241,7 @@ func (st *Database) cleanByHeight(ctx context.Context, height base.Height) error
 		defaultColNameBalance,
 		defaultColNameCurrency,
 		defaultColNameOperation,
+		defaultColNameBlock,
 	} {
 		res, err := st.database.Client().Collection(col).BulkWrite(
 			ctx,
@@ -254,10 +258,6 @@ func (st *Database) cleanByHeight(ctx context.Context, height base.Height) error
 	return st.setLastBlock(height - 1)
 }
 
-func (st *Database) BlockMap(height base.Height) (base.BlockMap, bool, error) {
-	return st.mitum.BlockMap(height)
-}
-
 /*
 func (st *Database) Manifest(h mitumutil.Hash) (base.Manifest, bool, error) {
 	return st.mitum.Manifest(h)
@@ -265,13 +265,12 @@ func (st *Database) Manifest(h mitumutil.Hash) (base.Manifest, bool, error) {
 */
 
 // Manifests returns block.Manifests by it's order, height.
-/*
 func (st *Database) Manifests(
 	load bool,
 	reverse bool,
 	offset base.Height,
 	limit int64,
-	callback func(base.Height, mitumutil.Hash, base.Manifest) (bool, error),
+	callback func(base.Height, base.Manifest) (bool, error),
 ) error {
 	var filter bson.M
 	if offset > base.NilHeight {
@@ -282,15 +281,37 @@ func (st *Database) Manifests(
 		}
 	}
 
-	return st.mitum.ManifestsByFilter(
+	sr := 1
+	if reverse {
+		sr = -1
+	}
+
+	opt := options.Find().SetSort(
+		util.NewBSONFilter("height", sr).Add("index", sr).D(),
+	)
+
+	switch {
+	case limit <= 0: // no limit
+	case limit > maxLimit:
+		opt = opt.SetLimit(maxLimit)
+	default:
+		opt = opt.SetLimit(limit)
+	}
+
+	return st.database.Client().Find(
+		context.Background(),
+		defaultColNameBlock,
 		filter,
-		load,
-		reverse,
-		limit,
-		callback,
+		func(cursor *mongo.Cursor) (bool, error) {
+			va, err := LoadManifest(cursor.Decode, st.database.Encoders())
+			if err != nil {
+				return false, err
+			}
+			return callback(va.Height(), va)
+		},
+		opt,
 	)
 }
-*/
 
 // OperationsByAddress finds the operation.Operations, which are related with
 // the given Address. The returned valuehash.Hash is the
@@ -666,6 +687,32 @@ func (st *Database) currencies() ([]string, error) {
 	}
 
 	return cids, nil
+}
+
+func (st *Database) Manifest(height base.Height) (base.Manifest, error) {
+	q := util.NewBSONFilter("height", height).D()
+
+	var m base.Manifest
+	if err := st.database.Client().GetByFilter(
+		defaultColNameBlock,
+		q,
+		func(res *mongo.SingleResult) error {
+			v, err := LoadManifest(res.Decode, st.database.Encoders())
+			if err != nil {
+				return err
+			}
+			m = v
+			return nil
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	if m != nil {
+		return m, nil
+	} else {
+		return nil, errors.Errorf("manifest is nil")
+	}
 }
 
 func (st *Database) currency(cid string) (currency.CurrencyDesign, base.State, error) {

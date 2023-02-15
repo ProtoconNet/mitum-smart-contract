@@ -59,7 +59,7 @@ func (hd *Handlers) handleOperationInGroup(h mitumutil.Hash) ([]byte, error) {
 }
 
 func (hd *Handlers) handleOperations(w http.ResponseWriter, r *http.Request) {
-	offset := parseOffsetQuery(r.URL.Query().Get("offset"))
+	offset := parseStringQuery(r.URL.Query().Get("offset"))
 	reverse := parseBoolQuery(r.URL.Query().Get("reverse"))
 
 	cachekey := CacheKey(r.URL.Path, stringOffsetQuery(offset), stringBoolQuery("reverse", reverse))
@@ -125,7 +125,7 @@ func (hd *Handlers) handleOperationsInGroup(offset string, reverse bool) ([]byte
 }
 
 func (hd *Handlers) handleOperationsByHeight(w http.ResponseWriter, r *http.Request) {
-	offset := parseOffsetQuery(r.URL.Query().Get("offset"))
+	offset := parseStringQuery(r.URL.Query().Get("offset"))
 	reverse := parseBoolQuery(r.URL.Query().Get("reverse"))
 
 	cachekey := CacheKey(r.URL.Path, stringOffsetQuery(offset), stringBoolQuery("reverse", reverse))

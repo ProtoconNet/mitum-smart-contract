@@ -3,6 +3,7 @@ package digest
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -80,7 +81,15 @@ func parseHashFromPath(s string) (util.Hash, error) {
 	return h, nil
 }
 
-func parseOffsetQuery(s string) string {
+func parseLimitQuery(s string) int64 {
+	n, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return int64(-1)
+	}
+	return n
+}
+
+func parseStringQuery(s string) string {
 	return strings.TrimSpace(s)
 }
 

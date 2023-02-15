@@ -165,16 +165,16 @@ func (hd *Handlers) setHandlers() {
 		Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathCurrency, hd.handleCurrency, true).
 		Methods(http.MethodOptions, "GET")
-	// _ = hd.setHandler(HandlerPathManifests, hd.handleManifests, true).
-	// 	Methods(http.MethodOptions, "GET")
+	_ = hd.setHandler(HandlerPathManifests, hd.handleManifests, true).
+		Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathOperations, hd.handleOperations, true).
 		Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathOperation, hd.handleOperation, true).
 		Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathOperationsByHeight, hd.handleOperationsByHeight, true).
 		Methods(http.MethodOptions, "GET")
-	// _ = hd.setHandler(HandlerPathManifestByHeight, hd.handleManifestByHeight, true).
-	// 	Methods(http.MethodOptions, "GET")
+	_ = hd.setHandler(HandlerPathManifestByHeight, hd.handleManifestByHeight, true).
+		Methods(http.MethodOptions, "GET")
 	// _ = hd.setHandler(HandlerPathManifestByHash, hd.handleManifestByHash, true).
 	// 	Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathBlockByHeight, hd.handleBlock, true).
