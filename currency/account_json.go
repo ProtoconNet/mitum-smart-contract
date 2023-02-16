@@ -12,7 +12,7 @@ import (
 
 type AccountJSONMarshaler struct {
 	hint.BaseHinter
-	Hint    util.Hash    `json:"hash"`
+	Hash    util.Hash    `json:"hash"`
 	Address base.Address `json:"address"`
 	Keys    AccountKeys  `json:"keys"`
 }
@@ -20,7 +20,7 @@ type AccountJSONMarshaler struct {
 func (ac Account) EncodeJSON() AccountJSONMarshaler {
 	return AccountJSONMarshaler{
 		BaseHinter: ac.BaseHinter,
-		Hint:       ac.h,
+		Hash:       ac.h,
 		Address:    ac.address,
 		Keys:       ac.keys,
 	}
@@ -29,7 +29,7 @@ func (ac Account) EncodeJSON() AccountJSONMarshaler {
 func (ac Account) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(AccountJSONMarshaler{
 		BaseHinter: ac.BaseHinter,
-		Hint:       ac.h,
+		Hash:       ac.h,
 		Address:    ac.address,
 		Keys:       ac.keys,
 	})
