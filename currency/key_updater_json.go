@@ -48,6 +48,12 @@ type keyUpdaterMarshaler struct {
 	BaseOperationJSONMarshaler
 }
 
+func (op KeyUpdater) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(keyUpdaterMarshaler{
+		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
+	})
+}
+
 func (op *KeyUpdater) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode KeyUpdater")
 
