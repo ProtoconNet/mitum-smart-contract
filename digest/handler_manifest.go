@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
+	mitumutil "github.com/spikeekips/mitum/util"
 )
 
 func (hd *Handlers) handleManifestByHeight(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +40,7 @@ func (hd *Handlers) handleManifestByHeight(w http.ResponseWriter, r *http.Reques
 func (hd *Handlers) handleManifestByHeightInGroup(
 	height base.Height,
 ) ([]byte, error) {
-	m, err := hd.database.Manifest(height)
+	m, err := hd.database.ManifestByHeight(height)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +53,6 @@ func (hd *Handlers) handleManifestByHeightInGroup(
 	return b, err
 }
 
-/*
 func (hd *Handlers) handleManifestByHash(w http.ResponseWriter, r *http.Request) {
 	if err := LoadFromCache(hd.cache, CacheKeyPath(r), w); err == nil {
 		return
@@ -66,31 +66,29 @@ func (hd *Handlers) handleManifestByHash(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	hd.handleManifest(w, r, func() (block.Manifest, bool, error) {
-		return hd.database.Manifest(h)
-	})
-}
-*/
-
-/*
-func (hd *Handlers) handleManifestByHash(w http.ResponseWriter, r *http.Request) {
-	if err := LoadFromCache(hd.cache, CacheKeyPath(r), w); err == nil {
-		return
-	}
-
-	var h mitumutil.Hash
-	h, err := parseHashFromPath(mux.Vars(r)["hash"])
+	v, err := hd.handleManifestByHashInGroup(h)
 	if err != nil {
-		HTTP2ProblemWithError(w, errors.Wrap(err, "invalid hash for manifest by hash"), http.StatusBadRequest)
+		HTTP2HandleError(w, err)
+	} else {
+		HTTP2WriteHalBytes(hd.enc, w, v, http.StatusOK)
+	}
+}
 
-		return
+func (hd *Handlers) handleManifestByHashInGroup(
+	hash mitumutil.Hash,
+) ([]byte, error) {
+	m, err := hd.database.ManifestByHash(hash)
+	if err != nil {
+		return nil, err
 	}
 
-	hd.handleManifest(w, r, func() (block.Manifest, bool, error) {
-		return hd.database.Manifest(h)
-	})
+	hal, err := hd.buildManifestHal(m)
+	if err != nil {
+		return nil, err
+	}
+	b, err := hd.enc.Marshal(hal)
+	return b, err
 }
-*/
 
 func (hd *Handlers) buildManifestHal(manifest base.Manifest) (Hal, error) {
 	height := manifest.Height()

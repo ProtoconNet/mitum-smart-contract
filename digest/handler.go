@@ -175,8 +175,8 @@ func (hd *Handlers) setHandlers() {
 		Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathManifestByHeight, hd.handleManifestByHeight, true).
 		Methods(http.MethodOptions, "GET")
-	// _ = hd.setHandler(HandlerPathManifestByHash, hd.handleManifestByHash, true).
-	// 	Methods(http.MethodOptions, "GET")
+	_ = hd.setHandler(HandlerPathManifestByHash, hd.handleManifestByHash, true).
+		Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathBlockByHeight, hd.handleBlock, true).
 		Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathBlockByHash, hd.handleBlock, true).

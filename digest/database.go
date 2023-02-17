@@ -689,8 +689,34 @@ func (st *Database) currencies() ([]string, error) {
 	return cids, nil
 }
 
-func (st *Database) Manifest(height base.Height) (base.Manifest, error) {
+func (st *Database) ManifestByHeight(height base.Height) (base.Manifest, error) {
 	q := util.NewBSONFilter("height", height).D()
+
+	var m base.Manifest
+	if err := st.database.Client().GetByFilter(
+		defaultColNameBlock,
+		q,
+		func(res *mongo.SingleResult) error {
+			v, err := LoadManifest(res.Decode, st.database.Encoders())
+			if err != nil {
+				return err
+			}
+			m = v
+			return nil
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	if m != nil {
+		return m, nil
+	} else {
+		return nil, errors.Errorf("manifest is nil")
+	}
+}
+
+func (st *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, error) {
+	q := util.NewBSONFilter("block", hash).D()
 
 	var m base.Manifest
 	if err := st.database.Client().GetByFilter(
