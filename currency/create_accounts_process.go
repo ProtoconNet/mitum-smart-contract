@@ -122,15 +122,11 @@ func (opp *CreateAccountsItemProcessor) Close() error {
 
 type CreateAccountsProcessor struct {
 	*base.BaseOperationProcessor
-	sb       map[CurrencyID]base.StateMergeValue
 	ns       []*CreateAccountsItemProcessor
-	required map[CurrencyID][2]Big
-	// collectFee func(AddFee) error
+	required map[CurrencyID][2]Big // required[0] : amount + fee, required[1] : fee
 }
 
-func NewCreateAccountsProcessor(
-// collectFee func(*OperationProcessor, AddFee) error,
-) GetNewProcessor {
+func NewCreateAccountsProcessor() GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,
@@ -152,10 +148,8 @@ func NewCreateAccountsProcessor(
 		}
 
 		opp.BaseOperationProcessor = b
-		opp.sb = nil
 		opp.ns = nil
 		opp.required = nil
-		// opp.collectFee = collectFee
 
 		return opp, nil
 	}
@@ -189,13 +183,18 @@ func (opp *CreateAccountsProcessor) Process( // nolint:dupl
 		return nil, base.NewBaseOperationProcessReasonError("expected CreateAccountsFact, not %T", op.Fact()), nil
 	}
 
-	if required, err := opp.calculateItemsFee(op, getStateFunc); err != nil {
+	var (
+		sendrBalSts, feeRecvrBalSts map[CurrencyID]base.State
+		required                    map[CurrencyID][2]Big
+		err                         error
+	)
+
+	if feeRecvrBalSts, required, err = opp.calculateItemsFee(op, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %w", err), nil
-	} else if sb, err := CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
+	} else if sendrBalSts, err = CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %s : %w", fact.sender, err), nil
 	} else {
 		opp.required = required
-		opp.sb = sb
 	}
 
 	ns := make([]*CreateAccountsItemProcessor, len(fact.items))
@@ -217,31 +216,48 @@ func (opp *CreateAccountsProcessor) Process( // nolint:dupl
 	}
 	opp.ns = ns
 
-	var sts []base.StateMergeValue // nolint:prealloc
+	var stmvs []base.StateMergeValue // nolint:prealloc
 	for i := range opp.ns {
 		s, err := opp.ns[i].Process(ctx, op, getStateFunc)
 		if err != nil {
 			return nil, base.NewBaseOperationProcessReasonError("failed to process CreateAccountsItem: %w", err), nil
 		}
-		sts = append(sts, s...)
+		stmvs = append(stmvs, s...)
 	}
 
-	for i := range opp.sb {
-		v, ok := opp.sb[i].Value().(BalanceStateValue)
+	for cid := range sendrBalSts {
+		v, ok := sendrBalSts[cid].Value().(BalanceStateValue)
 		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", opp.sb[i].Value()), nil
+			return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", sendrBalSts[cid].Value()), nil
 		}
-		stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[i][0])))
-		// stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[i][0]).Sub(opp.required[i][1])))
-		sts = append(sts, NewBalanceStateMergeValue(opp.sb[i].Key(), stv))
+
+		var stmv base.StateMergeValue
+		if sendrBalSts[cid].Key() == feeRecvrBalSts[cid].Key() {
+			stmv = NewBalanceStateMergeValue(
+				sendrBalSts[cid].Key(),
+				NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[cid][0]).Add(opp.required[cid][1]))),
+			)
+		} else {
+			stmv = NewBalanceStateMergeValue(
+				sendrBalSts[cid].Key(),
+				NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[cid][0]))),
+			)
+			r, ok := feeRecvrBalSts[cid].Value().(BalanceStateValue)
+			if !ok {
+				return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", feeRecvrBalSts[cid].Value()), nil
+			}
+			stmvs = append(
+				stmvs,
+				NewBalanceStateMergeValue(
+					feeRecvrBalSts[cid].Key(),
+					NewBalanceStateValue(r.Amount.WithBig(r.Amount.big.Add(opp.required[cid][1]))),
+				),
+			)
+		}
+		stmvs = append(stmvs, stmv)
 	}
 
-	// err := opp.collectFee(opp.required)
-	// if err != nil {
-	// 	return nil, base.NewBaseOperationProcessReasonError("failed to process create account item: %w", err), nil
-	// }
-
-	return sts, nil, nil
+	return stmvs, nil, nil
 }
 
 func (opp *CreateAccountsProcessor) Close() error {
@@ -249,7 +265,6 @@ func (opp *CreateAccountsProcessor) Close() error {
 		_ = opp.ns[i].Close()
 	}
 
-	opp.sb = nil
 	opp.ns = nil
 	opp.required = nil
 
@@ -258,10 +273,10 @@ func (opp *CreateAccountsProcessor) Close() error {
 	return nil
 }
 
-func (opp *CreateAccountsProcessor) calculateItemsFee(op base.Operation, getStateFunc base.GetStateFunc) (map[CurrencyID][2]Big, error) {
+func (opp *CreateAccountsProcessor) calculateItemsFee(op base.Operation, getStateFunc base.GetStateFunc) (map[CurrencyID]base.State, map[CurrencyID][2]Big, error) {
 	fact, ok := op.Fact().(CreateAccountsFact)
 	if !ok {
-		return nil, errors.Errorf("expected CreateAccountsFact, not %T", op.Fact())
+		return nil, nil, errors.Errorf("expected CreateAccountsFact, not %T", op.Fact())
 	}
 
 	items := make([]AmountsItem, len(fact.items))
@@ -272,7 +287,8 @@ func (opp *CreateAccountsProcessor) calculateItemsFee(op base.Operation, getStat
 	return CalculateItemsFee(getStateFunc, items)
 }
 
-func CalculateItemsFee(getStateFunc base.GetStateFunc, items []AmountsItem) (map[CurrencyID][2]Big, error) {
+func CalculateItemsFee(getStateFunc base.GetStateFunc, items []AmountsItem) (map[CurrencyID]base.State, map[CurrencyID][2]Big, error) {
+	feeRecvrSts := map[CurrencyID]base.State{}
 	required := map[CurrencyID][2]Big{}
 
 	for i := range items {
@@ -288,29 +304,42 @@ func CalculateItemsFee(getStateFunc base.GetStateFunc, items []AmountsItem) (map
 
 			policy, err := existsCurrencyPolicy(am.cid, getStateFunc)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
-			switch k, err := policy.Feeer().Fee(am.Big()); {
+			var k Big
+			switch k, err = policy.Feeer().Fee(am.Big()); {
 			case err != nil:
-				return nil, err
+				return nil, nil, err
 			case !k.OverZero():
 				required[am.Currency()] = [2]Big{rq[0].Add(am.Big()), rq[1]}
 			default:
 				required[am.Currency()] = [2]Big{rq[0].Add(am.Big()).Add(k), rq[1].Add(k)}
 			}
+
+			if policy.feeer.Receiver() == nil {
+				continue
+			}
+
+			if err := checkExistsState(StateKeyAccount(policy.feeer.Receiver()), getStateFunc); err != nil {
+				return nil, nil, err
+			} else if st, _, err := getStateFunc(StateKeyBalance(policy.feeer.Receiver(), am.Currency())); err != nil {
+				return nil, nil, err
+			} else {
+				feeRecvrSts[am.Currency()] = st
+			}
 		}
 	}
 
-	return required, nil
+	return feeRecvrSts, required, nil
 }
 
 func CheckEnoughBalance(
 	holder base.Address,
 	required map[CurrencyID][2]Big,
 	getStateFunc base.GetStateFunc,
-) (map[CurrencyID]base.StateMergeValue, error) {
-	sb := map[CurrencyID]base.StateMergeValue{}
+) (map[CurrencyID]base.State, error) {
+	sbSts := map[CurrencyID]base.State{}
 
 	for cid := range required {
 		rq := required[cid]
@@ -329,8 +358,8 @@ func CheckEnoughBalance(
 			return nil, base.NewBaseOperationProcessReasonError(
 				"insufficient balance of sender, %s; %d !> %d", holder.String(), am.Big(), rq[0])
 		}
-		sb[cid] = NewBalanceStateMergeValue(st.Key(), NewBalanceStateValue(am))
+		sbSts[cid] = st
 	}
 
-	return sb, nil
+	return sbSts, nil
 }

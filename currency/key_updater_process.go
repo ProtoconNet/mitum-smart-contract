@@ -54,11 +54,6 @@ func NewKeyUpdaterProcessor(
 		}
 
 		opp.BaseOperationProcessor = b
-		opp.sb = nil
-		opp.sa = nil
-		opp.fee = ZeroBig
-		// opp.collectFee = collectFee
-
 		return opp, nil
 	}
 }
@@ -95,63 +90,70 @@ func (opp *KeyUpdaterProcessor) Process( // nolint:dupl
 		return nil, base.NewBaseOperationProcessReasonError("expected KeyUpdaterFact, not %T", op.Fact()), nil
 	}
 
-	if st, err := existsState(StateKeyAccount(fact.target), "target keys", getStateFunc); err != nil {
+	var tgAccSt base.State
+	var err error
+	if tgAccSt, err = existsState(StateKeyAccount(fact.target), "target keys", getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of target %v : %w", fact.target, err), nil
-	} else {
-		opp.sa = NewAccountStateMergeValue(st.Key(), st.Value())
 	}
 
 	var fee Big
-	if policy, err := existsCurrencyPolicy(fact.currency, getStateFunc); err != nil {
+	var policy CurrencyPolicy
+	if policy, err = existsCurrencyPolicy(fact.currency, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of currency %v : %w", fact.currency, err), nil
-	} else if k, err := policy.Feeer().Fee(ZeroBig); err != nil {
+	} else if fee, err = policy.Feeer().Fee(ZeroBig); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to check fee of currency %v : %w", fact.currency, err), nil
-	} else {
-		fee = k
 	}
 
-	var bst base.State
-	if st, err := existsState(StateKeyBalance(fact.target, fact.currency), "balance of target", getStateFunc); err != nil {
+	var tgBalSt base.State
+	if tgBalSt, err = existsState(StateKeyBalance(fact.target, fact.currency), "balance of target", getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of targe balance %v : %w", fact.target, err), nil
-	} else {
-		bst = st
-		opp.sb = NewBalanceStateMergeValue(st.Key(), st.Value())
-	}
-
-	switch b, err := StateBalanceValue(bst); {
-	case err != nil:
+	} else if b, err := StateBalanceValue(tgBalSt); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of target balance %v,%v : %w", fact.currency, fact.target, err), nil
-	case b.Big().Compare(fee) < 0:
+	} else if b.Big().Compare(fee) < 0 {
 		return nil, base.NewBaseOperationProcessReasonError("insufficient balance with fee %v,%v", fact.currency, fact.target), nil
-	default:
-		opp.fee = fee
 	}
 
-	var sts []base.StateMergeValue // nolint:prealloc
-
-	v, ok := opp.sb.Value().(BalanceStateValue)
+	var stmvs []base.StateMergeValue // nolint:prealloc
+	v, ok := tgBalSt.Value().(BalanceStateValue)
 	if !ok {
-		return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", opp.sb.Value()), nil
+		return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", tgBalSt.Value()), nil
 	}
-	stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.fee)))
+
+	tgAmount := v.Amount.WithBig(v.Amount.Big().Sub(fee))
+
 	// stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[i][0]).Sub(opp.required[i][1])))
-	sts = append(sts, NewBalanceStateMergeValue(opp.sb.Key(), stv))
-
-	if a, err := NewAccountFromKeys(fact.keys); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to create new account from keys"), nil
-	} else {
-		v := NewAccountStateValue(a)
-		sts = append(sts, NewAccountStateMergeValue(opp.sa.Key(), v))
+	if policy.feeer.Receiver() != nil {
+		if err := checkExistsState(StateKeyAccount(policy.feeer.Receiver()), getStateFunc); err != nil {
+			return nil, nil, err
+		} else if feeRcvrSt, _, err := getStateFunc(StateKeyBalance(policy.feeer.Receiver(), fact.currency)); err != nil {
+			return nil, nil, err
+		} else if feeRcvrSt.Key() == tgBalSt.Key() {
+			tgAmount = tgAmount.WithBig(tgAmount.Big().Add(fee))
+		} else {
+			r, ok := feeRcvrSt.Value().(BalanceStateValue)
+			if !ok {
+				return nil, nil, errors.Errorf("invalid BalanceState value found, %T", feeRcvrSt.Value())
+			}
+			stmvs = append(stmvs, NewBalanceStateMergeValue(feeRcvrSt.Key(), NewBalanceStateValue(r.Amount.WithBig(r.Amount.big.Add(fee)))))
+		}
 	}
+	stmv := NewBalanceStateValue(tgAmount)
+	stmvs = append(stmvs, NewBalanceStateMergeValue(tgBalSt.Key(), stmv))
 
-	return sts, nil, nil
+	ac, err := LoadStateAccountValue(tgAccSt)
+	if err != nil {
+		return nil, nil, err
+	}
+	uac, err := ac.SetKeys(fact.keys)
+	if err != nil {
+		return nil, nil, err
+	}
+	stmvs = append(stmvs, NewAccountStateMergeValue(tgAccSt.Key(), NewAccountStateValue(uac)))
+
+	return stmvs, nil, nil
 }
 
 func (opp *KeyUpdaterProcessor) Close() error {
-	opp.sa = nil
-	opp.sb = nil
-	opp.fee = ZeroBig
-
 	keyUpdaterProcessorPool.Put(opp)
 
 	return nil

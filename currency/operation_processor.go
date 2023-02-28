@@ -69,7 +69,6 @@ type OperationProcessor struct {
 	*logging.Logging
 	*base.BaseOperationProcessor
 	processorHintSet     *hint.CompatibleSet
-	fee                  map[CurrencyID]Big
 	duplicated           map[string]DuplicationType
 	duplicatedNewAddress map[string]struct{}
 	processorClosers     *sync.Map
@@ -116,11 +115,9 @@ func NewOperationProcessor() *OperationProcessor {
 			return c.Str("module", "mitum-currency-operations-processor")
 		}),
 		processorHintSet:     hint.NewCompatibleSet(),
-		fee:                  map[CurrencyID]Big{},
 		duplicated:           map[string]DuplicationType{},
 		duplicatedNewAddress: map[string]struct{}{},
 		processorClosers:     &m,
-		CollectFee:           CollectFee,
 	}
 }
 
@@ -134,10 +131,6 @@ func (opr *OperationProcessor) New(
 	nopr := operationProcessorPool.Get().(*OperationProcessor)
 	if nopr.processorHintSet == nil {
 		nopr.processorHintSet = opr.processorHintSet
-	}
-
-	if nopr.fee == nil {
-		nopr.fee = opr.fee
 	}
 
 	if nopr.duplicated == nil {
@@ -350,25 +343,6 @@ func (opr *OperationProcessor) Close() error {
 	defer opr.Unlock()
 
 	defer opr.close()
-	/*
-		if len(opr.fee) > 0 {
-			op, err := NewFeeOperation(NewFeeOperationFact(opr.Height(), opr.fee))
-			if err != nil {
-				return err
-			}
-
-			pr, err := NewFeeOperationProcessor(opr.Height(), opr.GetStateFunc)
-			if err != nil {
-				return err
-			}
-
-				if err := pr.Process(nil, op, opr.GetStateFunc); err != nil {
-					return err
-				}
-				opr.pool.AddOperations(op)
-
-		}
-	*/
 
 	return nil
 }
@@ -449,7 +423,6 @@ func (opr *OperationProcessor) close() {
 	})
 
 	// opr.pool = nil
-	opr.fee = nil
 	opr.duplicated = nil
 	opr.duplicatedNewAddress = nil
 	opr.processorClosers = &sync.Map{}
@@ -457,25 +430,4 @@ func (opr *OperationProcessor) close() {
 	operationProcessorPool.Put(opr)
 
 	opr.Log().Debug().Msg("operation processors closed")
-}
-
-func CollectFee(opr *OperationProcessor, required AddFee) error {
-	opr.Lock()
-	defer opr.Unlock()
-
-	for k, v := range required {
-		if k == "" {
-			return errors.Errorf("AddFee key is empty")
-		}
-		if v == [2]Big{} {
-			return errors.Errorf("AddFee value is nil")
-		}
-		switch i, found := opr.fee[k]; {
-		case !found:
-			opr.fee[k] = v[1]
-		default:
-			opr.fee[k] = i.Add(v[1])
-		}
-	}
-	return nil
 }

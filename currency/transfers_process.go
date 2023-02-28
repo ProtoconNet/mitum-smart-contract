@@ -101,7 +101,6 @@ func (opp *TransfersItemProcessor) Close() error {
 
 type TransfersProcessor struct {
 	*base.BaseOperationProcessor
-	sb       map[CurrencyID]base.StateMergeValue
 	ns       []*TransfersItemProcessor
 	required map[CurrencyID][2]Big
 }
@@ -128,7 +127,6 @@ func NewTransfersProcessor() GetNewProcessor {
 		}
 
 		opp.BaseOperationProcessor = b
-		opp.sb = nil
 		opp.ns = nil
 		opp.required = nil
 
@@ -164,13 +162,18 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 		return nil, base.NewBaseOperationProcessReasonError("expected TransfersFact, not %T", op.Fact()), nil
 	}
 
-	if required, err := opp.calculateItemsFee(op, getStateFunc); err != nil {
+	var (
+		sendrBalSts, feeRecvrBalSts map[CurrencyID]base.State
+		required                    map[CurrencyID][2]Big
+		err                         error
+	)
+
+	if feeRecvrBalSts, required, err = opp.calculateItemsFee(op, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %w", err), nil
-	} else if sb, err := CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
+	} else if sendrBalSts, err = CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to check enough balance: %w", err), nil
 	} else {
 		opp.required = required
-		opp.sb = sb
 	}
 
 	ns := make([]*TransfersItemProcessor, len(fact.items))
@@ -192,27 +195,48 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 	}
 	opp.ns = ns
 
-	var sts []base.StateMergeValue // nolint:prealloc
+	var stmvs []base.StateMergeValue // nolint:prealloc
 	for i := range opp.ns {
 		s, err := opp.ns[i].Process(ctx, op, getStateFunc)
 		if err != nil {
 			return nil, base.NewBaseOperationProcessReasonError("failed to process transfer item: %w", err), nil
 		}
-		sts = append(sts, s...)
+		stmvs = append(stmvs, s...)
 	}
 
-	for k := range opp.required {
-		rq := opp.required[k]
-		v, ok := opp.sb[k].Value().(BalanceStateValue)
+	for cid := range sendrBalSts {
+		v, ok := sendrBalSts[cid].Value().(BalanceStateValue)
 		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("failed to process transfer"), nil
+			return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", sendrBalSts[cid].Value()), nil
 		}
-		stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(rq[0])))
-		// stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(rq[0]).Sub(rq[1])))
-		sts = append(sts, NewBalanceStateMergeValue(opp.sb[k].Key(), stv))
+
+		var stmv base.StateMergeValue
+		if sendrBalSts[cid].Key() == feeRecvrBalSts[cid].Key() {
+			stmv = NewBalanceStateMergeValue(
+				sendrBalSts[cid].Key(),
+				NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[cid][0]).Add(opp.required[cid][1]))),
+			)
+		} else {
+			stmv = NewBalanceStateMergeValue(
+				sendrBalSts[cid].Key(),
+				NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[cid][0]))),
+			)
+			r, ok := feeRecvrBalSts[cid].Value().(BalanceStateValue)
+			if !ok {
+				return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", feeRecvrBalSts[cid].Value()), nil
+			}
+			stmvs = append(
+				stmvs,
+				NewBalanceStateMergeValue(
+					feeRecvrBalSts[cid].Key(),
+					NewBalanceStateValue(r.Amount.WithBig(r.Amount.big.Add(opp.required[cid][1]))),
+				),
+			)
+		}
+		stmvs = append(stmvs, stmv)
 	}
 
-	return sts, nil, nil
+	return stmvs, nil, nil
 }
 
 func (opp *TransfersProcessor) Close() error {
@@ -220,7 +244,6 @@ func (opp *TransfersProcessor) Close() error {
 		_ = opp.ns[i].Close()
 	}
 
-	opp.sb = nil
 	opp.ns = nil
 	opp.required = nil
 
@@ -229,10 +252,10 @@ func (opp *TransfersProcessor) Close() error {
 	return nil
 }
 
-func (opp *TransfersProcessor) calculateItemsFee(op base.Operation, getStateFunc base.GetStateFunc) (map[CurrencyID][2]Big, error) {
+func (opp *TransfersProcessor) calculateItemsFee(op base.Operation, getStateFunc base.GetStateFunc) (map[CurrencyID]base.State, map[CurrencyID][2]Big, error) {
 	fact, ok := op.Fact().(TransfersFact)
 	if !ok {
-		return nil, errors.Errorf("expected TransfersFact, not %T", op.Fact())
+		return nil, nil, errors.Errorf("expected TransfersFact, not %T", op.Fact())
 	}
 	items := make([]AmountsItem, len(fact.items))
 	for i := range fact.items {
