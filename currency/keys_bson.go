@@ -71,11 +71,26 @@ func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	var vh valuehash.HashDecoder
-	err = vh.UnmarshalText(valuehash.NewBytesFromString(uks.Hash))
+	ks.BaseHinter = hint.NewBaseHinter(ht)
+
+	hks, err := enc.DecodeSlice(uks.Keys)
 	if err != nil {
 		return e(err, "")
 	}
 
-	return ks.unpack(enc, ht, vh, uks.Keys, uks.Threshold)
+	keys := make([]AccountKey, len(hks))
+	for i := range hks {
+		j, ok := hks[i].(BaseAccountKey)
+		if !ok {
+			return util.ErrWrongType.Errorf("expected BaseAccountKey, not %T", hks[i])
+		}
+
+		keys[i] = j
+	}
+	ks.keys = keys
+	ks.threshold = uks.Threshold
+
+	ks.h = valuehash.NewBytesFromString(uks.Hash)
+
+	return nil
 }
