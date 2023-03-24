@@ -88,7 +88,16 @@ func (opp *CreateAccountsItemProcessor) Process(
 ) ([]base.StateMergeValue, error) {
 	e := util.StringErrorFunc("failed to preprocess for CreateAccountsItemProcessor")
 
-	nac, err := NewAccountFromKeys(opp.item.Keys())
+	var (
+		nac Account
+		err error
+	)
+
+	if opp.item.AddressType() == EthAddressHint.Type() {
+		nac, err = NewEthAccountFromKeys(opp.item.Keys())
+	} else {
+		nac, err = NewAccountFromKeys(opp.item.Keys())
+	}
 	if err != nil {
 		return nil, e(err, "")
 	}

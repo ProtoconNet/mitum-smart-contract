@@ -10,17 +10,19 @@ import (
 func (it BaseCreateAccountsItem) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":   it.Hint().String(),
-			"keys":    it.keys,
-			"amounts": it.amounts,
+			"_hint":    it.Hint().String(),
+			"keys":     it.keys,
+			"amounts":  it.amounts,
+			"addrtype": it.addressType,
 		},
 	)
 }
 
 type CreateAccountsItemBSONUnmarshaler struct {
-	Hint   string   `bson:"_hint"`
-	Keys   bson.Raw `bson:"keys"`
-	Amount bson.Raw `bson:"amounts"`
+	Hint     string   `bson:"_hint"`
+	Keys     bson.Raw `bson:"keys"`
+	Amount   bson.Raw `bson:"amounts"`
+	AddrType string   `bson:"addrtype"`
 }
 
 func (it *BaseCreateAccountsItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -36,5 +38,5 @@ func (it *BaseCreateAccountsItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) err
 		return e(err, "")
 	}
 
-	return it.unpack(enc, ht, uit.Keys, uit.Amount)
+	return it.unpack(enc, ht, uit.Keys, uit.Amount, uit.AddrType)
 }

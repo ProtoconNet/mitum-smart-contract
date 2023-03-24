@@ -13,3 +13,13 @@ func (ca *Address) DecodeJSON(b []byte, _ *jsonenc.Encoder) error {
 
 	return nil
 }
+
+func (ca EthAddress) MarshalText() ([]byte, error) {
+	return ca.Bytes(), nil
+}
+
+func (ca *EthAddress) DecodeJSON(b []byte, _ *jsonenc.Encoder) error {
+	*ca = NewEthAddress(string(b))
+
+	return nil
+}

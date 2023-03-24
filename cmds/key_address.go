@@ -6,6 +6,7 @@ import (
 	"github.com/alecthomas/kong"
 
 	"github.com/spikeekips/mitum-currency/currency"
+	"github.com/spikeekips/mitum/base"
 )
 
 var KeyAddressVars = kong.Vars{
@@ -14,8 +15,9 @@ var KeyAddressVars = kong.Vars{
 
 type KeyAddressCommand struct {
 	baseCommand
-	Threshold uint      `arg:"" name:"threshold" help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
-	Keys      []KeyFlag `arg:"" name:"key" help:"key for address (ex: \"<public key>,<weight>\")" sep:"@" optional:""`
+	Threshold   uint      `arg:"" name:"threshold" help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
+	Keys        []KeyFlag `arg:"" name:"key" help:"key for address (ex: \"<public key>,<weight>\")" sep:"@" optional:""`
+	AddressType string    `help:"key type for address. select btc or ether" default:"btc"`
 }
 
 func NewKeyAddressCommand() KeyAddressCommand {
@@ -42,7 +44,13 @@ func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
 
 	cmd.log.Debug().Int("number_of_keys", len(ks)).Interface("keys", keys).Msg("keys loaded")
 
-	a, err := currency.NewAddressFromKeys(keys)
+	var a base.Address
+	if len(cmd.AddressType) > 0 && cmd.AddressType == "ether" {
+		a, err = currency.NewEthAddressFromKeys(keys)
+	} else {
+		a, err = currency.NewAddressFromKeys(keys)
+	}
+
 	if err != nil {
 		return err
 	}

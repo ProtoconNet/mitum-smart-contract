@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spikeekips/mitum-currency/currency"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/hint"
@@ -13,7 +14,8 @@ import (
 
 type KeyNewCommand struct {
 	baseCommand
-	Seed string `arg:"" name:"seed" optional:"" help:"seed for generating key"`
+	Seed    string `arg:"" name:"seed" optional:"" help:"seed for generating key"`
+	KeyType string `help:"select btc or ether" default:"btc"`
 }
 
 func NewKeyNewCommand() KeyNewCommand {
@@ -43,15 +45,26 @@ func (cmd *KeyNewCommand) Run(pctx context.Context) error {
 		if len(strings.TrimSpace(cmd.Seed)) < 1 {
 			cmd.log.Warn().Msg("seed consists with empty spaces")
 		}
-
-		i, err := base.NewMPrivatekeyFromSeed(cmd.Seed)
-		if err != nil {
-			return err
+		if len(cmd.KeyType) > 0 && cmd.KeyType == "ether" {
+			i, err := currency.NewMEPrivatekeyFromSeed(cmd.Seed)
+			if err != nil {
+				return err
+			}
+			key = i
+		} else {
+			i, err := base.NewMPrivatekeyFromSeed(cmd.Seed)
+			if err != nil {
+				return err
+			}
+			key = i
 		}
 
-		key = i
 	default:
-		key = base.NewMPrivatekey()
+		if len(cmd.KeyType) > 0 && cmd.KeyType == "ether" {
+			key = currency.NewMEPrivatekey()
+		} else {
+			key = base.NewMPrivatekey()
+		}
 	}
 
 	o := struct {

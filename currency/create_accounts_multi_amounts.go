@@ -15,9 +15,9 @@ type CreateAccountsItemMultiAmounts struct {
 	BaseCreateAccountsItem
 }
 
-func NewCreateAccountsItemMultiAmounts(keys AccountKeys, amounts []Amount) CreateAccountsItemMultiAmounts {
+func NewCreateAccountsItemMultiAmounts(keys AccountKeys, amounts []Amount, addrType hint.Type) CreateAccountsItemMultiAmounts {
 	return CreateAccountsItemMultiAmounts{
-		BaseCreateAccountsItem: NewBaseCreateAccountsItem(CreateAccountsItemMultiAmountsHint, keys, amounts),
+		BaseCreateAccountsItem: NewBaseCreateAccountsItem(CreateAccountsItemMultiAmountsHint, keys, amounts, addrType),
 	}
 }
 

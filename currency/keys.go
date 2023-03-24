@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"sort"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
-
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/hint"
@@ -111,6 +111,13 @@ func (ks BaseAccountKeys) Hash() util.Hash {
 
 func (ks BaseAccountKeys) GenerateHash() (util.Hash, error) {
 	return valuehash.NewSHA256(ks.Bytes()), nil
+}
+
+func (ks BaseAccountKeys) GenerateKeccakHash() (util.Hash, error) {
+	var b valuehash.L32
+	h := crypto.Keccak256(ks.Bytes()[:])
+	copy(b[:], h[:])
+	return b, nil
 }
 
 func (ks BaseAccountKeys) Bytes() []byte {

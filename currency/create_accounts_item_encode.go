@@ -1,12 +1,14 @@
 package currency
 
 import (
+	"fmt"
+
 	"github.com/spikeekips/mitum/util"
 	"github.com/spikeekips/mitum/util/encoder"
 	"github.com/spikeekips/mitum/util/hint"
 )
 
-func (it *BaseCreateAccountsItem) unpack(enc encoder.Encoder, ht hint.Hint, bks []byte, bam []byte) error {
+func (it *BaseCreateAccountsItem) unpack(enc encoder.Encoder, ht hint.Hint, bks []byte, bam []byte, sadtype string) error {
 	e := util.StringErrorFunc("failed to unmarshal BaseCreateAccountsItem")
 
 	it.BaseHinter = hint.NewBaseHinter(ht)
@@ -35,6 +37,8 @@ func (it *BaseCreateAccountsItem) unpack(enc encoder.Encoder, ht hint.Hint, bks 
 	}
 
 	it.amounts = amounts
+	it.addressType = hint.Type(sadtype)
+	fmt.Println(it.addressType)
 
 	return nil
 }

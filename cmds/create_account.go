@@ -12,12 +12,13 @@ import (
 type CreateAccountCommand struct {
 	baseCommand
 	OperationFlags
-	Sender    AddressFlag          `arg:"" name:"sender" help:"sender address" required:"true"`
-	Threshold uint                 `help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
-	Keys      []KeyFlag            `name:"key" help:"key for new account (ex: \"<public key>,<weight>\")" sep:"@"`
-	Amounts   []CurrencyAmountFlag `arg:"" name:"currency-amount" help:"amount (ex: \"<currency>,<amount>\")"`
-	sender    base.Address
-	keys      currency.BaseAccountKeys
+	Sender      AddressFlag          `arg:"" name:"sender" help:"sender address" required:"true"`
+	Threshold   uint                 `help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
+	Keys        []KeyFlag            `name:"key" help:"key for new account (ex: \"<public key>,<weight>\")" sep:"@"`
+	Amounts     []CurrencyAmountFlag `arg:"" name:"currency-amount" help:"amount (ex: \"<currency>,<amount>\")"`
+	AddressType string               `help:"address type for new account select mitum or ether" default:"mitum"`
+	sender      base.Address
+	keys        currency.BaseAccountKeys
 }
 
 func NewCreateAccountCommand() CreateAccountCommand {
@@ -111,7 +112,13 @@ func (cmd *CreateAccountCommand) createOperation() (base.Operation, error) { // 
 		ams[i] = am
 	}
 
-	item := currency.NewCreateAccountsItemMultiAmounts(cmd.keys, ams)
+	addrType := currency.AddressHint.Type()
+
+	if cmd.AddressType == "ether" {
+		addrType = currency.EthAddressHint.Type()
+	}
+
+	item := currency.NewCreateAccountsItemMultiAmounts(cmd.keys, ams, addrType)
 	if err := item.IsValid(nil); err != nil {
 		return nil, err
 	}

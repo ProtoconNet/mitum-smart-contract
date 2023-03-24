@@ -13,9 +13,9 @@ type CreateAccountsItemSingleAmount struct {
 	BaseCreateAccountsItem
 }
 
-func NewCreateAccountsItemSingleAmount(keys AccountKeys, amount Amount) CreateAccountsItemSingleAmount {
+func NewCreateAccountsItemSingleAmount(keys AccountKeys, amount Amount, addrType hint.Type) CreateAccountsItemSingleAmount {
 	return CreateAccountsItemSingleAmount{
-		BaseCreateAccountsItem: NewBaseCreateAccountsItem(CreateAccountsItemSingleAmountHint, keys, []Amount{amount}),
+		BaseCreateAccountsItem: NewBaseCreateAccountsItem(CreateAccountsItemSingleAmountHint, keys, []Amount{amount}, addrType),
 	}
 }
 

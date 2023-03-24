@@ -17,7 +17,10 @@ var hinters = []encoder.DecodeDetail{
 	// revive:disable-next-line:line-length-limit
 	{Hint: currency.BaseStateHint, Instance: currency.BaseState{}},
 	{Hint: currency.NodeHint, Instance: currency.BaseNode{}},
+	{Hint: currency.MEPrivatekeyHint, Instance: currency.MEPrivatekey{}},
+	{Hint: currency.MEPublickeyHint, Instance: currency.MEPublickey{}},
 	{Hint: currency.AccountHint, Instance: currency.Account{}},
+	{Hint: currency.EthAddressHint, Instance: currency.EthAddress{}},
 	{Hint: currency.AddressHint, Instance: currency.Address{}},
 	{Hint: currency.AmountHint, Instance: currency.Amount{}},
 	{Hint: currency.CreateAccountsItemMultiAmountsHint, Instance: currency.CreateAccountsItemMultiAmounts{}},
