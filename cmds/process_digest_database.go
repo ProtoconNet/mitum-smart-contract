@@ -3,13 +3,13 @@ package cmds
 import (
 	"context"
 
-	mongodbstorage "github.com/spikeekips/mitum-currency/digest/mongodb"
-	isaacdatabase "github.com/spikeekips/mitum/isaac/database"
-	"github.com/spikeekips/mitum/launch"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/logging"
+	mongodbstorage "github.com/ProtoconNet/mitum-currency/v2/digest/mongodb"
+	isaacdatabase "github.com/ProtoconNet/mitum2/isaac/database"
+	"github.com/ProtoconNet/mitum2/launch"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/logging"
 
-	"github.com/spikeekips/mitum-currency/digest"
+	"github.com/ProtoconNet/mitum-currency/v2/digest"
 )
 
 const ProcessNameDigestDatabase = "digest_database"

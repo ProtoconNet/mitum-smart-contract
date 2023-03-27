@@ -6,6 +6,7 @@ import (
 	"github.com/alecthomas/kong"
 
 	"github.com/ProtoconNet/mitum-currency/v2/currency"
+	"github.com/ProtoconNet/mitum2/base"
 )
 
 var KeyAddressVars = kong.Vars{

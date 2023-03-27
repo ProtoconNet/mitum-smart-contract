@@ -1,6 +1,6 @@
 package currency
 
-import "github.com/spikeekips/mitum/util"
+import "github.com/ProtoconNet/mitum2/util"
 
 func (a Big) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(a.String())

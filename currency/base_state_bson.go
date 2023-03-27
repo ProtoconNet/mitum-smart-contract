@@ -1,11 +1,11 @@
 package currency
 
 import (
-	bsonenc "github.com/spikeekips/mitum-currency/digest/util/bson"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
-	"github.com/spikeekips/mitum/util/valuehash"
+	bsonenc "github.com/ProtoconNet/mitum-currency/v2/digest/util/bson"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

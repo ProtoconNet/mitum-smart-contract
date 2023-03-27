@@ -1,8 +1,8 @@
 package cmds
 
 import (
-	"github.com/spikeekips/mitum/launch"
-	"github.com/spikeekips/mitum/util/ps"
+	"github.com/ProtoconNet/mitum2/launch"
+	"github.com/ProtoconNet/mitum2/util/ps"
 )
 
 func DefaultINITPS() *ps.PS {

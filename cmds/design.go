@@ -11,13 +11,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 
-	"github.com/spikeekips/mitum-currency/digest/config"
-	"github.com/spikeekips/mitum-currency/digest/util"
-	"github.com/spikeekips/mitum/base"
-	mitumutil "github.com/spikeekips/mitum/util"
-	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
+	"github.com/ProtoconNet/mitum-currency/v2/digest/config"
+	"github.com/ProtoconNet/mitum-currency/v2/digest/util"
+	"github.com/ProtoconNet/mitum2/base"
+	mitumutil "github.com/ProtoconNet/mitum2/util"
+	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 
-	"github.com/spikeekips/mitum-currency/currency"
+	"github.com/ProtoconNet/mitum-currency/v2/currency"
 	"gopkg.in/yaml.v3"
 )
 

@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"sort"
 
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pkg/errors"
-
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 )
 
 var (

@@ -1,6 +1,6 @@
 package currency
 
-// import "github.com/spikeekips/mitum/util"
+// import "github.com/ProtoconNet/mitum2/util"
 
 // var MaxMemoSize = 100 // TODO should be managed by policy
 

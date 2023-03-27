@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
 )
 
 func (hd *Handlers) SetSend(f func(interface{}) (base.Operation, error)) *Handlers {

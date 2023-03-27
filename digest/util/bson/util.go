@@ -1,7 +1,7 @@
 package bsonenc
 
 import (
-	"github.com/spikeekips/mitum/util/hint"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

@@ -8,13 +8,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ProtoconNet/mitum-currency/v2/digest/network"
+	"github.com/ProtoconNet/mitum-currency/v2/digest/util"
+	mitumutil "github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/spikeekips/mitum-currency/digest/network"
-	"github.com/spikeekips/mitum-currency/digest/util"
-	mitumutil "github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/logging"
 	"golang.org/x/net/http2"
 )
 

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/base"
+	mitumutil "github.com/ProtoconNet/mitum2/util"
 	"github.com/gorilla/mux"
-	"github.com/spikeekips/mitum/base"
-	mitumutil "github.com/spikeekips/mitum/util"
 )
 
 var halBlockTemplate = map[string]HalLink{

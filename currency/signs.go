@@ -1,7 +1,7 @@
 package currency
 
 import (
-	"github.com/spikeekips/mitum/base"
+	"github.com/ProtoconNet/mitum2/base"
 )
 
 func checkFactSignsByPubs(pubs []base.Publickey, threshold base.Threshold, signs []base.Sign) error {

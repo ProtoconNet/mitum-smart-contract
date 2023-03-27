@@ -1,8 +1,8 @@
 package currency
 
 import (
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 func (fact *CurrencyRegisterFact) unpack(

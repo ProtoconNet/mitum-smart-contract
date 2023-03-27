@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	isaacnetwork "github.com/spikeekips/mitum/isaac/network"
+	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 )
 
 func (hd *Handlers) SetNodeInfoHandler(handler NodeInfoHandler) *Handlers {

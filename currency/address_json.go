@@ -1,7 +1,7 @@
 package currency
 
 import (
-	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
+	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 )
 
 func (ca Address) MarshalText() ([]byte, error) {

@@ -8,10 +8,10 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/launch"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/launch"
-	"github.com/spikeekips/mitum/util"
 )
 
 type KeySignCommand struct {

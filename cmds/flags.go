@@ -8,10 +8,10 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util/encoder"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 
-	"github.com/spikeekips/mitum-currency/currency"
+	"github.com/ProtoconNet/mitum-currency/v2/currency"
 )
 
 type KeyFlag struct {

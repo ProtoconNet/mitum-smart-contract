@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/spikeekips/mitum-currency/currency"
-	"github.com/spikeekips/mitum/base"
+	"github.com/ProtoconNet/mitum-currency/v2/currency"
+	"github.com/ProtoconNet/mitum2/base"
 )
 
 type KeyUpdaterCommand struct {

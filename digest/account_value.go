@@ -1,11 +1,11 @@
 package digest
 
 import (
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util/hint"
 
-	"github.com/spikeekips/mitum-currency/currency"
+	"github.com/ProtoconNet/mitum-currency/v2/currency"
 )
 
 var (

@@ -3,9 +3,9 @@ package currency
 import (
 	"fmt"
 
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
-	"github.com/spikeekips/mitum/util/valuehash"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
 
 var (

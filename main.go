@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ProtoconNet/mitum-currency/v2/cmds"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/launch"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/alecthomas/kong"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum-currency/cmds"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/launch"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/logging"
 )
 
 var (

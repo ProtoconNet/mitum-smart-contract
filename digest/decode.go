@@ -1,12 +1,12 @@
 package digest
 
 import (
+	mongodbstorage "github.com/ProtoconNet/mitum-currency/v2/digest/mongodb"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"github.com/pkg/errors"
-	mongodbstorage "github.com/spikeekips/mitum-currency/digest/mongodb"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
-	"github.com/spikeekips/mitum/util/valuehash"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

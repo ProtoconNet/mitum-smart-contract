@@ -5,10 +5,10 @@ import (
 	"crypto/tls"
 	"strings"
 
+	"github.com/ProtoconNet/mitum-currency/v2/digest/config"
+	"github.com/ProtoconNet/mitum-currency/v2/digest/util"
+	mitumutil "github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum-currency/digest/config"
-	"github.com/spikeekips/mitum-currency/digest/util"
-	mitumutil "github.com/spikeekips/mitum/util"
 )
 
 type NetworkCommand struct {

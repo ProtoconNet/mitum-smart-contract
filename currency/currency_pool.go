@@ -4,7 +4,7 @@ package currency
 import (
 	"sync"
 
-	"github.com/spikeekips/mitum/base"
+	"github.com/ProtoconNet/mitum2/base"
 )
 
 type CurrencyPool struct {

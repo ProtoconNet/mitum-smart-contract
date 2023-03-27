@@ -3,8 +3,8 @@ package digest
 import (
 	"net/url"
 
-	"github.com/spikeekips/mitum-currency/digest/util"
-	"github.com/spikeekips/mitum/util/hint"
+	"github.com/ProtoconNet/mitum-currency/v2/digest/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 type Hal interface {

@@ -3,9 +3,9 @@ package digest
 import (
 	"encoding/json"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
 )
 
 var HALJSONConfigDefault = jsoniter.Config{

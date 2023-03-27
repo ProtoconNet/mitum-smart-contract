@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/ProtoconNet/mitum-currency/v2/digest/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum-currency/digest/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

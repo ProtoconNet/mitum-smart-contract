@@ -3,9 +3,9 @@ package cmds
 import (
 	"context"
 
+	isaacoperation "github.com/ProtoconNet/mitum-currency/v2/isaac"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/pkg/errors"
-	isaacoperation "github.com/spikeekips/mitum-currency/isaac"
-	"github.com/spikeekips/mitum/base"
 )
 
 type SuffrageDisjoinCommand struct {

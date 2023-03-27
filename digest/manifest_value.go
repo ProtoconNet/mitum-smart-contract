@@ -3,8 +3,8 @@ package digest
 import (
 	"time"
 
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util/hint"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 var (

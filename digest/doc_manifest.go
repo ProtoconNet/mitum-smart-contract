@@ -3,10 +3,10 @@ package digest
 import (
 	"time"
 
-	mongodbstorage "github.com/spikeekips/mitum-currency/digest/mongodb"
-	bsonenc "github.com/spikeekips/mitum-currency/digest/util/bson"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util/encoder"
+	mongodbstorage "github.com/ProtoconNet/mitum-currency/v2/digest/mongodb"
+	bsonenc "github.com/ProtoconNet/mitum-currency/v2/digest/util/bson"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type ManifestDoc struct {

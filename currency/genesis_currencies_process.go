@@ -3,8 +3,8 @@ package currency
 import (
 	"context"
 
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
 )
 
 func (_ GenesisCurrencies) PreProcess(

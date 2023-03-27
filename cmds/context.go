@@ -1,6 +1,6 @@
 package cmds
 
-import "github.com/spikeekips/mitum/util"
+import "github.com/ProtoconNet/mitum2/util"
 
 var (
 	ContextValueDigestDesign   util.ContextKey = "digest_design"
