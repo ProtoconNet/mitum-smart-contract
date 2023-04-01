@@ -2,7 +2,6 @@ package currency
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/spikeekips/mitum/util"
 	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
@@ -17,7 +16,6 @@ type CreateAccountsItemJSONMarshaler struct {
 }
 
 func (it BaseCreateAccountsItem) MarshalJSON() ([]byte, error) {
-	fmt.Println(it.addressType)
 	return util.MarshalJSON(CreateAccountsItemJSONMarshaler{
 		BaseHinter: it.BaseHinter,
 		Keys:       it.keys,
