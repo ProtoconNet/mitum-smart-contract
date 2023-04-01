@@ -74,3 +74,30 @@ func (op *BaseOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 	return nil
 }
+
+func (op BaseNodeOperation) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(op.JSONMarshaler())
+}
+
+func (op *BaseNodeOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+	e := util.StringErrorFunc("failed to decode BaseNodeOperation")
+
+	var u BaseOperationJSONUnmarshaler
+
+	if err := op.decodeJSON(b, enc, &u); err != nil {
+		return e(err, "")
+	}
+
+	op.signs = make([]base.Sign, len(u.Signs))
+
+	for i := range u.Signs {
+		var ub base.BaseNodeSign
+		if err := ub.DecodeJSON(u.Signs[i], enc); err != nil {
+			return e(err, "failed to decode sign")
+		}
+
+		op.signs[i] = ub
+	}
+
+	return nil
+}
