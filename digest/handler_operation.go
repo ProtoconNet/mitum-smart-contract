@@ -59,6 +59,7 @@ func (hd *Handlers) handleOperationInGroup(h mitumutil.Hash) ([]byte, error) {
 }
 
 func (hd *Handlers) handleOperations(w http.ResponseWriter, r *http.Request) {
+	limit := parseLimitQuery(r.URL.Query().Get("limit"))
 	offset := parseStringQuery(r.URL.Query().Get("offset"))
 	reverse := parseBoolQuery(r.URL.Query().Get("reverse"))
 
@@ -68,7 +69,7 @@ func (hd *Handlers) handleOperations(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if v, err, shared := hd.rg.Do(cachekey, func() (interface{}, error) {
-		i, filled, err := hd.handleOperationsInGroup(offset, reverse)
+		i, filled, err := hd.handleOperationsInGroup(offset, reverse, limit)
 
 		return []interface{}{i, filled}, err
 	}); err != nil {
@@ -95,14 +96,14 @@ func (hd *Handlers) handleOperations(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (hd *Handlers) handleOperationsInGroup(offset string, reverse bool) ([]byte, bool, error) {
+func (hd *Handlers) handleOperationsInGroup(offset string, reverse bool, l int64) ([]byte, bool, error) {
 	filter, err := buildOperationsFilterByOffset(offset, reverse)
 	if err != nil {
 		return nil, false, err
 	}
 
 	var vas []Hal
-	switch l, e := hd.loadOperationsHALFromDatabase(filter, reverse); {
+	switch l, e := hd.loadOperationsHALFromDatabase(filter, reverse, l); {
 	case e != nil:
 		return nil, false, e
 	case len(l) < 1:
@@ -125,6 +126,7 @@ func (hd *Handlers) handleOperationsInGroup(offset string, reverse bool) ([]byte
 }
 
 func (hd *Handlers) handleOperationsByHeight(w http.ResponseWriter, r *http.Request) {
+	limit := parseLimitQuery(r.URL.Query().Get("limit"))
 	offset := parseStringQuery(r.URL.Query().Get("offset"))
 	reverse := parseBoolQuery(r.URL.Query().Get("reverse"))
 
@@ -147,7 +149,7 @@ func (hd *Handlers) handleOperationsByHeight(w http.ResponseWriter, r *http.Requ
 	}
 
 	if v, err, shared := hd.rg.Do(cachekey, func() (interface{}, error) {
-		i, filled, err := hd.handleOperationsByHeightInGroup(height, offset, reverse)
+		i, filled, err := hd.handleOperationsByHeightInGroup(height, offset, reverse, limit)
 		return []interface{}{i, filled}, err
 	}); err != nil {
 		HTTP2HandleError(w, err)
@@ -177,6 +179,7 @@ func (hd *Handlers) handleOperationsByHeightInGroup(
 	height base.Height,
 	offset string,
 	reverse bool,
+	l int64,
 ) ([]byte, bool, error) {
 	filter, err := buildOperationsByHeightFilterByOffset(height, offset, reverse)
 	if err != nil {
@@ -184,7 +187,7 @@ func (hd *Handlers) handleOperationsByHeightInGroup(
 	}
 
 	var vas []Hal
-	switch l, e := hd.loadOperationsHALFromDatabase(filter, reverse); {
+	switch l, e := hd.loadOperationsHALFromDatabase(filter, reverse, l); {
 	case e != nil:
 		return nil, false, e
 	case len(l) < 1:
@@ -375,10 +378,17 @@ func nextOffsetOfOperationsByHeight(baseSelf string, vas []Hal, reverse bool) st
 	return next
 }
 
-func (hd *Handlers) loadOperationsHALFromDatabase(filter bson.M, reverse bool) ([]Hal, error) {
+func (hd *Handlers) loadOperationsHALFromDatabase(filter bson.M, reverse bool, l int64) ([]Hal, error) {
+	var limit int64
+	if l < 0 {
+		limit = hd.itemsLimiter("operations")
+	} else {
+		limit = l
+	}
+
 	var vas []Hal
 	if err := hd.database.Operations(
-		filter, true, reverse, hd.itemsLimiter("operations"),
+		filter, true, reverse, limit,
 		func(_ mitumutil.Hash, va OperationValue) (bool, error) {
 			hal, err := hd.buildOperationHal(va)
 			if err != nil {
