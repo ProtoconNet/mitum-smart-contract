@@ -5,8 +5,7 @@ import (
 
 	"github.com/alecthomas/kong"
 
-	"github.com/spikeekips/mitum-currency/currency"
-	"github.com/spikeekips/mitum/base"
+	"github.com/ProtoconNet/mitum-currency/v2/currency"
 )
 
 var KeyAddressVars = kong.Vars{

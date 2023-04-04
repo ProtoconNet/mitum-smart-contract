@@ -32,10 +32,11 @@ func NewProblem(t, title string) Problem {
 }
 
 func NewProblemFromError(err error) Problem {
+	title, detail := makeSplitedError(err)
 	return Problem{
 		t:      DefaultProblemType,
-		title:  fmt.Sprintf("%s", err),
-		detail: fmt.Sprintf("%+v", err),
+		title:  fmt.Sprintf("%s", title),
+		detail: fmt.Sprintf("%+v", detail),
 	}
 }
 
@@ -78,4 +79,19 @@ func parseProblemNamespace(s string) (string, error) {
 		return "", errors.Errorf("invalid problem namespace: %q", s)
 	}
 	return s[len(ProblemNamespace)+1:], nil
+}
+
+func makeSplitedError(err error) (title, detail string) {
+	if len(err.Error()) < 1 {
+		return "", ""
+	}
+	errorSlice := strings.Split(err.Error(), "-")
+	switch {
+	case len(errorSlice) > 2:
+		return errorSlice[len(errorSlice)-1], strings.Join(errorSlice[:len(errorSlice)-1], "")
+	case len(errorSlice) < 2:
+		return errorSlice[0], ""
+	default:
+		return strings.TrimSpace(errorSlice[1]), strings.TrimSpace(errorSlice[0])
+	}
 }

@@ -9,8 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	mitumutil "github.com/spikeekips/mitum/util"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func (hd *Handlers) handleAccount(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +33,7 @@ func (hd *Handlers) handleAccount(w http.ResponseWriter, r *http.Request) {
 	if v, err, shared := hd.rg.Do(cachekey, func() (interface{}, error) {
 		return hd.handleAccountInGroup(address)
 	}); err != nil {
-		if errors.Is(err, mitumutil.ErrNotFound) {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			err = mitumutil.ErrNotFound.Errorf("account, %s not found", address)
 		} else {
 			hd.Log().Err(err).Str("address", address.String()).Msg("failed to get account")

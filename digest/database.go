@@ -406,7 +406,7 @@ func (st *Database) Operation(
 			return nil
 		},
 	); err != nil {
-		if errors.Is(err, mitumutil.NewError("not found")) {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return OperationValue{}, false, nil
 		}
 
@@ -484,6 +484,7 @@ func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, er
 		},
 		options.FindOne().SetSort(util.NewBSONFilter("height", -1).D()),
 	); err != nil {
+		fmt.Println(err)
 		if errors.Is(err, mitumutil.NewError("not found")) {
 			return rs, false, nil
 		}
