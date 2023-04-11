@@ -332,8 +332,10 @@ func CalculateItemsFee(getStateFunc base.GetStateFunc, items []AmountsItem) (map
 
 			if err := checkExistsState(StateKeyAccount(policy.feeer.Receiver()), getStateFunc); err != nil {
 				return nil, nil, err
-			} else if st, _, err := getStateFunc(StateKeyBalance(policy.feeer.Receiver(), am.Currency())); err != nil {
+			} else if st, found, err := getStateFunc(StateKeyBalance(policy.feeer.Receiver(), am.Currency())); err != nil {
 				return nil, nil, err
+			} else if !found {
+				return nil, nil, errors.Errorf("feeer receiver %s not found", policy.feeer.Receiver())
 			} else {
 				feeRecvrSts[am.Currency()] = st
 			}

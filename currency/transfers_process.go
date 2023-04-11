@@ -52,17 +52,24 @@ func (opp *TransfersItemProcessor) PreProcess(
 			return err
 		}
 
-		st, _, err := getStateFunc(StateKeyBalance(opp.item.Receiver(), am.Currency()))
+		st, found, err := getStateFunc(StateKeyBalance(opp.item.Receiver(), am.Currency()))
 		if err != nil {
 			return err
+		} else if !found {
+			return errors.Errorf("receiver %s not found", opp.item.Receiver())
 		}
 
-		balance, err := StateBalanceValue(st)
-		if err != nil {
-			return err
+		var balance Amount
+		if st == nil {
+			balance = NewZeroAmount(am.Currency())
+		} else {
+			balance, err = StateBalanceValue(st)
+			if err != nil {
+				return err
+			}
 		}
 
-		rb[am.Currency()] = NewBalanceStateMergeValue(st.Key(), NewBalanceStateValue(balance))
+		rb[am.Currency()] = NewBalanceStateMergeValue(StateKeyBalance(opp.item.Receiver(), am.Currency()), NewBalanceStateValue(balance))
 	}
 
 	opp.rb = rb

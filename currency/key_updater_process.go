@@ -125,8 +125,10 @@ func (opp *KeyUpdaterProcessor) Process( // nolint:dupl
 	if policy.feeer.Receiver() != nil {
 		if err := checkExistsState(StateKeyAccount(policy.feeer.Receiver()), getStateFunc); err != nil {
 			return nil, nil, err
-		} else if feeRcvrSt, _, err := getStateFunc(StateKeyBalance(policy.feeer.Receiver(), fact.currency)); err != nil {
+		} else if feeRcvrSt, found, err := getStateFunc(StateKeyBalance(policy.feeer.Receiver(), fact.currency)); err != nil {
 			return nil, nil, err
+		} else if !found {
+			return nil, nil, errors.Errorf("feeer receiver %s not found", policy.feeer.Receiver())
 		} else if feeRcvrSt.Key() == tgBalSt.Key() {
 			tgAmount = tgAmount.WithBig(tgAmount.Big().Add(fee))
 		} else {
