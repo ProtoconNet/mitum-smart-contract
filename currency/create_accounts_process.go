@@ -180,6 +180,21 @@ func (opp *CreateAccountsProcessor) PreProcess(
 		return ctx, base.NewBaseOperationProcessReasonError("invalid signing :  %w", err), nil
 	}
 
+	for i := range fact.items {
+		cip := createAccountsItemProcessorPool.Get()
+		c, ok := cip.(*CreateAccountsItemProcessor)
+		if !ok {
+			return nil, base.NewBaseOperationProcessReasonError("expected CreateAccountsItemProcessor, not %T", cip), nil
+		}
+
+		c.h = op.Hash()
+		c.item = fact.items[i]
+
+		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateAccountsItem: %w", err), nil
+		}
+	}
+
 	return ctx, nil, nil
 }
 

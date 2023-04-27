@@ -52,11 +52,9 @@ func (opp *TransfersItemProcessor) PreProcess(
 			return err
 		}
 
-		st, found, err := getStateFunc(StateKeyBalance(opp.item.Receiver(), am.Currency()))
+		st, _, err := getStateFunc(StateKeyBalance(opp.item.Receiver(), am.Currency()))
 		if err != nil {
 			return err
-		} else if !found {
-			return errors.Errorf("receiver %s not found", opp.item.Receiver())
 		}
 
 		var balance Amount
@@ -155,6 +153,21 @@ func (opp *TransfersProcessor) PreProcess(
 
 	if err := checkFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError("invalid signing :  %w", err), nil
+	}
+
+	for i := range fact.items {
+		cip := transfersItemProcessorPool.Get()
+		c, ok := cip.(*TransfersItemProcessor)
+		if !ok {
+			return nil, base.NewBaseOperationProcessReasonError("expected TransfersItemProcessor, not %T", cip), nil
+		}
+
+		c.h = op.Hash()
+		c.item = fact.items[i]
+
+		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess transfer item: %w", err), nil
+		}
 	}
 
 	return ctx, nil, nil
