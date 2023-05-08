@@ -232,68 +232,6 @@ type DigestDesign struct {
 	cache        *url.URL
 }
 
-// type DigestYAMLUnmarshaler struct {
-// 	Design *DesignYAMLUnmarshaler `yaml:"digest"`
-// }
-
-// type DesignYAMLUnmarshaler struct {
-// 	NetworkYAML  map[string]interface{} `yaml:"network"`
-// 	CacheYAML    *string                `yaml:"cache"`
-// 	DatabaseYAML map[string]interface{} `yaml:"database"`
-// }
-
-// func (d *DigestDesign) DecodeYAML(b []byte, enc *jsonenc.Encoder) error {
-// 	e := mitumutil.StringErrorFunc("failed to unmarshal DigestDesign")
-
-// 	// var u DigestYAMLUnmarshaler
-
-// 	var m struct {
-// 		Digest *DigestDesign
-// 	}
-
-// 	if err := yaml.Unmarshal(b, d); err != nil {
-// 		return e(err, "")
-// 	}
-
-// 	if m.Digest == nil {
-// 		return e(errors.Errorf("DigestDesign is empty"), "")
-// 	}
-
-// 	d.CacheYAML = .CacheYAML
-// 	d.NetworkYAML = &LocalNetwork{}
-// 	d.DatabaseYAML = &config.DatabaseYAML{}
-
-// 	lb, err := mitumutil.MarshalJSON((*u.Design).NetworkYAML)
-// 	db, err := mitumutil.MarshalJSON((*u.Design).DatabaseYAML)
-// 	switch {
-// 	case err != nil:
-// 		return e(err, "")
-// 	default:
-// 		if err := mitumutil.UnmarshalJSON(lb, d.NetworkYAML); err != nil {
-// 			return e(err, "")
-// 		} else if err := mitumutil.UnmarshalJSON(db, d.DatabaseYAML); err != nil {
-// 			return e(err, "")
-// 		}
-// 	}
-
-// 	return nil
-// }
-
-// func DigestDesignFromFile(f string, enc *jsonenc.Encoder) (d *DigestDesign, _ []byte, _ error) {
-// 	e := mitumutil.StringErrorFunc("failed to load DigestDesign from file")
-
-// 	b, err := os.ReadFile(filepath.Clean(f))
-// 	if err != nil {
-// 		return nil, nil, e(err, "")
-// 	}
-
-// 	if err := d.DecodeYAML(b, enc); err != nil {
-// 		return nil, b, e(err, "")
-// 	}
-
-// 	return d, b, nil
-// }
-
 func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
 	e := mitumutil.StringErrorFunc("failed to Set DigestDesign")
 
