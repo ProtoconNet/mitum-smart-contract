@@ -3,8 +3,6 @@ package cmds
 import (
 	"context"
 	"net/url"
-	"os"
-	"path/filepath"
 
 	consulapi "github.com/hashicorp/consul/api"
 	vault "github.com/hashicorp/vault/api"
@@ -14,11 +12,11 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v2/digest/config"
 	"github.com/ProtoconNet/mitum-currency/v2/digest/util"
 	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/launch"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 
 	"github.com/ProtoconNet/mitum-currency/v2/currency"
-	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -234,59 +232,67 @@ type DigestDesign struct {
 	cache        *url.URL
 }
 
-type DigestYAMLUnmarshaler struct {
-	Design DesignYAMLUnmarshaler `yaml:"digest"`
-}
+// type DigestYAMLUnmarshaler struct {
+// 	Design *DesignYAMLUnmarshaler `yaml:"digest"`
+// }
 
-type DesignYAMLUnmarshaler struct {
-	NetworkYAML  map[string]interface{} `yaml:"network"`
-	CacheYAML    *string                `yaml:"cache"`
-	DatabaseYAML map[string]interface{} `yaml:"database"`
-}
+// type DesignYAMLUnmarshaler struct {
+// 	NetworkYAML  map[string]interface{} `yaml:"network"`
+// 	CacheYAML    *string                `yaml:"cache"`
+// 	DatabaseYAML map[string]interface{} `yaml:"database"`
+// }
 
-func (d *DigestDesign) DecodeYAML(b []byte, enc *jsonenc.Encoder) error {
-	e := mitumutil.StringErrorFunc("failed to unmarshal DigestDesign")
+// func (d *DigestDesign) DecodeYAML(b []byte, enc *jsonenc.Encoder) error {
+// 	e := mitumutil.StringErrorFunc("failed to unmarshal DigestDesign")
 
-	var u DigestYAMLUnmarshaler
+// 	// var u DigestYAMLUnmarshaler
 
-	if err := yaml.Unmarshal(b, &u); err != nil {
-		return e(err, "")
-	}
+// 	var m struct {
+// 		Digest *DigestDesign
+// 	}
 
-	d.CacheYAML = u.Design.CacheYAML
-	d.NetworkYAML = &LocalNetwork{}
-	d.DatabaseYAML = &config.DatabaseYAML{}
+// 	if err := yaml.Unmarshal(b, d); err != nil {
+// 		return e(err, "")
+// 	}
 
-	lb, err := mitumutil.MarshalJSON(u.Design.NetworkYAML)
-	db, err := mitumutil.MarshalJSON(u.Design.DatabaseYAML)
-	switch {
-	case err != nil:
-		return e(err, "")
-	default:
-		if err := mitumutil.UnmarshalJSON(lb, d.NetworkYAML); err != nil {
-			return e(err, "")
-		} else if err := mitumutil.UnmarshalJSON(db, d.DatabaseYAML); err != nil {
-			return e(err, "")
-		}
-	}
+// 	if m.Digest == nil {
+// 		return e(errors.Errorf("DigestDesign is empty"), "")
+// 	}
 
-	return nil
-}
+// 	d.CacheYAML = .CacheYAML
+// 	d.NetworkYAML = &LocalNetwork{}
+// 	d.DatabaseYAML = &config.DatabaseYAML{}
 
-func DigestDesignFromFile(f string, enc *jsonenc.Encoder) (d DigestDesign, _ []byte, _ error) {
-	e := mitumutil.StringErrorFunc("failed to load DigestDesign from file")
+// 	lb, err := mitumutil.MarshalJSON((*u.Design).NetworkYAML)
+// 	db, err := mitumutil.MarshalJSON((*u.Design).DatabaseYAML)
+// 	switch {
+// 	case err != nil:
+// 		return e(err, "")
+// 	default:
+// 		if err := mitumutil.UnmarshalJSON(lb, d.NetworkYAML); err != nil {
+// 			return e(err, "")
+// 		} else if err := mitumutil.UnmarshalJSON(db, d.DatabaseYAML); err != nil {
+// 			return e(err, "")
+// 		}
+// 	}
 
-	b, err := os.ReadFile(filepath.Clean(f))
-	if err != nil {
-		return d, nil, e(err, "")
-	}
+// 	return nil
+// }
 
-	if err := d.DecodeYAML(b, enc); err != nil {
-		return d, b, e(err, "")
-	}
+// func DigestDesignFromFile(f string, enc *jsonenc.Encoder) (d *DigestDesign, _ []byte, _ error) {
+// 	e := mitumutil.StringErrorFunc("failed to load DigestDesign from file")
 
-	return d, b, nil
-}
+// 	b, err := os.ReadFile(filepath.Clean(f))
+// 	if err != nil {
+// 		return nil, nil, e(err, "")
+// 	}
+
+// 	if err := d.DecodeYAML(b, enc); err != nil {
+// 		return nil, b, e(err, "")
+// 	}
+
+// 	return d, b, nil
+// }
 
 func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
 	e := mitumutil.StringErrorFunc("failed to Set DigestDesign")
@@ -296,7 +302,8 @@ func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
 		ContextValueLocalNetwork,
 		config.EmptyBaseLocalNetwork(),
 	)
-	if d.NetworkYAML != nil {
+	p := &LocalNetwork{}
+	if *d.NetworkYAML != *p {
 		var conf config.LocalNetwork
 		if i, err := d.NetworkYAML.Set(nctx); err != nil {
 			return ctx, e(err, "")
@@ -307,9 +314,9 @@ func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
 		}
 	}
 
-	var lconf config.LocalNetwork
-	if err := mitumutil.LoadFromContext(ctx, ContextValueLocalNetwork, &lconf); err != nil {
-		return ctx, e(err, "")
+	var ndesign launch.NodeDesign
+	if err := mitumutil.LoadFromContext(ctx, launch.DesignContextKey, &ndesign); err != nil {
+		return ctx, err
 	}
 
 	if d.network.Bind() == nil {
@@ -317,7 +324,7 @@ func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
 	}
 
 	if d.network.ConnInfo().URL() == nil {
-		connInfo, _ := util.NewHTTPConnInfoFromString(DefaultDigestURL, lconf.ConnInfo().Insecure())
+		connInfo, _ := util.NewHTTPConnInfoFromString(DefaultDigestURL, ndesign.Network.TLSInsecure)
 		_ = d.network.SetConnInfo(connInfo)
 	}
 

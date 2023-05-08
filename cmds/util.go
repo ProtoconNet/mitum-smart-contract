@@ -14,6 +14,7 @@ import (
 	"math/big"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/ProtoconNet/mitum-currency/v2/currency"
@@ -37,6 +38,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/ProtoconNet/mitum2/util/ps"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -355,36 +357,33 @@ func PLoadDigestDesign(ctx context.Context) (context.Context, error) {
 		return ctx, e(err, "")
 	}
 
-	var digestDesign DigestDesign
-
 	switch flag.Scheme() {
 	case "file":
-		switch d, _, err := DigestDesignFromFile(flag.URL().Path, enc); {
-		case err != nil:
+		b, err := os.ReadFile(filepath.Clean(flag.URL().Path))
+		if err != nil {
 			return ctx, e(err, "")
-		default:
-			digestDesign = d
 		}
 
-		if i, err := digestDesign.Set(ctx); err != nil {
+		var m struct {
+			Digest *DigestDesign
+		}
+
+		if err := yaml.Unmarshal(b, &m); err != nil {
+			return ctx, err
+		} else if m.Digest == nil {
+			return ctx, nil
+		} else if i, err := m.Digest.Set(ctx); err != nil {
 			return ctx, err
 		} else {
 			ctx = i
 		}
 
-		ctx = context.WithValue(ctx, ContextValueDigestDesign, digestDesign)
+		ctx = context.WithValue(ctx, ContextValueDigestDesign, *m.Digest)
 
-		// switch di, _, err := DigestDesignFromFile(flag.URL().Path, enc); {
-		// case err != nil:
-		// 	return ctx, e(err, "")
-		// default:
-		// 	digestDesign = d.DigestDesign
-		// }
+		log.Log().Debug().Object("design", *m.Digest).Msg("digest design loaded")
 	default:
 		return ctx, e(nil, "unknown digest design uri, %q", flag.URL())
 	}
-
-	log.Log().Debug().Object("design", digestDesign).Msg("digest design loaded")
 
 	return ctx, nil
 }
