@@ -90,3 +90,47 @@ func LoadDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id */, inter
 
 	return bd.I, data, nil
 }
+
+type BaseManifestDocBSONUnMarshaler struct {
+	I bson.Raw      `bson:"_id,omitempty"`
+	E string        `bson:"_e"`
+	D bson.RawValue `bson:"d"`
+	H bool          `bson:"_hinted"`
+	O uint64        `bson:"operations"`
+}
+
+func LoadManifestDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id */, interface{} /* data */, uint64 /* operations */, error) {
+
+	var bd BaseManifestDocBSONUnMarshaler
+	if err := bsonenc.Unmarshal(b, &bd); err != nil {
+		return nil, nil, 0, err
+	}
+
+	ht, err := hint.ParseHint(bd.E)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+
+	enc := encs.Find(ht)
+	if enc == nil {
+		return nil, nil, 0, util.ErrNotFound.Errorf("encoder not found for %q", bsonenc.BSONEncoderHint)
+	}
+
+	if !bd.H {
+		return bd.I, bd.D, 0, nil
+	}
+
+	doc, ok := bd.D.DocumentOK()
+	if !ok {
+		return nil, nil, 0, errors.Errorf("hinted should be mongodb Document")
+	}
+
+	var data interface{}
+	if i, err := enc.Decode([]byte(doc)); err != nil {
+		return nil, nil, 0, err
+	} else {
+		data = i
+	}
+
+	return bd.I, data, bd.O, nil
+}

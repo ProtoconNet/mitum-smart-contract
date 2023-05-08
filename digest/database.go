@@ -270,7 +270,7 @@ func (st *Database) Manifests(
 	reverse bool,
 	offset base.Height,
 	limit int64,
-	callback func(base.Height, base.Manifest) (bool, error),
+	callback func(base.Height, base.Manifest, uint64) (bool, error),
 ) error {
 	var filter bson.M
 	if offset > base.NilHeight {
@@ -303,11 +303,11 @@ func (st *Database) Manifests(
 		defaultColNameBlock,
 		filter,
 		func(cursor *mongo.Cursor) (bool, error) {
-			va, err := LoadManifest(cursor.Decode, st.database.Encoders())
+			va, ops, err := LoadManifest(cursor.Decode, st.database.Encoders())
 			if err != nil {
 				return false, err
 			}
-			return callback(va.Height(), va)
+			return callback(va.Height(), va, ops)
 		},
 		opt,
 	)
@@ -689,55 +689,59 @@ func (st *Database) currencies() ([]string, error) {
 	return cids, nil
 }
 
-func (st *Database) ManifestByHeight(height base.Height) (base.Manifest, error) {
+func (st *Database) ManifestByHeight(height base.Height) (base.Manifest, uint64, error) {
 	q := util.NewBSONFilter("height", height).D()
 
 	var m base.Manifest
+	var operations uint64
 	if err := st.database.Client().GetByFilter(
 		defaultColNameBlock,
 		q,
 		func(res *mongo.SingleResult) error {
-			v, err := LoadManifest(res.Decode, st.database.Encoders())
+			v, ops, err := LoadManifest(res.Decode, st.database.Encoders())
 			if err != nil {
 				return err
 			}
 			m = v
+			operations = ops
 			return nil
 		},
 	); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if m != nil {
-		return m, nil
+		return m, operations, nil
 	} else {
-		return nil, errors.Errorf("manifest is nil")
+		return nil, 0, errors.Errorf("manifest is nil")
 	}
 }
 
-func (st *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, error) {
+func (st *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, uint64, error) {
 	q := util.NewBSONFilter("block", hash).D()
 
 	var m base.Manifest
+	var operations uint64
 	if err := st.database.Client().GetByFilter(
 		defaultColNameBlock,
 		q,
 		func(res *mongo.SingleResult) error {
-			v, err := LoadManifest(res.Decode, st.database.Encoders())
+			v, ops, err := LoadManifest(res.Decode, st.database.Encoders())
 			if err != nil {
 				return err
 			}
 			m = v
+			operations = ops
 			return nil
 		},
 	); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if m != nil {
-		return m, nil
+		return m, operations, nil
 	} else {
-		return nil, errors.Errorf("manifest is nil")
+		return nil, 0, errors.Errorf("manifest is nil")
 	}
 }
 

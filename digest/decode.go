@@ -86,18 +86,18 @@ func LoadCurrency(decoder func(interface{}) error, encs *encoder.Encoders) (base
 	}
 }
 
-func LoadManifest(decoder func(interface{}) error, encs *encoder.Encoders) (base.Manifest, error) {
+func LoadManifest(decoder func(interface{}) error, encs *encoder.Encoders) (base.Manifest, uint64, error) {
 	var b bson.Raw
 
 	if err := decoder(&b); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	if _, hinter, err := mongodbstorage.LoadDataFromDoc(b, encs); err != nil {
-		return nil, err
+	if _, hinter, operations, err := mongodbstorage.LoadManifestDataFromDoc(b, encs); err != nil {
+		return nil, 0, err
 	} else if m, ok := hinter.(base.Manifest); !ok {
-		return nil, errors.Errorf("not base.Manifest: %T", hinter)
+		return nil, 0, errors.Errorf("not base.Manifest: %T", hinter)
 	} else {
-		return m, nil
+		return m, operations, nil
 	}
 }
