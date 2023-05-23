@@ -3,13 +3,14 @@ package digest
 import (
 	"context"
 	"fmt"
+	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
+	"github.com/ProtoconNet/mitum-currency/v2/state/currency"
 	"math"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/ProtoconNet/mitum-currency/v2/currency"
 	mongodbstorage "github.com/ProtoconNet/mitum-currency/v2/digest/mongodb"
 	"github.com/ProtoconNet/mitum-currency/v2/digest/util"
 	"github.com/ProtoconNet/mitum2/base"
@@ -577,11 +578,11 @@ end:
 	return nil
 }
 
-func (st *Database) balance(a base.Address) ([]currency.Amount, base.Height, error) {
+func (st *Database) balance(a base.Address) ([]base3.Amount, base.Height, error) {
 	lastHeight := base.NilHeight
 	var cids []string
 
-	amm := map[currency.CurrencyID]currency.Amount{}
+	amm := map[base3.CurrencyID]base3.Amount{}
 	for {
 		filter := util.NewBSONFilter("address", a.String())
 
@@ -627,7 +628,7 @@ func (st *Database) balance(a base.Address) ([]currency.Amount, base.Height, err
 		}
 	}
 
-	ams := make([]currency.Amount, len(amm))
+	ams := make([]base3.Amount, len(amm))
 	var i int
 	for k := range amm {
 		ams[i] = amm[k]
@@ -745,7 +746,7 @@ func (st *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, uint64, 
 	}
 }
 
-func (st *Database) currency(cid string) (currency.CurrencyDesign, base.State, error) {
+func (st *Database) currency(cid string) (base3.CurrencyDesign, base.State, error) {
 	q := util.NewBSONFilter("currency", cid).D()
 
 	opt := options.FindOne().SetSort(
@@ -765,17 +766,17 @@ func (st *Database) currency(cid string) (currency.CurrencyDesign, base.State, e
 		},
 		opt,
 	); err != nil {
-		return currency.CurrencyDesign{}, nil, err
+		return base3.CurrencyDesign{}, nil, err
 	}
 
 	if sta != nil {
 		de, err := currency.StateCurrencyDesignValue(sta)
 		if err != nil {
-			return currency.CurrencyDesign{}, nil, err
+			return base3.CurrencyDesign{}, nil, err
 		}
 		return de, sta, nil
 	} else {
-		return currency.CurrencyDesign{}, nil, errors.Errorf("state is nil")
+		return base3.CurrencyDesign{}, nil, errors.Errorf("state is nil")
 	}
 }
 

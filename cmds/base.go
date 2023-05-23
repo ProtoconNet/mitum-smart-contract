@@ -87,7 +87,7 @@ func PAddHinters(ctx context.Context) (context.Context, error) {
 type OperationFlags struct {
 	Privatekey PrivatekeyFlag `arg:"" name:"privatekey" help:"privatekey to sign operation" required:"true"`
 	Token      string         `help:"token for operation" optional:""`
-	NetworkID  NetworkIDFlag  `name:"network-id" help:"network-id" required:"true"`
+	NetworkID  NetworkIDFlag  `name:"network-id" help:"network-id" required:"true" default:"${network_id}"`
 	Pretty     bool           `name:"pretty" help:"pretty format"`
 }
 

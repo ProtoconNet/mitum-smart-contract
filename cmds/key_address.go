@@ -2,10 +2,9 @@ package cmds
 
 import (
 	"context"
-
+	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
 	"github.com/alecthomas/kong"
 
-	"github.com/ProtoconNet/mitum-currency/v2/currency"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -32,12 +31,12 @@ func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	ks := make([]currency.AccountKey, len(cmd.Keys))
+	ks := make([]base3.AccountKey, len(cmd.Keys))
 	for i := range cmd.Keys {
 		ks[i] = cmd.Keys[i].Key
 	}
 
-	keys, err := currency.NewBaseAccountKeys(ks, cmd.Threshold)
+	keys, err := base3.NewBaseAccountKeys(ks, cmd.Threshold)
 	if err != nil {
 		return err
 	}
@@ -46,9 +45,9 @@ func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
 
 	var a base.Address
 	if len(cmd.AddressType) > 0 && cmd.AddressType == "ether" {
-		a, err = currency.NewEthAddressFromKeys(keys)
+		a, err = base3.NewEthAddressFromKeys(keys)
 	} else {
-		a, err = currency.NewAddressFromKeys(keys)
+		a, err = base3.NewAddressFromKeys(keys)
 	}
 
 	if err != nil {

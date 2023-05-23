@@ -3,6 +3,7 @@ package digest
 import (
 	"context"
 	"fmt"
+	base2 "github.com/ProtoconNet/mitum-currency/v2/state/currency"
 	"sync"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/ProtoconNet/mitum-currency/v2/currency"
 	"github.com/ProtoconNet/mitum-currency/v2/digest/isaac"
 	"github.com/ProtoconNet/mitum2/base"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
@@ -211,13 +211,13 @@ func (bs *BlockSession) prepareAccounts() error {
 		st := bs.sts[i]
 
 		switch {
-		case currency.IsStateAccountKey(st.Key()):
+		case base2.IsStateAccountKey(st.Key()):
 			j, err := bs.handleAccountState(st)
 			if err != nil {
 				return err
 			}
 			accountModels = append(accountModels, j...)
-		case currency.IsStateBalanceKey(st.Key()):
+		case base2.IsStateBalanceKey(st.Key()):
 			j, err := bs.handleBalanceState(st)
 			if err != nil {
 				return err
@@ -243,7 +243,7 @@ func (bs *BlockSession) prepareCurrencies() error {
 	for i := range bs.sts {
 		st := bs.sts[i]
 		switch {
-		case currency.IsStateCurrencyDesignKey(st.Key()):
+		case base2.IsStateCurrencyDesignKey(st.Key()):
 			j, err := bs.handleCurrencyState(st)
 			if err != nil {
 				return err

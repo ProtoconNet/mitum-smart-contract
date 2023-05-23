@@ -2,9 +2,9 @@ package cmds
 
 import (
 	"context"
-
-	"github.com/ProtoconNet/mitum-currency/v2/currency"
-	isaacoperation "github.com/ProtoconNet/mitum-currency/v2/isaac"
+	base2 "github.com/ProtoconNet/mitum-currency/v2/base"
+	"github.com/ProtoconNet/mitum-currency/v2/operation/currency"
+	isaacoperation2 "github.com/ProtoconNet/mitum-currency/v2/operation/isaac"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	isaacblock "github.com/ProtoconNet/mitum2/isaac/block"
@@ -108,13 +108,13 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 		}
 
 		switch ht := hinter.Hint(); {
-		case ht.IsCompatible(isaacoperation.SuffrageGenesisJoinFactHint):
+		case ht.IsCompatible(isaacoperation2.SuffrageGenesisJoinFactHint):
 			if _, found := types[ht.String()]; found {
 				return errors.Errorf("multiple join operation found")
 			}
 
 			g.ops[i], err = g.joinOperation(fact)
-		case ht.IsCompatible(isaacoperation.GenesisNetworkPolicyFactHint):
+		case ht.IsCompatible(isaacoperation2.GenesisNetworkPolicyFactHint):
 			if _, found := types[ht.String()]; found {
 				return errors.Errorf("multiple network policy operation found")
 			}
@@ -140,18 +140,18 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 func (g *GenesisBlockGenerator) joinOperation(i base.Fact) (base.Operation, error) {
 	e := util.StringErrorFunc("failed to make join operation")
 
-	basefact, ok := i.(isaacoperation.SuffrageGenesisJoinFact)
+	basefact, ok := i.(isaacoperation2.SuffrageGenesisJoinFact)
 	if !ok {
 		return nil, e(nil, "expected SuffrageGenesisJoinFact, not %T", i)
 	}
 
-	fact := isaacoperation.NewSuffrageGenesisJoinFact(basefact.Nodes(), g.networkID)
+	fact := isaacoperation2.NewSuffrageGenesisJoinFact(basefact.Nodes(), g.networkID)
 
 	if err := fact.IsValid(g.networkID); err != nil {
 		return nil, e(err, "")
 	}
 
-	op := isaacoperation.NewSuffrageGenesisJoin(fact)
+	op := isaacoperation2.NewSuffrageGenesisJoin(fact)
 	if err := op.Sign(g.local.Privatekey(), g.networkID); err != nil {
 		return nil, e(err, "")
 	}
@@ -164,18 +164,18 @@ func (g *GenesisBlockGenerator) joinOperation(i base.Fact) (base.Operation, erro
 func (g *GenesisBlockGenerator) networkPolicyOperation(i base.Fact) (base.Operation, error) {
 	e := util.StringErrorFunc("failed to make join operation")
 
-	basefact, ok := i.(isaacoperation.GenesisNetworkPolicyFact)
+	basefact, ok := i.(isaacoperation2.GenesisNetworkPolicyFact)
 	if !ok {
 		return nil, e(nil, "expected GenesisNetworkPolicyFact, not %T", i)
 	}
 
-	fact := isaacoperation.NewGenesisNetworkPolicyFact(basefact.Policy())
+	fact := isaacoperation2.NewGenesisNetworkPolicyFact(basefact.Policy())
 
 	if err := fact.IsValid(nil); err != nil {
 		return nil, e(err, "")
 	}
 
-	op := isaacoperation.NewGenesisNetworkPolicy(fact)
+	op := isaacoperation2.NewGenesisNetworkPolicy(fact)
 	if err := op.Sign(g.local.Privatekey(), g.networkID); err != nil {
 		return nil, e(err, "")
 	}
@@ -192,7 +192,7 @@ func (g *GenesisBlockGenerator) genesisCurrenciesOperation(i base.Fact, token []
 	if !ok {
 		return nil, e(nil, "expected GenesisCurrenciesFact, not %T", i)
 	}
-	acks, err := currency.NewBaseAccountKeys(basefact.Keys().Keys(), basefact.Keys().Threshold())
+	acks, err := base2.NewBaseAccountKeys(basefact.Keys().Keys(), basefact.Keys().Threshold())
 	if err != nil {
 		return nil, e(err, "")
 	}

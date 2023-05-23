@@ -2,11 +2,12 @@ package cmds
 
 import (
 	"context"
+	"github.com/ProtoconNet/mitum-currency/v2/base"
+	"github.com/ProtoconNet/mitum-currency/v2/operation/currency"
 
 	"github.com/pkg/errors"
 
-	currency "github.com/ProtoconNet/mitum-currency/v2/currency"
-	"github.com/ProtoconNet/mitum2/base"
+	mitumbase "github.com/ProtoconNet/mitum2/base"
 )
 
 type TransferCommand struct {
@@ -15,8 +16,8 @@ type TransferCommand struct {
 	Sender   AddressFlag          `arg:"" name:"sender" help:"sender address" required:"true"`
 	Receiver AddressFlag          `arg:"" name:"receiver" help:"receiver address" required:"true"`
 	Amounts  []CurrencyAmountFlag `arg:"" name:"currency-amount" help:"amount (ex: \"<currency>,<amount>\")"`
-	sender   base.Address
-	receiver base.Address
+	sender   mitumbase.Address
+	receiver mitumbase.Address
 }
 
 func NewTransferCommand() TransferCommand {
@@ -81,13 +82,13 @@ func (cmd *TransferCommand) parseFlags() error {
 	return nil
 }
 
-func (cmd *TransferCommand) createOperation() (base.Operation, error) { // nolint:dupl
+func (cmd *TransferCommand) createOperation() (mitumbase.Operation, error) { // nolint:dupl
 	var items []currency.TransfersItem
 
-	ams := make([]currency.Amount, len(cmd.Amounts))
+	ams := make([]base.Amount, len(cmd.Amounts))
 	for i := range cmd.Amounts {
 		a := cmd.Amounts[i]
-		am := currency.NewAmount(a.Big, a.CID)
+		am := base.NewAmount(a.Big, a.CID)
 		if err := am.IsValid(nil); err != nil {
 			return nil, err
 		}
@@ -116,7 +117,7 @@ func (cmd *TransferCommand) createOperation() (base.Operation, error) { // nolin
 }
 
 /*
-func loadOperations(b []byte, networkID base.NetworkID) ([]operation.Operation, error) {
+func loadOperations(b []byte, networkID mitumbase.NetworkID) ([]operation.Operation, error) {
 	if len(bytes.TrimSpace(b)) < 1 {
 		return nil, nil
 	}

@@ -44,6 +44,7 @@ var flagDefaults = kong.Vars{
 	"design_uri":               launch.DefaultDesignURI,
 	"create_account_threshold": "100",
 	"safe_threshold":           base.SafeThreshold.String(),
+	"network_id":               "mitum",
 }
 
 func main() {

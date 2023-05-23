@@ -2,10 +2,11 @@ package cmds
 
 import (
 	"context"
+	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
+	"github.com/ProtoconNet/mitum-currency/v2/operation/currency"
 
 	"github.com/pkg/errors"
 
-	"github.com/ProtoconNet/mitum-currency/v2/currency"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -18,7 +19,7 @@ type CreateAccountCommand struct {
 	Amounts     []CurrencyAmountFlag `arg:"" name:"currency-amount" help:"amount (ex: \"<currency>,<amount>\")"`
 	AddressType string               `help:"address type for new account select mitum or ether" default:"mitum"`
 	sender      base.Address
-	keys        currency.BaseAccountKeys
+	keys        base3.BaseAccountKeys
 }
 
 func NewCreateAccountCommand() CreateAccountCommand {
@@ -81,12 +82,12 @@ func (cmd *CreateAccountCommand) parseFlags() error {
 	}
 
 	{
-		ks := make([]currency.AccountKey, len(cmd.Keys))
+		ks := make([]base3.AccountKey, len(cmd.Keys))
 		for i := range cmd.Keys {
 			ks[i] = cmd.Keys[i].Key
 		}
 
-		if kys, err := currency.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
+		if kys, err := base3.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
 			return err
 		} else if err := kys.IsValid(nil); err != nil {
 			return err
@@ -101,10 +102,10 @@ func (cmd *CreateAccountCommand) parseFlags() error {
 func (cmd *CreateAccountCommand) createOperation() (base.Operation, error) { // nolint:dupl}
 	var items []currency.CreateAccountsItem
 
-	ams := make([]currency.Amount, len(cmd.Amounts))
+	ams := make([]base3.Amount, len(cmd.Amounts))
 	for i := range cmd.Amounts {
 		a := cmd.Amounts[i]
-		am := currency.NewAmount(a.Big, a.CID)
+		am := base3.NewAmount(a.Big, a.CID)
 		if err := am.IsValid(nil); err != nil {
 			return nil, err
 		}
@@ -112,10 +113,10 @@ func (cmd *CreateAccountCommand) createOperation() (base.Operation, error) { // 
 		ams[i] = am
 	}
 
-	addrType := currency.AddressHint.Type()
+	addrType := base3.AddressHint.Type()
 
 	if cmd.AddressType == "ether" {
-		addrType = currency.EthAddressHint.Type()
+		addrType = base3.EthAddressHint.Type()
 	}
 
 	item := currency.NewCreateAccountsItemMultiAmounts(cmd.keys, ams, addrType)

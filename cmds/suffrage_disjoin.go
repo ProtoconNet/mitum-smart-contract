@@ -2,8 +2,8 @@ package cmds
 
 import (
 	"context"
+	"github.com/ProtoconNet/mitum-currency/v2/operation/isaac"
 
-	isaacoperation "github.com/ProtoconNet/mitum-currency/v2/isaac"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/pkg/errors"
 )

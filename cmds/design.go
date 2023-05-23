@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
 	"net/url"
 
 	consulapi "github.com/hashicorp/consul/api"
@@ -15,8 +16,6 @@ import (
 	"github.com/ProtoconNet/mitum2/launch"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
-
-	"github.com/ProtoconNet/mitum-currency/v2/currency"
 )
 
 var (
@@ -33,8 +32,8 @@ func init() {
 
 type KeyDesign struct {
 	PublickeyString string `yaml:"publickey"`
-	Weight          uint
-	Key             currency.BaseAccountKey `yaml:"-"`
+	Weight uint
+	Key    base3.BaseAccountKey `yaml:"-"`
 }
 
 func (kd *KeyDesign) IsValid([]byte) error {
@@ -42,7 +41,7 @@ func (kd *KeyDesign) IsValid([]byte) error {
 
 	if pub, err := base.DecodePublickeyFromString(kd.PublickeyString, je); err != nil {
 		return mitumutil.ErrInvalid.Wrap(err)
-	} else if k, err := currency.NewBaseAccountKey(pub, kd.Weight); err != nil {
+	} else if k, err := base3.NewBaseAccountKey(pub, kd.Weight); err != nil {
 		return mitumutil.ErrInvalid.Wrap(err)
 	} else {
 		kd.Key = k
@@ -53,13 +52,13 @@ func (kd *KeyDesign) IsValid([]byte) error {
 
 type AccountKeysDesign struct {
 	Threshold  uint
-	KeysDesign []*KeyDesign             `yaml:"keys"`
-	Keys       currency.BaseAccountKeys `yaml:"-"`
-	Address    currency.Address         `yaml:"-"`
+	KeysDesign []*KeyDesign          `yaml:"keys"`
+	Keys       base3.BaseAccountKeys `yaml:"-"`
+	Address    base3.Address         `yaml:"-"`
 }
 
 func (akd *AccountKeysDesign) IsValid([]byte) error {
-	ks := make([]currency.AccountKey, len(akd.KeysDesign))
+	ks := make([]base3.AccountKey, len(akd.KeysDesign))
 	for i := range akd.KeysDesign {
 		kd := akd.KeysDesign[i]
 
@@ -70,13 +69,13 @@ func (akd *AccountKeysDesign) IsValid([]byte) error {
 		ks[i] = kd.Key
 	}
 
-	keys, err := currency.NewBaseAccountKeys(ks, akd.Threshold)
+	keys, err := base3.NewBaseAccountKeys(ks, akd.Threshold)
 	if err != nil {
 		return mitumutil.ErrInvalid.Wrap(err)
 	}
 	akd.Keys = keys
 
-	a, err := currency.NewAddressFromKeys(akd.Keys)
+	a, err := base3.NewAddressFromKeys(akd.Keys)
 	if err != nil {
 		return mitumutil.ErrInvalid.Wrap(err)
 	}
@@ -109,39 +108,39 @@ func (de *GenesisCurrenciesDesign) IsValid([]byte) error {
 }
 
 type CurrencyDesign struct {
-	CurrencyString             *string         `yaml:"currency"`
-	BalanceString              *string         `yaml:"balance"`
-	NewAccountMinBalanceString *string         `yaml:"new-account-min-balance"`
-	Feeer                      *FeeerDesign    `yaml:"feeer"`
-	Balance                    currency.Amount `yaml:"-"`
-	NewAccountMinBalance       currency.Big    `yaml:"-"`
+	CurrencyString             *string      `yaml:"currency"`
+	BalanceString              *string      `yaml:"balance"`
+	NewAccountMinBalanceString *string      `yaml:"new-account-min-balance"`
+	Feeer                *FeeerDesign `yaml:"feeer"`
+	Balance              base3.Amount `yaml:"-"`
+	NewAccountMinBalance base3.Big    `yaml:"-"`
 }
 
 func (de *CurrencyDesign) IsValid([]byte) error {
-	var cid currency.CurrencyID
+	var cid base3.CurrencyID
 	if de.CurrencyString == nil {
 		return errors.Errorf("empty currency")
 	}
-	cid = currency.CurrencyID(*de.CurrencyString)
+	cid = base3.CurrencyID(*de.CurrencyString)
 	if err := cid.IsValid(nil); err != nil {
 		return err
 	}
 
 	if de.BalanceString != nil {
-		b, err := currency.NewBigFromString(*de.BalanceString)
+		b, err := base3.NewBigFromString(*de.BalanceString)
 		if err != nil {
 			return mitumutil.ErrInvalid.Wrap(err)
 		}
-		de.Balance = currency.NewAmount(b, cid)
+		de.Balance = base3.NewAmount(b, cid)
 		if err := de.Balance.IsValid(nil); err != nil {
 			return err
 		}
 	}
 
 	if de.NewAccountMinBalanceString == nil {
-		de.NewAccountMinBalance = currency.ZeroBig
+		de.NewAccountMinBalance = base3.ZeroBig
 	} else {
-		b, err := currency.NewBigFromString(*de.NewAccountMinBalanceString)
+		b, err := base3.NewBigFromString(*de.NewAccountMinBalanceString)
 		if err != nil {
 			return mitumutil.ErrInvalid.Wrap(err)
 		}
@@ -165,12 +164,12 @@ type FeeerDesign struct {
 
 func (no *FeeerDesign) IsValid([]byte) error {
 	switch t := no.Type; t {
-	case currency.FeeerNil, "":
-	case currency.FeeerFixed:
+	case base3.FeeerNil, "":
+	case base3.FeeerFixed:
 		if err := no.checkFixed(no.Extras); err != nil {
 			return err
 		}
-	case currency.FeeerRatio:
+	case base3.FeeerRatio:
 		if err := no.checkRatio(no.Extras); err != nil {
 			return err
 		}
@@ -186,7 +185,7 @@ func (no FeeerDesign) checkFixed(c map[string]interface{}) error {
 	if !found {
 		return errors.Errorf("fixed needs `amount`")
 	}
-	n, err := currency.NewBigFromInterface(a)
+	n, err := base3.NewBigFromInterface(a)
 	if err != nil {
 		return errors.Wrapf(err, "invalid amount value, %v of fixed", a)
 	}
@@ -206,14 +205,14 @@ func (no FeeerDesign) checkRatio(c map[string]interface{}) error {
 
 	if a, found := c["min"]; !found {
 		return errors.Errorf("ratio needs `min`")
-	} else if n, err := currency.NewBigFromInterface(a); err != nil {
+	} else if n, err := base3.NewBigFromInterface(a); err != nil {
 		return errors.Wrapf(err, "invalid min value, %v of ratio", a)
 	} else {
 		no.Extras["ratio_min"] = n
 	}
 
 	if a, found := c["max"]; found {
-		n, err := currency.NewBigFromInterface(a)
+		n, err := base3.NewBigFromInterface(a)
 		if err != nil {
 			return errors.Wrapf(err, "invalid max value, %v of ratio", a)
 		}

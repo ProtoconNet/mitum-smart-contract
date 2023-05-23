@@ -2,10 +2,10 @@ package cmds
 
 import (
 	"context"
-
+	base2 "github.com/ProtoconNet/mitum-currency/v2/base"
+	"github.com/ProtoconNet/mitum-currency/v2/operation/currency"
 	"github.com/pkg/errors"
 
-	"github.com/ProtoconNet/mitum-currency/v2/currency"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -17,7 +17,7 @@ type KeyUpdaterCommand struct {
 	Keys      []KeyFlag      `name:"key" help:"key for new account (ex: \"<public key>,<weight>\")" sep:"@"`
 	Currency  CurrencyIDFlag `arg:"" name:"currency-id" help:"currency id" required:"true"`
 	target    base.Address
-	keys      currency.BaseAccountKeys
+	keys      base2.BaseAccountKeys
 }
 
 func NewKeyUpdaterCommand() KeyUpdaterCommand {
@@ -76,12 +76,12 @@ func (cmd *KeyUpdaterCommand) parseFlags() error {
 	}
 
 	{
-		ks := make([]currency.AccountKey, len(cmd.Keys))
+		ks := make([]base2.AccountKey, len(cmd.Keys))
 		for i := range cmd.Keys {
 			ks[i] = cmd.Keys[i].Key
 		}
 
-		if kys, err := currency.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
+		if kys, err := base2.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
 			return err
 		} else if err := kys.IsValid(nil); err != nil {
 			return err

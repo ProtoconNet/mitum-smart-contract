@@ -1,9 +1,9 @@
 package digest
 
 import (
+	base2 "github.com/ProtoconNet/mitum-currency/v2/base"
 	"time"
 
-	"github.com/ProtoconNet/mitum-currency/v2/currency"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v2/digest/util/bson"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -55,7 +55,7 @@ func (va *OperationValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	va.BaseHinter = hint.NewBaseHinter(ht)
 
-	var op currency.BaseOperation
+	var op base2.BaseOperation
 	if err := op.DecodeBSON(uva.OP, enc); err != nil {
 		return e(err, "")
 	}

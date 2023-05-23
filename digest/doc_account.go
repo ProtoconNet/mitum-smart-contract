@@ -1,9 +1,10 @@
 package digest
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v2/currency"
+	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
 	mongodbstorage "github.com/ProtoconNet/mitum-currency/v2/digest/mongodb"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v2/digest/util/bson"
+	"github.com/ProtoconNet/mitum-currency/v2/state/currency"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
@@ -57,7 +58,7 @@ func (doc AccountDoc) MarshalBSON() ([]byte, error) {
 type BalanceDoc struct {
 	mongodbstorage.BaseDoc
 	st base.State
-	am currency.Amount
+	am base3.Amount
 }
 
 // NewBalanceDoc gets the State of Amount

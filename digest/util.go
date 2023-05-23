@@ -2,12 +2,13 @@ package digest
 
 import (
 	"fmt"
+	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
+	"github.com/ProtoconNet/mitum-currency/v2/state/currency"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/ProtoconNet/mitum-currency/v2/currency"
 	"github.com/ProtoconNet/mitum2/base"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	"github.com/ProtoconNet/mitum2/util"
@@ -31,26 +32,26 @@ func Unmarshal(b []byte, v interface{}) error {
 	return JSON.Unmarshal(b, v)
 }
 
-func IsAccountState(st base.State) (currency.Account, bool, error) {
+func IsAccountState(st base.State) (base3.Account, bool, error) {
 	if !currency.IsStateAccountKey(st.Key()) {
-		return currency.Account{}, false, nil
+		return base3.Account{}, false, nil
 	}
 
 	ac, err := currency.LoadStateAccountValue(st)
 	if err != nil {
-		return currency.Account{}, false, err
+		return base3.Account{}, false, err
 	}
 	return ac, true, nil
 }
 
-func IsBalanceState(st base.State) (currency.Amount, bool, error) {
+func IsBalanceState(st base.State) (base3.Amount, bool, error) {
 	if !currency.IsStateBalanceKey(st.Key()) {
-		return currency.Amount{}, false, nil
+		return base3.Amount{}, false, nil
 	}
 
 	am, err := currency.StateBalanceValue(st)
 	if err != nil {
-		return currency.Amount{}, false, err
+		return base3.Amount{}, false, err
 	}
 	return am, true, nil
 }

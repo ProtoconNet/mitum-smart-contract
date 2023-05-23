@@ -2,10 +2,10 @@ package cmds
 
 import (
 	"context"
-
+	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
+	"github.com/ProtoconNet/mitum-currency/v2/operation/currency"
 	"github.com/pkg/errors"
 
-	"github.com/ProtoconNet/mitum-currency/v2/currency"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -19,7 +19,7 @@ type CurrencyPolicyUpdaterCommand struct {
 	CurrencyRatioFeeerFlags `prefix:"feeer-ratio-" help:"ratio feeer"`
 	Node                    AddressFlag `arg:"" name:"node" help:"node address" required:"true"`
 	node                    base.Address
-	po                      currency.CurrencyPolicy
+	po                      base3.CurrencyPolicy
 }
 
 func NewCurrencyPolicyUpdaterCommand() CurrencyPolicyUpdaterCommand {
@@ -44,7 +44,7 @@ func (cmd *CurrencyPolicyUpdaterCommand) Run(pctx context.Context) error { // no
 	var op base.Operation
 	if i, err := cmd.createOperation(); err != nil {
 		return errors.Wrap(err, "failed to create currency-policy-updater operation")
-	} else if err := i.IsValid([]byte(cmd.OperationFlags.NetworkID)); err != nil {
+	} else if err := i.IsValid(cmd.OperationFlags.NetworkID); err != nil {
 		return errors.Wrap(err, "invalid currency-policy-updater operation")
 	} else {
 		cmd.log.Debug().Interface("operation", i).Msg("operation loaded")
@@ -76,13 +76,13 @@ func (cmd *CurrencyPolicyUpdaterCommand) parseFlags() error {
 	}
 	cmd.node = a
 
-	var feeer currency.Feeer
+	var feeer base3.Feeer
 	switch t := cmd.FeeerString; t {
-	case currency.FeeerNil, "":
-		feeer = currency.NewNilFeeer()
-	case currency.FeeerFixed:
+	case base3.FeeerNil, "":
+		feeer = base3.NewNilFeeer()
+	case base3.FeeerFixed:
 		feeer = cmd.CurrencyFixedFeeerFlags.feeer
-	case currency.FeeerRatio:
+	case base3.FeeerRatio:
 		feeer = cmd.CurrencyRatioFeeerFlags.feeer
 	default:
 		return errors.Errorf("unknown feeer type, %q", t)
@@ -94,7 +94,7 @@ func (cmd *CurrencyPolicyUpdaterCommand) parseFlags() error {
 		return err
 	}
 
-	cmd.po = currency.NewCurrencyPolicy(cmd.CurrencyPolicyFlags.NewAccountMinBalance.Big, feeer)
+	cmd.po = base3.NewCurrencyPolicy(cmd.CurrencyPolicyFlags.NewAccountMinBalance.Big, feeer)
 	if err := cmd.po.IsValid(nil); err != nil {
 		return err
 	}
