@@ -2,10 +2,8 @@ module github.com/ProtoconNet/mitum-currency/v3
 
 go 1.19
 
-replace github.com/ProtoconNet/mitum2 => /Users/soonkukkang/go/src/github.com/spikeekips/mitum2
-
 require (
-	github.com/ProtoconNet/mitum2 v0.0.0-20230327234451-801228e1e81f
+	github.com/ProtoconNet/mitum2 v0.0.0-20230530074946-8de13b10ff9e
 	github.com/alecthomas/kong v0.7.1
 	github.com/arl/statsviz v0.5.1
 	github.com/bluele/gcache v0.0.2
@@ -21,7 +19,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rainycape/memcache v0.0.0-20150622160815-1031fa0ce2f2
 	github.com/rs/zerolog v1.29.0
-	github.com/stretchr/testify v1.8.1
 	go.mongodb.org/mongo-driver v1.11.0
 	golang.org/x/crypto v0.5.0
 	golang.org/x/net v0.7.0
@@ -100,6 +97,7 @@ require (
 	github.com/rs/xid v1.4.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
+	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
