@@ -13,7 +13,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/ps"
 	"github.com/pkg/errors"
 
-	"github.com/ProtoconNet/mitum-currency/v2/digest"
+	"github.com/ProtoconNet/mitum-currency/v3/digest"
 )
 
 const (

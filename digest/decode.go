@@ -1,7 +1,7 @@
 package digest
 
 import (
-	mongodbstorage "github.com/ProtoconNet/mitum-currency/v2/digest/mongodb"
+	mongodbstorage "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"

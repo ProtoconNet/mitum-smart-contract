@@ -2,7 +2,7 @@ package extension
 
 import (
 	"fmt"
-	"github.com/ProtoconNet/mitum-currency/v2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/base"
 	"strings"
 
 	mitumbase "github.com/ProtoconNet/mitum2/base"

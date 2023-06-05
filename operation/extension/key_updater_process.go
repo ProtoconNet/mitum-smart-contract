@@ -3,10 +3,10 @@ package extension
 //
 //import (
 //	"context"
-//	"github.com/ProtoconNet/mitum-currency/v2/base"
-//	"github.com/ProtoconNet/mitum-currency/v2/state"
-//	"github.com/ProtoconNet/mitum-currency/v2/state/currency"
-//	"github.com/ProtoconNet/mitum-currency/v2/state/extension"
+//	"github.com/ProtoconNet/mitum-currency/v3/base"
+//	"github.com/ProtoconNet/mitum-currency/v3/state"
+//	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
+//	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 //	"sync"
 //
 //	mitumbase "github.com/ProtoconNet/mitum2/base"

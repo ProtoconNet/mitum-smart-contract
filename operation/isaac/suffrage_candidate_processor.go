@@ -2,7 +2,7 @@ package isaacoperation
 
 import (
 	"context"
-	base2 "github.com/ProtoconNet/mitum-currency/v2/base"
+	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
 	"sort"
 	"strings"
 

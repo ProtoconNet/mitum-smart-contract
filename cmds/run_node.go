@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ProtoconNet/mitum-currency/v2/digest"
+	"github.com/ProtoconNet/mitum-currency/v3/digest"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"

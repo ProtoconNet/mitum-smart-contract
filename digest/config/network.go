@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 	"net/url"
 
-	"github.com/ProtoconNet/mitum-currency/v2/digest/cache"
-	"github.com/ProtoconNet/mitum-currency/v2/digest/util"
+	"github.com/ProtoconNet/mitum-currency/v3/digest/cache"
+	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
 )
 
 var (

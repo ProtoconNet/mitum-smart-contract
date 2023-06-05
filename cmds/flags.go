@@ -3,7 +3,7 @@ package cmds
 import (
 	"bytes"
 	"fmt"
-	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
+	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
 	"strconv"
 	"strings"
 

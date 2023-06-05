@@ -1,4 +1,4 @@
-module github.com/ProtoconNet/mitum-currency/v2
+module github.com/ProtoconNet/mitum-currency/v3
 
 go 1.19
 

@@ -3,7 +3,7 @@ package digest
 import (
 	"net/url"
 
-	"github.com/ProtoconNet/mitum-currency/v2/digest/util"
+	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 

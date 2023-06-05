@@ -10,7 +10,7 @@ import (
 
 const (
 	ProblemMimetype    = "application/problem+json; charset=utf-8"
-	ProblemNamespace   = "https://github.com/ProtoconNet/mitum-currency/v2/problems"
+	ProblemNamespace   = "https://github.com/ProtoconNet/mitum-currency/v3/problems"
 	DefaultProblemType = "others"
 )
 

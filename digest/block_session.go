@@ -3,7 +3,7 @@ package digest
 import (
 	"context"
 	"fmt"
-	base2 "github.com/ProtoconNet/mitum-currency/v2/state/currency"
+	base2 "github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"sync"
 	"time"
 
@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/ProtoconNet/mitum-currency/v2/digest/isaac"
+	"github.com/ProtoconNet/mitum-currency/v3/digest/isaac"
 	"github.com/ProtoconNet/mitum2/base"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/fixedtree"

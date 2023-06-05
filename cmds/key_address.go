@@ -2,7 +2,7 @@ package cmds
 
 import (
 	"context"
-	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
+	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
 	"github.com/alecthomas/kong"
 
 	"github.com/ProtoconNet/mitum2/base"

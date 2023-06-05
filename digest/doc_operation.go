@@ -1,11 +1,11 @@
 package digest
 
 import (
-	base2 "github.com/ProtoconNet/mitum-currency/v2/base"
+	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
 	"time"
 
-	mongodbstorage "github.com/ProtoconNet/mitum-currency/v2/digest/mongodb"
-	bsonenc "github.com/ProtoconNet/mitum-currency/v2/digest/util/bson"
+	mongodbstorage "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
+	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )

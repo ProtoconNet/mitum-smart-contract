@@ -2,12 +2,12 @@ package extension
 
 import (
 	"context"
-	"github.com/ProtoconNet/mitum-currency/v2/base"
-	"github.com/ProtoconNet/mitum-currency/v2/operation/currency"
-	types "github.com/ProtoconNet/mitum-currency/v2/operation/type"
-	"github.com/ProtoconNet/mitum-currency/v2/state"
-	statecurrency "github.com/ProtoconNet/mitum-currency/v2/state/currency"
-	"github.com/ProtoconNet/mitum-currency/v2/state/extension"
+	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
+	types "github.com/ProtoconNet/mitum-currency/v3/operation/type"
+	"github.com/ProtoconNet/mitum-currency/v3/state"
+	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"sync"
 
 	mitumbase "github.com/ProtoconNet/mitum2/base"

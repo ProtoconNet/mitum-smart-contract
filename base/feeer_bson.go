@@ -3,7 +3,7 @@ package base
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
-	bsonenc "github.com/ProtoconNet/mitum-currency/v2/digest/util/bson"
+	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )

@@ -1,7 +1,7 @@
 package base
 
 import (
-	bsonenc "github.com/ProtoconNet/mitum-currency/v2/digest/util/bson"
+	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 )

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ProtoconNet/mitum-currency/v2/cmds"
+	"github.com/ProtoconNet/mitum-currency/v3/cmds"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util"

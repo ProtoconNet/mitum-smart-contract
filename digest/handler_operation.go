@@ -2,7 +2,7 @@ package digest
 
 import (
 	"fmt"
-	"github.com/ProtoconNet/mitum-currency/v2/operation/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"net/http"
 	"strconv"
 	"time"

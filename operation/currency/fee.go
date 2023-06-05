@@ -2,9 +2,9 @@ package currency
 
 import (
 	"context"
-	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
-	"github.com/ProtoconNet/mitum-currency/v2/state"
-	"github.com/ProtoconNet/mitum-currency/v2/state/currency"
+	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/state"
+	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"

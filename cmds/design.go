@@ -2,7 +2,7 @@ package cmds
 
 import (
 	"context"
-	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
+	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
 	"net/url"
 
 	consulapi "github.com/hashicorp/consul/api"
@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 
-	"github.com/ProtoconNet/mitum-currency/v2/digest/config"
-	"github.com/ProtoconNet/mitum-currency/v2/digest/util"
+	"github.com/ProtoconNet/mitum-currency/v3/digest/config"
+	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/launch"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
@@ -32,8 +32,8 @@ func init() {
 
 type KeyDesign struct {
 	PublickeyString string `yaml:"publickey"`
-	Weight uint
-	Key    base3.BaseAccountKey `yaml:"-"`
+	Weight          uint
+	Key             base3.BaseAccountKey `yaml:"-"`
 }
 
 func (kd *KeyDesign) IsValid([]byte) error {
@@ -111,9 +111,9 @@ type CurrencyDesign struct {
 	CurrencyString             *string      `yaml:"currency"`
 	BalanceString              *string      `yaml:"balance"`
 	NewAccountMinBalanceString *string      `yaml:"new-account-min-balance"`
-	Feeer                *FeeerDesign `yaml:"feeer"`
-	Balance              base3.Amount `yaml:"-"`
-	NewAccountMinBalance base3.Big    `yaml:"-"`
+	Feeer                      *FeeerDesign `yaml:"feeer"`
+	Balance                    base3.Amount `yaml:"-"`
+	NewAccountMinBalance       base3.Big    `yaml:"-"`
 }
 
 func (de *CurrencyDesign) IsValid([]byte) error {

@@ -1,12 +1,12 @@
 package cmds
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v2/base"
-	"github.com/ProtoconNet/mitum-currency/v2/digest"
-	digestisaac "github.com/ProtoconNet/mitum-currency/v2/digest/isaac"
-	"github.com/ProtoconNet/mitum-currency/v2/operation/currency"
-	isaacoperation2 "github.com/ProtoconNet/mitum-currency/v2/operation/isaac"
-	statecurrency "github.com/ProtoconNet/mitum-currency/v2/state/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/digest"
+	digestisaac "github.com/ProtoconNet/mitum-currency/v3/digest/isaac"
+	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
+	isaacoperation2 "github.com/ProtoconNet/mitum-currency/v3/operation/isaac"
+	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"

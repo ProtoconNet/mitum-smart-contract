@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ProtoconNet/mitum-currency/v2/digest/network"
-	"github.com/ProtoconNet/mitum-currency/v2/digest/util"
+	"github.com/ProtoconNet/mitum-currency/v3/digest/network"
+	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/gorilla/mux"

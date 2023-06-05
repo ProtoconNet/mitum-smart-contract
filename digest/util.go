@@ -2,8 +2,8 @@ package digest
 
 import (
 	"fmt"
-	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
-	"github.com/ProtoconNet/mitum-currency/v2/state/currency"
+	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"net/http"
 	"strconv"
 	"strings"

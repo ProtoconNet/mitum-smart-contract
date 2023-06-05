@@ -1,7 +1,7 @@
 package currency
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )

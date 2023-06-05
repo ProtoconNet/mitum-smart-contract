@@ -3,7 +3,7 @@ package isaacoperation
 import (
 	"bytes"
 	"context"
-	base3 "github.com/ProtoconNet/mitum-currency/v2/base"
+	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
