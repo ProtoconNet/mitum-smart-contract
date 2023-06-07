@@ -126,7 +126,7 @@ func (opp *CreateContractAccountsItemProcessor) Process(
 		return nil, e(err, "")
 	}
 
-	ks, err := NewContractAccountKeys()
+	ks, err := base.NewContractAccountKeys()
 	if err != nil {
 		return nil, e(err, "")
 	}

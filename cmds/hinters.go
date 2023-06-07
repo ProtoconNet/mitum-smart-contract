@@ -5,6 +5,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/digest"
 	digestisaac "github.com/ProtoconNet/mitum-currency/v3/digest/isaac"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
 	isaacoperation2 "github.com/ProtoconNet/mitum-currency/v3/operation/isaac"
 	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum2/launch"
@@ -25,6 +26,22 @@ var hinters = []encoder.DecodeDetail{
 	{Hint: base.EthAddressHint, Instance: base.EthAddress{}},
 	{Hint: base.AddressHint, Instance: base.Address{}},
 	{Hint: base.AmountHint, Instance: base.Amount{}},
+	{Hint: base.CurrencyDesignHint, Instance: base.CurrencyDesign{}},
+	{Hint: base.CurrencyPolicyHint, Instance: base.CurrencyPolicy{}},
+	{Hint: base.AccountKeysHint, Instance: base.BaseAccountKeys{}},
+	{Hint: base.AccountKeyHint, Instance: base.BaseAccountKey{}},
+	{Hint: base.NilFeeerHint, Instance: base.NilFeeer{}},
+	{Hint: base.RatioFeeerHint, Instance: base.RatioFeeer{}},
+	{Hint: base.FixedFeeerHint, Instance: base.FixedFeeer{}},
+
+	{Hint: base.ContractAccountKeysHint, Instance: base.ContractAccountKeys{}},
+	{Hint: extension.CreateContractAccountsItemMultiAmountsHint, Instance: extension.CreateContractAccountsItemMultiAmounts{}},
+	{Hint: extension.CreateContractAccountsItemSingleAmountHint, Instance: extension.CreateContractAccountsItemSingleAmount{}},
+	{Hint: extension.CreateContractAccountsHint, Instance: extension.CreateContractAccounts{}},
+	{Hint: extension.WithdrawsItemMultiAmountsHint, Instance: extension.WithdrawsItemMultiAmounts{}},
+	{Hint: extension.WithdrawsItemSingleAmountHint, Instance: extension.WithdrawsItemSingleAmount{}},
+	{Hint: extension.WithdrawsHint, Instance: extension.Withdraws{}},
+
 	{Hint: currency.CreateAccountsItemMultiAmountsHint, Instance: currency.CreateAccountsItemMultiAmounts{}},
 	{Hint: currency.CreateAccountsItemSingleAmountHint, Instance: currency.CreateAccountsItemSingleAmount{}},
 	{Hint: currency.CreateAccountsHint, Instance: currency.CreateAccounts{}},
@@ -32,20 +49,13 @@ var hinters = []encoder.DecodeDetail{
 	{Hint: currency.TransfersItemMultiAmountsHint, Instance: currency.TransfersItemMultiAmounts{}},
 	{Hint: currency.TransfersItemSingleAmountHint, Instance: currency.TransfersItemSingleAmount{}},
 	{Hint: currency.TransfersHint, Instance: currency.Transfers{}},
-	{Hint: base.CurrencyDesignHint, Instance: base.CurrencyDesign{}},
-	{Hint: base.CurrencyPolicyHint, Instance: base.CurrencyPolicy{}},
 	{Hint: currency.CurrencyRegisterHint, Instance: currency.CurrencyRegister{}},
 	{Hint: currency.CurrencyPolicyUpdaterHint, Instance: currency.CurrencyPolicyUpdater{}},
 	{Hint: currency.SuffrageInflationHint, Instance: currency.SuffrageInflation{}},
 	{Hint: currency.FeeOperationFactHint, Instance: currency.FeeOperationFact{}},
 	{Hint: currency.FeeOperationHint, Instance: currency.FeeOperation{}},
-	{Hint: base.FixedFeeerHint, Instance: base.FixedFeeer{}},
 	{Hint: currency.GenesisCurrenciesFactHint, Instance: currency.GenesisCurrenciesFact{}},
 	{Hint: currency.GenesisCurrenciesHint, Instance: currency.GenesisCurrencies{}},
-	{Hint: base.AccountKeysHint, Instance: base.BaseAccountKeys{}},
-	{Hint: base.AccountKeyHint, Instance: base.BaseAccountKey{}},
-	{Hint: base.NilFeeerHint, Instance: base.NilFeeer{}},
-	{Hint: base.RatioFeeerHint, Instance: base.RatioFeeer{}},
 	{Hint: statecurrency.AccountStateValueHint, Instance: statecurrency.AccountStateValue{}},
 	{Hint: statecurrency.BalanceStateValueHint, Instance: statecurrency.BalanceStateValue{}},
 	{Hint: statecurrency.CurrencyDesignStateValueHint, Instance: statecurrency.CurrencyDesignStateValue{}},
@@ -75,6 +85,8 @@ var supportedProposalOperationFactHinters = []encoder.DecodeDetail{
 	{Hint: currency.CurrencyRegisterFactHint, Instance: currency.CurrencyRegisterFact{}},
 	{Hint: currency.CurrencyPolicyUpdaterFactHint, Instance: currency.CurrencyPolicyUpdaterFact{}},
 	{Hint: currency.SuffrageInflationFactHint, Instance: currency.SuffrageInflationFact{}},
+	{Hint: extension.CreateContractAccountsFactHint, Instance: extension.CreateContractAccountsFact{}},
+	{Hint: extension.WithdrawsFactHint, Instance: extension.WithdrawsFact{}},
 }
 
 func init() {
