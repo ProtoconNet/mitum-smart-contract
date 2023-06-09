@@ -2,7 +2,7 @@ package currency
 
 import (
 	"encoding/json"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
@@ -51,7 +51,7 @@ func (fact *SuffrageInflationFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) er
 }
 
 func (op *SuffrageInflation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	var ubo base2.BaseNodeOperation
+	var ubo common.BaseNodeOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
 		return err
 	}

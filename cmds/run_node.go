@@ -427,9 +427,12 @@ func (cmd *RunCommand) setDigestSendHandler(
 	)
 
 	handlers = handlers.SetSend(
-		NewSendHandler(local.Privatekey(), params.NetworkID(), func() (*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
-			return client, memberlist, nil
-		}),
+		NewSendHandler(
+			local.Privatekey(),
+			params.NetworkID(),
+			func() (*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
+				return client, memberlist, nil
+			}),
 	)
 
 	cmd.log.Debug().Msg("send handler attached")

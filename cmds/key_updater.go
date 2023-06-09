@@ -2,8 +2,8 @@ package cmds
 
 import (
 	"context"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/pkg/errors"
 
 	"github.com/ProtoconNet/mitum2/base"
@@ -16,8 +16,8 @@ type KeyUpdaterCommand struct {
 	Threshold uint           `help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
 	Keys      []KeyFlag      `name:"key" help:"key for new account (ex: \"<public key>,<weight>\")" sep:"@"`
 	Currency  CurrencyIDFlag `arg:"" name:"currency-id" help:"currency id" required:"true"`
-	target    base.Address
-	keys      base2.BaseAccountKeys
+	target base.Address
+	keys   types.BaseAccountKeys
 }
 
 func NewKeyUpdaterCommand() KeyUpdaterCommand {
@@ -76,12 +76,12 @@ func (cmd *KeyUpdaterCommand) parseFlags() error {
 	}
 
 	{
-		ks := make([]base2.AccountKey, len(cmd.Keys))
+		ks := make([]types.AccountKey, len(cmd.Keys))
 		for i := range cmd.Keys {
 			ks[i] = cmd.Keys[i].Key
 		}
 
-		if kys, err := base2.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
+		if kys, err := types.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
 			return err
 		} else if err := kys.IsValid(nil); err != nil {
 			return err

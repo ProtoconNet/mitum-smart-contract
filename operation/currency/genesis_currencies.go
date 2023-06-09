@@ -1,7 +1,8 @@
 package currency
 
 import (
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -17,15 +18,15 @@ var (
 type GenesisCurrenciesFact struct {
 	base.BaseFact
 	genesisNodeKey base.Publickey
-	keys           base3.AccountKeys
-	cs             []base3.CurrencyDesign
+	keys           types.AccountKeys
+	cs             []types.CurrencyDesign
 }
 
 func NewGenesisCurrenciesFact(
 	token []byte,
 	genesisNodeKey base.Publickey,
-	keys base3.AccountKeys,
-	cs []base3.CurrencyDesign,
+	keys types.AccountKeys,
+	cs []types.CurrencyDesign,
 ) GenesisCurrenciesFact {
 	fact := GenesisCurrenciesFact{
 		BaseFact:       base.NewBaseFact(GenesisCurrenciesFactHint, token),
@@ -56,7 +57,7 @@ func (fact GenesisCurrenciesFact) Bytes() []byte {
 }
 
 func (fact GenesisCurrenciesFact) IsValid(b []byte) error {
-	if err := base3.IsValidOperationFact(fact, b); err != nil {
+	if err := common.IsValidOperationFact(fact, b); err != nil {
 		return err
 	}
 
@@ -68,7 +69,7 @@ func (fact GenesisCurrenciesFact) IsValid(b []byte) error {
 		return util.ErrInvalid.Errorf("invalid fact: %w", err)
 	}
 
-	founds := map[base3.CurrencyID]struct{}{}
+	founds := map[types.CurrencyID]struct{}{}
 	for i := range fact.cs {
 		c := fact.cs[i]
 		if err := c.IsValid(nil); err != nil {
@@ -95,26 +96,26 @@ func (fact GenesisCurrenciesFact) GenesisNodeKey() base.Publickey {
 	return fact.genesisNodeKey
 }
 
-func (fact GenesisCurrenciesFact) Keys() base3.AccountKeys {
+func (fact GenesisCurrenciesFact) Keys() types.AccountKeys {
 	return fact.keys
 }
 
 func (fact GenesisCurrenciesFact) Address() (base.Address, error) {
-	return base3.NewAddressFromKeys(fact.keys)
+	return types.NewAddressFromKeys(fact.keys)
 }
 
-func (fact GenesisCurrenciesFact) Currencies() []base3.CurrencyDesign {
+func (fact GenesisCurrenciesFact) Currencies() []types.CurrencyDesign {
 	return fact.cs
 }
 
 type GenesisCurrencies struct {
-	base3.BaseOperation
+	common.BaseOperation
 }
 
 func NewGenesisCurrencies(
 	fact GenesisCurrenciesFact,
 ) GenesisCurrencies {
-	return GenesisCurrencies{BaseOperation: base3.NewBaseOperation(GenesisCurrenciesHint, fact)}
+	return GenesisCurrencies{BaseOperation: common.NewBaseOperation(GenesisCurrenciesHint, fact)}
 }
 
 func (op GenesisCurrencies) IsValid(networkID []byte) error {

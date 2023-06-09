@@ -1,7 +1,7 @@
 package currency
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
@@ -14,7 +14,7 @@ func (fact *CurrencyRegisterFact) unpack(
 
 	if hinter, err := enc.Decode(bcr); err != nil {
 		return e(err, "")
-	} else if cr, ok := hinter.(base.CurrencyDesign); !ok {
+	} else if cr, ok := hinter.(types.CurrencyDesign); !ok {
 		return util.ErrWrongType.Errorf("expected CurrencyDesign not %T,", hinter)
 	} else {
 		fact.currency = cr

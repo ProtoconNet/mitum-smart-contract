@@ -2,7 +2,7 @@ package isaacoperation
 
 import (
 	"context"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
@@ -132,7 +132,7 @@ func (p *SuffrageDisjoinProcessor) Process(ctx context.Context, op base.Operatio
 	fact := op.Fact().(SuffrageDisjoinFact) //nolint:forcetypeassert //...
 
 	return []base.StateMergeValue{
-		base2.NewBaseStateMergeValue(
+		common.NewBaseStateMergeValue(
 			isaac.SuffrageStateKey,
 			newSuffrageDisjoinNodeStateValue(fact.Node()),
 			func(height base.Height, st base.State) base.StateValueMerger {

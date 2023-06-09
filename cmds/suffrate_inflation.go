@@ -3,19 +3,19 @@ package cmds
 import (
 	"context"
 	"fmt"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"strings"
 
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 )
 
 type SuffrageInflationItemFlag struct {
 	s        string
-	receiver mitumbase.Address
-	amount   base.Amount
+	receiver base.Address
+	amount   types.Amount
 }
 
 func (v *SuffrageInflationItemFlag) String() string {
@@ -48,7 +48,7 @@ func (v *SuffrageInflationItemFlag) UnmarshalText(b []byte) error {
 	if err := cf.UnmarshalText([]byte(c)); err != nil {
 		return util.ErrInvalid.Errorf("invalid inflation amount: %w", err)
 	}
-	v.amount = base.NewAmount(cf.Big, cf.CID)
+	v.amount = types.NewAmount(cf.Big, cf.CID)
 
 	return nil
 }
@@ -69,7 +69,7 @@ type SuffrageInflationCommand struct {
 	baseCommand
 	OperationFlags
 	Node  AddressFlag `arg:"" name:"node" help:"node address" required:"true"`
-	node  mitumbase.Address
+	node  base.Address
 	Items []SuffrageInflationItemFlag `arg:"" name:"inflation item" help:"ex: \"<receiver address>,<currency>,<amount>\""`
 	items []currency.SuffrageInflationItem
 }
@@ -93,7 +93,7 @@ func (cmd *SuffrageInflationCommand) Run(pctx context.Context) error { // nolint
 		return err
 	}
 
-	var op mitumbase.Operation
+	var op base.Operation
 	if i, err := cmd.createOperation(); err != nil {
 		return errors.Wrap(err, "failed to create suffrage-inflation operation")
 	} else if err := i.IsValid(cmd.OperationFlags.NetworkID); err != nil {

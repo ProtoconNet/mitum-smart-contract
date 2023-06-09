@@ -3,7 +3,8 @@ package cmds
 import (
 	"bytes"
 	"fmt"
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"strconv"
 	"strings"
 
@@ -14,7 +15,7 @@ import (
 )
 
 type KeyFlag struct {
-	Key base3.BaseAccountKey
+	Key types.BaseAccountKey
 }
 
 func (v *KeyFlag) UnmarshalText(b []byte) error {
@@ -45,7 +46,7 @@ func (v *KeyFlag) UnmarshalText(b []byte) error {
 		weight = uint(i)
 	}
 
-	if k, err := base3.NewBaseAccountKey(pk, weight); err != nil {
+	if k, err := types.NewBaseAccountKey(pk, weight); err != nil {
 		return err
 	} else if err := k.IsValid(nil); err != nil {
 		return errors.Wrap(err, "invalid key string")
@@ -75,7 +76,7 @@ func (v *StringLoad) UnmarshalText(b []byte) error {
 }
 
 func (v StringLoad) Bytes() []byte {
-	return []byte(v)
+	return v
 }
 
 func (v StringLoad) String() string {
@@ -147,11 +148,11 @@ func (v *AddressFlag) Encode(enc encoder.Encoder) (base.Address, error) {
 }
 
 type BigFlag struct {
-	base3.Big
+	common.Big
 }
 
 func (v *BigFlag) UnmarshalText(b []byte) error {
-	if a, err := base3.NewBigFromString(string(b)); err != nil {
+	if a, err := common.NewBigFromString(string(b)); err != nil {
 		return errors.Wrapf(err, "invalid big string, %q", string(b))
 	} else if err := a.IsValid(nil); err != nil {
 		return err
@@ -163,11 +164,11 @@ func (v *BigFlag) UnmarshalText(b []byte) error {
 }
 
 type CurrencyIDFlag struct {
-	CID base3.CurrencyID
+	CID types.CurrencyID
 }
 
 func (v *CurrencyIDFlag) UnmarshalText(b []byte) error {
-	cid := base3.CurrencyID(string(b))
+	cid := types.CurrencyID(string(b))
 	if err := cid.IsValid(nil); err != nil {
 		return err
 	}
@@ -181,8 +182,8 @@ func (v *CurrencyIDFlag) String() string {
 }
 
 type CurrencyAmountFlag struct {
-	CID base3.CurrencyID
-	Big base3.Big
+	CID types.CurrencyID
+	Big common.Big
 }
 
 func (v *CurrencyAmountFlag) UnmarshalText(b []byte) error {
@@ -193,13 +194,13 @@ func (v *CurrencyAmountFlag) UnmarshalText(b []byte) error {
 
 	a, c := l[0], l[1]
 
-	cid := base3.CurrencyID(a)
+	cid := types.CurrencyID(a)
 	if err := cid.IsValid(nil); err != nil {
 		return err
 	}
 	v.CID = cid
 
-	if a, err := base3.NewBigFromString(c); err != nil {
+	if a, err := common.NewBigFromString(c); err != nil {
 		return errors.Wrapf(err, "invalid big string, %q", string(b))
 	} else if err := a.IsValid(nil); err != nil {
 		return err

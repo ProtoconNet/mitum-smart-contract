@@ -2,13 +2,12 @@ package currency
 
 import (
 	"fmt"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
-	"strings"
-
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 var (
@@ -25,10 +24,10 @@ var (
 
 type AccountStateValue struct {
 	hint.BaseHinter
-	Account base2.Account
+	Account types.Account
 }
 
-func NewAccountStateValue(account base2.Account) AccountStateValue {
+func NewAccountStateValue(account types.Account) AccountStateValue {
 	return AccountStateValue{
 		BaseHinter: hint.NewBaseHinter(AccountStateValueHint),
 		Account:    account,
@@ -57,7 +56,7 @@ func (a AccountStateValue) HashBytes() []byte {
 	return a.Account.Bytes()
 }
 
-func StateKeysValue(st base.State) (base2.AccountKeys, error) {
+func StateKeysValue(st base.State) (types.AccountKeys, error) {
 	ac, err := LoadStateAccountValue(st)
 	if err != nil {
 		return nil, err
@@ -67,10 +66,10 @@ func StateKeysValue(st base.State) (base2.AccountKeys, error) {
 
 type BalanceStateValue struct {
 	hint.BaseHinter
-	Amount base2.Amount
+	Amount types.Amount
 }
 
-func NewBalanceStateValue(amount base2.Amount) BalanceStateValue {
+func NewBalanceStateValue(amount types.Amount) BalanceStateValue {
 	return BalanceStateValue{
 		BaseHinter: hint.NewBaseHinter(BalanceStateValueHint),
 		Amount:     amount,
@@ -99,15 +98,15 @@ func (b BalanceStateValue) HashBytes() []byte {
 	return b.Amount.Bytes()
 }
 
-func StateBalanceValue(st base.State) (base2.Amount, error) {
+func StateBalanceValue(st base.State) (types.Amount, error) {
 	v := st.Value()
 	if v == nil {
-		return base2.Amount{}, util.ErrNotFound.Errorf("balance not found in State")
+		return types.Amount{}, util.ErrNotFound.Errorf("balance not found in State")
 	}
 
 	a, ok := v.(BalanceStateValue)
 	if !ok {
-		return base2.Amount{}, errors.Errorf("invalid balance value found, %T", v)
+		return types.Amount{}, errors.Errorf("invalid balance value found, %T", v)
 	}
 
 	return a.Amount, nil
@@ -115,10 +114,10 @@ func StateBalanceValue(st base.State) (base2.Amount, error) {
 
 type CurrencyDesignStateValue struct {
 	hint.BaseHinter
-	CurrencyDesign base2.CurrencyDesign
+	CurrencyDesign types.CurrencyDesign
 }
 
-func NewCurrencyDesignStateValue(currencyDesign base2.CurrencyDesign) CurrencyDesignStateValue {
+func NewCurrencyDesignStateValue(currencyDesign types.CurrencyDesign) CurrencyDesignStateValue {
 	return CurrencyDesignStateValue{
 		BaseHinter:     hint.NewBaseHinter(CurrencyDesignStateValueHint),
 		CurrencyDesign: currencyDesign,
@@ -147,21 +146,21 @@ func (c CurrencyDesignStateValue) HashBytes() []byte {
 	return c.CurrencyDesign.Bytes()
 }
 
-func StateCurrencyDesignValue(st base.State) (base2.CurrencyDesign, error) {
+func StateCurrencyDesignValue(st base.State) (types.CurrencyDesign, error) {
 	v := st.Value()
 	if v == nil {
-		return base2.CurrencyDesign{}, util.ErrNotFound.Errorf("currency design not found in State")
+		return types.CurrencyDesign{}, util.ErrNotFound.Errorf("currency design not found in State")
 	}
 
 	de, ok := v.(CurrencyDesignStateValue)
 	if !ok {
-		return base2.CurrencyDesign{}, errors.Errorf("invalid currency design value found, %T", v)
+		return types.CurrencyDesign{}, errors.Errorf("invalid currency design value found, %T", v)
 	}
 
 	return de.CurrencyDesign, nil
 }
 
-func StateBalanceKeyPrefix(a base.Address, cid base2.CurrencyID) string {
+func StateBalanceKeyPrefix(a base.Address, cid types.CurrencyID) string {
 	return fmt.Sprintf("%s-%s", a.String(), cid)
 }
 
@@ -173,21 +172,21 @@ func IsStateAccountKey(key string) bool {
 	return strings.HasSuffix(key, StateKeyAccountSuffix)
 }
 
-func LoadStateAccountValue(st base.State) (base2.Account, error) {
+func LoadStateAccountValue(st base.State) (types.Account, error) {
 	v := st.Value()
 	if v == nil {
-		return base2.Account{}, util.ErrNotFound.Errorf("account not found in State")
+		return types.Account{}, util.ErrNotFound.Errorf("account not found in State")
 	}
 
 	s, ok := v.(AccountStateValue)
 	if !ok {
-		return base2.Account{}, errors.Errorf("invalid account value found, %T", v)
+		return types.Account{}, errors.Errorf("invalid account value found, %T", v)
 	}
 	return s.Account, nil
 
 }
 
-func StateKeyBalance(a base.Address, cid base2.CurrencyID) string {
+func StateKeyBalance(a base.Address, cid types.CurrencyID) string {
 	return fmt.Sprintf("%s%s", StateBalanceKeyPrefix(a, cid), StateKeyBalanceSuffix)
 }
 
@@ -199,73 +198,6 @@ func IsStateCurrencyDesignKey(key string) bool {
 	return strings.HasPrefix(key, StateKeyCurrencyDesignPrefix)
 }
 
-func StateKeyCurrencyDesign(cid base2.CurrencyID) string {
+func StateKeyCurrencyDesign(cid types.CurrencyID) string {
 	return fmt.Sprintf("%s%s", StateKeyCurrencyDesignPrefix, cid)
 }
-
-//
-//type AccountStateValueMerger struct {
-//	*base2.BaseStateValueMerger
-//}
-//
-//func NewAccountStateValueMerger(height base.Height, key string, st base.State) *AccountStateValueMerger {
-//	s := &AccountStateValueMerger{
-//		BaseStateValueMerger: base2.NewBaseStateValueMerger(height, key, st),
-//	}
-//
-//	return s
-//}
-//
-//type BalanceStateValueMerger struct {
-//	*base2.BaseStateValueMerger
-//}
-//
-//func NewBalanceStateValueMerger(height base.Height, key string, st base.State) *BalanceStateValueMerger {
-//	s := &BalanceStateValueMerger{
-//		BaseStateValueMerger: base2.NewBaseStateValueMerger(height, key, st),
-//	}
-//
-//	return s
-//}
-//
-//type CurrencyDesignStateValueMerger struct {
-//	*base2.BaseStateValueMerger
-//}
-//
-//func NewCurrencyDesignStateValueMerger(height base.Height, key string, st base.State) *CurrencyDesignStateValueMerger {
-//	s := &CurrencyDesignStateValueMerger{
-//		BaseStateValueMerger: base2.NewBaseStateValueMerger(height, key, st),
-//	}
-//
-//	return s
-//}
-//
-//func NewBalanceStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
-//	return base2.NewBaseStateMergeValue(
-//		key,
-//		stv,
-//		func(height base.Height, st base.State) base.StateValueMerger {
-//			return NewBalanceStateValueMerger(height, key, st)
-//		},
-//	)
-//}
-//
-//func NewAccountStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
-//	return base2.NewBaseStateMergeValue(
-//		key,
-//		stv,
-//		func(height base.Height, st base.State) base.StateValueMerger {
-//			return NewAccountStateValueMerger(height, key, st)
-//		},
-//	)
-//}
-//
-//func NewCurrencyDesignStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
-//	return base2.NewBaseStateMergeValue(
-//		key,
-//		stv,
-//		func(height base.Height, st base.State) base.StateValueMerger {
-//			return NewCurrencyDesignStateValueMerger(height, key, st)
-//		},
-//	)
-//}

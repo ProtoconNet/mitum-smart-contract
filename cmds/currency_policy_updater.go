@@ -2,11 +2,10 @@ package cmds
 
 import (
 	"context"
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
-	"github.com/pkg/errors"
-
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
+	"github.com/pkg/errors"
 )
 
 type CurrencyPolicyUpdaterCommand struct {
@@ -19,7 +18,7 @@ type CurrencyPolicyUpdaterCommand struct {
 	CurrencyRatioFeeerFlags `prefix:"feeer-ratio-" help:"ratio feeer"`
 	Node                    AddressFlag `arg:"" name:"node" help:"node address" required:"true"`
 	node                    base.Address
-	po                      base3.CurrencyPolicy
+	po                      types.CurrencyPolicy
 }
 
 func NewCurrencyPolicyUpdaterCommand() CurrencyPolicyUpdaterCommand {
@@ -76,13 +75,13 @@ func (cmd *CurrencyPolicyUpdaterCommand) parseFlags() error {
 	}
 	cmd.node = a
 
-	var feeer base3.Feeer
+	var feeer types.Feeer
 	switch t := cmd.FeeerString; t {
-	case base3.FeeerNil, "":
-		feeer = base3.NewNilFeeer()
-	case base3.FeeerFixed:
+	case types.FeeerNil, "":
+		feeer = types.NewNilFeeer()
+	case types.FeeerFixed:
 		feeer = cmd.CurrencyFixedFeeerFlags.feeer
-	case base3.FeeerRatio:
+	case types.FeeerRatio:
 		feeer = cmd.CurrencyRatioFeeerFlags.feeer
 	default:
 		return errors.Errorf("unknown feeer type, %q", t)
@@ -94,7 +93,7 @@ func (cmd *CurrencyPolicyUpdaterCommand) parseFlags() error {
 		return err
 	}
 
-	cmd.po = base3.NewCurrencyPolicy(cmd.CurrencyPolicyFlags.NewAccountMinBalance.Big, feeer)
+	cmd.po = types.NewCurrencyPolicy(cmd.CurrencyPolicyFlags.NewAccountMinBalance.Big, feeer)
 	if err := cmd.po.IsValid(nil); err != nil {
 		return err
 	}

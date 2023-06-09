@@ -1,7 +1,7 @@
 package currency
 
 import (
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -47,7 +47,7 @@ func (fact SuffrageInflationFact) Bytes() []byte {
 }
 
 func (fact SuffrageInflationFact) IsValid(b []byte) error {
-	if err := base2.IsValidOperationFact(fact, b); err != nil {
+	if err := common.IsValidOperationFact(fact, b); err != nil {
 		return err
 	}
 
@@ -88,11 +88,11 @@ func (fact SuffrageInflationFact) Items() []SuffrageInflationItem {
 }
 
 type SuffrageInflation struct {
-	base2.BaseNodeOperation
+	common.BaseNodeOperation
 }
 
 func NewSuffrageInflation(
 	fact SuffrageInflationFact,
 ) (SuffrageInflation, error) {
-	return SuffrageInflation{BaseNodeOperation: base2.NewBaseNodeOperation(SuffrageInflationHint, fact)}, nil
+	return SuffrageInflation{BaseNodeOperation: common.NewBaseNodeOperation(SuffrageInflationHint, fact)}, nil
 }

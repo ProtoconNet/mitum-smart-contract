@@ -1,9 +1,9 @@
 package isaacoperation
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
@@ -23,15 +23,15 @@ func (fact SuffrageDisjoinFact) MarshalBSON() ([]byte, error) {
 }
 
 type SuffrageDisjoinFactBSONUnMarshaler struct {
-	Hint  string           `bson:"_hint"`
-	Node  string           `bson:"node"`
-	Start mitumbase.Height `bson:"start"`
+	Hint  string      `bson:"_hint"`
+	Node  string      `bson:"node"`
+	Start base.Height `bson:"start"`
 }
 
 func (fact *SuffrageDisjoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of SuffrageDisjoinFact")
 
-	var u base.BaseFactBSONUnmarshaler
+	var u common.BaseFactBSONUnmarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
@@ -57,7 +57,7 @@ func (fact *SuffrageDisjoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) erro
 
 func (op *SuffrageDisjoin) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of SuffrageDisjoin")
-	var ubo base.BaseNodeOperation
+	var ubo common.BaseNodeOperation
 
 	err := ubo.DecodeBSON(b, enc)
 	if err != nil {

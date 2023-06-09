@@ -2,11 +2,11 @@ package isaacoperation
 
 import (
 	"context"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum2/base"
 	"sort"
 	"strings"
 
-	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -147,7 +147,7 @@ func (p *SuffrageCandidateProcessor) Process(ctx context.Context, op base.Operat
 	)
 
 	return []base.StateMergeValue{
-		base2.NewBaseStateMergeValue(
+		common.NewBaseStateMergeValue(
 			isaac.SuffrageCandidateStateKey,
 			isaac.NewSuffrageCandidatesStateValue([]base.SuffrageCandidateStateValue{node}),
 			func(height base.Height, st base.State) base.StateValueMerger {

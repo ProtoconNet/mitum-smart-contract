@@ -3,7 +3,7 @@ package cmds
 import (
 	"context"
 	"fmt"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"os"
 	"strings"
 
@@ -46,7 +46,7 @@ func (cmd *KeyNewCommand) Run(pctx context.Context) error {
 			cmd.log.Warn().Msg("seed consists with empty spaces")
 		}
 		if len(cmd.KeyType) > 0 && cmd.KeyType == "ether" {
-			i, err := base2.NewMEPrivatekeyFromSeed(cmd.Seed)
+			i, err := types.NewMEPrivatekeyFromSeed(cmd.Seed)
 			if err != nil {
 				return err
 			}
@@ -61,7 +61,7 @@ func (cmd *KeyNewCommand) Run(pctx context.Context) error {
 
 	default:
 		if len(cmd.KeyType) > 0 && cmd.KeyType == "ether" {
-			key = base2.NewMEPrivatekey()
+			key = types.NewMEPrivatekey()
 		} else {
 			key = base.NewMPrivatekey()
 		}

@@ -2,9 +2,9 @@ package cmds
 
 import (
 	"context"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
-	isaacoperation2 "github.com/ProtoconNet/mitum-currency/v3/operation/isaac"
+	isaacoperation "github.com/ProtoconNet/mitum-currency/v3/operation/isaac"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	isaacblock "github.com/ProtoconNet/mitum2/isaac/block"
@@ -95,7 +95,7 @@ func (g *GenesisBlockGenerator) Generate() (base.BlockMap, error) {
 func (g *GenesisBlockGenerator) generateOperations() error {
 	g.ops = make([]base.Operation, len(g.facts))
 
-	types := map[string]struct{}{}
+	factTypes := map[string]struct{}{}
 
 	for i := range g.facts {
 		fact := g.facts[i]
@@ -108,20 +108,20 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 		}
 
 		switch ht := hinter.Hint(); {
-		case ht.IsCompatible(isaacoperation2.SuffrageGenesisJoinFactHint):
-			if _, found := types[ht.String()]; found {
+		case ht.IsCompatible(isaacoperation.SuffrageGenesisJoinFactHint):
+			if _, found := factTypes[ht.String()]; found {
 				return errors.Errorf("multiple join operation found")
 			}
 
 			g.ops[i], err = g.joinOperation(fact)
-		case ht.IsCompatible(isaacoperation2.GenesisNetworkPolicyFactHint):
-			if _, found := types[ht.String()]; found {
+		case ht.IsCompatible(isaacoperation.GenesisNetworkPolicyFactHint):
+			if _, found := factTypes[ht.String()]; found {
 				return errors.Errorf("multiple network policy operation found")
 			}
 
 			g.ops[i], err = g.networkPolicyOperation(fact)
 		case ht.IsCompatible(currency.GenesisCurrenciesFactHint):
-			if _, found := types[ht.String()]; found {
+			if _, found := factTypes[ht.String()]; found {
 				return errors.Errorf("multiple GenesisCurrencies operation found")
 			}
 			g.ops[i], err = g.genesisCurrenciesOperation(fact, g.networkID)
@@ -131,7 +131,7 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 			return err
 		}
 
-		types[hinter.Hint().String()] = struct{}{}
+		factTypes[hinter.Hint().String()] = struct{}{}
 	}
 
 	return nil
@@ -140,18 +140,18 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 func (g *GenesisBlockGenerator) joinOperation(i base.Fact) (base.Operation, error) {
 	e := util.StringErrorFunc("failed to make join operation")
 
-	basefact, ok := i.(isaacoperation2.SuffrageGenesisJoinFact)
+	basefact, ok := i.(isaacoperation.SuffrageGenesisJoinFact)
 	if !ok {
 		return nil, e(nil, "expected SuffrageGenesisJoinFact, not %T", i)
 	}
 
-	fact := isaacoperation2.NewSuffrageGenesisJoinFact(basefact.Nodes(), g.networkID)
+	fact := isaacoperation.NewSuffrageGenesisJoinFact(basefact.Nodes(), g.networkID)
 
 	if err := fact.IsValid(g.networkID); err != nil {
 		return nil, e(err, "")
 	}
 
-	op := isaacoperation2.NewSuffrageGenesisJoin(fact)
+	op := isaacoperation.NewSuffrageGenesisJoin(fact)
 	if err := op.Sign(g.local.Privatekey(), g.networkID); err != nil {
 		return nil, e(err, "")
 	}
@@ -164,18 +164,18 @@ func (g *GenesisBlockGenerator) joinOperation(i base.Fact) (base.Operation, erro
 func (g *GenesisBlockGenerator) networkPolicyOperation(i base.Fact) (base.Operation, error) {
 	e := util.StringErrorFunc("failed to make join operation")
 
-	basefact, ok := i.(isaacoperation2.GenesisNetworkPolicyFact)
+	basefact, ok := i.(isaacoperation.GenesisNetworkPolicyFact)
 	if !ok {
 		return nil, e(nil, "expected GenesisNetworkPolicyFact, not %T", i)
 	}
 
-	fact := isaacoperation2.NewGenesisNetworkPolicyFact(basefact.Policy())
+	fact := isaacoperation.NewGenesisNetworkPolicyFact(basefact.Policy())
 
 	if err := fact.IsValid(nil); err != nil {
 		return nil, e(err, "")
 	}
 
-	op := isaacoperation2.NewGenesisNetworkPolicy(fact)
+	op := isaacoperation.NewGenesisNetworkPolicy(fact)
 	if err := op.Sign(g.local.Privatekey(), g.networkID); err != nil {
 		return nil, e(err, "")
 	}
@@ -192,7 +192,7 @@ func (g *GenesisBlockGenerator) genesisCurrenciesOperation(i base.Fact, token []
 	if !ok {
 		return nil, e(nil, "expected GenesisCurrenciesFact, not %T", i)
 	}
-	acks, err := base2.NewBaseAccountKeys(basefact.Keys().Keys(), basefact.Keys().Threshold())
+	acks, err := types.NewBaseAccountKeys(basefact.Keys().Keys(), basefact.Keys().Threshold())
 	if err != nil {
 		return nil, e(err, "")
 	}

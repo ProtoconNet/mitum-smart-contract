@@ -2,9 +2,9 @@ package cmds
 
 import (
 	"context"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/pkg/errors"
 )
 
@@ -16,8 +16,8 @@ type CreateContractAccountCommand struct {
 	Keys        []KeyFlag            `name:"key" help:"key for new account (ex: \"<public key>,<weight>\")" sep:"@"`
 	Amounts     []CurrencyAmountFlag `arg:"" name:"currency-amount" help:"amount (ex: \"<currency>,<amount>\")"`
 	AddressType string               `help:"address type for new account select mitum or ether" default:"mitum"`
-	sender      mitumbase.Address
-	keys        base.BaseAccountKeys
+	sender      base.Address
+	keys        types.BaseAccountKeys
 }
 
 func NewCreateContractAccountCommand() CreateContractAccountCommand {
@@ -69,12 +69,12 @@ func (cmd *CreateContractAccountCommand) parseFlags() error {
 	}
 
 	{
-		ks := make([]base.AccountKey, len(cmd.Keys))
+		ks := make([]types.AccountKey, len(cmd.Keys))
 		for i := range cmd.Keys {
 			ks[i] = cmd.Keys[i].Key
 		}
 
-		if kys, err := base.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
+		if kys, err := types.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
 			return err
 		} else if err := kys.IsValid(nil); err != nil {
 			return err
@@ -86,13 +86,13 @@ func (cmd *CreateContractAccountCommand) parseFlags() error {
 	return nil
 }
 
-func (cmd *CreateContractAccountCommand) createOperation() (mitumbase.Operation, error) { // nolint:dupl}
+func (cmd *CreateContractAccountCommand) createOperation() (base.Operation, error) { // nolint:dupl}
 	var items []extension.CreateContractAccountsItem
 
-	ams := make([]base.Amount, len(cmd.Amounts))
+	ams := make([]types.Amount, len(cmd.Amounts))
 	for i := range cmd.Amounts {
 		a := cmd.Amounts[i]
-		am := base.NewAmount(a.Big, a.CID)
+		am := types.NewAmount(a.Big, a.CID)
 		if err := am.IsValid(nil); err != nil {
 			return nil, err
 		}
@@ -100,10 +100,10 @@ func (cmd *CreateContractAccountCommand) createOperation() (mitumbase.Operation,
 		ams[i] = am
 	}
 
-	addrType := base.AddressHint.Type()
+	addrType := types.AddressHint.Type()
 
 	if cmd.AddressType == "ether" {
-		addrType = base.EthAddressHint.Type()
+		addrType = types.EthAddressHint.Type()
 	}
 
 	item := extension.NewCreateContractAccountsItemMultiAmounts(cmd.keys, ams, addrType)

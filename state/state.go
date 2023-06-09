@@ -1,30 +1,31 @@
 package state
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/pkg/errors"
 )
 
 type StateValueMerger struct {
-	*base.BaseStateValueMerger
+	*common.BaseStateValueMerger
 }
 
-func NewStateValueMerger(height mitumbase.Height, key string, st mitumbase.State) *StateValueMerger {
+func NewStateValueMerger(height base.Height, key string, st base.State) *StateValueMerger {
 	s := &StateValueMerger{
-		BaseStateValueMerger: base.NewBaseStateValueMerger(height, key, st),
+		BaseStateValueMerger: common.NewBaseStateValueMerger(height, key, st),
 	}
 
 	return s
 }
 
-func NewStateMergeValue(key string, stv mitumbase.StateValue) mitumbase.StateMergeValue {
-	StateValueMergerFunc := func(height mitumbase.Height, st mitumbase.State) mitumbase.StateValueMerger {
+func NewStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
+	StateValueMergerFunc := func(height base.Height, st base.State) base.StateValueMerger {
 		return NewStateValueMerger(height, key, st)
 	}
 
-	return base.NewBaseStateMergeValue(
+	return common.NewBaseStateMergeValue(
 		key,
 		stv,
 		StateValueMergerFunc,
@@ -33,13 +34,13 @@ func NewStateMergeValue(key string, stv mitumbase.StateValue) mitumbase.StateMer
 
 func CheckNotExistsState(
 	key string,
-	getState mitumbase.GetStateFunc,
+	getState base.GetStateFunc,
 ) error {
 	switch _, found, err := getState(key); {
 	case err != nil:
 		return err
 	case found:
-		return mitumbase.NewBaseOperationProcessReasonError("state, %q already exists", key)
+		return base.NewBaseOperationProcessReasonError("state, %q already exists", key)
 	default:
 		return nil
 	}
@@ -47,13 +48,13 @@ func CheckNotExistsState(
 
 func CheckExistsState(
 	key string,
-	getState mitumbase.GetStateFunc,
+	getState base.GetStateFunc,
 ) error {
 	switch _, found, err := getState(key); {
 	case err != nil:
 		return err
 	case !found:
-		return mitumbase.NewBaseOperationProcessReasonError("state, %q does not exist", key)
+		return base.NewBaseOperationProcessReasonError("state, %q does not exist", key)
 	default:
 		return nil
 	}
@@ -62,13 +63,13 @@ func CheckExistsState(
 func ExistsState(
 	k,
 	name string,
-	getState mitumbase.GetStateFunc,
-) (mitumbase.State, error) {
+	getState base.GetStateFunc,
+) (base.State, error) {
 	switch st, found, err := getState(k); {
 	case err != nil:
 		return nil, err
 	case !found:
-		return nil, mitumbase.NewBaseOperationProcessReasonError("%s does not exist", name)
+		return nil, base.NewBaseOperationProcessReasonError("%s does not exist", name)
 	default:
 		return st, nil
 	}
@@ -77,31 +78,31 @@ func ExistsState(
 func NotExistsState(
 	k,
 	name string,
-	getState mitumbase.GetStateFunc,
-) (mitumbase.State, error) {
-	var st mitumbase.State
+	getState base.GetStateFunc,
+) (base.State, error) {
+	var st base.State
 	switch _, found, err := getState(k); {
 	case err != nil:
 		return nil, err
 	case found:
-		return nil, mitumbase.NewBaseOperationProcessReasonError("%s already exists", name)
+		return nil, base.NewBaseOperationProcessReasonError("%s already exists", name)
 	case !found:
-		st = base.NewBaseState(mitumbase.NilHeight, k, nil, nil, nil)
+		st = common.NewBaseState(base.NilHeight, k, nil, nil, nil)
 	}
 	return st, nil
 }
 
-func ExistsCurrencyPolicy(cid base.CurrencyID, getStateFunc mitumbase.GetStateFunc) (base.CurrencyPolicy, error) {
-	var policy base.CurrencyPolicy
+func ExistsCurrencyPolicy(cid types.CurrencyID, getStateFunc base.GetStateFunc) (types.CurrencyPolicy, error) {
+	var policy types.CurrencyPolicy
 	switch i, found, err := getStateFunc(currency.StateKeyCurrencyDesign(cid)); {
 	case err != nil:
-		return base.CurrencyPolicy{}, err
+		return types.CurrencyPolicy{}, err
 	case !found:
-		return base.CurrencyPolicy{}, mitumbase.NewBaseOperationProcessReasonError("currency not found, %v", cid)
+		return types.CurrencyPolicy{}, base.NewBaseOperationProcessReasonError("currency not found, %v", cid)
 	default:
 		currencydesign, ok := i.Value().(currency.CurrencyDesignStateValue) //nolint:forcetypeassert //...
 		if !ok {
-			return base.CurrencyPolicy{}, errors.Errorf("expected CurrencyDesignStateValue, not %T", i.Value())
+			return types.CurrencyPolicy{}, errors.Errorf("expected CurrencyDesignStateValue, not %T", i.Value())
 		}
 		policy = currencydesign.CurrencyDesign.Policy()
 	}
@@ -109,9 +110,9 @@ func ExistsCurrencyPolicy(cid base.CurrencyID, getStateFunc mitumbase.GetStateFu
 }
 
 func CheckFactSignsByState(
-	address mitumbase.Address,
-	fs []mitumbase.Sign,
-	getState mitumbase.GetStateFunc,
+	address base.Address,
+	fs []base.Sign,
+	getState base.GetStateFunc,
 ) error {
 	st, err := ExistsState(currency.StateKeyAccount(address), "keys of account", getState)
 	if err != nil {
@@ -120,13 +121,13 @@ func CheckFactSignsByState(
 	keys, err := currency.StateKeysValue(st)
 	switch {
 	case err != nil:
-		return mitumbase.NewBaseOperationProcessReasonError("failed to get Keys %w", err)
+		return base.NewBaseOperationProcessReasonError("failed to get Keys %w", err)
 	case keys == nil:
-		return mitumbase.NewBaseOperationProcessReasonError("empty keys found")
+		return base.NewBaseOperationProcessReasonError("empty keys found")
 	}
 
-	if err := base.CheckThreshold(fs, keys); err != nil {
-		return mitumbase.NewBaseOperationProcessReasonError("failed to check threshold %w", err)
+	if err := types.CheckThreshold(fs, keys); err != nil {
+		return base.NewBaseOperationProcessReasonError("failed to check threshold %w", err)
 	}
 
 	return nil

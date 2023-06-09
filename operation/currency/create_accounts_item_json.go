@@ -2,7 +2,7 @@ package currency
 
 import (
 	"encoding/json"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -10,8 +10,8 @@ import (
 
 type CreateAccountsItemJSONMarshaler struct {
 	hint.BaseHinter
-	Keys     base2.AccountKeys `json:"keys"`
-	Amounts  []base2.Amount    `json:"amounts"`
+	Keys     types.AccountKeys `json:"keys"`
+	Amounts  []types.Amount    `json:"amounts"`
 	AddrType hint.Type         `json:"addrtype"`
 }
 

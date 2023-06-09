@@ -1,7 +1,8 @@
 package currency
 
 import (
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -16,15 +17,15 @@ var (
 type KeyUpdaterFact struct {
 	base.BaseFact
 	target   base.Address
-	keys     base3.AccountKeys
-	currency base3.CurrencyID
+	keys     types.AccountKeys
+	currency types.CurrencyID
 }
 
 func NewKeyUpdaterFact(
 	token []byte,
 	target base.Address,
-	keys base3.AccountKeys,
-	currency base3.CurrencyID,
+	keys types.AccountKeys,
+	currency types.CurrencyID,
 ) KeyUpdaterFact {
 	bf := base.NewBaseFact(KeyUpdaterFactHint, token)
 	fact := KeyUpdaterFact{
@@ -60,7 +61,7 @@ func (fact KeyUpdaterFact) IsValid(b []byte) error {
 		return err
 	}
 
-	if err := base3.IsValidOperationFact(fact, b); err != nil {
+	if err := common.IsValidOperationFact(fact, b); err != nil {
 		return err
 	}
 
@@ -85,11 +86,11 @@ func (fact KeyUpdaterFact) Addresses() ([]base.Address, error) {
 	return as, nil
 }
 
-func (fact KeyUpdaterFact) Keys() base3.AccountKeys {
+func (fact KeyUpdaterFact) Keys() types.AccountKeys {
 	return fact.keys
 }
 
-func (fact KeyUpdaterFact) Currency() base3.CurrencyID {
+func (fact KeyUpdaterFact) Currency() types.CurrencyID {
 	return fact.currency
 }
 
@@ -99,11 +100,11 @@ func (fact KeyUpdaterFact) Rebuild() KeyUpdaterFact {
 }
 
 type KeyUpdater struct {
-	base3.BaseOperation
+	common.BaseOperation
 }
 
 func NewKeyUpdater(fact KeyUpdaterFact) (KeyUpdater, error) {
-	return KeyUpdater{BaseOperation: base3.NewBaseOperation(KeyUpdaterHint, fact)}, nil
+	return KeyUpdater{BaseOperation: common.NewBaseOperation(KeyUpdaterHint, fact)}, nil
 }
 
 func (op *KeyUpdater) HashSign(priv base.Privatekey, networkID base.NetworkID) error {

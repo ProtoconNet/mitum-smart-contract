@@ -1,8 +1,8 @@
 package extension
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"go.mongodb.org/mongo-driver/bson"
@@ -37,7 +37,7 @@ func (s *ContractAccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) e
 	}
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
-	var ca base.ContractAccount
+	var ca types.ContractAccount
 	if err := ca.DecodeBSON(u.ContractAccount, enc); err != nil {
 		return e(err, "")
 	}

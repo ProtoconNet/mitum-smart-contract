@@ -1,19 +1,19 @@
 package extension
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 type BaseWithdrawsItem struct {
 	hint.BaseHinter
-	target  mitumbase.Address
-	amounts []base.Amount
+	target  base.Address
+	amounts []types.Amount
 }
 
-func NewBaseWithdrawsItem(ht hint.Hint, target mitumbase.Address, amounts []base.Amount) BaseWithdrawsItem {
+func NewBaseWithdrawsItem(ht hint.Hint, target base.Address, amounts []types.Amount) BaseWithdrawsItem {
 	return BaseWithdrawsItem{
 		BaseHinter: hint.NewBaseHinter(ht),
 		target:     target,
@@ -41,7 +41,7 @@ func (it BaseWithdrawsItem) IsValid([]byte) error {
 		return util.ErrInvalid.Errorf("empty amounts")
 	}
 
-	founds := map[base.CurrencyID]struct{}{}
+	founds := map[types.CurrencyID]struct{}{}
 	for i := range it.amounts {
 		am := it.amounts[i]
 		if _, found := founds[am.Currency()]; found {
@@ -59,16 +59,16 @@ func (it BaseWithdrawsItem) IsValid([]byte) error {
 	return nil
 }
 
-func (it BaseWithdrawsItem) Target() mitumbase.Address {
+func (it BaseWithdrawsItem) Target() base.Address {
 	return it.target
 }
 
-func (it BaseWithdrawsItem) Amounts() []base.Amount {
+func (it BaseWithdrawsItem) Amounts() []types.Amount {
 	return it.amounts
 }
 
 func (it BaseWithdrawsItem) Rebuild() WithdrawsItem {
-	ams := make([]base.Amount, len(it.amounts))
+	ams := make([]types.Amount, len(it.amounts))
 	for i := range it.amounts {
 		am := it.amounts[i]
 		ams[i] = am.WithBig(am.Big())

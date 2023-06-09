@@ -1,7 +1,7 @@
 package currency
 
 import (
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -17,7 +17,7 @@ type TransfersItemMultiAmounts struct {
 	BaseTransfersItem
 }
 
-func NewTransfersItemMultiAmounts(receiver base.Address, amounts []base2.Amount) TransfersItemMultiAmounts {
+func NewTransfersItemMultiAmounts(receiver base.Address, amounts []types.Amount) TransfersItemMultiAmounts {
 	return TransfersItemMultiAmounts{
 		BaseTransfersItem: NewBaseTransfersItem(TransfersItemMultiAmountsHint, receiver, amounts),
 	}

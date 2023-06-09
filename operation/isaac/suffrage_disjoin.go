@@ -1,7 +1,7 @@
 package isaacoperation
 
 import (
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -66,12 +66,12 @@ func (fact SuffrageDisjoinFact) hash() util.Hash {
 }
 
 type SuffrageDisjoin struct {
-	base2.BaseNodeOperation
+	common.BaseNodeOperation
 }
 
 func NewSuffrageDisjoin(fact SuffrageDisjoinFact) SuffrageDisjoin {
 	return SuffrageDisjoin{
-		BaseNodeOperation: base2.NewBaseNodeOperation(SuffrageDisjoinHint, fact),
+		BaseNodeOperation: common.NewBaseNodeOperation(SuffrageDisjoinHint, fact),
 	}
 }
 

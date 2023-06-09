@@ -1,9 +1,10 @@
 package extension
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
@@ -21,20 +22,20 @@ type CreateContractAccountsItem interface {
 	util.IsValider
 	currency.AmountsItem
 	Bytes() []byte
-	Keys() base.AccountKeys
-	Address() (mitumbase.Address, error)
+	Keys() types.AccountKeys
+	Address() (base.Address, error)
 	Rebuild() CreateContractAccountsItem
 	AddressType() hint.Type
 }
 
 type CreateContractAccountsFact struct {
-	mitumbase.BaseFact
-	sender mitumbase.Address
+	base.BaseFact
+	sender base.Address
 	items  []CreateContractAccountsItem
 }
 
-func NewCreateContractAccountsFact(token []byte, sender mitumbase.Address, items []CreateContractAccountsItem) CreateContractAccountsFact {
-	bf := mitumbase.NewBaseFact(CreateContractAccountsFactHint, token)
+func NewCreateContractAccountsFact(token []byte, sender base.Address, items []CreateContractAccountsItem) CreateContractAccountsFact {
+	bf := base.NewBaseFact(CreateContractAccountsFactHint, token)
 	fact := CreateContractAccountsFact{
 		BaseFact: bf,
 		sender:   sender,
@@ -71,7 +72,7 @@ func (fact CreateContractAccountsFact) IsValid(b []byte) error {
 		return err
 	}
 
-	if err := base.IsValidOperationFact(fact, b); err != nil {
+	if err := common.IsValidOperationFact(fact, b); err != nil {
 		return err
 	}
 
@@ -110,11 +111,11 @@ func (fact CreateContractAccountsFact) IsValid(b []byte) error {
 	return nil
 }
 
-func (fact CreateContractAccountsFact) Token() mitumbase.Token {
+func (fact CreateContractAccountsFact) Token() base.Token {
 	return fact.BaseFact.Token()
 }
 
-func (fact CreateContractAccountsFact) Sender() mitumbase.Address {
+func (fact CreateContractAccountsFact) Sender() base.Address {
 	return fact.sender
 }
 
@@ -122,8 +123,8 @@ func (fact CreateContractAccountsFact) Items() []CreateContractAccountsItem {
 	return fact.items
 }
 
-func (fact CreateContractAccountsFact) Targets() ([]mitumbase.Address, error) {
-	as := make([]mitumbase.Address, len(fact.items))
+func (fact CreateContractAccountsFact) Targets() ([]base.Address, error) {
+	as := make([]base.Address, len(fact.items))
 	for i := range fact.items {
 		a, err := fact.items[i].Address()
 		if err != nil {
@@ -135,8 +136,8 @@ func (fact CreateContractAccountsFact) Targets() ([]mitumbase.Address, error) {
 	return as, nil
 }
 
-func (fact CreateContractAccountsFact) Addresses() ([]mitumbase.Address, error) {
-	as := make([]mitumbase.Address, len(fact.items)+1)
+func (fact CreateContractAccountsFact) Addresses() ([]base.Address, error) {
+	as := make([]base.Address, len(fact.items)+1)
 
 	tas, err := fact.Targets()
 	if err != nil {
@@ -163,14 +164,14 @@ func (fact CreateContractAccountsFact) Rebuild() CreateContractAccountsFact {
 }
 
 type CreateContractAccounts struct {
-	base.BaseOperation
+	common.BaseOperation
 }
 
 func NewCreateContractAccounts(fact CreateContractAccountsFact) (CreateContractAccounts, error) {
-	return CreateContractAccounts{BaseOperation: base.NewBaseOperation(CreateContractAccountsHint, fact)}, nil
+	return CreateContractAccounts{BaseOperation: common.NewBaseOperation(CreateContractAccountsHint, fact)}, nil
 }
 
-func (op *CreateContractAccounts) HashSign(priv mitumbase.Privatekey, networkID mitumbase.NetworkID) error {
+func (op *CreateContractAccounts) HashSign(priv base.Privatekey, networkID base.NetworkID) error {
 	err := op.Sign(priv, networkID)
 	if err != nil {
 		return err

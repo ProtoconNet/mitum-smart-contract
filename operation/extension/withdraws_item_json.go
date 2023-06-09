@@ -2,8 +2,8 @@ package extension
 
 import (
 	"encoding/json"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -11,8 +11,8 @@ import (
 
 type WithdrawsItemJSONMarshaler struct {
 	hint.BaseHinter
-	Target  mitumbase.Address `json:"target"`
-	Amounts []base.Amount     `json:"amounts"`
+	Target  base.Address   `json:"target"`
+	Amounts []types.Amount `json:"amounts"`
 }
 
 func (it BaseWithdrawsItem) MarshalJSON() ([]byte, error) {

@@ -1,7 +1,7 @@
 package digest
 
 import (
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"time"
 
 	mongodbstorage "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
@@ -28,7 +28,7 @@ func NewOperationDoc(
 	index uint64,
 ) (OperationDoc, error) {
 	var addresses []string
-	if ads, ok := op.Fact().(base2.Addresses); ok {
+	if ads, ok := op.Fact().(types.Addresses); ok {
 		as, err := ads.Addresses()
 		if err != nil {
 			return OperationDoc{}, err

@@ -1,7 +1,7 @@
 package isaacoperation
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -30,7 +30,7 @@ type SuffrageCandidateFactBSONUnMarshaler struct {
 func (fact *SuffrageCandidateFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of SuffrageCandidateFact")
 
-	var u base.BaseFactBSONUnmarshaler
+	var u common.BaseFactBSONUnmarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
@@ -60,7 +60,7 @@ func (op SuffrageCandidate) MarshalBSON() ([]byte, error) {
 
 func (op *SuffrageCandidate) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of GenesisCurrencies")
-	var ubo base.BaseNodeOperation
+	var ubo common.BaseNodeOperation
 
 	err := ubo.DecodeBSON(b, enc)
 	if err != nil {

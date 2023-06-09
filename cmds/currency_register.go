@@ -2,8 +2,8 @@ package cmds
 
 import (
 	"context"
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -12,7 +12,7 @@ import (
 type CurrencyFixedFeeerFlags struct {
 	Receiver AddressFlag `name:"receiver" help:"fee receiver account address"`
 	Amount   BigFlag     `name:"amount" help:"fee amount"`
-	feeer    base3.Feeer
+	feeer    types.Feeer
 }
 
 func (fl *CurrencyFixedFeeerFlags) IsValid([]byte) error {
@@ -29,7 +29,7 @@ func (fl *CurrencyFixedFeeerFlags) IsValid([]byte) error {
 		receiver = a
 	}
 
-	fl.feeer = base3.NewFixedFeeer(receiver, fl.Amount.Big)
+	fl.feeer = types.NewFixedFeeer(receiver, fl.Amount.Big)
 	return fl.feeer.IsValid(nil)
 }
 
@@ -38,7 +38,7 @@ type CurrencyRatioFeeerFlags struct {
 	Ratio    float64     `name:"ratio" help:"fee ratio, multifly by operation amount"`
 	Min      BigFlag     `name:"min" help:"minimum fee"`
 	Max      BigFlag     `name:"max" help:"maximum fee"`
-	feeer    base3.Feeer
+	feeer    types.Feeer
 }
 
 func (fl *CurrencyRatioFeeerFlags) IsValid([]byte) error {
@@ -55,7 +55,7 @@ func (fl *CurrencyRatioFeeerFlags) IsValid([]byte) error {
 		receiver = a
 	}
 
-	fl.feeer = base3.NewRatioFeeer(receiver, fl.Ratio, fl.Min.Big, fl.Max.Big)
+	fl.feeer = types.NewRatioFeeer(receiver, fl.Ratio, fl.Min.Big, fl.Max.Big)
 	return fl.feeer.IsValid(nil)
 }
 
@@ -75,7 +75,7 @@ type CurrencyDesignFlags struct {
 	FeeerString             string `name:"feeer" help:"feeer type, {nil, fixed, ratio}" required:"true"`
 	CurrencyFixedFeeerFlags `prefix:"feeer-fixed-" help:"fixed feeer"`
 	CurrencyRatioFeeerFlags `prefix:"feeer-ratio-" help:"ratio feeer"`
-	currencyDesign          base3.CurrencyDesign
+	currencyDesign          types.CurrencyDesign
 }
 
 func (fl *CurrencyDesignFlags) IsValid([]byte) error {
@@ -87,13 +87,13 @@ func (fl *CurrencyDesignFlags) IsValid([]byte) error {
 		return err
 	}
 
-	var feeer base3.Feeer
+	var feeer types.Feeer
 	switch t := fl.FeeerString; t {
-	case base3.FeeerNil, "":
-		feeer = base3.NewNilFeeer()
-	case base3.FeeerFixed:
+	case types.FeeerNil, "":
+		feeer = types.NewNilFeeer()
+	case types.FeeerFixed:
 		feeer = fl.CurrencyFixedFeeerFlags.feeer
-	case base3.FeeerRatio:
+	case types.FeeerRatio:
 		feeer = fl.CurrencyRatioFeeerFlags.feeer
 	default:
 		return util.ErrInvalid.Errorf("unknown feeer type, %q", t)
@@ -105,7 +105,7 @@ func (fl *CurrencyDesignFlags) IsValid([]byte) error {
 		return err
 	}
 
-	po := base3.NewCurrencyPolicy(fl.CurrencyPolicyFlags.NewAccountMinBalance.Big, feeer)
+	po := types.NewCurrencyPolicy(fl.CurrencyPolicyFlags.NewAccountMinBalance.Big, feeer)
 	if err := po.IsValid(nil); err != nil {
 		return err
 	}
@@ -119,12 +119,12 @@ func (fl *CurrencyDesignFlags) IsValid([]byte) error {
 		genesisAccount = a
 	}
 
-	am := base3.NewAmount(fl.GenesisAmount.Big, fl.Currency.CID)
+	am := types.NewAmount(fl.GenesisAmount.Big, fl.Currency.CID)
 	if err := am.IsValid(nil); err != nil {
 		return err
 	}
 
-	fl.currencyDesign = base3.NewCurrencyDesign(am, genesisAccount, po)
+	fl.currencyDesign = types.NewCurrencyDesign(am, genesisAccount, po)
 	return fl.currencyDesign.IsValid(nil)
 }
 

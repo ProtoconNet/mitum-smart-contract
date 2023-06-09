@@ -2,7 +2,7 @@ package currency
 
 import (
 	"encoding/json"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 
@@ -13,7 +13,7 @@ import (
 type SuffrageInflationItemJSONMarshaler struct {
 	hint.BaseHinter
 	Receiver base.Address `json:"receiver"`
-	Amount   base2.Amount `json:"amount"`
+	Amount   types.Amount `json:"amount"`
 }
 
 func (it SuffrageInflationItem) MarshalJSON() ([]byte, error) {

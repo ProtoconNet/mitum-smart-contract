@@ -2,7 +2,7 @@ package currency
 
 import (
 	"encoding/json"
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
@@ -11,8 +11,8 @@ import (
 type GenesisCurrenciesFactJSONMarshaler struct {
 	base.BaseFactJSONMarshaler
 	GenesisNodeKey base.Publickey         `json:"genesis_node_key"`
-	Keys           base3.AccountKeys      `json:"keys"`
-	Currencies     []base3.CurrencyDesign `json:"currencies"`
+	Keys           types.AccountKeys      `json:"keys"`
+	Currencies     []types.CurrencyDesign `json:"currencies"`
 }
 
 func (fact GenesisCurrenciesFact) MarshalJSON() ([]byte, error) {

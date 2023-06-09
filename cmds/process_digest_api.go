@@ -18,12 +18,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	ProcessNameDigestAPI      = "digest_api"
-	ProcessNameStartDigestAPI = "start_digest_api"
-	HookNameSetLocalChannel   = "set_local_channel"
-)
-
 func ProcessStartDigestAPI(ctx context.Context) (context.Context, error) {
 	var nt *digest.HTTP2Server
 	if err := mitumutil.LoadFromContext(ctx, ContextValueDigestNetwork, &nt); err != nil {
@@ -91,8 +85,8 @@ func ProcessDigestAPI(ctx context.Context) (context.Context, error) {
 }
 
 func NewSendHandler(
-	priv base.Privatekey,
-	networkID base.NetworkID,
+	_ base.Privatekey,
+	_ base.NetworkID,
 	f func() (*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error),
 ) func(interface{}) (base.Operation, error) {
 	return func(v interface{}) (base.Operation, error) {

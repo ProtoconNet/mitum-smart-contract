@@ -2,12 +2,12 @@ package cmds
 
 import (
 	"context"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 
 	"github.com/pkg/errors"
 
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/base"
 )
 
 type WithdrawCommand struct {
@@ -16,8 +16,8 @@ type WithdrawCommand struct {
 	Sender  AddressFlag          `arg:"" name:"sender" help:"sender address" required:"true"`
 	Target  AddressFlag          `arg:"" name:"target" help:"target contract account address" required:"true"`
 	Amounts []CurrencyAmountFlag `arg:"" name:"currency-amount" help:"amount (ex: \"<currency>,<amount>\")"`
-	sender  mitumbase.Address
-	target  mitumbase.Address
+	sender  base.Address
+	target  base.Address
 }
 
 func NewWithdrawCommand() WithdrawCommand {
@@ -70,13 +70,13 @@ func (cmd *WithdrawCommand) parseFlags() error {
 	return nil
 }
 
-func (cmd *WithdrawCommand) createOperation() (mitumbase.Operation, error) { // nolint:dupl
+func (cmd *WithdrawCommand) createOperation() (base.Operation, error) { // nolint:dupl
 	var items []extension.WithdrawsItem
 
-	ams := make([]base.Amount, len(cmd.Amounts))
+	ams := make([]types.Amount, len(cmd.Amounts))
 	for i := range cmd.Amounts {
 		a := cmd.Amounts[i]
-		am := base.NewAmount(a.Big, a.CID)
+		am := types.NewAmount(a.Big, a.CID)
 		if err := am.IsValid(nil); err != nil {
 			return nil, err
 		}

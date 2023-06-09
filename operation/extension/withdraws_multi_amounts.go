@@ -1,8 +1,8 @@
 package extension
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
@@ -17,7 +17,7 @@ type WithdrawsItemMultiAmounts struct {
 	BaseWithdrawsItem
 }
 
-func NewWithdrawsItemMultiAmounts(target mitumbase.Address, amounts []base.Amount) WithdrawsItemMultiAmounts {
+func NewWithdrawsItemMultiAmounts(target base.Address, amounts []types.Amount) WithdrawsItemMultiAmounts {
 	return WithdrawsItemMultiAmounts{
 		BaseWithdrawsItem: NewBaseWithdrawsItem(WithdrawsItemMultiAmountsHint, target, amounts),
 	}

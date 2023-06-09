@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
-	types "github.com/ProtoconNet/mitum-currency/v3/operation/type"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"io"
 	"sync"
 
-	mitumbase "github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/logging"
@@ -23,24 +23,14 @@ var operationProcessorPool = sync.Pool{
 	},
 }
 
-//type GetNewProcessor func(
-//	height mitumbase.Height,
-//	getStateFunc mitumbase.GetStateFunc,
-//	newPreProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc,
-//	newProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc) (mitumbase.OperationProcessor, error)
-//
-//type DuplicationType string
-//
-//type AddFee map[base.CurrencyID][2]base.Big
-
 const (
 	DuplicationTypeSender   types.DuplicationType = "sender"
 	DuplicationTypeCurrency types.DuplicationType = "currency"
 )
 
 type BaseOperationProcessor interface {
-	PreProcess(mitumbase.Operation, mitumbase.GetStateFunc) (mitumbase.OperationProcessReasonError, error)
-	Process(mitumbase.Operation, mitumbase.GetStateFunc) ([]mitumbase.StateMergeValue, mitumbase.OperationProcessReasonError, error)
+	PreProcess(base.Operation, base.GetStateFunc) (base.OperationProcessReasonError, error)
+	Process(base.Operation, base.GetStateFunc) ([]base.StateMergeValue, base.OperationProcessReasonError, error)
 	Close() error
 }
 
@@ -48,25 +38,25 @@ type OperationProcessor struct {
 	// id string
 	sync.RWMutex
 	*logging.Logging
-	*mitumbase.BaseOperationProcessor
+	*base.BaseOperationProcessor
 	processorHintSet     *hint.CompatibleSet
 	duplicated           map[string]types.DuplicationType
 	duplicatedNewAddress map[string]struct{}
 	processorClosers     *sync.Map
-	GetStateFunc         mitumbase.GetStateFunc
+	GetStateFunc         base.GetStateFunc
 	CollectFee           func(*OperationProcessor, types.AddFee) error
 }
 
 /*
 func NewOperationProcessor(
-	height mitumbase.Height,
-	getStateFunc mitumbase.GetStateFunc,
-	newPreProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc,
-	newProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc,
+	height base.Height,
+	getStateFunc base.GetStateFunc,
+	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
+	newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 ) (*OperationProcessor, error) {
 	e := util.StringErrorFunc("failed to create new OperationProcessor")
 
-	b, err := mitumbase.NewBaseOperationProcessor(
+	b, err := base.NewBaseOperationProcessor(
 		height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 	if err != nil {
 		return nil, e(err, "")
@@ -103,10 +93,10 @@ func NewOperationProcessor() *OperationProcessor {
 }
 
 func (opr *OperationProcessor) New(
-	height mitumbase.Height,
-	getStateFunc mitumbase.GetStateFunc,
-	newPreProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc,
-	newProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc) (*OperationProcessor, error) {
+	height base.Height,
+	getStateFunc base.GetStateFunc,
+	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
+	newProcessConstraintFunc base.NewOperationProcessorProcessFunc) (*OperationProcessor, error) {
 	e := util.StringErrorFunc("failed to create new OperationProcessor")
 
 	nopr := operationProcessorPool.Get().(*OperationProcessor)
@@ -130,7 +120,7 @@ func (opr *OperationProcessor) New(
 		nopr.Logging = opr.Logging
 	}
 
-	b, err := mitumbase.NewBaseOperationProcessor(
+	b, err := base.NewBaseOperationProcessor(
 		height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 	if err != nil {
 		return nil, e(err, "")
@@ -154,17 +144,17 @@ func (opr *OperationProcessor) SetProcessor(
 	return nil
 }
 
-func (opr *OperationProcessor) PreProcess(ctx context.Context, op mitumbase.Operation, getStateFunc mitumbase.GetStateFunc) (context.Context, mitumbase.OperationProcessReasonError, error) {
+func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (context.Context, base.OperationProcessReasonError, error) {
 	e := util.StringErrorFunc("failed to preprocess for OperationProcessor")
 
 	if opr.processorClosers == nil {
 		opr.processorClosers = &sync.Map{}
 	}
 
-	var sp mitumbase.OperationProcessor
+	var sp base.OperationProcessor
 	switch i, known, err := opr.getNewProcessor(op); {
 	case err != nil:
-		return ctx, mitumbase.NewBaseOperationProcessReasonError(err.Error()), nil
+		return ctx, base.NewBaseOperationProcessReasonError(err.Error()), nil
 	case !known:
 		return ctx, nil, e(nil, "failed to getNewProcessor, %T", op)
 	default:
@@ -181,14 +171,14 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op mitumbase.Oper
 	return ctx, nil, nil
 }
 
-func (opr *OperationProcessor) Process(ctx context.Context, op mitumbase.Operation, getStateFunc mitumbase.GetStateFunc) ([]mitumbase.StateMergeValue, mitumbase.OperationProcessReasonError, error) {
+func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
 	e := util.StringErrorFunc("failed to process for OperationProcessor")
 
 	if err := opr.checkDuplication(op); err != nil {
-		return nil, mitumbase.NewBaseOperationProcessReasonError("duplication found: %w", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("duplication found: %w", err), nil
 	}
 
-	var sp mitumbase.OperationProcessor
+	var sp base.OperationProcessor
 	switch i, known, err := opr.getNewProcessor(op); {
 	case err != nil:
 		return nil, nil, e(err, "")
@@ -205,8 +195,8 @@ func (opr *OperationProcessor) Process(ctx context.Context, op mitumbase.Operati
 }
 
 /*
-func (opr *OperationProcessor) process(op mitumbase.OperationProcessor) error {
-	var sp mitumbase.OperationProcessor
+func (opr *OperationProcessor) process(op base.OperationProcessor) error {
+	var sp base.OperationProcessor
 
 	switch t := op.(type) {
 	case *TransfersProcessor:
@@ -223,13 +213,13 @@ func (opr *OperationProcessor) process(op mitumbase.OperationProcessor) error {
 }
 */
 
-func (opr *OperationProcessor) checkDuplication(op mitumbase.Operation) error {
+func (opr *OperationProcessor) checkDuplication(op base.Operation) error {
 	opr.Lock()
 	defer opr.Unlock()
 
 	// var did string
 	// var didtype DuplicationType
-	var newAddresses []mitumbase.Address
+	var newAddresses []base.Address
 
 	switch t := op.(type) {
 	case currency.CreateAccounts:
@@ -305,7 +295,7 @@ func (opr *OperationProcessor) checkDuplication(op mitumbase.Operation) error {
 	return nil
 }
 
-func (opr *OperationProcessor) checkNewAddressDuplication(as []mitumbase.Address) error {
+func (opr *OperationProcessor) checkNewAddressDuplication(as []base.Address) error {
 	for i := range as {
 		if _, found := opr.duplicatedNewAddress[as[i].String()]; found {
 			return errors.Errorf("new address already processed")
@@ -337,7 +327,7 @@ func (opr *OperationProcessor) Cancel() error {
 	return nil
 }
 
-func (opr *OperationProcessor) getNewProcessor(op mitumbase.Operation) (mitumbase.OperationProcessor, bool, error) {
+func (opr *OperationProcessor) getNewProcessor(op base.Operation) (base.OperationProcessor, bool, error) {
 	switch i, err := opr.getNewProcessorFromHintset(op); {
 	case err != nil:
 		return nil, false, err
@@ -360,7 +350,7 @@ func (opr *OperationProcessor) getNewProcessor(op mitumbase.Operation) (mitumbas
 	}
 }
 
-func (opr *OperationProcessor) getNewProcessorFromHintset(op mitumbase.Operation) (mitumbase.OperationProcessor, error) {
+func (opr *OperationProcessor) getNewProcessorFromHintset(op base.Operation) (base.OperationProcessor, error) {
 	var f types.GetNewProcessor
 	if hinter, ok := op.(hint.Hinter); !ok {
 		return nil, nil

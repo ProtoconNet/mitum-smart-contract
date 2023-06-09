@@ -3,16 +3,10 @@ package digest
 import (
 	"context"
 	"fmt"
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
-	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	"math"
-	"sort"
-	"strconv"
-	"strings"
-	"sync"
-
 	mongodbstorage "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
 	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
+	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	isaacdatabase "github.com/ProtoconNet/mitum2/isaac/database"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
@@ -23,6 +17,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"math"
+	"sort"
+	"strconv"
+	"strings"
+	"sync"
 )
 
 var maxLimit int64 = 50
@@ -578,11 +577,11 @@ end:
 	return nil
 }
 
-func (st *Database) balance(a base.Address) ([]base3.Amount, base.Height, error) {
+func (st *Database) balance(a base.Address) ([]types.Amount, base.Height, error) {
 	lastHeight := base.NilHeight
 	var cids []string
 
-	amm := map[base3.CurrencyID]base3.Amount{}
+	amm := map[types.CurrencyID]types.Amount{}
 	for {
 		filter := util.NewBSONFilter("address", a.String())
 
@@ -628,7 +627,7 @@ func (st *Database) balance(a base.Address) ([]base3.Amount, base.Height, error)
 		}
 	}
 
-	ams := make([]base3.Amount, len(amm))
+	ams := make([]types.Amount, len(amm))
 	var i int
 	for k := range amm {
 		ams[i] = amm[k]
@@ -746,7 +745,7 @@ func (st *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, uint64, 
 	}
 }
 
-func (st *Database) currency(cid string) (base3.CurrencyDesign, base.State, error) {
+func (st *Database) currency(cid string) (types.CurrencyDesign, base.State, error) {
 	q := util.NewBSONFilter("currency", cid).D()
 
 	opt := options.FindOne().SetSort(
@@ -766,17 +765,17 @@ func (st *Database) currency(cid string) (base3.CurrencyDesign, base.State, erro
 		},
 		opt,
 	); err != nil {
-		return base3.CurrencyDesign{}, nil, err
+		return types.CurrencyDesign{}, nil, err
 	}
 
 	if sta != nil {
 		de, err := currency.StateCurrencyDesignValue(sta)
 		if err != nil {
-			return base3.CurrencyDesign{}, nil, err
+			return types.CurrencyDesign{}, nil, err
 		}
 		return de, sta, nil
 	} else {
-		return base3.CurrencyDesign{}, nil, errors.Errorf("state is nil")
+		return types.CurrencyDesign{}, nil, errors.Errorf("state is nil")
 	}
 }
 

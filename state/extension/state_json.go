@@ -2,7 +2,7 @@ package extension
 
 import (
 	"encoding/json"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -10,7 +10,7 @@ import (
 
 type ContractAccountStateValueJSONMarshaler struct {
 	hint.BaseHinter
-	ContractAccount base.ContractAccount `json:"contractaccount"`
+	ContractAccount types.ContractAccount `json:"contractaccount"`
 }
 
 func (s ContractAccountStateValue) MarshalJSON() ([]byte, error) {
@@ -35,7 +35,7 @@ func (s *ContractAccountStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) e
 
 	s.BaseHinter = hint.NewBaseHinter(u.Hint)
 
-	var ca base.ContractAccount
+	var ca types.ContractAccount
 	if err := ca.DecodeJSON(u.ContractAccount, enc); err != nil {
 		return e(err, "")
 	}

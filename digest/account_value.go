@@ -1,7 +1,7 @@
 package digest
 
 import (
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
@@ -13,13 +13,13 @@ var (
 
 type AccountValue struct {
 	hint.BaseHinter
-	ac      base3.Account
-	balance []base3.Amount
+	ac      types.Account
+	balance []types.Amount
 	height  base.Height
 }
 
 func NewAccountValue(st base.State) (AccountValue, error) {
-	var ac base3.Account
+	var ac types.Account
 	switch a, ok, err := IsAccountState(st); {
 	case err != nil:
 		return AccountValue{}, err
@@ -36,11 +36,11 @@ func NewAccountValue(st base.State) (AccountValue, error) {
 	}, nil
 }
 
-func (va AccountValue) Account() base3.Account {
+func (va AccountValue) Account() types.Account {
 	return va.ac
 }
 
-func (va AccountValue) Balance() []base3.Amount {
+func (va AccountValue) Balance() []types.Amount {
 	return va.balance
 }
 
@@ -54,7 +54,7 @@ func (va AccountValue) SetHeight(height base.Height) AccountValue {
 	return va
 }
 
-func (va AccountValue) SetBalance(balance []base3.Amount) AccountValue {
+func (va AccountValue) SetBalance(balance []types.Amount) AccountValue {
 	va.balance = balance
 
 	return va

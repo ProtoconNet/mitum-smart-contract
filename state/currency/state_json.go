@@ -2,7 +2,7 @@ package currency
 
 import (
 	"encoding/json"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -10,7 +10,7 @@ import (
 
 type AccountStateValueJSONMarshaler struct {
 	hint.BaseHinter
-	Account base.Account `json:"account"`
+	Account types.Account `json:"account"`
 }
 
 func (s AccountStateValue) MarshalJSON() ([]byte, error) {
@@ -32,7 +32,7 @@ func (s *AccountStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	var ac base.Account
+	var ac types.Account
 
 	if err := ac.DecodeJSON(u.AC, enc); err != nil {
 		return e(err, "")
@@ -45,7 +45,7 @@ func (s *AccountStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 type BalanceStateValueJSONMarshaler struct {
 	hint.BaseHinter
-	Amount base.Amount `json:"amount"`
+	Amount types.Amount `json:"amount"`
 }
 
 func (s BalanceStateValue) MarshalJSON() ([]byte, error) {
@@ -67,7 +67,7 @@ func (s *BalanceStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e(err, "")
 	}
 
-	var am base.Amount
+	var am types.Amount
 
 	if err := am.DecodeJSON(u.AM, enc); err != nil {
 		return e(err, "")
@@ -80,7 +80,7 @@ func (s *BalanceStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 type CurrencyDesignStateValueJSONMarshaler struct {
 	hint.BaseHinter
-	CurrencyDesign base.CurrencyDesign `json:"currencydesign"`
+	CurrencyDesign types.CurrencyDesign `json:"currencydesign"`
 }
 
 func (s CurrencyDesignStateValue) MarshalJSON() ([]byte, error) {
@@ -102,7 +102,7 @@ func (s *CurrencyDesignStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) er
 		return e(err, "")
 	}
 
-	var cd base.CurrencyDesign
+	var cd types.CurrencyDesign
 
 	if err := cd.DecodeJSON(u.CD, enc); err != nil {
 		return e(err, "")

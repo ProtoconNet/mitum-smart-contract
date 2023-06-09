@@ -2,10 +2,8 @@ package extension
 
 import (
 	"fmt"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
-	"strings"
-
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
@@ -17,10 +15,10 @@ var StateKeyContractAccountSuffix = ":contractaccount"
 
 type ContractAccountStateValue struct {
 	hint.BaseHinter
-	account base.ContractAccount
+	account types.ContractAccount
 }
 
-func NewContractAccountStateValue(account base.ContractAccount) ContractAccountStateValue {
+func NewContractAccountStateValue(account types.ContractAccount) ContractAccountStateValue {
 	return ContractAccountStateValue{
 		BaseHinter: hint.NewBaseHinter(ContractAccountStateValueHint),
 		account:    account,
@@ -49,23 +47,19 @@ func (c ContractAccountStateValue) HashBytes() []byte {
 	return c.account.Bytes()
 }
 
-func StateKeyContractAccount(a mitumbase.Address) string {
+func StateKeyContractAccount(a base.Address) string {
 	return fmt.Sprintf("%s%s", a.String(), StateKeyContractAccountSuffix)
 }
 
-func IsStateContractAccountKey(key string) bool {
-	return strings.HasSuffix(key, StateKeyContractAccountSuffix)
-}
-
-func StateContractAccountValue(st mitumbase.State) (base.ContractAccount, error) {
+func StateContractAccountValue(st base.State) (types.ContractAccount, error) {
 	v := st.Value()
 	if v == nil {
-		return base.ContractAccount{}, util.ErrNotFound.Errorf("contract account status not found in State")
+		return types.ContractAccount{}, util.ErrNotFound.Errorf("contract account status not found in State")
 	}
 
 	cs, ok := v.(ContractAccountStateValue)
 	if !ok {
-		return base.ContractAccount{}, errors.Errorf("invalid contract account status value found, %T", v)
+		return types.ContractAccount{}, errors.Errorf("invalid contract account status value found, %T", v)
 	}
 	return cs.account, nil
 }
@@ -75,7 +69,7 @@ func StateContractAccountValue(st mitumbase.State) (base.ContractAccount, error)
 //	*base.BaseStateValueMerger
 //}
 //
-//func NewCurrencyDesignStateValueMerger(height mitumbase.Height, key string, st mitumbase.State) *CurrencyDesignStateValueMerger {
+//func NewCurrencyDesignStateValueMerger(height base.Height, key string, st base.State) *CurrencyDesignStateValueMerger {
 //	s := &CurrencyDesignStateValueMerger{
 //		BaseStateValueMerger: base.NewBaseStateValueMerger(height, key, st),
 //	}
@@ -83,11 +77,11 @@ func StateContractAccountValue(st mitumbase.State) (base.ContractAccount, error)
 //	return s
 //}
 //
-//func NewCurrencyDesignStateMergeValue(key string, stv mitumbase.StateValue) mitumbase.StateMergeValue {
-//	return mitumbase.NewBaseStateMergeValue(
+//func NewCurrencyDesignStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
+//	return base.NewBaseStateMergeValue(
 //		key,
 //		stv,
-//		func(height mitumbase.Height, st mitumbase.State) mitumbase.StateValueMerger {
+//		func(height base.Height, st base.State) base.StateValueMerger {
 //			return NewCurrencyDesignStateValueMerger(height, key, st)
 //		},
 //	)
@@ -97,7 +91,7 @@ func StateContractAccountValue(st mitumbase.State) (base.ContractAccount, error)
 //	*base.BaseStateValueMerger
 //}
 //
-//func NewContractAccountStateValueMerger(height mitumbase.Height, key string, st mitumbase.State) *ContractAccountStateValueMerger {
+//func NewContractAccountStateValueMerger(height base.Height, key string, st base.State) *ContractAccountStateValueMerger {
 //	s := &ContractAccountStateValueMerger{
 //		BaseStateValueMerger: base.NewBaseStateValueMerger(height, key, st),
 //	}
@@ -105,11 +99,11 @@ func StateContractAccountValue(st mitumbase.State) (base.ContractAccount, error)
 //	return s
 //}
 //
-//func NewContractAccountStateMergeValue(key string, stv mitumbase.StateValue) mitumbase.StateMergeValue {
-//	return mitumbase.NewBaseStateMergeValue(
+//func NewContractAccountStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
+//	return base.NewBaseStateMergeValue(
 //		key,
 //		stv,
-//		func(height mitumbase.Height, st mitumbase.State) mitumbase.StateValueMerger {
+//		func(height base.Height, st base.State) base.StateValueMerger {
 //			return NewContractAccountStateValueMerger(height, key, st)
 //		},
 //	)

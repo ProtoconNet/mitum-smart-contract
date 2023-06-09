@@ -1,13 +1,14 @@
 package cmds
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/digest"
 	digestisaac "github.com/ProtoconNet/mitum-currency/v3/digest/isaac"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
 	isaacoperation2 "github.com/ProtoconNet/mitum-currency/v3/operation/isaac"
 	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
@@ -18,23 +19,23 @@ var SupportedProposalOperationFactHinters []encoder.DecodeDetail
 
 var hinters = []encoder.DecodeDetail{
 	// revive:disable-next-line:line-length-limit
-	{Hint: base.BaseStateHint, Instance: base.BaseState{}},
-	{Hint: base.NodeHint, Instance: base.BaseNode{}},
-	{Hint: base.MEPrivatekeyHint, Instance: base.MEPrivatekey{}},
-	{Hint: base.MEPublickeyHint, Instance: base.MEPublickey{}},
-	{Hint: base.AccountHint, Instance: base.Account{}},
-	{Hint: base.EthAddressHint, Instance: base.EthAddress{}},
-	{Hint: base.AddressHint, Instance: base.Address{}},
-	{Hint: base.AmountHint, Instance: base.Amount{}},
-	{Hint: base.CurrencyDesignHint, Instance: base.CurrencyDesign{}},
-	{Hint: base.CurrencyPolicyHint, Instance: base.CurrencyPolicy{}},
-	{Hint: base.AccountKeysHint, Instance: base.BaseAccountKeys{}},
-	{Hint: base.AccountKeyHint, Instance: base.BaseAccountKey{}},
-	{Hint: base.NilFeeerHint, Instance: base.NilFeeer{}},
-	{Hint: base.RatioFeeerHint, Instance: base.RatioFeeer{}},
-	{Hint: base.FixedFeeerHint, Instance: base.FixedFeeer{}},
+	{Hint: common.BaseStateHint, Instance: common.BaseState{}},
+	{Hint: common.NodeHint, Instance: common.BaseNode{}},
+	{Hint: types.MEPrivatekeyHint, Instance: types.MEPrivatekey{}},
+	{Hint: types.MEPublickeyHint, Instance: types.MEPublickey{}},
+	{Hint: types.AccountHint, Instance: types.Account{}},
+	{Hint: types.EthAddressHint, Instance: types.EthAddress{}},
+	{Hint: types.AddressHint, Instance: types.Address{}},
+	{Hint: types.AmountHint, Instance: types.Amount{}},
+	{Hint: types.CurrencyDesignHint, Instance: types.CurrencyDesign{}},
+	{Hint: types.CurrencyPolicyHint, Instance: types.CurrencyPolicy{}},
+	{Hint: types.AccountKeysHint, Instance: types.BaseAccountKeys{}},
+	{Hint: types.AccountKeyHint, Instance: types.BaseAccountKey{}},
+	{Hint: types.NilFeeerHint, Instance: types.NilFeeer{}},
+	{Hint: types.RatioFeeerHint, Instance: types.RatioFeeer{}},
+	{Hint: types.FixedFeeerHint, Instance: types.FixedFeeer{}},
 
-	{Hint: base.ContractAccountKeysHint, Instance: base.ContractAccountKeys{}},
+	{Hint: types.ContractAccountKeysHint, Instance: types.ContractAccountKeys{}},
 	{Hint: extension.CreateContractAccountsItemMultiAmountsHint, Instance: extension.CreateContractAccountsItemMultiAmounts{}},
 	{Hint: extension.CreateContractAccountsItemSingleAmountHint, Instance: extension.CreateContractAccountsItemSingleAmount{}},
 	{Hint: extension.CreateContractAccountsHint, Instance: extension.CreateContractAccounts{}},

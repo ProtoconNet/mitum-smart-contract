@@ -2,7 +2,7 @@ package digest
 
 import (
 	"encoding/json"
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
@@ -11,8 +11,8 @@ import (
 
 type AccountValueJSONMarshaler struct {
 	hint.BaseHinter
-	base3.AccountJSONMarshaler
-	Balance []base3.Amount `json:"balance,omitempty"`
+	types.AccountJSONMarshaler
+	Balance []types.Amount `json:"balance,omitempty"`
 	Height  base.Height    `json:"height"`
 }
 
@@ -37,7 +37,7 @@ func (va *AccountValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return err
 	}
 
-	ac := new(base3.Account)
+	ac := new(types.Account)
 	if err := va.unpack(enc, uva.Hint, nil, uva.Balance, uva.Height); err != nil {
 		return err
 	} else if err := ac.DecodeJSON(b, enc); err != nil {

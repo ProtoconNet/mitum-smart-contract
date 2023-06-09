@@ -2,14 +2,14 @@ package currency
 
 import (
 	"context"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
-	types "github.com/ProtoconNet/mitum-currency/v3/operation/type"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"sync"
 
-	mitumbase "github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 )
@@ -21,17 +21,17 @@ var keyUpdaterProcessorPool = sync.Pool{
 }
 
 func (KeyUpdater) Process(
-	_ context.Context, _ mitumbase.GetStateFunc,
-) ([]mitumbase.StateMergeValue, mitumbase.OperationProcessReasonError, error) {
+	_ context.Context, _ base.GetStateFunc,
+) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
 	// NOTE Process is nil func
 	return nil, nil, nil
 }
 
 type KeyUpdaterProcessor struct {
-	*mitumbase.BaseOperationProcessor
-	sa  mitumbase.StateMergeValue
-	sb  mitumbase.StateMergeValue
-	fee base.Big
+	*base.BaseOperationProcessor
+	sa  base.StateMergeValue
+	sb  base.StateMergeValue
+	fee common.Big
 	// collectFee func(AddFee) error
 }
 
@@ -39,11 +39,11 @@ func NewKeyUpdaterProcessor(
 // collectFee func(*OperationProcessor, AddFee) error,
 ) types.GetNewProcessor {
 	return func(
-		height mitumbase.Height,
-		getStateFunc mitumbase.GetStateFunc,
-		newPreProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc,
-		newProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc,
-	) (mitumbase.OperationProcessor, error) {
+		height base.Height,
+		getStateFunc base.GetStateFunc,
+		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
+		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
+	) (base.OperationProcessor, error) {
 		e := util.StringErrorFunc("failed to create new KeyUpdaterProcessor")
 
 		nopp := keyUpdaterProcessorPool.Get()
@@ -52,7 +52,7 @@ func NewKeyUpdaterProcessor(
 			return nil, errors.Errorf("expected KeyUpdaterProcessor, not %T", nopp)
 		}
 
-		b, err := mitumbase.NewBaseOperationProcessor(
+		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
 			return nil, e(err, "")
@@ -64,33 +64,33 @@ func NewKeyUpdaterProcessor(
 }
 
 func (opp *KeyUpdaterProcessor) PreProcess(
-	ctx context.Context, op mitumbase.Operation, getStateFunc mitumbase.GetStateFunc,
-) (context.Context, mitumbase.OperationProcessReasonError, error) {
+	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
+) (context.Context, base.OperationProcessReasonError, error) {
 	fact, ok := op.Fact().(KeyUpdaterFact)
 	if !ok {
-		return ctx, mitumbase.NewBaseOperationProcessReasonError("expected KeyUpdaterFact, not %T", op.Fact()), nil
+		return ctx, base.NewBaseOperationProcessReasonError("expected KeyUpdaterFact, not %T", op.Fact()), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.target, op.Signs(), getStateFunc); err != nil {
-		return ctx, mitumbase.NewBaseOperationProcessReasonError("invalid signing :  %w", err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("invalid signing :  %w", err), nil
 	}
 
 	if st, err := state.ExistsState(currency.StateKeyAccount(fact.target), "target keys", getStateFunc); err != nil {
-		return ctx, mitumbase.NewBaseOperationProcessReasonError("failed to check existence of target %v : %w", fact.target, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("failed to check existence of target %v : %w", fact.target, err), nil
 	} else if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Target()), getStateFunc); err != nil {
-		return ctx, mitumbase.NewBaseOperationProcessReasonError("contract account not allowed for key updater, %q: %w", fact.Target(), err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account not allowed for key updater, %q: %w", fact.Target(), err), nil
 	} else if ks, err := currency.StateKeysValue(st); err != nil {
-		return ctx, mitumbase.NewBaseOperationProcessReasonError("failed to get state value of keys %v : %w", fact.keys.Hash(), err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("failed to get state value of keys %v : %w", fact.keys.Hash(), err), nil
 	} else if ks.Equal(fact.Keys()) {
-		return ctx, mitumbase.NewBaseOperationProcessReasonError("same Keys as existing %v : %w", fact.keys.Hash(), err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("same Keys as existing %v : %w", fact.keys.Hash(), err), nil
 	}
 
 	return ctx, nil, nil
 }
 
 func (opp *KeyUpdaterProcessor) Process( // nolint:dupl
-	_ context.Context, op mitumbase.Operation, getStateFunc mitumbase.GetStateFunc) (
-	[]mitumbase.StateMergeValue, mitumbase.OperationProcessReasonError, error,
+	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
+	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
 	e := util.StringErrorFunc("failed to process KeyUpdater")
 
@@ -99,33 +99,33 @@ func (opp *KeyUpdaterProcessor) Process( // nolint:dupl
 		return nil, nil, e(nil, "expected KeyUpdaterFact, not %T", op.Fact())
 	}
 
-	var tgAccSt mitumbase.State
+	var tgAccSt base.State
 	var err error
 	if tgAccSt, err = state.ExistsState(currency.StateKeyAccount(fact.target), "target keys", getStateFunc); err != nil {
-		return nil, mitumbase.NewBaseOperationProcessReasonError("failed to check existence of target %v : %w", fact.target, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of target %v : %w", fact.target, err), nil
 	}
 
-	var fee base.Big
-	var policy base.CurrencyPolicy
+	var fee common.Big
+	var policy types.CurrencyPolicy
 	if policy, err = state.ExistsCurrencyPolicy(fact.currency, getStateFunc); err != nil {
-		return nil, mitumbase.NewBaseOperationProcessReasonError("failed to check existence of currency %v : %w", fact.currency, err), nil
-	} else if fee, err = policy.Feeer().Fee(base.ZeroBig); err != nil {
-		return nil, mitumbase.NewBaseOperationProcessReasonError("failed to check fee of currency %v : %w", fact.currency, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of currency %v : %w", fact.currency, err), nil
+	} else if fee, err = policy.Feeer().Fee(common.ZeroBig); err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("failed to check fee of currency %v : %w", fact.currency, err), nil
 	}
 
-	var tgBalSt mitumbase.State
+	var tgBalSt base.State
 	if tgBalSt, err = state.ExistsState(currency.StateKeyBalance(fact.target, fact.currency), "balance of target", getStateFunc); err != nil {
-		return nil, mitumbase.NewBaseOperationProcessReasonError("failed to check existence of targe balance %v : %w", fact.target, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of targe balance %v : %w", fact.target, err), nil
 	} else if b, err := currency.StateBalanceValue(tgBalSt); err != nil {
-		return nil, mitumbase.NewBaseOperationProcessReasonError("failed to check existence of target balance %v,%v : %w", fact.currency, fact.target, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of target balance %v,%v : %w", fact.currency, fact.target, err), nil
 	} else if b.Big().Compare(fee) < 0 {
-		return nil, mitumbase.NewBaseOperationProcessReasonError("insufficient balance with fee %v,%v", fact.currency, fact.target), nil
+		return nil, base.NewBaseOperationProcessReasonError("insufficient balance with fee %v,%v", fact.currency, fact.target), nil
 	}
 
-	var stmvs []mitumbase.StateMergeValue // nolint:prealloc
+	var stmvs []base.StateMergeValue // nolint:prealloc
 	v, ok := tgBalSt.Value().(currency.BalanceStateValue)
 	if !ok {
-		return nil, mitumbase.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", tgBalSt.Value()), nil
+		return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", tgBalSt.Value()), nil
 	}
 
 	tgAmount := v.Amount.WithBig(v.Amount.Big().Sub(fee))

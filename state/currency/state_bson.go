@@ -1,8 +1,8 @@
 package currency
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"go.mongodb.org/mongo-driver/bson"
@@ -37,7 +37,7 @@ func (s *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
-	var ac base.Account
+	var ac types.Account
 	if err := ac.DecodeBSON(u.Account, enc); err != nil {
 		return e(err, "")
 	}
@@ -75,7 +75,7 @@ func (s *BalanceStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	}
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
-	var am base.Amount
+	var am types.Amount
 	if err := am.DecodeBSON(u.Amount, enc); err != nil {
 		return e(err, "")
 	}
@@ -113,7 +113,7 @@ func (s *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 	}
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
-	var cd base.CurrencyDesign
+	var cd types.CurrencyDesign
 	if err := cd.DecodeBSON(u.CurrencyDesign, enc); err != nil {
 		return e(err, "")
 	}

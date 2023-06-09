@@ -1,9 +1,9 @@
 package isaacoperation
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
@@ -23,15 +23,15 @@ func (fact SuffrageJoinFact) MarshalBSON() ([]byte, error) {
 }
 
 type SuffrageJoinFactBSONUnMarshaler struct {
-	Hint      string           `bson:"_hint"`
-	Candidate string           `bson:"candidate"`
-	Start     mitumbase.Height `bson:"start"`
+	Hint      string      `bson:"_hint"`
+	Candidate string      `bson:"candidate"`
+	Start     base.Height `bson:"start"`
 }
 
 func (fact *SuffrageJoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of SuffrageJoinFact")
 
-	var u base.BaseFactBSONUnmarshaler
+	var u common.BaseFactBSONUnmarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
@@ -57,7 +57,7 @@ func (fact *SuffrageJoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 func (op *SuffrageJoin) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of SuffrageJoin")
-	var ubo base.BaseNodeOperation
+	var ubo common.BaseNodeOperation
 
 	err := ubo.DecodeBSON(b, enc)
 	if err != nil {
@@ -88,7 +88,7 @@ type SuffrageGenesisJoinFactBSONUnMarshaler struct {
 func (fact *SuffrageGenesisJoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of SuffrageGenesisJoinFact")
 
-	var u base.BaseFactBSONUnmarshaler
+	var u common.BaseFactBSONUnmarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
@@ -114,9 +114,9 @@ func (fact *SuffrageGenesisJoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) 
 		return err
 	}
 
-	nodes := make([]base.BaseNode, len(r))
+	nodes := make([]common.BaseNode, len(r))
 	for i := range r {
-		node := base.BaseNode{}
+		node := common.BaseNode{}
 		if err := node.DecodeBSON(r[i].Value, enc); err != nil {
 			return err
 		}
@@ -128,7 +128,7 @@ func (fact *SuffrageGenesisJoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) 
 
 func (op *SuffrageGenesisJoin) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of SuffrageGenesisJoin")
-	var ubo base.BaseOperation
+	var ubo common.BaseOperation
 
 	err := ubo.DecodeBSON(b, enc)
 	if err != nil {

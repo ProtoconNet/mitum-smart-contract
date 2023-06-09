@@ -1,7 +1,7 @@
 package currency
 
 import (
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -19,13 +19,13 @@ func (fact *KeyUpdaterFact) unpack(enc encoder.Encoder, tg string, bks []byte, c
 
 	if hinter, err := enc.Decode(bks); err != nil {
 		return err
-	} else if k, ok := hinter.(base3.AccountKeys); !ok {
+	} else if k, ok := hinter.(types.AccountKeys); !ok {
 		return util.ErrWrongType.Errorf("expected AccountKeys, not %T", hinter)
 	} else {
 		fact.keys = k
 	}
 
-	fact.currency = base3.CurrencyID(cid)
+	fact.currency = types.CurrencyID(cid)
 
 	return nil
 }

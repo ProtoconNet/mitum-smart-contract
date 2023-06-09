@@ -3,7 +3,7 @@ package isaacoperation
 import (
 	"bytes"
 	"context"
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
@@ -144,12 +144,12 @@ func (fact SuffrageGenesisJoinFact) hash() util.Hash {
 }
 
 type SuffrageJoin struct {
-	base3.BaseNodeOperation
+	common.BaseNodeOperation
 }
 
 func NewSuffrageJoin(fact SuffrageJoinFact) SuffrageJoin {
 	return SuffrageJoin{
-		BaseNodeOperation: base3.NewBaseNodeOperation(SuffrageJoinHint, fact),
+		BaseNodeOperation: common.NewBaseNodeOperation(SuffrageJoinHint, fact),
 	}
 }
 
@@ -204,12 +204,12 @@ func (op SuffrageJoin) IsValid(networkID []byte) error {
 
 // SuffrageGenesisJoin is only for used for genesis block
 type SuffrageGenesisJoin struct {
-	base3.BaseOperation
+	common.BaseOperation
 }
 
 func NewSuffrageGenesisJoin(fact SuffrageGenesisJoinFact) SuffrageGenesisJoin {
 	return SuffrageGenesisJoin{
-		BaseOperation: base3.NewBaseOperation(SuffrageGenesisJoinHint, fact),
+		BaseOperation: common.NewBaseOperation(SuffrageGenesisJoinHint, fact),
 	}
 }
 
@@ -257,7 +257,7 @@ func (op SuffrageGenesisJoin) Process(context.Context, base.GetStateFunc) (
 	}
 
 	return []base.StateMergeValue{
-		base3.NewBaseStateMergeValue(
+		common.NewBaseStateMergeValue(
 			isaac.SuffrageStateKey,
 			isaac.NewSuffrageNodesStateValue(base.GenesisHeight, nodes),
 			nil,

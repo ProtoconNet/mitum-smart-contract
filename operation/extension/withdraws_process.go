@@ -2,15 +2,15 @@ package extension
 
 import (
 	"context"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
-	types "github.com/ProtoconNet/mitum-currency/v3/operation/type"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"sync"
 
-	mitumbase "github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 )
@@ -28,21 +28,21 @@ var withdrawsProcessorPool = sync.Pool{
 }
 
 func (Withdraws) Process(
-	_ context.Context, _ mitumbase.GetStateFunc,
-) ([]mitumbase.StateMergeValue, mitumbase.OperationProcessReasonError, error) {
+	_ context.Context, _ base.GetStateFunc,
+) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
 	// NOTE Process is nil func
 	return nil, nil, nil
 }
 
 type WithdrawsItemProcessor struct {
 	h      util.Hash
-	sender mitumbase.Address
+	sender base.Address
 	item   WithdrawsItem
-	tb     map[base.CurrencyID]mitumbase.StateMergeValue
+	tb     map[types.CurrencyID]base.StateMergeValue
 }
 
 func (opp *WithdrawsItemProcessor) PreProcess(
-	_ context.Context, _ mitumbase.Operation, getStateFunc mitumbase.GetStateFunc,
+	_ context.Context, _ base.Operation, getStateFunc base.GetStateFunc,
 ) error {
 	if err := state.CheckExistsState(statecurrency.StateKeyAccount(opp.item.Target()), getStateFunc); err != nil {
 		return err
@@ -60,7 +60,7 @@ func (opp *WithdrawsItemProcessor) PreProcess(
 		return errors.Errorf("contract account owner is not matched with %q", opp.sender)
 	}
 
-	tb := map[base.CurrencyID]mitumbase.StateMergeValue{}
+	tb := map[types.CurrencyID]base.StateMergeValue{}
 	for i := range opp.item.Amounts() {
 		am := opp.item.Amounts()[i]
 
@@ -88,9 +88,9 @@ func (opp *WithdrawsItemProcessor) PreProcess(
 }
 
 func (opp *WithdrawsItemProcessor) Process(
-	_ context.Context, _ mitumbase.Operation, _ mitumbase.GetStateFunc,
-) ([]mitumbase.StateMergeValue, error) {
-	sts := make([]mitumbase.StateMergeValue, len(opp.item.Amounts()))
+	_ context.Context, _ base.Operation, _ base.GetStateFunc,
+) ([]base.StateMergeValue, error) {
+	sts := make([]base.StateMergeValue, len(opp.item.Amounts()))
 	for i := range opp.item.Amounts() {
 		am := opp.item.Amounts()[i]
 		v, ok := opp.tb[am.Currency()].Value().(statecurrency.BalanceStateValue)
@@ -114,18 +114,18 @@ func (opp *WithdrawsItemProcessor) Close() {
 }
 
 type WithdrawsProcessor struct {
-	*mitumbase.BaseOperationProcessor
+	*base.BaseOperationProcessor
 	ns       []*WithdrawsItemProcessor
-	required map[base.CurrencyID][2]base.Big // required[0] : amount + fee, required[1] : fee
+	required map[types.CurrencyID][2]common.Big // required[0] : amount + fee, required[1] : fee
 }
 
 func NewWithdrawsProcessor() types.GetNewProcessor {
 	return func(
-		height mitumbase.Height,
-		getStateFunc mitumbase.GetStateFunc,
-		newPreProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc,
-		newProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc,
-	) (mitumbase.OperationProcessor, error) {
+		height base.Height,
+		getStateFunc base.GetStateFunc,
+		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
+		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
+	) (base.OperationProcessor, error) {
 		e := util.StringErrorFunc("failed to create new WithdrawsProcessor")
 
 		nopp := withdrawsProcessorPool.Get()
@@ -134,7 +134,7 @@ func NewWithdrawsProcessor() types.GetNewProcessor {
 			return nil, e(nil, "expected WithdrawsProcessor, not %T", nopp)
 		}
 
-		b, err := mitumbase.NewBaseOperationProcessor(
+		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
 			return nil, e(err, "")
@@ -147,8 +147,8 @@ func NewWithdrawsProcessor() types.GetNewProcessor {
 }
 
 func (opp *WithdrawsProcessor) PreProcess(
-	ctx context.Context, op mitumbase.Operation, getStateFunc mitumbase.GetStateFunc,
-) (context.Context, mitumbase.OperationProcessReasonError, error) {
+	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
+) (context.Context, base.OperationProcessReasonError, error) {
 	e := util.StringErrorFunc("failed to preprocess Withdraws")
 
 	fact, ok := op.Fact().(WithdrawsFact)
@@ -157,36 +157,36 @@ func (opp *WithdrawsProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(statecurrency.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, mitumbase.NewBaseOperationProcessReasonError("sender not found, %q: %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %q: %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, mitumbase.NewBaseOperationProcessReasonError("contract account cannot be ca withdraw sender, %q: %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be ca withdraw sender, %q: %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
-		return ctx, mitumbase.NewBaseOperationProcessReasonError("invalid signing: %w", err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("invalid signing: %w", err), nil
 	}
 
 	return ctx, nil, nil
 }
 
 func (opp *WithdrawsProcessor) Process( // nolint:dupl
-	ctx context.Context, op mitumbase.Operation, getStateFunc mitumbase.GetStateFunc) (
-	[]mitumbase.StateMergeValue, mitumbase.OperationProcessReasonError, error,
+	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
+	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
 	fact, ok := op.Fact().(WithdrawsFact)
 	if !ok {
-		return nil, mitumbase.NewBaseOperationProcessReasonError("expected WithdrawsFact, not %T", op.Fact()), nil
+		return nil, base.NewBaseOperationProcessReasonError("expected WithdrawsFact, not %T", op.Fact()), nil
 	}
 
 	feeReceiveBalSts, required, err := opp.calculateItemsFee(op, getStateFunc)
 	if err != nil {
-		return nil, mitumbase.NewBaseOperationProcessReasonError("failed to calculate fee: %w", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %w", err), nil
 	}
 	senderBalSts, err := currency.CheckEnoughBalance(fact.sender, required, getStateFunc)
 	if err != nil {
-		return nil, mitumbase.NewBaseOperationProcessReasonError("failed to check enough balance: %w", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check enough balance: %w", err), nil
 	} else {
 		opp.required = required
 	}
@@ -196,7 +196,7 @@ func (opp *WithdrawsProcessor) Process( // nolint:dupl
 		cip := withdrawsItemProcessorPool.Get()
 		c, ok := cip.(*WithdrawsItemProcessor)
 		if !ok {
-			return nil, mitumbase.NewBaseOperationProcessReasonError("expected WithdrawsItemProcessor, not %T", cip), nil
+			return nil, base.NewBaseOperationProcessReasonError("expected WithdrawsItemProcessor, not %T", cip), nil
 		}
 
 		c.h = op.Hash()
@@ -204,17 +204,17 @@ func (opp *WithdrawsProcessor) Process( // nolint:dupl
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, mitumbase.NewBaseOperationProcessReasonError("fail to preprocess WithdrawsItem: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess WithdrawsItem: %w", err), nil
 		}
 
 		ns[i] = c
 	}
 
-	var stateMergeValues []mitumbase.StateMergeValue // nolint:prealloc
+	var stateMergeValues []base.StateMergeValue // nolint:prealloc
 	for i := range ns {
 		s, err := ns[i].Process(ctx, op, getStateFunc)
 		if err != nil {
-			return nil, mitumbase.NewBaseOperationProcessReasonError("failed to process WithdrawsItem: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to process WithdrawsItem: %w", err), nil
 		}
 		stateMergeValues = append(stateMergeValues, s...)
 
@@ -224,10 +224,10 @@ func (opp *WithdrawsProcessor) Process( // nolint:dupl
 	for cid := range senderBalSts {
 		v, ok := senderBalSts[cid].Value().(statecurrency.BalanceStateValue)
 		if !ok {
-			return nil, mitumbase.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", senderBalSts[cid].Value()), nil
+			return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", senderBalSts[cid].Value()), nil
 		}
 
-		var stateMergeValue mitumbase.StateMergeValue
+		var stateMergeValue base.StateMergeValue
 		if senderBalSts[cid].Key() == feeReceiveBalSts[cid].Key() {
 			stateMergeValue = state.NewStateMergeValue(
 				senderBalSts[cid].Key(),
@@ -240,7 +240,7 @@ func (opp *WithdrawsProcessor) Process( // nolint:dupl
 			)
 			r, ok := feeReceiveBalSts[cid].Value().(statecurrency.BalanceStateValue)
 			if !ok {
-				return nil, mitumbase.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", feeReceiveBalSts[cid].Value()), nil
+				return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", feeReceiveBalSts[cid].Value()), nil
 			}
 			stateMergeValues = append(
 				stateMergeValues,
@@ -267,7 +267,7 @@ func (opp *WithdrawsProcessor) Close() error {
 	return nil
 }
 
-func (opp *WithdrawsProcessor) calculateItemsFee(op mitumbase.Operation, getStateFunc mitumbase.GetStateFunc) (map[base.CurrencyID]mitumbase.State, map[base.CurrencyID][2]base.Big, error) {
+func (opp *WithdrawsProcessor) calculateItemsFee(op base.Operation, getStateFunc base.GetStateFunc) (map[types.CurrencyID]base.State, map[types.CurrencyID][2]common.Big, error) {
 	fact, ok := op.Fact().(WithdrawsFact)
 	if !ok {
 		return nil, nil, errors.Errorf("expected WithdrawsFact, not %T", op.Fact())

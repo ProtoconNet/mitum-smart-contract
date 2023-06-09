@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"io"
 	"os"
 	"sort"
@@ -33,7 +33,7 @@ var (
 func init() {
 	headerExamples = map[string]isaac.NetworkHeader{
 		isaacnetwork.HandlerPrefixRequestProposal: isaacnetwork.NewRequestProposalRequestHeader(
-			base.RawPoint(33, 1), base2.NewStringAddress("proposer")), //nolint:gomnd //...
+			base.RawPoint(33, 1), types.NewStringAddress("proposer")), //nolint:gomnd //...
 		isaacnetwork.HandlerPrefixProposal: isaacnetwork.NewProposalRequestHeader(
 			valuehash.RandomSHA256()),
 		isaacnetwork.HandlerPrefixLastSuffrageProof: isaacnetwork.NewLastSuffrageProofRequestHeader(

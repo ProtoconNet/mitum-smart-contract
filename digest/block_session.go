@@ -3,7 +3,7 @@ package digest
 import (
 	"context"
 	"fmt"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"sync"
 	"time"
 
@@ -211,13 +211,13 @@ func (bs *BlockSession) prepareAccounts() error {
 		st := bs.sts[i]
 
 		switch {
-		case base2.IsStateAccountKey(st.Key()):
+		case statecurrency.IsStateAccountKey(st.Key()):
 			j, err := bs.handleAccountState(st)
 			if err != nil {
 				return err
 			}
 			accountModels = append(accountModels, j...)
-		case base2.IsStateBalanceKey(st.Key()):
+		case statecurrency.IsStateBalanceKey(st.Key()):
 			j, err := bs.handleBalanceState(st)
 			if err != nil {
 				return err
@@ -243,7 +243,7 @@ func (bs *BlockSession) prepareCurrencies() error {
 	for i := range bs.sts {
 		st := bs.sts[i]
 		switch {
-		case base2.IsStateCurrencyDesignKey(st.Key()):
+		case statecurrency.IsStateCurrencyDesignKey(st.Key()):
 			j, err := bs.handleCurrencyState(st)
 			if err != nil {
 				return err

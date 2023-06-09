@@ -1,7 +1,7 @@
 package currency
 
 import (
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
@@ -16,7 +16,7 @@ type CreateAccountsItemMultiAmounts struct {
 	BaseCreateAccountsItem
 }
 
-func NewCreateAccountsItemMultiAmounts(keys base2.AccountKeys, amounts []base2.Amount, addrType hint.Type) CreateAccountsItemMultiAmounts {
+func NewCreateAccountsItemMultiAmounts(keys types.AccountKeys, amounts []types.Amount, addrType hint.Type) CreateAccountsItemMultiAmounts {
 	return CreateAccountsItemMultiAmounts{
 		BaseCreateAccountsItem: NewBaseCreateAccountsItem(CreateAccountsItemMultiAmountsHint, keys, amounts, addrType),
 	}

@@ -1,7 +1,7 @@
 package currency
 
 import (
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -14,7 +14,7 @@ func (it *BaseCreateAccountsItem) unpack(enc encoder.Encoder, ht hint.Hint, bks 
 
 	if hinter, err := enc.Decode(bks); err != nil {
 		return e(err, "")
-	} else if k, ok := hinter.(base2.AccountKeys); !ok {
+	} else if k, ok := hinter.(types.AccountKeys); !ok {
 		return util.ErrWrongType.Errorf("expected AccountsKeys, not %T", hinter)
 	} else {
 		it.keys = k
@@ -25,9 +25,9 @@ func (it *BaseCreateAccountsItem) unpack(enc encoder.Encoder, ht hint.Hint, bks 
 		return e(err, "")
 	}
 
-	amounts := make([]base2.Amount, len(ham))
+	amounts := make([]types.Amount, len(ham))
 	for i := range ham {
-		j, ok := ham[i].(base2.Amount)
+		j, ok := ham[i].(types.Amount)
 		if !ok {
 			return util.ErrWrongType.Errorf("expected Amount, not %T", ham[i])
 		}

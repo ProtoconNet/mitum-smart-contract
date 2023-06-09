@@ -1,7 +1,7 @@
 package currency
 
 import (
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -10,10 +10,10 @@ import (
 type BaseTransfersItem struct {
 	hint.BaseHinter
 	receiver base.Address
-	amounts  []base3.Amount
+	amounts  []types.Amount
 }
 
-func NewBaseTransfersItem(ht hint.Hint, receiver base.Address, amounts []base3.Amount) BaseTransfersItem {
+func NewBaseTransfersItem(ht hint.Hint, receiver base.Address, amounts []types.Amount) BaseTransfersItem {
 	return BaseTransfersItem{
 		BaseHinter: hint.NewBaseHinter(ht),
 		receiver:   receiver,
@@ -41,7 +41,7 @@ func (it BaseTransfersItem) IsValid([]byte) error {
 		return util.ErrInvalid.Errorf("empty amounts")
 	}
 
-	founds := map[base3.CurrencyID]struct{}{}
+	founds := map[types.CurrencyID]struct{}{}
 	for i := range it.amounts {
 		am := it.amounts[i]
 		if _, found := founds[am.Currency()]; found {
@@ -63,12 +63,12 @@ func (it BaseTransfersItem) Receiver() base.Address {
 	return it.receiver
 }
 
-func (it BaseTransfersItem) Amounts() []base3.Amount {
+func (it BaseTransfersItem) Amounts() []types.Amount {
 	return it.amounts
 }
 
 func (it BaseTransfersItem) Rebuild() TransfersItem {
-	ams := make([]base3.Amount, len(it.amounts))
+	ams := make([]types.Amount, len(it.amounts))
 	for i := range it.amounts {
 		am := it.amounts[i]
 		ams[i] = am.WithBig(am.Big())

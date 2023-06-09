@@ -1,7 +1,7 @@
 package currency
 
 import (
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -14,10 +14,10 @@ var (
 type SuffrageInflationItem struct {
 	hint.BaseHinter
 	receiver base.Address
-	amount   base3.Amount
+	amount   types.Amount
 }
 
-func NewSuffrageInflationItem(receiver base.Address, amount base3.Amount) SuffrageInflationItem {
+func NewSuffrageInflationItem(receiver base.Address, amount types.Amount) SuffrageInflationItem {
 	return SuffrageInflationItem{
 		BaseHinter: hint.NewBaseHinter(SuffrageInflationItemHint),
 		receiver:   receiver,
@@ -38,11 +38,11 @@ func (it SuffrageInflationItem) Receiver() base.Address {
 	return it.receiver
 }
 
-func (it SuffrageInflationItem) Currency() base3.CurrencyID {
+func (it SuffrageInflationItem) Currency() types.CurrencyID {
 	return it.amount.Currency()
 }
 
-func (it SuffrageInflationItem) Amount() base3.Amount {
+func (it SuffrageInflationItem) Amount() types.Amount {
 	return it.amount
 }
 

@@ -1,20 +1,20 @@
 package extension
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 type BaseCreateContractAccountsItem struct {
 	hint.BaseHinter
-	keys        base.AccountKeys
-	amounts     []base.Amount
+	keys        types.AccountKeys
+	amounts     []types.Amount
 	addressType hint.Type
 }
 
-func NewBaseCreateContractAccountsItem(ht hint.Hint, keys base.AccountKeys, amounts []base.Amount, addrType hint.Type) BaseCreateContractAccountsItem {
+func NewBaseCreateContractAccountsItem(ht hint.Hint, keys types.AccountKeys, amounts []types.Amount, addrType hint.Type) BaseCreateContractAccountsItem {
 	return BaseCreateContractAccountsItem{
 		BaseHinter:  hint.NewBaseHinter(ht),
 		keys:        keys,
@@ -44,11 +44,11 @@ func (it BaseCreateContractAccountsItem) IsValid([]byte) error {
 		return err
 	}
 
-	if it.addressType != base.AddressHint.Type() && it.addressType != base.EthAddressHint.Type() {
+	if it.addressType != types.AddressHint.Type() && it.addressType != types.EthAddressHint.Type() {
 		return util.ErrInvalid.Errorf("invalid AddressHint")
 	}
 
-	founds := map[base.CurrencyID]struct{}{}
+	founds := map[types.CurrencyID]struct{}{}
 	for i := range it.amounts {
 		am := it.amounts[i]
 		if _, found := founds[am.Currency()]; found {
@@ -66,24 +66,24 @@ func (it BaseCreateContractAccountsItem) IsValid([]byte) error {
 	return nil
 }
 
-func (it BaseCreateContractAccountsItem) Keys() base.AccountKeys {
+func (it BaseCreateContractAccountsItem) Keys() types.AccountKeys {
 	return it.keys
 }
 
-func (it BaseCreateContractAccountsItem) Address() (mitumbase.Address, error) {
-	return base.NewAddressFromKeys(it.keys)
+func (it BaseCreateContractAccountsItem) Address() (base.Address, error) {
+	return types.NewAddressFromKeys(it.keys)
 }
 
 func (it BaseCreateContractAccountsItem) AddressType() hint.Type {
 	return it.addressType
 }
 
-func (it BaseCreateContractAccountsItem) Amounts() []base.Amount {
+func (it BaseCreateContractAccountsItem) Amounts() []types.Amount {
 	return it.amounts
 }
 
 func (it BaseCreateContractAccountsItem) Rebuild() CreateContractAccountsItem {
-	ams := make([]base.Amount, len(it.amounts))
+	ams := make([]types.Amount, len(it.amounts))
 	for i := range it.amounts {
 		am := it.amounts[i]
 		ams[i] = am.WithBig(am.Big())

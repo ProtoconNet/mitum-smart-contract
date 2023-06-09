@@ -1,7 +1,8 @@
 package currency
 
 import (
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -15,11 +16,11 @@ var (
 
 type CurrencyPolicyUpdaterFact struct {
 	base.BaseFact
-	currency base3.CurrencyID
-	policy   base3.CurrencyPolicy
+	currency types.CurrencyID
+	policy   types.CurrencyPolicy
 }
 
-func NewCurrencyPolicyUpdaterFact(token []byte, currency base3.CurrencyID, policy base3.CurrencyPolicy) CurrencyPolicyUpdaterFact {
+func NewCurrencyPolicyUpdaterFact(token []byte, currency types.CurrencyID, policy types.CurrencyPolicy) CurrencyPolicyUpdaterFact {
 	fact := CurrencyPolicyUpdaterFact{
 		BaseFact: base.NewBaseFact(CurrencyPolicyUpdaterFactHint, token),
 		currency: currency,
@@ -44,7 +45,7 @@ func (fact CurrencyPolicyUpdaterFact) Bytes() []byte {
 }
 
 func (fact CurrencyPolicyUpdaterFact) IsValid(b []byte) error {
-	if err := base3.IsValidOperationFact(fact, b); err != nil {
+	if err := common.IsValidOperationFact(fact, b); err != nil {
 		return err
 	}
 
@@ -63,20 +64,20 @@ func (fact CurrencyPolicyUpdaterFact) Token() base.Token {
 	return fact.BaseFact.Token()
 }
 
-func (fact CurrencyPolicyUpdaterFact) Currency() base3.CurrencyID {
+func (fact CurrencyPolicyUpdaterFact) Currency() types.CurrencyID {
 	return fact.currency
 }
 
-func (fact CurrencyPolicyUpdaterFact) Policy() base3.CurrencyPolicy {
+func (fact CurrencyPolicyUpdaterFact) Policy() types.CurrencyPolicy {
 	return fact.policy
 }
 
 type CurrencyPolicyUpdater struct {
-	base3.BaseNodeOperation
+	common.BaseNodeOperation
 }
 
 func NewCurrencyPolicyUpdater(fact CurrencyPolicyUpdaterFact, memo string) (CurrencyPolicyUpdater, error) {
 	return CurrencyPolicyUpdater{
-		BaseNodeOperation: base3.NewBaseNodeOperation(CurrencyPolicyUpdaterHint, fact),
+		BaseNodeOperation: common.NewBaseNodeOperation(CurrencyPolicyUpdaterHint, fact),
 	}, nil
 }

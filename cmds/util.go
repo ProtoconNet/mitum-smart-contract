@@ -659,7 +659,7 @@ func SendOperationFilterFunc(ctx context.Context) (
 ) {
 	var db isaac.Database
 	var oprs *hint.CompatibleSet
-
+	fmt.Println(">>>>>>>>>")
 	if err := util.LoadFromContextOK(ctx,
 		launch.CenterDatabaseContextKey, &db,
 		launch.OperationProcessorsMapContextKey, &oprs,
@@ -670,13 +670,14 @@ func SendOperationFilterFunc(ctx context.Context) (
 	operationfilterf := IsSupportedProposalOperationFactHintFunc()
 
 	return func(op base.Operation) (bool, error) {
+		fmt.Println("<<<<<<<<<<<<<<<<1")
 		switch hinter, ok := op.Fact().(hint.Hinter); {
 		case !ok:
 			return false, nil
 		case !operationfilterf(hinter.Hint()):
 			return false, errors.Errorf("Not supported operation")
 		}
-
+		fmt.Println("<<<<<<<<<<<<<<<<2")
 		var height base.Height
 
 		switch m, found, err := db.LastBlockMap(); {
@@ -687,7 +688,7 @@ func SendOperationFilterFunc(ctx context.Context) (
 		default:
 			height = m.Manifest().Height()
 		}
-
+		fmt.Println("<<<<<<<<<<<<<<<<3")
 		f, closef, err := launch.OperationPreProcess(oprs, op, height)
 		if err != nil {
 			return false, err
@@ -701,7 +702,7 @@ func SendOperationFilterFunc(ctx context.Context) (
 		if err != nil {
 			return false, err
 		}
-
+		fmt.Println(">>>>>>>", reason)
 		return reason == nil, reason
 	}, nil
 }

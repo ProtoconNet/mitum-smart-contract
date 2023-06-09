@@ -1,7 +1,7 @@
 package currency
 
 import (
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -20,7 +20,7 @@ func (it *SuffrageInflationItem) unpack(enc encoder.Encoder, ht hint.Hint, rc st
 
 	if hinter, err := enc.Decode(bam); err != nil {
 		return e(err, "")
-	} else if am, ok := hinter.(base2.Amount); !ok {
+	} else if am, ok := hinter.(types.Amount); !ok {
 		return util.ErrWrongType.Errorf("expected Amount, not %T", hinter)
 	} else {
 		it.amount = am

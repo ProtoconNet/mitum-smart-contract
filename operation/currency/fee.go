@@ -2,9 +2,10 @@ package currency
 
 import (
 	"context"
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -19,14 +20,14 @@ var (
 
 type FeeOperationFact struct {
 	base.BaseFact
-	amounts []base3.Amount
+	amounts []types.Amount
 }
 
-func NewFeeOperationFact(height base.Height, ams map[base3.CurrencyID]base3.Big) FeeOperationFact {
-	amounts := make([]base3.Amount, len(ams))
+func NewFeeOperationFact(height base.Height, ams map[types.CurrencyID]common.Big) FeeOperationFact {
+	amounts := make([]types.Amount, len(ams))
 	var i int
 	for cid := range ams {
-		amounts[i] = base3.NewAmount(ams[cid], cid)
+		amounts[i] = types.NewAmount(ams[cid], cid)
 		i++
 	}
 
@@ -77,16 +78,16 @@ func (fact FeeOperationFact) Token() base.Token {
 	return fact.BaseFact.Token()
 }
 
-func (fact FeeOperationFact) Amounts() []base3.Amount {
+func (fact FeeOperationFact) Amounts() []types.Amount {
 	return fact.amounts
 }
 
 type FeeOperation struct {
-	base3.BaseOperation
+	common.BaseOperation
 }
 
 func NewFeeOperation(fact FeeOperationFact) (FeeOperation, error) {
-	return FeeOperation{BaseOperation: base3.NewBaseOperation(FeeOperationHint, fact)}, nil
+	return FeeOperation{BaseOperation: common.NewBaseOperation(FeeOperationHint, fact)}, nil
 }
 
 func (op *FeeOperation) HashSign(priv base.Privatekey, networkID base.NetworkID) error {

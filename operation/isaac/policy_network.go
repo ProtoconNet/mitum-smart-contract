@@ -2,7 +2,7 @@ package isaacoperation
 
 import (
 	"context"
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
@@ -62,12 +62,12 @@ func (fact GenesisNetworkPolicyFact) hash() util.Hash {
 
 // GenesisNetworkPolicy is only for used for genesis block
 type GenesisNetworkPolicy struct {
-	base3.BaseOperation
+	common.BaseOperation
 }
 
 func NewGenesisNetworkPolicy(fact GenesisNetworkPolicyFact) GenesisNetworkPolicy {
 	return GenesisNetworkPolicy{
-		BaseOperation: base3.NewBaseOperation(GenesisNetworkPolicyHint, fact),
+		BaseOperation: common.NewBaseOperation(GenesisNetworkPolicyHint, fact),
 	}
 }
 
@@ -108,7 +108,7 @@ func (op GenesisNetworkPolicy) Process(context.Context, base.GetStateFunc) (
 	fact := op.Fact().(GenesisNetworkPolicyFact) //nolint:forcetypeassert //...
 
 	return []base.StateMergeValue{
-		base3.NewBaseStateMergeValue(
+		common.NewBaseStateMergeValue(
 			isaac.NetworkPolicyStateKey,
 			NewNetworkPolicyStateValue(fact.Policy()),
 			nil,

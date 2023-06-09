@@ -2,16 +2,16 @@ package extension
 
 import (
 	"encoding/json"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 )
 
 type TransferFactJSONMarshaler struct {
-	mitumbase.BaseFactJSONMarshaler
-	Sender mitumbase.Address `json:"sender"`
-	Items  []WithdrawsItem   `json:"items"`
+	base.BaseFactJSONMarshaler
+	Sender base.Address    `json:"sender"`
+	Items  []WithdrawsItem `json:"items"`
 }
 
 func (fact WithdrawsFact) MarshalJSON() ([]byte, error) {
@@ -23,7 +23,7 @@ func (fact WithdrawsFact) MarshalJSON() ([]byte, error) {
 }
 
 type WithdrawsFactJSONUnmarshaler struct {
-	mitumbase.BaseFactJSONUnmarshaler
+	base.BaseFactJSONUnmarshaler
 	Sender string          `json:"sender"`
 	Items  json.RawMessage `json:"items"`
 }
@@ -43,7 +43,7 @@ func (fact *WithdrawsFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 }
 
 type withdrawsMarshaler struct {
-	base.BaseOperationJSONMarshaler
+	common.BaseOperationJSONMarshaler
 }
 
 func (op Withdraws) MarshalJSON() ([]byte, error) {
@@ -55,7 +55,7 @@ func (op Withdraws) MarshalJSON() ([]byte, error) {
 func (op *Withdraws) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode json of Withdraws")
 
-	var ubo base.BaseOperation
+	var ubo common.BaseOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
 		return e(err, "")
 	}

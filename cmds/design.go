@@ -2,10 +2,10 @@ package cmds
 
 import (
 	"context"
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"net/url"
 
-	consulapi "github.com/hashicorp/consul/api"
 	vault "github.com/hashicorp/vault/api"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -33,7 +33,7 @@ func init() {
 type KeyDesign struct {
 	PublickeyString string `yaml:"publickey"`
 	Weight          uint
-	Key             base3.BaseAccountKey `yaml:"-"`
+	Key             types.BaseAccountKey `yaml:"-"`
 }
 
 func (kd *KeyDesign) IsValid([]byte) error {
@@ -41,7 +41,7 @@ func (kd *KeyDesign) IsValid([]byte) error {
 
 	if pub, err := base.DecodePublickeyFromString(kd.PublickeyString, je); err != nil {
 		return mitumutil.ErrInvalid.Wrap(err)
-	} else if k, err := base3.NewBaseAccountKey(pub, kd.Weight); err != nil {
+	} else if k, err := types.NewBaseAccountKey(pub, kd.Weight); err != nil {
 		return mitumutil.ErrInvalid.Wrap(err)
 	} else {
 		kd.Key = k
@@ -53,12 +53,12 @@ func (kd *KeyDesign) IsValid([]byte) error {
 type AccountKeysDesign struct {
 	Threshold  uint
 	KeysDesign []*KeyDesign          `yaml:"keys"`
-	Keys       base3.BaseAccountKeys `yaml:"-"`
-	Address    base3.Address         `yaml:"-"`
+	Keys       types.BaseAccountKeys `yaml:"-"`
+	Address    types.Address         `yaml:"-"`
 }
 
 func (akd *AccountKeysDesign) IsValid([]byte) error {
-	ks := make([]base3.AccountKey, len(akd.KeysDesign))
+	ks := make([]types.AccountKey, len(akd.KeysDesign))
 	for i := range akd.KeysDesign {
 		kd := akd.KeysDesign[i]
 
@@ -69,13 +69,13 @@ func (akd *AccountKeysDesign) IsValid([]byte) error {
 		ks[i] = kd.Key
 	}
 
-	keys, err := base3.NewBaseAccountKeys(ks, akd.Threshold)
+	keys, err := types.NewBaseAccountKeys(ks, akd.Threshold)
 	if err != nil {
 		return mitumutil.ErrInvalid.Wrap(err)
 	}
 	akd.Keys = keys
 
-	a, err := base3.NewAddressFromKeys(akd.Keys)
+	a, err := types.NewAddressFromKeys(akd.Keys)
 	if err != nil {
 		return mitumutil.ErrInvalid.Wrap(err)
 	}
@@ -112,35 +112,35 @@ type CurrencyDesign struct {
 	BalanceString              *string      `yaml:"balance"`
 	NewAccountMinBalanceString *string      `yaml:"new-account-min-balance"`
 	Feeer                      *FeeerDesign `yaml:"feeer"`
-	Balance                    base3.Amount `yaml:"-"`
-	NewAccountMinBalance       base3.Big    `yaml:"-"`
+	Balance                    types.Amount `yaml:"-"`
+	NewAccountMinBalance       common.Big   `yaml:"-"`
 }
 
 func (de *CurrencyDesign) IsValid([]byte) error {
-	var cid base3.CurrencyID
+	var cid types.CurrencyID
 	if de.CurrencyString == nil {
 		return errors.Errorf("empty currency")
 	}
-	cid = base3.CurrencyID(*de.CurrencyString)
+	cid = types.CurrencyID(*de.CurrencyString)
 	if err := cid.IsValid(nil); err != nil {
 		return err
 	}
 
 	if de.BalanceString != nil {
-		b, err := base3.NewBigFromString(*de.BalanceString)
+		b, err := common.NewBigFromString(*de.BalanceString)
 		if err != nil {
 			return mitumutil.ErrInvalid.Wrap(err)
 		}
-		de.Balance = base3.NewAmount(b, cid)
+		de.Balance = types.NewAmount(b, cid)
 		if err := de.Balance.IsValid(nil); err != nil {
 			return err
 		}
 	}
 
 	if de.NewAccountMinBalanceString == nil {
-		de.NewAccountMinBalance = base3.ZeroBig
+		de.NewAccountMinBalance = common.ZeroBig
 	} else {
-		b, err := base3.NewBigFromString(*de.NewAccountMinBalanceString)
+		b, err := common.NewBigFromString(*de.NewAccountMinBalanceString)
 		if err != nil {
 			return mitumutil.ErrInvalid.Wrap(err)
 		}
@@ -164,12 +164,12 @@ type FeeerDesign struct {
 
 func (no *FeeerDesign) IsValid([]byte) error {
 	switch t := no.Type; t {
-	case base3.FeeerNil, "":
-	case base3.FeeerFixed:
+	case types.FeeerNil, "":
+	case types.FeeerFixed:
 		if err := no.checkFixed(no.Extras); err != nil {
 			return err
 		}
-	case base3.FeeerRatio:
+	case types.FeeerRatio:
 		if err := no.checkRatio(no.Extras); err != nil {
 			return err
 		}
@@ -185,7 +185,7 @@ func (no FeeerDesign) checkFixed(c map[string]interface{}) error {
 	if !found {
 		return errors.Errorf("fixed needs `amount`")
 	}
-	n, err := base3.NewBigFromInterface(a)
+	n, err := common.NewBigFromInterface(a)
 	if err != nil {
 		return errors.Wrapf(err, "invalid amount value, %v of fixed", a)
 	}
@@ -205,14 +205,14 @@ func (no FeeerDesign) checkRatio(c map[string]interface{}) error {
 
 	if a, found := c["min"]; !found {
 		return errors.Errorf("ratio needs `min`")
-	} else if n, err := base3.NewBigFromInterface(a); err != nil {
+	} else if n, err := common.NewBigFromInterface(a); err != nil {
 		return errors.Wrapf(err, "invalid min value, %v of ratio", a)
 	} else {
 		no.Extras["ratio_min"] = n
 	}
 
 	if a, found := c["max"]; found {
-		n, err := base3.NewBigFromInterface(a)
+		n, err := common.NewBigFromInterface(a)
 		if err != nil {
 			return errors.Wrapf(err, "invalid max value, %v of ratio", a)
 		}
@@ -343,9 +343,9 @@ func (d DigestDesign) MarshalZerologObject(e *zerolog.Event) {
 func loadPrivatekeyFromVault(path string, enc *jsonenc.Encoder) (base.Privatekey, error) {
 	e := mitumutil.StringErrorFunc("failed to load privatekey from vault")
 
-	config := vault.DefaultConfig()
+	clientConfig := vault.DefaultConfig()
 
-	client, err := vault.NewClient(config)
+	client, err := vault.NewClient(clientConfig)
 	if err != nil {
 		return nil, e(err, "failed to create vault client")
 	}
@@ -368,18 +368,4 @@ func loadPrivatekeyFromVault(path string, enc *jsonenc.Encoder) (base.Privatekey
 	default:
 		return priv, nil
 	}
-}
-
-func consulClient(addr string) (*consulapi.Client, error) {
-	config := consulapi.DefaultConfig()
-	if len(addr) > 0 {
-		config.Address = addr
-	}
-
-	client, err := consulapi.NewClient(config)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create new consul api Client")
-	}
-
-	return client, nil
 }

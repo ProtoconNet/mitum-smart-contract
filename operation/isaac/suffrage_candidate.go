@@ -1,7 +1,7 @@
 package isaacoperation
 
 import (
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -66,12 +66,12 @@ func (fact SuffrageCandidateFact) hash() util.Hash {
 }
 
 type SuffrageCandidate struct {
-	base2.BaseNodeOperation
+	common.BaseNodeOperation
 }
 
 func NewSuffrageCandidate(fact SuffrageCandidateFact) SuffrageCandidate {
 	return SuffrageCandidate{
-		BaseNodeOperation: base2.NewBaseNodeOperation(SuffrageCandidateHint, fact),
+		BaseNodeOperation: common.NewBaseNodeOperation(SuffrageCandidateHint, fact),
 	}
 }
 

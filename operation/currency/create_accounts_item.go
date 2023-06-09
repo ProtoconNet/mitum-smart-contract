@@ -1,7 +1,7 @@
 package currency
 
 import (
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -9,12 +9,12 @@ import (
 
 type BaseCreateAccountsItem struct {
 	hint.BaseHinter
-	keys        base3.AccountKeys
-	amounts     []base3.Amount
+	keys        types.AccountKeys
+	amounts     []types.Amount
 	addressType hint.Type
 }
 
-func NewBaseCreateAccountsItem(ht hint.Hint, keys base3.AccountKeys, amounts []base3.Amount, addrHint hint.Type) BaseCreateAccountsItem {
+func NewBaseCreateAccountsItem(ht hint.Hint, keys types.AccountKeys, amounts []types.Amount, addrHint hint.Type) BaseCreateAccountsItem {
 	return BaseCreateAccountsItem{
 		BaseHinter:  hint.NewBaseHinter(ht),
 		keys:        keys,
@@ -43,11 +43,11 @@ func (it BaseCreateAccountsItem) IsValid([]byte) error {
 		return err
 	}
 
-	if it.addressType != base3.AddressHint.Type() && it.addressType != base3.EthAddressHint.Type() {
+	if it.addressType != types.AddressHint.Type() && it.addressType != types.EthAddressHint.Type() {
 		return util.ErrInvalid.Errorf("invalid AddressHint")
 	}
 
-	founds := map[base3.CurrencyID]struct{}{}
+	founds := map[types.CurrencyID]struct{}{}
 	for i := range it.amounts {
 		am := it.amounts[i]
 		if _, found := founds[am.Currency()]; found {
@@ -65,15 +65,15 @@ func (it BaseCreateAccountsItem) IsValid([]byte) error {
 	return nil
 }
 
-func (it BaseCreateAccountsItem) Keys() base3.AccountKeys {
+func (it BaseCreateAccountsItem) Keys() types.AccountKeys {
 	return it.keys
 }
 
 func (it BaseCreateAccountsItem) Address() (base.Address, error) {
-	if it.addressType == base3.AddressHint.Type() {
-		return base3.NewAddressFromKeys(it.keys)
-	} else if it.addressType == base3.EthAddressHint.Type() {
-		return base3.NewEthAddressFromKeys(it.keys)
+	if it.addressType == types.AddressHint.Type() {
+		return types.NewAddressFromKeys(it.keys)
+	} else if it.addressType == types.EthAddressHint.Type() {
+		return types.NewEthAddressFromKeys(it.keys)
 	}
 	return nil, util.ErrInvalid.Errorf("invalid address hint")
 }
@@ -82,12 +82,12 @@ func (it BaseCreateAccountsItem) AddressType() hint.Type {
 	return it.addressType
 }
 
-func (it BaseCreateAccountsItem) Amounts() []base3.Amount {
+func (it BaseCreateAccountsItem) Amounts() []types.Amount {
 	return it.amounts
 }
 
 func (it BaseCreateAccountsItem) Rebuild() CreateAccountsItem {
-	ams := make([]base3.Amount, len(it.amounts))
+	ams := make([]types.Amount, len(it.amounts))
 	for i := range it.amounts {
 		am := it.amounts[i]
 		ams[i] = am.WithBig(am.Big())

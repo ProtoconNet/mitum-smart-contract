@@ -2,7 +2,7 @@ package currency
 
 import (
 	"encoding/json"
-	base2 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
@@ -10,7 +10,7 @@ import (
 
 type FeeOperationFactJSONMarshaler struct {
 	base.BaseFactJSONMarshaler
-	Amounts []base2.Amount `json:"amounts"`
+	Amounts []types.Amount `json:"amounts"`
 }
 
 func (fact FeeOperationFact) MarshalJSON() ([]byte, error) {

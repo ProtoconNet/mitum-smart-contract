@@ -2,22 +2,22 @@ package currency
 
 import (
 	"context"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/pkg/errors"
 )
 
 func (_ GenesisCurrencies) PreProcess(
-	ctx context.Context, _ mitumbase.GetStateFunc,
-) (context.Context, mitumbase.OperationProcessReasonError, error) {
+	ctx context.Context, _ base.GetStateFunc,
+) (context.Context, base.OperationProcessReasonError, error) {
 	return ctx, nil, nil
 }
 
 func (op GenesisCurrencies) Process(
-	_ context.Context, getStateFunc mitumbase.GetStateFunc) (
-	[]mitumbase.StateMergeValue, mitumbase.OperationProcessReasonError, error,
+	_ context.Context, getStateFunc base.GetStateFunc) (
+	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
 	fact, ok := op.Fact().(GenesisCurrenciesFact)
 	if !ok {
@@ -26,7 +26,7 @@ func (op GenesisCurrencies) Process(
 
 	newAddress, err := fact.Address()
 	if err != nil {
-		return nil, mitumbase.NewBaseOperationProcessReasonError(err.Error()), nil
+		return nil, base.NewBaseOperationProcessReasonError(err.Error()), nil
 	}
 
 	ns, err := state.NotExistsState(currency.StateKeyAccount(newAddress), "key of genesis", getStateFunc)
@@ -34,9 +34,9 @@ func (op GenesisCurrencies) Process(
 		return nil, nil, err
 	}
 
-	cs := make([]base.CurrencyDesign, len(fact.cs))
-	gas := map[base.CurrencyID]mitumbase.StateMergeValue{}
-	sts := map[base.CurrencyID]mitumbase.StateMergeValue{}
+	cs := make([]types.CurrencyDesign, len(fact.cs))
+	gas := map[types.CurrencyID]base.StateMergeValue{}
+	sts := map[types.CurrencyID]base.StateMergeValue{}
 	for i := range fact.cs {
 		c := fact.cs[i]
 		c.SetGenesisAccount(newAddress)
@@ -53,11 +53,11 @@ func (op GenesisCurrencies) Process(
 		if err != nil {
 			return nil, nil, err
 		}
-		gas[c.Currency()] = state.NewStateMergeValue(st.Key(), currency.NewBalanceStateValue(base.NewZeroAmount(c.Currency())))
+		gas[c.Currency()] = state.NewStateMergeValue(st.Key(), currency.NewBalanceStateValue(types.NewZeroAmount(c.Currency())))
 	}
 
-	var smvs []mitumbase.StateMergeValue
-	if ac, err := base.NewAccount(newAddress, fact.keys); err != nil {
+	var smvs []base.StateMergeValue
+	if ac, err := types.NewAccount(newAddress, fact.keys); err != nil {
 		return nil, nil, err
 	} else {
 		smvs = append(smvs, state.NewStateMergeValue(ns.Key(), currency.NewAccountStateValue(ac)))
@@ -67,7 +67,7 @@ func (op GenesisCurrencies) Process(
 		c := cs[i]
 		v, ok := gas[c.Currency()].Value().(currency.BalanceStateValue)
 		if !ok {
-			return nil, mitumbase.NewBaseOperationProcessReasonError("invalid BalanceState value found, %T", gas[c.Currency()].Value()), nil
+			return nil, base.NewBaseOperationProcessReasonError("invalid BalanceState value found, %T", gas[c.Currency()].Value()), nil
 		}
 
 		gst := state.NewStateMergeValue(gas[c.Currency()].Key(), currency.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(c.Amount().Big()))))

@@ -1,7 +1,8 @@
 package currency
 
 import (
-	base3 "github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -15,10 +16,10 @@ var (
 
 type CurrencyRegisterFact struct {
 	base.BaseFact
-	currency base3.CurrencyDesign
+	currency types.CurrencyDesign
 }
 
-func NewCurrencyRegisterFact(token []byte, de base3.CurrencyDesign) CurrencyRegisterFact {
+func NewCurrencyRegisterFact(token []byte, de types.CurrencyDesign) CurrencyRegisterFact {
 	fact := CurrencyRegisterFact{
 		BaseFact: base.NewBaseFact(CurrencyRegisterFactHint, token),
 		currency: de,
@@ -38,7 +39,7 @@ func (fact CurrencyRegisterFact) Bytes() []byte {
 }
 
 func (fact CurrencyRegisterFact) IsValid(b []byte) error {
-	if err := base3.IsValidOperationFact(fact, b); err != nil {
+	if err := common.IsValidOperationFact(fact, b); err != nil {
 		return err
 	}
 
@@ -61,16 +62,16 @@ func (fact CurrencyRegisterFact) Token() base.Token {
 	return fact.BaseFact.Token()
 }
 
-func (fact CurrencyRegisterFact) Currency() base3.CurrencyDesign {
+func (fact CurrencyRegisterFact) Currency() types.CurrencyDesign {
 	return fact.currency
 }
 
 type CurrencyRegister struct {
-	base3.BaseNodeOperation
+	common.BaseNodeOperation
 }
 
 func NewCurrencyRegister(fact CurrencyRegisterFact, memo string) (CurrencyRegister, error) {
 	return CurrencyRegister{
-		BaseNodeOperation: base3.NewBaseNodeOperation(CurrencyRegisterHint, fact),
+		BaseNodeOperation: common.NewBaseNodeOperation(CurrencyRegisterHint, fact),
 	}, nil
 }

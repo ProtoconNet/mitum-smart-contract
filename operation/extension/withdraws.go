@@ -1,9 +1,9 @@
 package extension
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
-	mitumbase "github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
@@ -21,18 +21,18 @@ type WithdrawsItem interface {
 	util.IsValider
 	currency.AmountsItem
 	Bytes() []byte
-	Target() mitumbase.Address
+	Target() base.Address
 	Rebuild() WithdrawsItem
 }
 
 type WithdrawsFact struct {
-	mitumbase.BaseFact
-	sender mitumbase.Address
+	base.BaseFact
+	sender base.Address
 	items  []WithdrawsItem
 }
 
-func NewWithdrawsFact(token []byte, sender mitumbase.Address, items []WithdrawsItem) WithdrawsFact {
-	bf := mitumbase.NewBaseFact(WithdrawsFactHint, token)
+func NewWithdrawsFact(token []byte, sender base.Address, items []WithdrawsItem) WithdrawsFact {
+	bf := base.NewBaseFact(WithdrawsFactHint, token)
 	fact := WithdrawsFact{
 		BaseFact: bf,
 		sender:   sender,
@@ -51,7 +51,7 @@ func (fact WithdrawsFact) GenerateHash() util.Hash {
 	return valuehash.NewSHA256(fact.Bytes())
 }
 
-func (fact WithdrawsFact) Token() mitumbase.Token {
+func (fact WithdrawsFact) Token() base.Token {
 	return fact.BaseFact.Token()
 }
 
@@ -73,7 +73,7 @@ func (fact WithdrawsFact) IsValid(b []byte) error {
 		return err
 	}
 
-	if err := base.IsValidOperationFact(fact, b); err != nil {
+	if err := common.IsValidOperationFact(fact, b); err != nil {
 		return err
 	}
 
@@ -108,7 +108,7 @@ func (fact WithdrawsFact) IsValid(b []byte) error {
 	return nil
 }
 
-func (fact WithdrawsFact) Sender() mitumbase.Address {
+func (fact WithdrawsFact) Sender() base.Address {
 	return fact.sender
 }
 
@@ -129,8 +129,8 @@ func (fact WithdrawsFact) Rebuild() WithdrawsFact {
 	return fact
 }
 
-func (fact WithdrawsFact) Addresses() ([]mitumbase.Address, error) {
-	as := make([]mitumbase.Address, len(fact.items)+1)
+func (fact WithdrawsFact) Addresses() ([]base.Address, error) {
+	as := make([]base.Address, len(fact.items)+1)
 	for i := range fact.items {
 		as[i] = fact.items[i].Target()
 	}
@@ -141,14 +141,14 @@ func (fact WithdrawsFact) Addresses() ([]mitumbase.Address, error) {
 }
 
 type Withdraws struct {
-	base.BaseOperation
+	common.BaseOperation
 }
 
 func NewWithdraws(fact WithdrawsFact) (Withdraws, error) {
-	return Withdraws{BaseOperation: base.NewBaseOperation(WithdrawsHint, fact)}, nil
+	return Withdraws{BaseOperation: common.NewBaseOperation(WithdrawsHint, fact)}, nil
 }
 
-func (op *Withdraws) HashSign(priv mitumbase.Privatekey, networkID mitumbase.NetworkID) error {
+func (op *Withdraws) HashSign(priv base.Privatekey, networkID base.NetworkID) error {
 	err := op.Sign(priv, networkID)
 	if err != nil {
 		return err

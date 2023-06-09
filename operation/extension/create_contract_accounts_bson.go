@@ -1,7 +1,7 @@
 package extension // nolint: dupl
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/base"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -30,7 +30,7 @@ type CreateContractAccountsFactBSONUnmarshaler struct {
 func (fact *CreateContractAccountsFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of CreateContractAccountsFact")
 
-	var ubf base.BaseFactBSONUnmarshaler
+	var ubf common.BaseFactBSONUnmarshaler
 
 	if err := enc.Unmarshal(b, &ubf); err != nil {
 		return e(err, "")
@@ -66,7 +66,7 @@ func (op CreateContractAccounts) MarshalBSON() ([]byte, error) {
 func (op *CreateContractAccounts) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringErrorFunc("failed to decode bson of CreateContractAccounts")
 
-	var ubo base.BaseOperation
+	var ubo common.BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {
 		return e(err, "")
 	}

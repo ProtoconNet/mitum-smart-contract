@@ -2,13 +2,12 @@ package currency
 
 import (
 	"context"
-	"github.com/ProtoconNet/mitum-currency/v3/base"
-	types "github.com/ProtoconNet/mitum-currency/v3/operation/type"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum2/base"
 	"sync"
 
-	mitumbase "github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -21,24 +20,24 @@ var currencyRegisterProcessorPool = sync.Pool{
 }
 
 func (CurrencyRegister) Process(
-	_ context.Context, _ mitumbase.GetStateFunc,
-) ([]mitumbase.StateMergeValue, mitumbase.OperationProcessReasonError, error) {
+	_ context.Context, _ base.GetStateFunc,
+) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
 	// NOTE Process is nil func
 	return nil, nil, nil
 }
 
 type CurrencyRegisterProcessor struct {
-	*mitumbase.BaseOperationProcessor
-	suffrage  mitumbase.Suffrage
-	threshold mitumbase.Threshold
+	*base.BaseOperationProcessor
+	suffrage  base.Suffrage
+	threshold base.Threshold
 }
 
-func NewCurrencyRegisterProcessor(threshold mitumbase.Threshold) types.GetNewProcessor {
-	return func(height mitumbase.Height,
-		getStateFunc mitumbase.GetStateFunc,
-		newPreProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc,
-		newProcessConstraintFunc mitumbase.NewOperationProcessorProcessFunc,
-	) (mitumbase.OperationProcessor, error) {
+func NewCurrencyRegisterProcessor(threshold base.Threshold) types.GetNewProcessor {
+	return func(height base.Height,
+		getStateFunc base.GetStateFunc,
+		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
+		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
+	) (base.OperationProcessor, error) {
 		e := util.StringErrorFunc("failed to create new CurrencyRegisterProcessor")
 
 		nopp := currencyRegisterProcessorPool.Get()
@@ -47,7 +46,7 @@ func NewCurrencyRegisterProcessor(threshold mitumbase.Threshold) types.GetNewPro
 			return nil, e(errors.Errorf("expected CurrencyRegisterProcessor, not %T", nopp), "")
 		}
 
-		b, err := mitumbase.NewBaseOperationProcessor(
+		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
 			return nil, e(err, "")
@@ -62,7 +61,7 @@ func NewCurrencyRegisterProcessor(threshold mitumbase.Threshold) types.GetNewPro
 		case !found, i == nil:
 			return nil, e(isaac.ErrStopProcessingRetry.Errorf("empty state"), "")
 		default:
-			sufstv := i.Value().(mitumbase.SuffrageNodesStateValue) //nolint:forcetypeassert //...
+			sufstv := i.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
 
 			suf, err := sufstv.Suffrage()
 			if err != nil {
@@ -77,8 +76,8 @@ func NewCurrencyRegisterProcessor(threshold mitumbase.Threshold) types.GetNewPro
 }
 
 func (opp *CurrencyRegisterProcessor) PreProcess(
-	ctx context.Context, op mitumbase.Operation, getStateFunc mitumbase.GetStateFunc,
-) (context.Context, mitumbase.OperationProcessReasonError, error) {
+	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
+) (context.Context, base.OperationProcessReasonError, error) {
 	e := util.StringErrorFunc("failed to preprocess for CurrencyRegister")
 
 	nop, ok := op.(CurrencyRegister)
@@ -86,8 +85,8 @@ func (opp *CurrencyRegisterProcessor) PreProcess(
 		return ctx, nil, e(nil, "not CurrencyRegister, %T", op)
 	}
 
-	if err := mitumbase.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, nop.NodeSigns()); err != nil {
-		return ctx, mitumbase.NewBaseOperationProcessReasonError("not enough signs"), nil
+	if err := base.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, nop.NodeSigns()); err != nil {
+		return ctx, base.NewBaseOperationProcessReasonError("not enough signs"), nil
 	}
 
 	fact, ok := op.Fact().(CurrencyRegisterFact)
@@ -116,7 +115,7 @@ func (opp *CurrencyRegisterProcessor) PreProcess(
 	case err != nil:
 		return ctx, nil, err
 	case found:
-		return ctx, nil, mitumbase.NewBaseOperationProcessReasonError("currency already registered, %q", design.Currency())
+		return ctx, nil, base.NewBaseOperationProcessReasonError("currency already registered, %q", design.Currency())
 	default:
 	}
 
@@ -124,7 +123,7 @@ func (opp *CurrencyRegisterProcessor) PreProcess(
 	case err != nil:
 		return ctx, nil, err
 	case found:
-		return ctx, nil, mitumbase.NewBaseOperationProcessReasonError("genesis account has already the currency, %q", design.Currency())
+		return ctx, nil, base.NewBaseOperationProcessReasonError("genesis account has already the currency, %q", design.Currency())
 	default:
 	}
 
@@ -132,15 +131,15 @@ func (opp *CurrencyRegisterProcessor) PreProcess(
 }
 
 func (opp *CurrencyRegisterProcessor) Process(
-	_ context.Context, op mitumbase.Operation, getStateFunc mitumbase.GetStateFunc) (
-	[]mitumbase.StateMergeValue, mitumbase.OperationProcessReasonError, error,
+	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
+	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
 	fact, ok := op.Fact().(CurrencyRegisterFact)
 	if !ok {
 		return nil, nil, errors.Errorf("not CurrencyRegisterFact, %T", op.Fact())
 	}
 
-	sts := make([]mitumbase.StateMergeValue, 4)
+	sts := make([]base.StateMergeValue, 4)
 
 	design := fact.currency
 
@@ -165,12 +164,12 @@ func (opp *CurrencyRegisterProcessor) Process(
 }
 
 func createZeroAccount(
-	cid base.CurrencyID,
-	getStateFunc mitumbase.GetStateFunc,
-) ([]mitumbase.StateMergeValue, error) {
-	sts := make([]mitumbase.StateMergeValue, 2)
+	cid types.CurrencyID,
+	getStateFunc base.GetStateFunc,
+) ([]base.StateMergeValue, error) {
+	sts := make([]base.StateMergeValue, 2)
 
-	ac, err := base.ZeroAccount(cid)
+	ac, err := types.ZeroAccount(cid)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +185,7 @@ func createZeroAccount(
 		return nil, err
 	}
 
-	sts[1] = state.NewStateMergeValue(bst.Key(), currency.NewBalanceStateValue(base.NewZeroAmount(cid)))
+	sts[1] = state.NewStateMergeValue(bst.Key(), currency.NewBalanceStateValue(types.NewZeroAmount(cid)))
 
 	return sts, nil
 }
