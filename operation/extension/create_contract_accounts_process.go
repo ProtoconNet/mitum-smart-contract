@@ -2,6 +2,8 @@ package extension
 
 import (
 	"context"
+	"sync"
+
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
@@ -12,7 +14,6 @@ import (
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"sync"
 )
 
 var createContractAccountsItemProcessorPool = sync.Pool{
@@ -217,6 +218,23 @@ func (opp *CreateContractAccountsProcessor) PreProcess(
 
 	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError("invalid signing: %w", err), nil
+	}
+
+	for i := range fact.items {
+		cip := createContractAccountsItemProcessorPool.Get()
+		c, ok := cip.(*CreateContractAccountsItemProcessor)
+		if !ok {
+			return nil, base.NewBaseOperationProcessReasonError("expected CreateContractAccountsItemProcessor, not %T", cip), nil
+		}
+
+		c.h = op.Hash()
+		c.item = fact.items[i]
+
+		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateContractAccountsItem: %w", err), nil
+		}
+
+		c.Close()
 	}
 
 	return ctx, nil, nil

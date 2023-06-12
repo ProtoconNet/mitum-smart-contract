@@ -2,13 +2,14 @@ package currency
 
 import (
 	"context"
+	"sync"
+
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"sync"
 
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
@@ -200,6 +201,8 @@ func (opp *CreateAccountsProcessor) PreProcess(
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
 			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateAccountsItem: %w", err), nil
 		}
+
+		c.Close()
 	}
 
 	return ctx, nil, nil
