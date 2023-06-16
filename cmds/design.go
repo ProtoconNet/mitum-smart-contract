@@ -232,7 +232,7 @@ type DigestDesign struct {
 }
 
 func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
-	e := mitumutil.StringErrorFunc("failed to Set DigestDesign")
+	e := mitumutil.StringError("failed to Set DigestDesign")
 
 	nctx := context.WithValue(
 		context.Background(),
@@ -243,9 +243,9 @@ func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
 	if *d.NetworkYAML != *p {
 		var conf config.LocalNetwork
 		if i, err := d.NetworkYAML.Set(nctx); err != nil {
-			return ctx, e(err, "")
+			return ctx, e.Wrap(err)
 		} else if err := mitumutil.LoadFromContext(i, ContextValueLocalNetwork, &conf); err != nil {
-			return ctx, e(err, "")
+			return ctx, e.Wrap(err)
 		} else {
 			d.network = conf
 		}
@@ -266,9 +266,9 @@ func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
 	}
 
 	if certs := d.network.Certs(); len(certs) < 1 {
-		priv, err := GenerateED25519Privatekey()
+		priv, err := GenerateED25519PrivateKey()
 		if err != nil {
-			return ctx, e(err, "")
+			return ctx, e.Wrap(err)
 		}
 
 		host := "localhost"
@@ -278,11 +278,11 @@ func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
 
 		ct, err := GenerateTLSCerts(host, priv)
 		if err != nil {
-			return ctx, e(err, "")
+			return ctx, e.Wrap(err)
 		}
 
 		if err := d.network.SetCerts(ct); err != nil {
-			return ctx, e(err, "")
+			return ctx, e.Wrap(err)
 		}
 	}
 
@@ -291,7 +291,7 @@ func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
 	} else {
 		u, err := util.ParseURL(*d.CacheYAML, true)
 		if err != nil {
-			return ctx, e(err, "")
+			return ctx, e.Wrap(err)
 		}
 		d.cache = u
 	}
@@ -299,20 +299,20 @@ func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
 	var st config.BaseDatabase
 	if d.DatabaseYAML == nil {
 		if err := st.SetURI(config.DefaultDatabaseURI); err != nil {
-			return ctx, e(err, "")
+			return ctx, e.Wrap(err)
 		} else if err := st.SetCache(config.DefaultDatabaseCache); err != nil {
-			return ctx, e(err, "")
+			return ctx, e.Wrap(err)
 		} else {
 			d.database = st
 		}
 	} else {
 		if err := st.SetURI(d.DatabaseYAML.URI); err != nil {
-			return ctx, e(err, "")
+			return ctx, e.Wrap(err)
 		}
 		if d.DatabaseYAML.Cache != "" {
 			err := st.SetCache(d.DatabaseYAML.Cache)
 			if err != nil {
-				return ctx, e(err, "")
+				return ctx, e.Wrap(err)
 			}
 		}
 		d.database = st
@@ -341,30 +341,30 @@ func (d DigestDesign) MarshalZerologObject(e *zerolog.Event) {
 }
 
 func loadPrivatekeyFromVault(path string, enc *jsonenc.Encoder) (base.Privatekey, error) {
-	e := mitumutil.StringErrorFunc("failed to load privatekey from vault")
+	e := mitumutil.StringError("failed to load privatekey from vault")
 
 	clientConfig := vault.DefaultConfig()
 
 	client, err := vault.NewClient(clientConfig)
 	if err != nil {
-		return nil, e(err, "failed to create vault client")
+		return nil, e.WithMessage(err, "failed to create vault client")
 	}
 
 	secret, err := client.KVv2("secret").Get(context.Background(), path)
 	if err != nil {
-		return nil, e(err, "failed to read secret")
+		return nil, e.WithMessage(err, "failed to read secret")
 	}
 
 	i := secret.Data["string"]
 
 	privs, ok := i.(string)
 	if !ok {
-		return nil, e(nil, "failed to read secret; expected string but %T", i)
+		return nil, e.WithMessage(nil, "failed to read secret; expected string but %T", i)
 	}
 
 	switch priv, err := base.DecodePrivatekeyFromString(privs, enc); {
 	case err != nil:
-		return nil, e(err, "invalid privatekey")
+		return nil, e.WithMessage(err, "invalid privatekey")
 	default:
 		return priv, nil
 	}

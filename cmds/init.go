@@ -18,7 +18,7 @@ func init() {
 	pctx := context.Background()
 	baseFlags := launch.BaseFlags{
 		LoggingFlags: launch.LoggingFlags{
-			Out:    launch.LogOutFlag("stdout"),
+			Out:    []launch.LogOutFlag{launch.LogOutFlag("stdout")},
 			Format: "terminal",
 		},
 	}
@@ -30,14 +30,14 @@ func init() {
 
 	pctx = context.WithValue(pctx, launch.LoggingContextKey, log) //revive:disable-line:modifies-parameter
 
-	cmd := baseCommand{
+	cmd := BaseCommand{
 		Out: os.Stdout,
 	}
 
 	if _, err := cmd.prepare(pctx); err != nil {
 		panic(err)
 	} else {
-		encs = cmd.encs
-		enc = cmd.enc
+		encs = cmd.Encoders
+		enc = cmd.Encoder
 	}
 }

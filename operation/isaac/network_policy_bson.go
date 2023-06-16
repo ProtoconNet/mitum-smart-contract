@@ -32,16 +32,16 @@ type NetworkPolicyBSONUnMarshaler struct {
 }
 
 func (p *NetworkPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of NetworkPolicy")
+	e := util.StringError("failed to decode bson of NetworkPolicy")
 
 	var u NetworkPolicyBSONUnMarshaler
 	if err := bson.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	p.BaseHinter = hint.NewBaseHinter(ht)
 
@@ -63,22 +63,22 @@ type NetworkPolicyStateValueBSONUnmarshaler struct {
 }
 
 func (s *NetworkPolicyStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode NetworkPolicyStateValue")
+	e := util.StringError("failed to decode NetworkPolicyStateValue")
 
 	var u NetworkPolicyStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
 	if err := encoder.Decode(enc, u.Policy, &s.policy); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return nil

@@ -29,12 +29,12 @@ type WithdrawsFactJSONUnmarshaler struct {
 }
 
 func (fact *WithdrawsFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of WithdrawsFact")
+	e := util.StringError("failed to decode json of WithdrawsFact")
 
 	var uf WithdrawsFactJSONUnmarshaler
 
 	if err := enc.Unmarshal(b, &uf); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
@@ -53,11 +53,11 @@ func (op Withdraws) MarshalJSON() ([]byte, error) {
 }
 
 func (op *Withdraws) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of Withdraws")
+	e := util.StringError("failed to decode json of Withdraws")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	op.BaseOperation = ubo

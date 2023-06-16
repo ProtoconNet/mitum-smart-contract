@@ -32,11 +32,11 @@ type GenesisCurrenciesFactJSONUnMarshaler struct {
 }
 
 func (fact *GenesisCurrenciesFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of GenesisCurrenciesFact")
+	e := util.StringError("failed to decode json of GenesisCurrenciesFact")
 
 	var uf GenesisCurrenciesFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)

@@ -9,7 +9,7 @@ import (
 )
 
 type CurrencyPolicyUpdaterCommand struct {
-	baseCommand
+	BaseCommand
 	OperationFlags
 	Currency                CurrencyIDFlag `arg:"" name:"currency-id" help:"currency id" required:"true"`
 	CurrencyPolicyFlags     `prefix:"policy-" help:"currency policy" required:"true"`
@@ -22,9 +22,9 @@ type CurrencyPolicyUpdaterCommand struct {
 }
 
 func NewCurrencyPolicyUpdaterCommand() CurrencyPolicyUpdaterCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return CurrencyPolicyUpdaterCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -33,8 +33,8 @@ func (cmd *CurrencyPolicyUpdaterCommand) Run(pctx context.Context) error { // no
 		return err
 	}
 
-	encs = cmd.encs
-	enc = cmd.enc
+	encs = cmd.Encoders
+	enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err
@@ -46,7 +46,7 @@ func (cmd *CurrencyPolicyUpdaterCommand) Run(pctx context.Context) error { // no
 	} else if err := i.IsValid(cmd.OperationFlags.NetworkID); err != nil {
 		return errors.Wrap(err, "invalid currency-policy-updater operation")
 	} else {
-		cmd.log.Debug().Interface("operation", i).Msg("operation loaded")
+		cmd.Log.Debug().Interface("operation", i).Msg("operation loaded")
 
 		op = i
 	}
@@ -98,7 +98,7 @@ func (cmd *CurrencyPolicyUpdaterCommand) parseFlags() error {
 		return err
 	}
 
-	cmd.log.Debug().Interface("currency-policy", cmd.po).Msg("currency policy loaded")
+	cmd.Log.Debug().Interface("currency-policy", cmd.po).Msg("currency policy loaded")
 
 	return nil
 }

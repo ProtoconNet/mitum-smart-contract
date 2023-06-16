@@ -7,12 +7,12 @@ import (
 )
 
 func (am *Amount) unpack(enc encoder.Encoder, cid string, big string) error {
-	e := util.StringErrorFunc("failed to unmarshal Account")
+	e := util.StringError("failed to unmarshal Account")
 
 	am.cid = CurrencyID(cid)
 
 	if b, err := common.NewBigFromString(big); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	} else {
 		am.big = b
 	}

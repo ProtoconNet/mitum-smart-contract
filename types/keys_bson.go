@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
@@ -26,15 +27,15 @@ type KeyBSONUnmarshaler struct {
 }
 
 func (ky *BaseAccountKey) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of BaseAccountKey")
+	e := util.StringError("failed to decode bson of BaseAccountKey")
 
 	var uk KeyBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uk); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	ht, err := hint.ParseHint(uk.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return ky.unpack(enc, ht, uk.Weight, uk.Keys)
@@ -59,30 +60,30 @@ type KeysBSONUnmarshaler struct {
 }
 
 func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of BaseAccountKeys")
+	e := util.StringError("failed to decode bson of BaseAccountKeys")
 
 	var uks KeysBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uks); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(uks.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ks.BaseHinter = hint.NewBaseHinter(ht)
 
 	hks, err := enc.DecodeSlice(uks.Keys)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	keys := make([]AccountKey, len(hks))
 	for i := range hks {
 		j, ok := hks[i].(BaseAccountKey)
 		if !ok {
-			return util.ErrWrongType.Errorf("expected BaseAccountKey, not %T", hks[i])
+			return errors.Errorf("expected BaseAccountKey, not %T", hks[i])
 		}
 
 		keys[i] = j

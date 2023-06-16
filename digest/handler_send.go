@@ -2,27 +2,25 @@ package digest
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/pkg/errors"
 )
 
-func (hd *Handlers) SetSend(f func(interface{}) (base.Operation, error)) *Handlers {
-	hd.send = f
-
-	return hd
-}
+//func (hd *Handlers) SetSend(f func(interface{}) (base.Operation, error)) *Handlers {
+//	hd.send = f
+//
+//	return hd
+//}
 
 func (hd *Handlers) handleSend(w http.ResponseWriter, r *http.Request) {
-	if hd.send == nil {
-		HTTP2NotSupported(w, nil)
-
-		return
-	}
-
 	body := &bytes.Buffer{}
 	if _, err := io.Copy(body, r.Body); err != nil {
 		HTTP2ProblemWithError(w, err, http.StatusInternalServerError)
@@ -60,10 +58,41 @@ func (hd *Handlers) sendItem(v interface{}) (Hal, error) {
 }
 
 func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
-	op, err := hd.send(v)
-	if err != nil {
-		return nil, err
+	op, ok := v.(base.Operation)
+	if !ok {
+		return nil, errors.Errorf("expected Operation, not %T", v)
 	}
+
+	client, memberList, err := hd.client()
+
+	switch {
+	case err != nil:
+		return nil, err
+
+	default:
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		defer cancel()
+
+		var nodeList []quicstream.UDPConnInfo
+		memberList.Members(func(node quicmemberlist.Member) bool {
+			nodeList = append(nodeList, node.UDPConnInfo())
+			return true
+		})
+		for i := range nodeList {
+			//buf := bytes.NewBuffer(nil)
+			//if err := json.NewEncoder(buf).Encode(op); err != nil {
+			//	return nil, err
+			//} else if buf == nil {
+			//	return nil, errors.Errorf("buffer from json encoding operation is nil")
+			//}
+
+			_, err := client.SendOperation(ctx, nodeList[i], op)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return hd.buildSealHal(op)
 }
 

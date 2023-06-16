@@ -22,7 +22,6 @@ type BaseState struct {
 	v        base.StateValue
 	k        string
 	ops      []util.Hash
-	util.DefaultJSONMarshaled
 	hint.BaseHinter
 	height base.Height
 }
@@ -74,7 +73,7 @@ func (s BaseState) IsValid([]byte) error {
 
 	if s.previous != nil {
 		if err := s.previous.IsValid(nil); err != nil {
-			return e.Wrapf(err, "invalid previous state hash")
+			return e.WithMessage(err, "invalid previous state hash")
 		}
 	}
 
@@ -178,11 +177,11 @@ type baseStateJSONUnmarshaler struct {
 }
 
 func (s *BaseState) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to unmarshal BaseState")
+	e := util.StringError("failed to unmarshal BaseState")
 
 	var u baseStateJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	s.h = u.Hash.Hash()
@@ -198,7 +197,7 @@ func (s *BaseState) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 	switch i, err := DecodeStateValue(u.Value, enc); {
 	case err != nil:
-		return e(err, "")
+		return e.Wrap(err)
 	default:
 		s.v = i
 	}
@@ -302,10 +301,10 @@ func (s *BaseStateValueMerger) Close() error {
 	s.Lock()
 	defer s.Unlock()
 
-	e := util.StringErrorFunc("failed to close BaseStateValueMerger")
+	e := util.StringError("failed to close BaseStateValueMerger")
 
 	if s.value == nil {
-		return e(nil, "empty value")
+		return e.Errorf("empty value")
 	}
 
 	sort.Slice(s.ops, func(i, j int) bool {
@@ -376,11 +375,11 @@ func (v BaseStateMergeValue) defaultMerger(height base.Height, st base.State) ba
 }
 
 func DecodeStateValue(b []byte, enc encoder.Encoder) (base.StateValue, error) {
-	e := util.StringErrorFunc("failed to decode StateValue")
+	e := util.StringError("failed to decode StateValue")
 
 	var s base.StateValue
 	if err := encoder.Decode(enc, b, &s); err != nil {
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	}
 
 	return s, nil

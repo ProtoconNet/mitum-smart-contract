@@ -9,7 +9,7 @@ import (
 )
 
 type SuffrageCandidateCommand struct {
-	baseCommand
+	BaseCommand
 	OperationFlags
 	Node      AddressFlag   `arg:"" name:"node" help:"node address" required:"true"`
 	PublicKey PublickeyFlag `arg:"" name:"public-key" help:"public key" required:"true"`
@@ -17,9 +17,9 @@ type SuffrageCandidateCommand struct {
 }
 
 func NewSuffrageCandidateCommand() SuffrageCandidateCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return SuffrageCandidateCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -28,8 +28,8 @@ func (cmd *SuffrageCandidateCommand) Run(pctx context.Context) error { // nolint
 		return err
 	}
 
-	encs = cmd.encs
-	enc = cmd.enc
+	encs = cmd.Encoders
+	enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err
@@ -41,7 +41,7 @@ func (cmd *SuffrageCandidateCommand) Run(pctx context.Context) error { // nolint
 	} else if err := i.IsValid([]byte(cmd.OperationFlags.NetworkID)); err != nil {
 		return errors.Wrap(err, "invalid suffrage-candidate operation")
 	} else {
-		cmd.log.Debug().Interface("operation", i).Msg("operation loaded")
+		cmd.Log.Debug().Interface("operation", i).Msg("operation loaded")
 
 		op = i
 	}

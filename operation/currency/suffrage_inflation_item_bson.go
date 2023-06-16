@@ -24,15 +24,15 @@ type SuffrageInflationItemBSONUnmarshaler struct {
 }
 
 func (it *SuffrageInflationItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of SuffrageInflationItem")
+	e := util.StringError("failed to decode bson of SuffrageInflationItem")
 
 	var uit SuffrageInflationItemBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uit); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	ht, err := hint.ParseHint(uit.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return it.unpack(enc, ht, uit.Receiver, uit.Amount)

@@ -22,7 +22,6 @@ var (
 
 type NetworkPolicy struct {
 	suffrageCandidateLimiterRule base.SuffrageCandidateLimiterRule
-	util.DefaultJSONMarshaled
 	hint.BaseHinter
 	maxOperationsInProposal   uint64
 	suffrageCandidateLifespan base.Height
@@ -58,7 +57,7 @@ func (p NetworkPolicy) IsValid([]byte) error {
 
 	switch err := p.suffrageCandidateLifespan.IsValid(nil); {
 	case err != nil:
-		return e.Wrapf(err, "invalid SuffrageCandidateLifespan")
+		return e.WithMessage(err, "invalid SuffrageCandidateLifespan")
 	case p.suffrageCandidateLifespan <= base.GenesisHeight:
 		return e.Errorf("zero SuffrageCandidateLifespan")
 	}
@@ -106,7 +105,7 @@ func (p NetworkPolicy) MaxSuffrageSize() uint64 {
 	return p.maxSuffrageSize
 }
 
-func (p NetworkPolicy) SuffrageWithdrawLifespan() base.Height {
+func (p NetworkPolicy) SuffrageExpelLifespan() base.Height {
 	return p.suffrageWithdrawLifespan
 }
 

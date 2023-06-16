@@ -54,12 +54,12 @@ func NewOperationProcessor(
 	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 ) (*OperationProcessor, error) {
-	e := util.StringErrorFunc("failed to create new OperationProcessor")
+	e := util.StringError("failed to create new OperationProcessor")
 
 	b, err := base.NewBaseOperationProcessor(
 		height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 	if err != nil {
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	}
 
 	return &OperationProcessor{
@@ -97,7 +97,7 @@ func (opr *OperationProcessor) New(
 	getStateFunc base.GetStateFunc,
 	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	newProcessConstraintFunc base.NewOperationProcessorProcessFunc) (*OperationProcessor, error) {
-	e := util.StringErrorFunc("failed to create new OperationProcessor")
+	e := util.StringError("failed to create new OperationProcessor")
 
 	nopr := operationProcessorPool.Get().(*OperationProcessor)
 	if nopr.processorHintSet == nil {
@@ -123,7 +123,7 @@ func (opr *OperationProcessor) New(
 	b, err := base.NewBaseOperationProcessor(
 		height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 	if err != nil {
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	}
 
 	nopr.BaseOperationProcessor = b
@@ -145,7 +145,7 @@ func (opr *OperationProcessor) SetProcessor(
 }
 
 func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringErrorFunc("failed to preprocess for OperationProcessor")
+	e := util.StringError("failed to preprocess for OperationProcessor")
 
 	if opr.processorClosers == nil {
 		opr.processorClosers = &sync.Map{}
@@ -156,14 +156,14 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation
 	case err != nil:
 		return ctx, base.NewBaseOperationProcessReasonError(err.Error()), nil
 	case !known:
-		return ctx, nil, e(nil, "failed to getNewProcessor, %T", op)
+		return ctx, nil, e.Errorf("failed to getNewProcessor, %T", op)
 	default:
 		sp = i
 	}
 
 	switch _, reasonerr, err := sp.PreProcess(ctx, op, getStateFunc); {
 	case err != nil:
-		return ctx, nil, e(err, "")
+		return ctx, nil, e.Wrap(err)
 	case reasonerr != nil:
 		return ctx, reasonerr, nil
 	}
@@ -172,7 +172,7 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation
 }
 
 func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
-	e := util.StringErrorFunc("failed to process for OperationProcessor")
+	e := util.StringError("failed to process for OperationProcessor")
 
 	if err := opr.checkDuplication(op); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("duplication found: %w", err), nil
@@ -181,9 +181,9 @@ func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, g
 	var sp base.OperationProcessor
 	switch i, known, err := opr.getNewProcessor(op); {
 	case err != nil:
-		return nil, nil, e(err, "")
+		return nil, nil, e.Wrap(err)
 	case !known:
-		return nil, nil, e(nil, "failed to getNewProcessor")
+		return nil, nil, e.Errorf("failed to getNewProcessor")
 	default:
 		sp = i
 	}

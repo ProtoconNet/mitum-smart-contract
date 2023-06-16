@@ -38,18 +38,18 @@ func NewCurrencyRegisterProcessor(threshold base.Threshold) types.GetNewProcesso
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringErrorFunc("failed to create new CurrencyRegisterProcessor")
+		e := util.StringError("failed to create new CurrencyRegisterProcessor")
 
 		nopp := currencyRegisterProcessorPool.Get()
 		opp, ok := nopp.(*CurrencyRegisterProcessor)
 		if !ok {
-			return nil, e(errors.Errorf("expected CurrencyRegisterProcessor, not %T", nopp), "")
+			return nil, e.Wrap(errors.Errorf("expected CurrencyRegisterProcessor, not %T", nopp))
 		}
 
 		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
-			return nil, e(err, "")
+			return nil, e.Wrap(err)
 		}
 
 		opp.BaseOperationProcessor = b
@@ -57,15 +57,15 @@ func NewCurrencyRegisterProcessor(threshold base.Threshold) types.GetNewProcesso
 
 		switch i, found, err := getStateFunc(isaac.SuffrageStateKey); {
 		case err != nil:
-			return nil, e(err, "")
+			return nil, e.Wrap(err)
 		case !found, i == nil:
-			return nil, e(isaac.ErrStopProcessingRetry.Errorf("empty state"), "")
+			return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("empty state"))
 		default:
 			sufstv := i.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
 
 			suf, err := sufstv.Suffrage()
 			if err != nil {
-				return nil, e(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"), "")
+				return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"))
 			}
 
 			opp.suffrage = suf
@@ -78,11 +78,11 @@ func NewCurrencyRegisterProcessor(threshold base.Threshold) types.GetNewProcesso
 func (opp *CurrencyRegisterProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringErrorFunc("failed to preprocess for CurrencyRegister")
+	e := util.StringError("failed to preprocess for CurrencyRegister")
 
 	nop, ok := op.(CurrencyRegister)
 	if !ok {
-		return ctx, nil, e(nil, "not CurrencyRegister, %T", op)
+		return ctx, nil, e.Errorf("not CurrencyRegister, %T", op)
 	}
 
 	if err := base.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, nop.NodeSigns()); err != nil {
@@ -91,7 +91,7 @@ func (opp *CurrencyRegisterProcessor) PreProcess(
 
 	fact, ok := op.Fact().(CurrencyRegisterFact)
 	if !ok {
-		return ctx, nil, e(nil, "not CurrencyRegisterFact, %T", op.Fact())
+		return ctx, nil, e.Errorf("not CurrencyRegisterFact, %T", op.Fact())
 	}
 
 	design := fact.currency
@@ -102,12 +102,12 @@ func (opp *CurrencyRegisterProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(currency.StateKeyAccount(design.GenesisAccount()), getStateFunc); err != nil {
-		return ctx, nil, e(err, "genesis account not found")
+		return ctx, nil, e.WithMessage(err, "genesis account not found")
 	}
 
 	if receiver := design.Policy().Feeer().Receiver(); receiver != nil {
 		if err := state.CheckExistsState(currency.StateKeyAccount(receiver), getStateFunc); err != nil {
-			return ctx, nil, e(err, "feeer receiver account not found")
+			return ctx, nil, e.WithMessage(err, "feeer receiver account not found")
 		}
 	}
 

@@ -31,11 +31,11 @@ type KeyJSONUnmarshaler struct {
 }
 
 func (ky *BaseAccountKey) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of BaseAccountKey")
+	e := util.StringError("failed to decode json of BaseAccountKey")
 
 	var uk KeyJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uk); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return ky.unpack(enc, uk.Hint, uk.Weight, uk.Key)
@@ -65,11 +65,11 @@ type KeysJSONUnMarshaler struct {
 }
 
 func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of BaseAccountKeys")
+	e := util.StringError("failed to decode json of BaseAccountKeys")
 
 	var uks KeysJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uks); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return ks.unpack(enc, uks.Hint, uks.Hash, uks.Keys, uks.Threshold)

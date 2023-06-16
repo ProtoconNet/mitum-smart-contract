@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
@@ -29,16 +30,16 @@ type AccountBSONUnmarshaler struct {
 }
 
 func (ac *Account) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of Account")
+	e := util.StringError("failed to decode bson of Account")
 
 	var uac AccountBSONUnmarshaler
 	if err := enc.Unmarshal(b, &uac); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(uac.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ac.h = valuehash.NewHashFromBytes(uac.Hash)
@@ -46,18 +47,18 @@ func (ac *Account) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	ac.BaseHinter = hint.NewBaseHinter(ht)
 	switch ad, err := base.DecodeAddress(uac.Address, enc); {
 	case err != nil:
-		return e(err, "")
+		return e.Wrap(err)
 	default:
 		ac.address = ad
 	}
 
 	k, err := enc.Decode(uac.Keys)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	} else if k != nil {
 		v, ok := k.(AccountKeys)
 		if !ok {
-			return util.ErrWrongType.Errorf("expected BaseAccountKeys, not %T", k)
+			return errors.Errorf("expected BaseAccountKeys, not %T", k)
 		}
 		ac.keys = v
 	}

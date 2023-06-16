@@ -53,12 +53,12 @@ func (op *BaseOperation) decodeJSON(b []byte, enc *jsonenc.Encoder, u *BaseOpera
 }
 
 func (op *BaseOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode BaseOperation")
+	e := util.StringError("failed to decode BaseOperation")
 
 	var u BaseOperationJSONUnmarshaler
 
 	if err := op.decodeJSON(b, enc, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	op.signs = make([]base.Sign, len(u.Signs))
@@ -66,7 +66,7 @@ func (op *BaseOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	for i := range u.Signs {
 		var ub base.BaseSign
 		if err := ub.DecodeJSON(u.Signs[i], enc); err != nil {
-			return e(err, "failed to decode sign")
+			return e.WithMessage(err, "failed to decode sign")
 		}
 
 		op.signs[i] = ub
@@ -80,12 +80,12 @@ func (op BaseNodeOperation) MarshalJSON() ([]byte, error) {
 }
 
 func (op *BaseNodeOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode BaseNodeOperation")
+	e := util.StringError("failed to decode BaseNodeOperation")
 
 	var u BaseOperationJSONUnmarshaler
 
 	if err := op.decodeJSON(b, enc, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	op.signs = make([]base.Sign, len(u.Signs))
@@ -93,7 +93,7 @@ func (op *BaseNodeOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	for i := range u.Signs {
 		var ub base.BaseNodeSign
 		if err := ub.DecodeJSON(u.Signs[i], enc); err != nil {
-			return e(err, "failed to decode sign")
+			return e.WithMessage(err, "failed to decode sign")
 		}
 
 		op.signs[i] = ub

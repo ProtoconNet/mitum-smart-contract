@@ -29,13 +29,13 @@ type SuffrageDisjoinFactBSONUnMarshaler struct {
 }
 
 func (fact *SuffrageDisjoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of SuffrageDisjoinFact")
+	e := util.StringError("failed to decode bson of SuffrageDisjoinFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	fact.BaseFact.SetHash(valuehash.NewBytesFromString(u.Hash))
@@ -43,12 +43,12 @@ func (fact *SuffrageDisjoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) erro
 
 	var uf SuffrageDisjoinFactBSONUnMarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
@@ -56,12 +56,12 @@ func (fact *SuffrageDisjoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) erro
 }
 
 func (op *SuffrageDisjoin) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of SuffrageDisjoin")
+	e := util.StringError("failed to decode bson of SuffrageDisjoin")
 	var ubo common.BaseNodeOperation
 
 	err := ubo.DecodeBSON(b, enc)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	op.BaseNodeOperation = ubo

@@ -12,14 +12,14 @@ import (
 )
 
 type KeyLoadCommand struct {
-	baseCommand
+	BaseCommand
 	KeyString string `arg:"" name:"key string" help:"key string"`
 }
 
 func NewKeyLoadCommand() KeyLoadCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return KeyLoadCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -28,7 +28,7 @@ func (cmd *KeyLoadCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	cmd.log.Debug().
+	cmd.Log.Debug().
 		Str("key_string", cmd.KeyString).
 		Msg("flags")
 
@@ -36,7 +36,7 @@ func (cmd *KeyLoadCommand) Run(pctx context.Context) error {
 		return errors.Errorf("empty key string")
 	}
 
-	if key, err := base.DecodePrivatekeyFromString(cmd.KeyString, cmd.enc); err == nil {
+	if key, err := base.DecodePrivatekeyFromString(cmd.KeyString, cmd.Encoder); err == nil {
 		o := struct {
 			PrivateKey base.PKKey  `json:"privatekey"` //nolint:tagliatelle //...
 			Publickey  base.PKKey  `json:"publickey"`
@@ -64,7 +64,7 @@ func (cmd *KeyLoadCommand) Run(pctx context.Context) error {
 		return nil
 	}
 
-	if key, err := base.DecodePublickeyFromString(cmd.KeyString, cmd.enc); err == nil {
+	if key, err := base.DecodePublickeyFromString(cmd.KeyString, cmd.Encoder); err == nil {
 		o := struct {
 			Publickey base.PKKey  `json:"publickey"`
 			Hint      interface{} `json:"hint,omitempty"`

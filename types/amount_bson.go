@@ -24,16 +24,16 @@ type AmountBSONUnmarshaler struct {
 }
 
 func (am *Amount) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of Amount")
+	e := util.StringError("failed to decode bson of Amount")
 
 	var uam AmountBSONUnmarshaler
 	if err := enc.Unmarshal(b, &uam); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(uam.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	am.BaseHinter = hint.NewBaseHinter(ht)

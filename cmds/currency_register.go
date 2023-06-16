@@ -129,7 +129,7 @@ func (fl *CurrencyDesignFlags) IsValid([]byte) error {
 }
 
 type CurrencyRegisterCommand struct {
-	baseCommand
+	BaseCommand
 	OperationFlags
 	CurrencyDesignFlags
 	Node AddressFlag `arg:"" name:"node" help:"node address" required:"true"`
@@ -137,9 +137,9 @@ type CurrencyRegisterCommand struct {
 }
 
 func NewCurrencyRegisterCommand() CurrencyRegisterCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return CurrencyRegisterCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -148,8 +148,8 @@ func (cmd *CurrencyRegisterCommand) Run(pctx context.Context) error { // nolint:
 		return err
 	}
 
-	encs = cmd.encs
-	enc = cmd.enc
+	encs = cmd.Encoders
+	enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err
@@ -161,7 +161,7 @@ func (cmd *CurrencyRegisterCommand) Run(pctx context.Context) error { // nolint:
 	} else if err := i.IsValid([]byte(cmd.OperationFlags.NetworkID)); err != nil {
 		return errors.Wrap(err, "invalid currency-register operation")
 	} else {
-		cmd.log.Debug().Interface("operation", i).Msg("operation loaded")
+		cmd.Log.Debug().Interface("operation", i).Msg("operation loaded")
 
 		op = i
 	}
@@ -196,7 +196,7 @@ func (cmd *CurrencyRegisterCommand) parseFlags() error {
 	}
 	cmd.node = a
 
-	cmd.log.Debug().Interface("currency-design", cmd.CurrencyDesignFlags.currencyDesign).Msg("currency design loaded")
+	cmd.Log.Debug().Interface("currency-design", cmd.CurrencyDesignFlags.currencyDesign).Msg("currency design loaded")
 
 	return nil
 }

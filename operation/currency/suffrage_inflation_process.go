@@ -32,18 +32,18 @@ func NewSuffrageInflationProcessor(threshold base.Threshold) types.GetNewProcess
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringErrorFunc("failed to create new SuffrageInflationProcessor")
+		e := util.StringError("failed to create new SuffrageInflationProcessor")
 
 		nopp := suffrageInflationProcessorPool.Get()
 		opp, ok := nopp.(*SuffrageInflationProcessor)
 		if !ok {
-			return nil, e(nil, "expected SuffrageInflationProcessor, not %T", nopp)
+			return nil, e.Errorf("expected SuffrageInflationProcessor, not %T", nopp)
 		}
 
 		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
-			return nil, e(err, "")
+			return nil, e.Wrap(err)
 		}
 
 		opp.BaseOperationProcessor = b
@@ -51,15 +51,15 @@ func NewSuffrageInflationProcessor(threshold base.Threshold) types.GetNewProcess
 
 		switch i, found, err := getStateFunc(isaac.SuffrageStateKey); {
 		case err != nil:
-			return nil, e(err, "")
+			return nil, e.Wrap(err)
 		case !found, i == nil:
-			return nil, e(isaac.ErrStopProcessingRetry.Errorf("empty state"), "")
+			return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("empty state"))
 		default:
 			sufstv := i.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
 
 			suf, err := sufstv.Suffrage()
 			if err != nil {
-				return nil, e(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"), "")
+				return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"))
 			}
 
 			opp.suffrage = suf
@@ -72,16 +72,16 @@ func NewSuffrageInflationProcessor(threshold base.Threshold) types.GetNewProcess
 func (opp *SuffrageInflationProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringErrorFunc("failed to preprocess SuffrageInflation")
+	e := util.StringError("failed to preprocess SuffrageInflation")
 
 	nop, ok := op.(SuffrageInflation)
 	if !ok {
-		return ctx, nil, e(nil, "expected SuffrageInflation, not %T", op)
+		return ctx, nil, e.Errorf("expected SuffrageInflation, not %T", op)
 	}
 
 	fact, ok := op.Fact().(SuffrageInflationFact)
 	if !ok {
-		return ctx, nil, e(nil, "expected SuffrageInflationFact, not %T", op.Fact())
+		return ctx, nil, e.Errorf("expected SuffrageInflationFact, not %T", op.Fact())
 	}
 
 	if err := base.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, nop.NodeSigns()); err != nil {
@@ -114,11 +114,11 @@ func (opp *SuffrageInflationProcessor) Process(
 	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringErrorFunc("failed to process SuffrageInflation")
+	e := util.StringError("failed to process SuffrageInflation")
 
 	fact, ok := op.Fact().(SuffrageInflationFact)
 	if !ok {
-		return nil, nil, e(nil, "expected SuffrageInflationFact, not %T", op.Fact())
+		return nil, nil, e.Errorf("expected SuffrageInflationFact, not %T", op.Fact())
 	}
 
 	var sts []base.StateMergeValue

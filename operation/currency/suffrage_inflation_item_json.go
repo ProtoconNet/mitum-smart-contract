@@ -31,11 +31,11 @@ type SuffrageInflationItemJSONUnmarshaler struct {
 }
 
 func (it *SuffrageInflationItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of SuffrageInflationItem")
+	e := util.StringError("failed to decode json of SuffrageInflationItem")
 
 	var uit SuffrageInflationItemJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uit); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return it.unpack(enc, uit.HT, uit.Receiver, uit.Amount)

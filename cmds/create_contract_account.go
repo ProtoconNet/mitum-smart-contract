@@ -9,7 +9,7 @@ import (
 )
 
 type CreateContractAccountCommand struct {
-	baseCommand
+	BaseCommand
 	OperationFlags
 	Sender      AddressFlag          `arg:"" name:"sender" help:"sender address" required:"true"`
 	Threshold   uint                 `help:"threshold for keys (default: ${create_contract_account_threshold})" default:"${create_contract_account_threshold}"` // nolint
@@ -21,9 +21,9 @@ type CreateContractAccountCommand struct {
 }
 
 func NewCreateContractAccountCommand() CreateContractAccountCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return CreateContractAccountCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -32,8 +32,8 @@ func (cmd *CreateContractAccountCommand) Run(pctx context.Context) error { // no
 		return err
 	}
 
-	encs = cmd.encs
-	enc = cmd.enc
+	encs = cmd.Encoders
+	enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err

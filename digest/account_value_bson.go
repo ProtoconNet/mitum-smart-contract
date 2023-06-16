@@ -27,16 +27,16 @@ type AccountValueBSONUnmarshaler struct {
 }
 
 func (va *AccountValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of AccountValue")
+	e := util.StringError("failed to decode bson of AccountValue")
 
 	var uva AccountValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &uva); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(uva.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return va.unpack(enc, ht, uva.Account, uva.Balance, uva.Height)

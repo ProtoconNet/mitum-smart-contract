@@ -28,13 +28,13 @@ type SuffrageCandidateFactBSONUnMarshaler struct {
 }
 
 func (fact *SuffrageCandidateFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of SuffrageCandidateFact")
+	e := util.StringError("failed to decode bson of SuffrageCandidateFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	fact.BaseFact.SetHash(valuehash.NewBytesFromString(u.Hash))
@@ -42,12 +42,12 @@ func (fact *SuffrageCandidateFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 
 	var uf SuffrageCandidateFactBSONUnMarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
@@ -59,12 +59,12 @@ func (op SuffrageCandidate) MarshalBSON() ([]byte, error) {
 }
 
 func (op *SuffrageCandidate) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of GenesisCurrencies")
+	e := util.StringError("failed to decode bson of GenesisCurrencies")
 	var ubo common.BaseNodeOperation
 
 	err := ubo.DecodeBSON(b, enc)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	op.BaseNodeOperation = ubo

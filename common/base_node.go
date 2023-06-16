@@ -16,7 +16,6 @@ type BaseNode struct {
 	util.IsValider
 	addr base.Address
 	pub  base.Publickey
-	util.DefaultJSONMarshaled
 	hint.BaseHinter
 }
 
@@ -72,23 +71,23 @@ type BaseNodeJSONUnmarshaler struct {
 }
 
 func (n *BaseNode) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode RemoteNode")
+	e := util.StringError("decode BaseNode")
 
 	var u BaseNodeJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	switch i, err := base.DecodeAddress(u.Address, enc); {
 	case err != nil:
-		return e(err, "failed to decode node address")
+		return e.WithMessage(err, "decode node address")
 	default:
 		n.addr = i
 	}
 
 	switch i, err := base.DecodePublickeyFromString(u.Publickey, enc); {
 	case err != nil:
-		return e(err, "failed to decode node publickey")
+		return e.WithMessage(err, "node publickey")
 	default:
 		n.pub = i
 	}
@@ -113,31 +112,31 @@ type BaseNodeBSONUnMarshaler struct {
 }
 
 func (n *BaseNode) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of BaseNode")
+	e := util.StringError("failed to decode bson of BaseNode")
 
 	var u BaseNodeBSONUnMarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	n.BaseHinter = hint.NewBaseHinter(ht)
 
 	switch i, err := base.DecodeAddress(u.Address, enc); {
 	case err != nil:
-		return e(err, "")
+		return e.Wrap(err)
 	default:
 		n.addr = i
 	}
 
 	switch p, err := base.DecodePublickeyFromString(u.Publickey, enc); {
 	case err != nil:
-		return e(err, "")
+		return e.Wrap(err)
 	default:
 		n.pub = p
 	}

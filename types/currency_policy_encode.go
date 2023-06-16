@@ -8,10 +8,10 @@ import (
 )
 
 func (po *CurrencyPolicy) unpack(enc encoder.Encoder, ht hint.Hint, mn string, bfe []byte) error {
-	e := util.StringErrorFunc("failed to unmarshal CurrencyPolicy")
+	e := util.StringError("failed to unmarshal CurrencyPolicy")
 
 	if big, err := common.NewBigFromString(mn); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	} else {
 		po.newAccountMinBalance = big
 	}
@@ -20,7 +20,7 @@ func (po *CurrencyPolicy) unpack(enc encoder.Encoder, ht hint.Hint, mn string, b
 	var feeer Feeer
 	err := encoder.Decode(enc, bfe, &feeer)
 	if err != nil {
-		return e(err, "failed to decode feeer")
+		return e.WithMessage(err, "failed to decode feeer")
 	}
 	po.feeer = feeer
 

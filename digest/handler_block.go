@@ -39,7 +39,7 @@ func (hd *Handlers) handleBlockInGroup(vars map[string]string) ([]byte, error) {
 	if s, found := vars["height"]; found {
 		height, err := parseHeightFromPath(s)
 		if err != nil {
-			return nil, mitumutil.NewError("bad request").Errorf("invalid height found for block by height: %w", err)
+			return nil, mitumutil.NewIDError("bad request").Errorf("invalid height found for block by height: %w", err)
 		}
 
 		h, err := hd.buildBlockHalByHeight(height)
@@ -50,7 +50,7 @@ func (hd *Handlers) handleBlockInGroup(vars map[string]string) ([]byte, error) {
 	} else if s, found := vars["hash"]; found {
 		h, err := parseHashFromPath(s)
 		if err != nil {
-			return nil, mitumutil.NewError("bad request").Errorf("invalid hash for block by hash: %w", err)
+			return nil, mitumutil.NewIDError("bad request").Errorf("invalid hash for block by hash: %w", err)
 		}
 
 		i, err := hd.buildBlockHalByHash(h)

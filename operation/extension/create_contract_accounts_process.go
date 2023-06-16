@@ -108,7 +108,7 @@ func (opp *CreateContractAccountsItemProcessor) PreProcess(
 func (opp *CreateContractAccountsItemProcessor) Process(
 	_ context.Context, _ base.Operation, _ base.GetStateFunc,
 ) ([]base.StateMergeValue, error) {
-	e := util.StringErrorFunc("failed to preprocess for CreateContractAccountsItemProcessor")
+	e := util.StringError("failed to preprocess for CreateContractAccountsItemProcessor")
 
 	sts := make([]base.StateMergeValue, len(opp.item.Amounts())+2)
 
@@ -123,17 +123,17 @@ func (opp *CreateContractAccountsItemProcessor) Process(
 		nac, err = types.NewAccountFromKeys(opp.item.Keys())
 	}
 	if err != nil {
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	}
 
 	ks, err := types.NewContractAccountKeys()
 	if err != nil {
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	}
 
 	ncac, err := nac.SetKeys(ks)
 	if err != nil {
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	}
 	sts[0] = state.NewStateMergeValue(opp.ns.Key(), currencystate.NewAccountStateValue(ncac))
 
@@ -178,18 +178,18 @@ func NewCreateContractAccountsProcessor() types.GetNewProcessor {
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringErrorFunc("failed to create new CreateContractAccountsProcessor")
+		e := util.StringError("failed to create new CreateContractAccountsProcessor")
 
 		nopp := createContractAccountsProcessorPool.Get()
 		opp, ok := nopp.(*CreateContractAccountsProcessor)
 		if !ok {
-			return nil, e(nil, "expected CreateContractAccountsProcessor, not %T", nopp)
+			return nil, e.Errorf("expected CreateContractAccountsProcessor, not %T", nopp)
 		}
 
 		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
-			return nil, e(err, "")
+			return nil, e.Wrap(err)
 		}
 
 		opp.BaseOperationProcessor = b
@@ -201,11 +201,11 @@ func NewCreateContractAccountsProcessor() types.GetNewProcessor {
 func (opp *CreateContractAccountsProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringErrorFunc("failed to preprocess CreateContractAccounts")
+	e := util.StringError("failed to preprocess CreateContractAccounts")
 
 	fact, ok := op.Fact().(CreateContractAccountsFact)
 	if !ok {
-		return ctx, nil, e(nil, "expected CreateContractAccountsFact, not %T", op.Fact())
+		return ctx, nil, e.Errorf("expected CreateContractAccountsFact, not %T", op.Fact())
 	}
 
 	if err := state.CheckExistsState(currencystate.StateKeyAccount(fact.sender), getStateFunc); err != nil {

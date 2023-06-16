@@ -13,13 +13,13 @@ func (cs *ContractAccount) unpack(
 	ia bool,
 	ow string,
 ) error {
-	e := util.StringErrorFunc("failed to unmarshal ContractAccount")
+	e := util.StringError("failed to unmarshal ContractAccount")
 
 	cs.BaseHinter = hint.NewBaseHinter(ht)
 
 	switch a, err := base.DecodeAddress(ow, enc); {
 	case err != nil:
-		return e(err, "failed to decode address")
+		return e.WithMessage(err, "failed to decode address")
 	default:
 		cs.owner = a
 	}

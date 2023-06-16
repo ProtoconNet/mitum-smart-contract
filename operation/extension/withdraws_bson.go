@@ -29,7 +29,7 @@ type WithdrawsFactBSONUnmarshaler struct {
 }
 
 func (fact *WithdrawsFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of WithdrawsFact")
+	e := util.StringError("failed to decode bson of WithdrawsFact")
 
 	var ubf common.BaseFactBSONUnmarshaler
 	if err := enc.Unmarshal(b, &ubf); err != nil {
@@ -41,12 +41,12 @@ func (fact *WithdrawsFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	var uf WithdrawsFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	fact.BaseHinter = hint.NewBaseHinter(ht)
@@ -59,11 +59,11 @@ func (op Withdraws) MarshalBSON() ([]byte, error) {
 }
 
 func (op *Withdraws) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of Withdraw")
+	e := util.StringError("failed to decode bson of Withdraw")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	op.BaseOperation = ubo

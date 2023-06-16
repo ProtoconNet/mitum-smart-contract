@@ -28,12 +28,12 @@ func NewSuffrageJoinProcessor(
 	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 ) (*SuffrageJoinProcessor, error) {
-	e := util.StringErrorFunc("failed to create new SuffrageJoinProcessor")
+	e := util.StringError("failed to create new SuffrageJoinProcessor")
 
 	b, err := base.NewBaseOperationProcessor(
 		height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 	if err != nil {
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	}
 
 	p := &SuffrageJoinProcessor{
@@ -45,15 +45,15 @@ func NewSuffrageJoinProcessor(
 
 	switch i, found, err := getStateFunc(isaac.SuffrageStateKey); {
 	case err != nil:
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	case !found, i == nil:
-		return nil, e(isaac.ErrStopProcessingRetry.Errorf("empty state"), "")
+		return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("empty state"))
 	default:
 		p.sufstv = i.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
 
 		suf, err := p.sufstv.Suffrage()
 		if err != nil {
-			return nil, e(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"), "")
+			return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"))
 		}
 
 		p.suffrage = suf
@@ -61,7 +61,7 @@ func NewSuffrageJoinProcessor(
 
 	switch _, candidates, err := isaac.LastCandidatesFromState(height, getStateFunc); {
 	case err != nil:
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	case candidates == nil:
 	default:
 		for i := range candidates {
@@ -95,11 +95,11 @@ func (p *SuffrageJoinProcessor) PreProcess(ctx context.Context, op base.Operatio
 		return ctx, base.NewBaseOperationProcessReasonError("not candidate"), nil
 	}
 
-	e := util.StringErrorFunc("failed to preprocess for SuffrageJoin")
+	e := util.StringError("failed to preprocess for SuffrageJoin")
 
 	noop, ok := op.(base.NodeSignFact)
 	if !ok {
-		return ctx, nil, e(nil, "not NodeSignFact, %T", op)
+		return ctx, nil, e.Errorf("not NodeSignFact, %T", op)
 	}
 
 	fact := op.Fact().(SuffrageJoinFact) //nolint:forcetypeassert //...
@@ -135,7 +135,7 @@ func (p *SuffrageJoinProcessor) PreProcess(ctx context.Context, op base.Operatio
 
 	switch reasonerr, err := p.PreProcessConstraintFunc(ctx, op, getStateFunc); {
 	case err != nil:
-		return ctx, nil, e(err, "")
+		return ctx, nil, e.Wrap(err)
 	case reasonerr != nil:
 		return ctx, reasonerr, nil
 	}
@@ -152,11 +152,11 @@ func (p *SuffrageJoinProcessor) PreProcess(ctx context.Context, op base.Operatio
 func (p *SuffrageJoinProcessor) Process(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringErrorFunc("failed to process for SuffrageJoin")
+	e := util.StringError("failed to process for SuffrageJoin")
 
 	switch reasonerr, err := p.ProcessConstraintFunc(ctx, op, getStateFunc); {
 	case err != nil:
-		return nil, nil, e(err, "")
+		return nil, nil, e.Wrap(err)
 	case reasonerr != nil:
 		return nil, reasonerr, nil
 	}

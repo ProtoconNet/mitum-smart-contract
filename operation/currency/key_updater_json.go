@@ -33,11 +33,11 @@ type KeyUpdaterFactJSONUnMarshaler struct {
 }
 
 func (fact *KeyUpdaterFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of KeyUpdaterFact")
+	e := util.StringError("failed to decode json of KeyUpdaterFact")
 
 	var uf KeyUpdaterFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
@@ -56,11 +56,11 @@ func (op KeyUpdater) MarshalJSON() ([]byte, error) {
 }
 
 func (op *KeyUpdater) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode KeyUpdater")
+	e := util.StringError("failed to decode KeyUpdater")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	op.BaseOperation = ubo

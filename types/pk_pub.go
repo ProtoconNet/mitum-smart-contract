@@ -50,11 +50,11 @@ func ParseMEPublickey(s string) (MEPublickey, error) {
 func LoadMEPublickey(s string) (MEPublickey, error) {
 	h, err := hex.DecodeString(s)
 	if err != nil {
-		return MEPublickey{}, util.ErrInvalid.Wrapf(err, "failed to load publickey")
+		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "failed to load publickey")
 	}
 	pk, err := crypto.UnmarshalPubkey(h)
 	if err != nil {
-		return MEPublickey{}, util.ErrInvalid.Wrapf(err, "failed to unmarshal publickey")
+		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "failed to unmarshal publickey")
 	}
 
 	return NewMEPublickey(pk), nil
@@ -70,7 +70,7 @@ func (k MEPublickey) Bytes() []byte {
 
 func (k MEPublickey) IsValid([]byte) error {
 	if err := k.BaseHinter.IsValid(MEPublickeyHint.Type().Bytes()); err != nil {
-		return util.ErrInvalid.Wrapf(err, "wrong hint in publickey")
+		return util.ErrInvalid.WithMessage(err, "wrong hint in publickey")
 	}
 
 	switch {
@@ -96,7 +96,7 @@ func (k MEPublickey) Equal(b base.PKKey) bool {
 
 func (k MEPublickey) Verify(input []byte, sig base.Signature) error {
 	if len(sig) < 4 {
-		return base.ErrSignatureVerification.Call()
+		return base.ErrSignatureVerification.WithStack()
 	}
 
 	rlength := int(binary.LittleEndian.Uint32(sig[:4]))
@@ -105,7 +105,7 @@ func (k MEPublickey) Verify(input []byte, sig base.Signature) error {
 
 	h := sha256.Sum256(input)
 	if !ecdsa.Verify(k.k, h[:], r, s) {
-		return base.ErrSignatureVerification.Call()
+		return base.ErrSignatureVerification.WithStack()
 	}
 
 	return nil

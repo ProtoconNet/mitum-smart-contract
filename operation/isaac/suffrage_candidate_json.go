@@ -27,11 +27,11 @@ type suffrageCandidateFactJSONUnmarshaler struct {
 }
 
 func (fact *SuffrageCandidateFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode SuffrageCandidateFact")
+	e := util.StringError("failed to decode SuffrageCandidateFact")
 
 	var u suffrageCandidateFactJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(u.BaseFactJSONUnmarshaler)

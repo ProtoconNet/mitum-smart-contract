@@ -11,7 +11,7 @@ import (
 )
 
 type WithdrawCommand struct {
-	baseCommand
+	BaseCommand
 	OperationFlags
 	Sender  AddressFlag          `arg:"" name:"sender" help:"sender address" required:"true"`
 	Target  AddressFlag          `arg:"" name:"target" help:"target contract account address" required:"true"`
@@ -21,9 +21,9 @@ type WithdrawCommand struct {
 }
 
 func NewWithdrawCommand() WithdrawCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return WithdrawCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -32,8 +32,8 @@ func (cmd *WithdrawCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	encs = cmd.encs
-	enc = cmd.enc
+	encs = cmd.Encoders
+	enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err

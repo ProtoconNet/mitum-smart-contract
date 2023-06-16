@@ -11,11 +11,11 @@ func (fact *SuffrageDisjoinFact) unpack(
 	nd string,
 	height base.Height,
 ) error {
-	e := util.StringErrorFunc("failed to unmarshal SuffrageDisjoinFact")
+	e := util.StringError("failed to unmarshal SuffrageDisjoinFact")
 
 	switch i, err := base.DecodeAddress(nd, enc); {
 	case err != nil:
-		return e(err, "")
+		return e.Wrap(err)
 	default:
 		fact.node = i
 	}

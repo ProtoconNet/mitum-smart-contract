@@ -32,11 +32,11 @@ type CreateAccountsItemJSONUnMarshaler struct {
 }
 
 func (it *BaseCreateAccountsItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of BaseCreateAccountsItem")
+	e := util.StringError("failed to decode json of BaseCreateAccountsItem")
 
 	var uit CreateAccountsItemJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uit); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return it.unpack(enc, uit.Hint, uit.Keys, uit.Amounts, uit.AddrType)

@@ -29,16 +29,16 @@ type CurrencyDesignBSONUnmarshaler struct {
 }
 
 func (de *CurrencyDesign) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of CurrencyDesign")
+	e := util.StringError("failed to decode bson of CurrencyDesign")
 
 	var ude CurrencyDesignBSONUnmarshaler
 	if err := enc.Unmarshal(b, &ude); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(ude.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return de.unpack(enc, ht, ude.Amount, ude.Genesis, ude.Policy, ude.Aggregate)

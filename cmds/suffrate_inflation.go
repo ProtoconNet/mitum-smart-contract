@@ -66,7 +66,7 @@ func (v *SuffrageInflationItemFlag) IsValid([]byte) error {
 }
 
 type SuffrageInflationCommand struct {
-	baseCommand
+	BaseCommand
 	OperationFlags
 	Node  AddressFlag `arg:"" name:"node" help:"node address" required:"true"`
 	node  base.Address
@@ -75,9 +75,9 @@ type SuffrageInflationCommand struct {
 }
 
 func NewSuffrageInflationCommand() SuffrageInflationCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return SuffrageInflationCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -86,8 +86,8 @@ func (cmd *SuffrageInflationCommand) Run(pctx context.Context) error { // nolint
 		return err
 	}
 
-	encs = cmd.encs
-	enc = cmd.enc
+	encs = cmd.Encoders
+	enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err
@@ -99,7 +99,7 @@ func (cmd *SuffrageInflationCommand) Run(pctx context.Context) error { // nolint
 	} else if err := i.IsValid(cmd.OperationFlags.NetworkID); err != nil {
 		return errors.Wrap(err, "invalid suffrage-inflation operation")
 	} else {
-		cmd.log.Debug().Interface("operation", i).Msg("operation loaded")
+		cmd.Log.Debug().Interface("operation", i).Msg("operation loaded")
 
 		op = i
 	}
@@ -127,7 +127,7 @@ func (cmd *SuffrageInflationCommand) parseFlags() error {
 
 		items[i] = currency.NewSuffrageInflationItem(item.receiver, item.amount)
 
-		cmd.log.Debug().
+		cmd.Log.Debug().
 			Stringer("amount", item.amount).
 			Stringer("receiver", item.receiver).
 			Msg("inflation item loaded")

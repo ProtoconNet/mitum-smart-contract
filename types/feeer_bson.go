@@ -13,16 +13,16 @@ func (fa NilFeeer) MarshalBSON() ([]byte, error) {
 }
 
 func (fa *NilFeeer) UnmarsahlBSON(b []byte) error {
-	e := util.StringErrorFunc("failed to unmarshal bson of NilFeeer")
+	e := util.StringError("failed to unmarshal bson of NilFeeer")
 
 	var head bsonenc.HintedHead
 	if err := bsonenc.Unmarshal(b, &head); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(head.H)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	fa.BaseHinter = hint.NewBaseHinter(ht)
@@ -48,16 +48,16 @@ type FixedFeeerBSONUnmarshaler struct {
 }
 
 func (fa *FixedFeeer) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of FixedFeeer")
+	e := util.StringError("failed to decode bson of FixedFeeer")
 
 	var ufa FixedFeeerBSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(ufa.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return fa.unpack(enc, ht, ufa.Receiver, ufa.Amount)
@@ -84,15 +84,15 @@ type RatioFeeerBSONUnmarshaler struct {
 }
 
 func (fa *RatioFeeer) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of RatioFeeer")
+	e := util.StringError("failed to decode bson of RatioFeeer")
 
 	var ufa RatioFeeerBSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	ht, err := hint.ParseHint(ufa.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return fa.unpack(enc, ht, ufa.Receiver, ufa.Ratio, ufa.Min, ufa.Max)

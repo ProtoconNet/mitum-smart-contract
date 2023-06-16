@@ -28,9 +28,11 @@ type CLI struct { //nolint:govet //...
 	Import    cmds.ImportCommand    `cmd:"" help:"import from block data"`
 	Init      cmds.INITCommand      `cmd:"" help:"init node"`
 	Run       cmds.RunCommand       `cmd:"" help:"run node"`
+	Storage   cmds.Storage          `cmd:""`
 	Operation cmds.OperationCommand `cmd:"" help:"create operation"`
 	Network   cmds.NetworkCommand   `cmd:"" help:"network"`
 	Key       cmds.KeyCommand       `cmd:"" help:"key"`
+	Handover  cmds.HandoverCommands `cmd:""`
 	Version   struct{}              `cmd:"" help:"version"`
 }
 
@@ -53,9 +55,11 @@ func main() {
 		Import:    cmds.NewImportCommand(),
 		Init:      cmds.NewINITCommand(),
 		Run:       cmds.NewRunCommand(),
+		Storage:   cmds.NewStorageCommand(),
 		Operation: cmds.NewOperationCommand(),
 		Network:   cmds.NewNetworkCommand(),
 		Key:       cmds.NewKeyCommand(),
+		Handover:  cmds.NewHandOverCommand(),
 	}
 	kctx := kong.Parse(&cli, flagDefaults)
 

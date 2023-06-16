@@ -27,11 +27,11 @@ type AmountJSONUnmarshaler struct {
 }
 
 func (am *Amount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of Amount")
+	e := util.StringError("failed to decode json of Amount")
 
 	var uam AmountJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uam); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	am.BaseHinter = hint.NewBaseHinter(uam.Hint)

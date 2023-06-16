@@ -5,6 +5,7 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/pkg/errors"
 )
 
 func (fact *GenesisCurrenciesFact) unpack(
@@ -13,11 +14,11 @@ func (fact *GenesisCurrenciesFact) unpack(
 	bks []byte,
 	bcs []byte,
 ) error {
-	e := util.StringErrorFunc("failed to unmarshal GenesisCurrenciesFact")
+	e := util.StringError("failed to unmarshal GenesisCurrenciesFact")
 
 	switch pk, err := base.DecodePublickeyFromString(gk, enc); {
 	case err != nil:
-		return e(err, "")
+		return e.Wrap(err)
 	default:
 		fact.genesisNodeKey = pk
 	}
@@ -25,9 +26,9 @@ func (fact *GenesisCurrenciesFact) unpack(
 	var keys types.AccountKeys
 	hinter, err := enc.Decode(bks)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	} else if k, ok := hinter.(types.AccountKeys); !ok {
-		return util.ErrWrongType.Errorf("expected AccountKeys, not %T", hinter)
+		return errors.Errorf("expected AccountKeys, not %T", hinter)
 	} else {
 		keys = k
 	}
@@ -36,14 +37,14 @@ func (fact *GenesisCurrenciesFact) unpack(
 
 	hcs, err := enc.DecodeSlice(bcs)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	cs := make([]types.CurrencyDesign, len(hcs))
 	for i := range hcs {
 		j, ok := hcs[i].(types.CurrencyDesign)
 		if !ok {
-			return util.ErrWrongType.Errorf("expected CurrencyDesign, not %T", hcs[i])
+			return errors.Errorf("expected CurrencyDesign, not %T", hcs[i])
 		}
 
 		cs[i] = j

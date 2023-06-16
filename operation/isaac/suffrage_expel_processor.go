@@ -8,45 +8,45 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 )
 
-var WithdrawPreProcessedContextKey = util.ContextKey("withdraw-preprocessed")
+var ExpelPreProcessedContextKey = util.ContextKey("expel-preprocessed")
 
-type SuffrageWithdrawProcessor struct {
+type SuffrageExpelProcessor struct {
 	*base.BaseOperationProcessor
 	sufstv       base.SuffrageNodesStateValue
 	suffrage     base.Suffrage
 	preprocessed map[string]struct{} //revive:disable-line:nested-structs
 }
 
-func NewSuffrageWithdrawProcessor(
+func NewSuffrageExpelProcessor(
 	height base.Height,
 	getStateFunc base.GetStateFunc,
 	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
-) (*SuffrageWithdrawProcessor, error) {
-	e := util.StringErrorFunc("failed to create new SuffrageWithdrawProcessor")
+) (*SuffrageExpelProcessor, error) {
+	e := util.StringError("create new SuffrageExpelProcessor")
 
 	b, err := base.NewBaseOperationProcessor(
 		height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 	if err != nil {
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	}
 
-	p := &SuffrageWithdrawProcessor{
+	p := &SuffrageExpelProcessor{
 		BaseOperationProcessor: b,
 		preprocessed:           map[string]struct{}{},
 	}
 
 	switch i, found, err := getStateFunc(isaac.SuffrageStateKey); {
 	case err != nil:
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	case !found, i == nil:
-		return nil, e(isaac.ErrStopProcessingRetry.Errorf("empty state"), "")
+		return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("empty state"))
 	default:
 		p.sufstv = i.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
 
 		suf, err := p.sufstv.Suffrage()
 		if err != nil {
-			return nil, e(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"), "")
+			return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"))
 		}
 
 		p.suffrage = suf
@@ -55,7 +55,7 @@ func NewSuffrageWithdrawProcessor(
 	return p, nil
 }
 
-func (p *SuffrageWithdrawProcessor) Close() error {
+func (p *SuffrageExpelProcessor) Close() error {
 	if err := p.BaseOperationProcessor.Close(); err != nil {
 		return err
 	}
@@ -67,17 +67,17 @@ func (p *SuffrageWithdrawProcessor) Close() error {
 	return nil
 }
 
-func (p *SuffrageWithdrawProcessor) PreProcess(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
+func (p *SuffrageExpelProcessor) PreProcess(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	context.Context, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringErrorFunc("failed to preprocess for SuffrageWithdraw")
+	e := util.StringError("preprocess for SuffrageExpel")
 
-	fact := op.Fact().(base.SuffrageWithdrawFact) //nolint:forcetypeassert //...
+	fact := op.Fact().(base.SuffrageExpelFact) //nolint:forcetypeassert //...
 
 	switch {
-	case fact.WithdrawStart() > p.Height():
+	case fact.ExpelStart() > p.Height():
 		return ctx, base.NewBaseOperationProcessReasonError("wrong start height"), nil
-	case fact.WithdrawEnd() < p.Height():
+	case fact.ExpelEnd() < p.Height():
 		return ctx, base.NewBaseOperationProcessReasonError("expired"), nil
 	}
 
@@ -93,7 +93,7 @@ func (p *SuffrageWithdrawProcessor) PreProcess(ctx context.Context, op base.Oper
 
 	switch reasonerr, err := p.PreProcessConstraintFunc(ctx, op, getStateFunc); {
 	case err != nil:
-		return ctx, nil, e(err, "")
+		return ctx, nil, e.Wrap(err)
 	case reasonerr != nil:
 		return ctx, reasonerr, nil
 	}
@@ -102,27 +102,27 @@ func (p *SuffrageWithdrawProcessor) PreProcess(ctx context.Context, op base.Oper
 
 	var preprocessed []base.Address
 
-	_ = util.LoadFromContext(ctx, WithdrawPreProcessedContextKey, &preprocessed)
+	_ = util.LoadFromContext(ctx, ExpelPreProcessedContextKey, &preprocessed)
 	preprocessed = append(preprocessed, n)
 
-	ctx = context.WithValue(ctx, WithdrawPreProcessedContextKey, preprocessed) //revive:disable-line:modifies-parameter
+	ctx = context.WithValue(ctx, ExpelPreProcessedContextKey, preprocessed) //revive:disable-line:modifies-parameter
 
 	return ctx, nil, nil
 }
 
-func (p *SuffrageWithdrawProcessor) Process(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
+func (p *SuffrageExpelProcessor) Process(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringErrorFunc("failed to process for SuffrageWithdraw")
+	e := util.StringError("process for SuffrageWithdraw")
 
 	switch reasonerr, err := p.ProcessConstraintFunc(ctx, op, getStateFunc); {
 	case err != nil:
-		return nil, nil, e(err, "")
+		return nil, nil, e.Wrap(err)
 	case reasonerr != nil:
 		return nil, reasonerr, nil
 	}
 
-	fact := op.Fact().(base.SuffrageWithdrawFact) //nolint:forcetypeassert //...
+	fact := op.Fact().(base.SuffrageExpelFact) //nolint:forcetypeassert //...
 
 	return []base.StateMergeValue{
 		base.NewBaseStateMergeValue(

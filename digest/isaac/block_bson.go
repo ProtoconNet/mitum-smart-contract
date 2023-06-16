@@ -58,16 +58,16 @@ type ManifestBSONUnmarshaler struct {
 }
 
 func (m *Manifest) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of Manifest")
+	e := util.StringError("failed to decode bson of Manifest")
 
 	var u ManifestBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	m.BaseHinter = hint.NewBaseHinter(ht)

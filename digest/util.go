@@ -137,7 +137,7 @@ func HTTP2Stream(enc encoder.Encoder, w http.ResponseWriter, bufsize int, status
 
 func HTTP2NotSupported(w http.ResponseWriter, err error) {
 	if err == nil {
-		err = util.NewError("not supported")
+		err = util.NewIDError("not supported")
 	}
 
 	HTTP2ProblemWithError(w, err, http.StatusInternalServerError)
@@ -197,11 +197,11 @@ func HTTP2WriteCache(w http.ResponseWriter, key string, expire time.Duration) {
 func HTTP2HandleError(w http.ResponseWriter, err error) {
 	status := http.StatusInternalServerError
 	switch {
-	case errors.Is(err, util.NewError("not found")):
+	case errors.Is(err, util.NewIDError("not found")):
 		status = http.StatusNotFound
-	case errors.Is(err, util.NewError("bad request")):
+	case errors.Is(err, util.NewIDError("bad request")):
 		status = http.StatusBadRequest
-	case errors.Is(err, util.NewError("not supported")):
+	case errors.Is(err, util.NewIDError("not supported")):
 		status = http.StatusInternalServerError
 	}
 

@@ -2,12 +2,17 @@ package cmds
 
 import (
 	"context"
-	"crypto/tls"
-	"strings"
+	"fmt"
+	"io"
+	"os"
+	"time"
 
-	"github.com/ProtoconNet/mitum-currency/v3/digest/config"
-	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
-	mitumutil "github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
+	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
+	"github.com/ProtoconNet/mitum2/launch"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
 )
 
@@ -15,87 +20,87 @@ type NetworkCommand struct {
 	Client NetworkClientCommand `cmd:"" help:"network client"`
 }
 
+type NetworkClientCommand struct { //nolint:govet //...
+	//revive:disable:line-length-limit
+	NodeInfo          NetworkClientNodeInfoCommand          `cmd:"" name:"node-info" help:"remote node info"`
+	SendOperation     NetworkClientSendOperationCommand     `cmd:"" name:"send-operation" help:"send operation"`
+	State             NetworkClientStateCommand             `cmd:"" name:"state" help:"get state"`
+	LastBlockMap      NetworkClientLastBlockMapCommand      `cmd:"" name:"last-blockmap" help:"get last blockmap"`
+	SetAllowConsensus NetworkClientSetAllowConsensusCommand `cmd:"" name:"set-allow-consensus" help:"set to enter consensus"`
+	//revive:enable:line-length-limit
+}
+
 func NewNetworkCommand() NetworkCommand {
-	return NetworkCommand{
-		Client: NewNetworkClientCommand(),
+	return NetworkCommand{}
+}
+
+type BaseNetworkClientNodeInfoFlags struct { //nolint:govet //...
+	//revive:disable:line-length-limit
+	NetworkID string              `arg:"" name:"network-id" help:"network-id"`
+	Remote    launch.ConnInfoFlag `arg:"" help:"remote node conn info (default \"localhost:4321\")" placeholder:"ConnInfo" default:"localhost:4321"`
+	Timeout   time.Duration       `help:"timeout" placeholder:"duration" default:"9s"`
+	Body      *os.File            `help:"body"`
+	//revive:enable:line-length-limit
+}
+
+type BaseNetworkClientCommand struct { //nolint:govet //...
+	BaseCommand
+	BaseNetworkClientNodeInfoFlags
+	Client *isaacnetwork.QuicstreamClient `kong:"-"`
+}
+
+func NewBaseNetworkClientCommand() BaseNetworkClientCommand {
+	cmd := NewBaseCommand()
+	return BaseNetworkClientCommand{
+		BaseCommand: *cmd,
 	}
 }
 
-type LocalNetwork struct {
-	Bind        *string `yaml:"bind"`
-	URL         *string `yaml:"url"`
-	CertKeyFile *string `yaml:"cert-key,omitempty"`
-	CertFile    *string `yaml:"cert,omitempty"`
-	Cache       *string `yaml:",omitempty"`
-	SealCache   *string `yaml:"seal-cache,omitempty"`
+func (cmd *BaseNetworkClientCommand) Prepare(pctx context.Context) error {
+	if _, err := cmd.BaseCommand.prepare(pctx); err != nil {
+		return err
+	}
+
+	if len(cmd.NetworkID) < 1 {
+		return errors.Errorf(`expected "<network-id>"`)
+	}
+
+	if _, err := cmd.Remote.ConnInfo(); err != nil {
+		return err
+	}
+
+	if cmd.Timeout < 1 {
+		cmd.Timeout = isaac.DefaultTimeoutRequest * 2
+	}
+
+	cmd.Client = launch.NewNetworkClient(cmd.Encoders, cmd.Encoder, base.NetworkID(cmd.NetworkID))
+
+	cmd.Log.Debug().
+		Stringer("remote", cmd.Remote).
+		Stringer("timeout", cmd.Timeout).
+		Str("network_id", cmd.NetworkID).
+		Bool("has_body", cmd.Body != nil).
+		Msg("flags")
+
+	return nil
 }
 
-func (no LocalNetwork) Set(ctx context.Context) (context.Context, error) {
-	var conf config.LocalNetwork
-	if err := mitumutil.LoadFromContext(ctx, ContextValueLocalNetwork, &conf); err != nil {
-		return ctx, err
+func (cmd *BaseNetworkClientCommand) Print(v interface{}, out io.Writer) error {
+	l := cmd.Log.Debug().
+		Str("type", fmt.Sprintf("%T", v))
+
+	if ht, ok := v.(hint.Hinter); ok {
+		l = l.Stringer("hint", ht.Hint())
 	}
 
-	if err := no.setConnInfo(conf); err != nil {
-		return ctx, err
-	}
+	l.Msg("body loaded")
 
-	if no.Bind != nil {
-		if err := conf.SetBind(*no.Bind); err != nil {
-			return ctx, err
-		}
-	}
-
-	if err := no.setCerts(conf); err != nil {
-		return ctx, err
-	}
-
-	if no.Cache != nil {
-		if err := conf.SetCache(*no.Cache); err != nil {
-			return ctx, err
-		}
-	}
-
-	if no.SealCache != nil {
-		if err := conf.SetSealCache(*no.SealCache); err != nil {
-			return ctx, err
-		}
-	}
-
-	return ctx, nil
-}
-
-func (no LocalNetwork) setConnInfo(conf config.LocalNetwork) error {
-	if no.URL == nil {
-		return nil
-	}
-
-	ci, err := util.NewHTTPConnInfoFromString(*no.URL, false)
+	b, err := util.MarshalJSONIndent(v)
 	if err != nil {
 		return err
 	}
 
-	if err := ci.IsValid(nil); err != nil {
-		return err
-	}
+	_, err = fmt.Fprintln(out, string(b))
 
-	return conf.SetConnInfo(ci)
-}
-
-func (no LocalNetwork) setCerts(conf config.LocalNetwork) error {
-	switch {
-	case (no.CertKeyFile != nil || no.CertFile != nil) && (no.CertKeyFile == nil || no.CertFile == nil):
-		return errors.Errorf("cert-key and cert should be given both")
-	case no.CertKeyFile == nil || len(strings.TrimSpace(*no.CertKeyFile)) < 1:
-		return nil
-	case no.CertFile == nil || len(strings.TrimSpace(*no.CertFile)) < 1:
-		return nil
-	}
-
-	c, err := tls.LoadX509KeyPair(*no.CertFile, *no.CertKeyFile)
-	if err != nil {
-		return err
-	}
-
-	return conf.SetCerts([]tls.Certificate{c})
+	return errors.WithStack(err)
 }

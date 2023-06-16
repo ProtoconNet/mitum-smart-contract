@@ -22,6 +22,7 @@ func DefaultINITPS() *ps.PS {
 
 	_ = pps.POK(launch.PNameDesign).
 		PostAddOK(launch.PNameCheckDesign, launch.PCheckDesign).
+		PostAddOK(launch.PNameINITObjectCache, launch.PINITObjectCache).
 		PostAddOK(launch.PNameGenesisDesign, launch.PGenesisDesign)
 
 	_ = pps.POK(launch.PNameStorage).

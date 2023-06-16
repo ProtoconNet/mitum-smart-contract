@@ -9,7 +9,7 @@ import (
 )
 
 type SuffrageDisjoinCommand struct {
-	baseCommand
+	BaseCommand
 	OperationFlags
 	Node  AddressFlag `arg:"" name:"node" help:"node address" required:"true"`
 	Start base.Height `arg:"" name:"height" help:"block height" required:"true"`
@@ -17,9 +17,9 @@ type SuffrageDisjoinCommand struct {
 }
 
 func NewSuffrageDisjoinCommand() SuffrageDisjoinCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return SuffrageDisjoinCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -28,8 +28,8 @@ func (cmd *SuffrageDisjoinCommand) Run(pctx context.Context) error { // nolint:d
 		return err
 	}
 
-	encs = cmd.encs
-	enc = cmd.enc
+	encs = cmd.Encoders
+	enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err
@@ -41,7 +41,7 @@ func (cmd *SuffrageDisjoinCommand) Run(pctx context.Context) error { // nolint:d
 	} else if err := i.IsValid([]byte(cmd.OperationFlags.NetworkID)); err != nil {
 		return errors.Wrap(err, "invalid suffrage-disjoin operation")
 	} else {
-		cmd.log.Debug().Interface("operation", i).Msg("operation loaded")
+		cmd.Log.Debug().Interface("operation", i).Msg("operation loaded")
 
 		op = i
 	}

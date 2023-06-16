@@ -27,13 +27,13 @@ type CurrencyRegisterFactBSONUnmarshaler struct {
 }
 
 func (fact *CurrencyRegisterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of CurrencyRegisterFact")
+	e := util.StringError("failed to decode bson of CurrencyRegisterFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	fact.BaseFact.SetHash(valuehash.NewBytesFromString(u.Hash))
@@ -41,12 +41,12 @@ func (fact *CurrencyRegisterFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) err
 
 	var uf CurrencyRegisterFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	fact.BaseHinter = hint.NewBaseHinter(ht)
@@ -65,11 +65,11 @@ func (op CurrencyRegister) MarshalBSON() ([]byte, error) {
 }
 
 func (op *CurrencyRegister) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of CurrencyRegister")
+	e := util.StringError("failed to decode bson of CurrencyRegister")
 
 	var ubo common.BaseNodeOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	op.BaseNodeOperation = ubo

@@ -2,7 +2,6 @@ package isaacoperation
 
 import (
 	"encoding/json"
-
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -40,11 +39,11 @@ type networkPolicyJSONUnmarshaler struct {
 }
 
 func (p *NetworkPolicy) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to unmarshal NetworkPolicy")
+	e := util.StringError("failed to unmarshal NetworkPolicy")
 
 	var u networkPolicyJSONUnmarshaler
 	if err := util.UnmarshalJSON(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return p.unpack(enc, u.SuffrageCandidateLimiterRule, u.MaxOperationsInProposal, u.SuffrageCandidateLifespan, u.MaxSuffrageSize, u.SuffrageWithdrawLifespan)
@@ -67,15 +66,15 @@ type NetworkPolicyStateValueJSONUnmarshaler struct {
 }
 
 func (s *NetworkPolicyStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode NetworkPolicyStateValue")
+	e := util.StringError("failed to decode NetworkPolicyStateValue")
 
 	var u NetworkPolicyStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	if err := encoder.Decode(enc, u.Policy, &s.policy); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return nil

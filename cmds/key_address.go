@@ -12,16 +12,16 @@ var KeyAddressVars = kong.Vars{
 }
 
 type KeyAddressCommand struct {
-	baseCommand
+	BaseCommand
 	Threshold   uint      `arg:"" name:"threshold" help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
 	Keys        []KeyFlag `arg:"" name:"key" help:"key for address (ex: \"<public key>,<weight>\")" sep:"@" optional:""`
 	AddressType string    `help:"key type for address. select btc or ether" default:"btc"`
 }
 
 func NewKeyAddressCommand() KeyAddressCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return KeyAddressCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -40,7 +40,7 @@ func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	cmd.log.Debug().Int("number_of_keys", len(ks)).Interface("keys", keys).Msg("keys loaded")
+	cmd.Log.Debug().Int("number_of_keys", len(ks)).Interface("keys", keys).Msg("keys loaded")
 
 	var a base.Address
 	if len(cmd.AddressType) > 0 && cmd.AddressType == "ether" {

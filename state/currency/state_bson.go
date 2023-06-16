@@ -23,23 +23,23 @@ type AccountStateValueBSONUnmarshaler struct {
 }
 
 func (s *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode AccountStateValue")
+	e := util.StringError("failed to decode AccountStateValue")
 
 	var u AccountStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
 	var ac types.Account
 	if err := ac.DecodeBSON(u.Account, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	s.Account = ac
@@ -62,22 +62,22 @@ type BalanceStateValueBSONUnmarshaler struct {
 }
 
 func (s *BalanceStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode BalanceStateValue")
+	e := util.StringError("failed to decode BalanceStateValue")
 
 	var u BalanceStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
 	var am types.Amount
 	if err := am.DecodeBSON(u.Amount, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	s.Amount = am
@@ -100,22 +100,22 @@ type CurrencyDesignStateValueBSONUnmarshaler struct {
 }
 
 func (s *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode CurrencyDesignStateValue")
+	e := util.StringError("failed to decode CurrencyDesignStateValue")
 
 	var u CurrencyDesignStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
 	var cd types.CurrencyDesign
 	if err := cd.DecodeBSON(u.CurrencyDesign, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	s.CurrencyDesign = cd

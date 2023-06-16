@@ -25,16 +25,16 @@ type CurrencyPolicyBSONUnmarshaler struct {
 }
 
 func (po *CurrencyPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of CurrencyPolicy")
+	e := util.StringError("failed to decode bson of CurrencyPolicy")
 
 	var upo CurrencyPolicyBSONUnmarshaler
 	if err := enc.Unmarshal(b, &upo); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(upo.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return po.unpack(enc, ht, upo.NewAccountMin, upo.Feeer)

@@ -19,7 +19,7 @@ import (
 
 var (
 	DefaultCacheExpire = time.Hour
-	SkipCacheError     = mitumutil.NewError("skip cache")
+	SkipCacheError     = mitumutil.NewIDError("skip cache")
 )
 
 type Cache interface {
@@ -100,7 +100,7 @@ func (mc *Memcached) Set(key string, b []byte, expire time.Duration) error {
 type DummyCache struct{}
 
 func (DummyCache) Get(string) ([]byte, error) {
-	return nil, mitumutil.NewError("not found")
+	return nil, mitumutil.NewIDError("not found")
 }
 
 func (DummyCache) Set(string, []byte, time.Duration) error {

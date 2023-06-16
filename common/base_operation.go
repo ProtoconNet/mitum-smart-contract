@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"golang.org/x/exp/slices"
 
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -17,9 +18,7 @@ type BaseOperation struct {
 	hint.BaseHinter
 }
 
-func NewBaseOperation(
-	ht hint.Hint, fact base.Fact,
-) BaseOperation {
+func NewBaseOperation(ht hint.Hint, fact base.Fact) BaseOperation {
 	return BaseOperation{
 		BaseHinter: hint.NewBaseHinter(ht),
 		fact:       fact,
@@ -57,61 +56,6 @@ func (op BaseOperation) HashBytes() []byte {
 	return util.ConcatByters(bs...)
 }
 
-func (op *BaseOperation) Sign(priv base.Privatekey, networkID base.NetworkID) error {
-	switch index, sign, err := op.sign(priv, networkID); {
-	case err != nil:
-		return err
-	case index < 0:
-		op.signs = append(op.signs, sign)
-	default:
-		op.signs[index] = sign
-	}
-
-	op.h = op.hash()
-
-	return nil
-}
-
-func (op *BaseOperation) sign(priv base.Privatekey, networkID base.NetworkID) (found int, sign base.BaseSign, _ error) {
-	e := util.StringErrorFunc("failed to sign BaseOperation")
-
-	found = -1
-
-	for i := range op.signs {
-		s := op.signs[i]
-		if s == nil {
-			continue
-		}
-
-		if s.Signer().Equal(priv.Publickey()) {
-			found = i
-
-			break
-		}
-	}
-
-	newsign, err := base.NewBaseSignFromFact(priv, networkID, op.fact)
-	if err != nil {
-		return found, sign, e(err, "")
-	}
-
-	return found, newsign, nil
-}
-
-func (BaseOperation) PreProcess(ctx context.Context, _ base.GetStateFunc) (
-	context.Context, base.OperationProcessReasonError, error,
-) {
-	return ctx, nil, errors.WithStack(util.ErrNotImplemented)
-}
-
-func (BaseOperation) Process(context.Context, base.GetStateFunc) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
-	return nil, nil, errors.WithStack(util.ErrNotImplemented)
-}
-
-func (op BaseOperation) hash() util.Hash {
-	return valuehash.NewSHA256(op.HashBytes())
-}
-
 func (op BaseOperation) IsValid(networkID []byte) error {
 	e := util.ErrInvalid.Errorf("invalid BaseOperation")
 
@@ -132,6 +76,61 @@ func (op BaseOperation) IsValid(networkID []byte) error {
 	}
 
 	return nil
+}
+
+func (op *BaseOperation) Sign(priv base.Privatekey, networkID base.NetworkID) error {
+	switch index, sign, err := op.sign(priv, networkID); {
+	case err != nil:
+		return err
+	case index < 0:
+		op.signs = append(op.signs, sign)
+	default:
+		op.signs[index] = sign
+	}
+
+	op.h = op.hash()
+
+	return nil
+}
+
+func (op *BaseOperation) sign(priv base.Privatekey, networkID base.NetworkID) (found int, sign base.BaseSign, _ error) {
+	e := util.StringError("failed to sign BaseOperation")
+
+	found = -1
+
+	for i := range op.signs {
+		s := op.signs[i]
+		if s == nil {
+			continue
+		}
+
+		if s.Signer().Equal(priv.Publickey()) {
+			found = i
+
+			break
+		}
+	}
+
+	newsign, err := base.NewBaseSignFromFact(priv, networkID, op.fact)
+	if err != nil {
+		return found, sign, e.Wrap(err)
+	}
+
+	return found, newsign, nil
+}
+
+func (BaseOperation) PreProcess(ctx context.Context, _ base.GetStateFunc) (
+	context.Context, base.OperationProcessReasonError, error,
+) {
+	return ctx, nil, errors.WithStack(util.ErrNotImplemented)
+}
+
+func (BaseOperation) Process(context.Context, base.GetStateFunc) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
+	return nil, nil, errors.WithStack(util.ErrNotImplemented)
+}
+
+func (op BaseOperation) hash() util.Hash {
+	return valuehash.NewSHA256(op.HashBytes())
 }
 
 func IsValidOperationFact(fact base.Fact, networkID []byte) error {
@@ -182,6 +181,10 @@ func (op BaseNodeOperation) IsValid(networkID []byte) error {
 	var duplicatederr error
 
 	switch _, duplicated := util.IsDuplicatedSlice(sfs, func(i base.Sign) (bool, string) {
+		if i == nil {
+			return true, ""
+		}
+
 		ns, ok := i.(base.NodeSign)
 		if !ok {
 			duplicatederr = errors.Errorf("not NodeSign, %T", i)
@@ -239,6 +242,10 @@ func (op *BaseNodeOperation) NodeSign(priv base.Privatekey, networkID base.Netwo
 
 func (op *BaseNodeOperation) SetNodeSigns(signs []base.NodeSign) error {
 	if _, duplicated := util.IsDuplicatedSlice(signs, func(i base.NodeSign) (bool, string) {
+		if i == nil {
+			return true, ""
+		}
+
 		return true, i.Node().String()
 	}); duplicated {
 		return errors.Errorf("duplicated signs found")
@@ -256,7 +263,7 @@ func (op *BaseNodeOperation) SetNodeSigns(signs []base.NodeSign) error {
 
 func (op *BaseNodeOperation) AddNodeSigns(signs []base.NodeSign) (added bool, _ error) {
 	updates := util.FilterSlice(signs, func(sign base.NodeSign) bool {
-		return util.InSliceFunc(op.signs, func(s base.Sign) bool {
+		return slices.IndexFunc[base.Sign](op.signs, func(s base.Sign) bool {
 			nodesign, ok := s.(base.NodeSign)
 			if !ok {
 				return false

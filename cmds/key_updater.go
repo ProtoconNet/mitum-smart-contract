@@ -10,20 +10,20 @@ import (
 )
 
 type KeyUpdaterCommand struct {
-	baseCommand
+	BaseCommand
 	OperationFlags
 	Target    AddressFlag    `arg:"" name:"target" help:"target address" required:"true"`
 	Threshold uint           `help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
 	Keys      []KeyFlag      `name:"key" help:"key for new account (ex: \"<public key>,<weight>\")" sep:"@"`
 	Currency  CurrencyIDFlag `arg:"" name:"currency-id" help:"currency id" required:"true"`
-	target base.Address
-	keys   types.BaseAccountKeys
+	target    base.Address
+	keys      types.BaseAccountKeys
 }
 
 func NewKeyUpdaterCommand() KeyUpdaterCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return KeyUpdaterCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -32,8 +32,8 @@ func (cmd *KeyUpdaterCommand) Run(pctx context.Context) error { // nolint:dupl
 		return err
 	}
 
-	encs = cmd.encs
-	enc = cmd.enc
+	encs = cmd.Encoders
+	enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err

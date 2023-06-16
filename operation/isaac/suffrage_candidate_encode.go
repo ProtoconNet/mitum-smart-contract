@@ -11,18 +11,18 @@ func (fact *SuffrageCandidateFact) unpack(
 	sd string,
 	pk string,
 ) error {
-	e := util.StringErrorFunc("failed to unmarshal SuffrageCandidateFact")
+	e := util.StringError("failed to unmarshal SuffrageCandidateFact")
 
 	switch ad, err := base.DecodeAddress(sd, enc); {
 	case err != nil:
-		return e(err, "")
+		return e.Wrap(err)
 	default:
 		fact.address = ad
 	}
 
 	switch p, err := base.DecodePublickeyFromString(pk, enc); {
 	case err != nil:
-		return e(err, "")
+		return e.Wrap(err)
 	default:
 		fact.publickey = p
 	}

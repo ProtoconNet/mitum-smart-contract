@@ -43,10 +43,10 @@ type TransfersItemProcessor struct {
 func (opp *TransfersItemProcessor) PreProcess(
 	_ context.Context, _ base.Operation, getStateFunc base.GetStateFunc,
 ) error {
-	e := util.StringErrorFunc("failed to preprocess for TransfersItemProcessor")
+	e := util.StringError("failed to preprocess for TransfersItemProcessor")
 
 	if _, err := state.ExistsState(currency.StateKeyAccount(opp.item.Receiver()), "receiver", getStateFunc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	rb := map[types.CurrencyID]base.StateMergeValue{}
@@ -84,14 +84,14 @@ func (opp *TransfersItemProcessor) PreProcess(
 func (opp *TransfersItemProcessor) Process(
 	_ context.Context, _ base.Operation, _ base.GetStateFunc,
 ) ([]base.StateMergeValue, error) {
-	e := util.StringErrorFunc("failed to preprocess for TransfersItemProcessor")
+	e := util.StringError("failed to preprocess for TransfersItemProcessor")
 
 	sts := make([]base.StateMergeValue, len(opp.item.Amounts()))
 	for i := range opp.item.Amounts() {
 		am := opp.item.Amounts()[i]
 		v, ok := opp.rb[am.Currency()].Value().(currency.BalanceStateValue)
 		if !ok {
-			return nil, e(errors.Errorf("not BalanceStateValue, %T", opp.rb[am.Currency()].Value()), "")
+			return nil, e.Wrap(errors.Errorf("not BalanceStateValue, %T", opp.rb[am.Currency()].Value()))
 		}
 		stv := currency.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(am.Big())))
 		sts[i] = state.NewStateMergeValue(opp.rb[am.Currency()].Key(), stv)
@@ -123,18 +123,18 @@ func NewTransfersProcessor() types.GetNewProcessor {
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringErrorFunc("failed to create new TransfersProcessor")
+		e := util.StringError("failed to create new TransfersProcessor")
 
 		nopp := transfersProcessorPool.Get()
 		opp, ok := nopp.(*TransfersProcessor)
 		if !ok {
-			return nil, e(errors.Errorf("expected TransfersProcessor, not %T", nopp), "")
+			return nil, e.Wrap(errors.Errorf("expected TransfersProcessor, not %T", nopp))
 		}
 
 		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
-			return nil, e(err, "")
+			return nil, e.Wrap(err)
 		}
 
 		opp.BaseOperationProcessor = b

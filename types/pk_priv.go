@@ -27,9 +27,9 @@ var (
 // MEPrivatekey is the default privatekey of mitum, it is based on BTC Privatekey.
 type MEPrivatekey struct {
 	priv *ecdsa.PrivateKey
-	s   string
-	pub MEPublickey
-	b   []byte
+	s    string
+	pub  MEPublickey
+	b    []byte
 	hint.BaseHinter
 }
 
@@ -102,7 +102,7 @@ func (k MEPrivatekey) Bytes() []byte {
 
 func (k MEPrivatekey) IsValid([]byte) error {
 	if err := k.BaseHinter.IsValid(MEPrivatekeyHint.Type().Bytes()); err != nil {
-		return util.ErrInvalid.Wrapf(err, "wrong hint in privatekey")
+		return util.ErrInvalid.WithMessage(err, "wrong hint in privatekey")
 	}
 
 	switch {

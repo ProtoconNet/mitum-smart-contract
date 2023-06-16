@@ -44,7 +44,7 @@ func NewKeyUpdaterProcessor(
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringErrorFunc("failed to create new KeyUpdaterProcessor")
+		e := util.StringError("failed to create new KeyUpdaterProcessor")
 
 		nopp := keyUpdaterProcessorPool.Get()
 		opp, ok := nopp.(*KeyUpdaterProcessor)
@@ -55,7 +55,7 @@ func NewKeyUpdaterProcessor(
 		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
-			return nil, e(err, "")
+			return nil, e.Wrap(err)
 		}
 
 		opp.BaseOperationProcessor = b
@@ -92,11 +92,11 @@ func (opp *KeyUpdaterProcessor) Process( // nolint:dupl
 	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringErrorFunc("failed to process KeyUpdater")
+	e := util.StringError("failed to process KeyUpdater")
 
 	fact, ok := op.Fact().(KeyUpdaterFact)
 	if !ok {
-		return nil, nil, e(nil, "expected KeyUpdaterFact, not %T", op.Fact())
+		return nil, nil, e.Errorf("expected KeyUpdaterFact, not %T", op.Fact())
 	}
 
 	var tgAccSt base.State

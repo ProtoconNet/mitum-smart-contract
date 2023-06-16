@@ -13,15 +13,15 @@ import (
 )
 
 type KeyNewCommand struct {
-	baseCommand
+	BaseCommand
 	Seed    string `arg:"" name:"seed" optional:"" help:"seed for generating key"`
 	KeyType string `help:"select btc or ether" default:"btc"`
 }
 
 func NewKeyNewCommand() KeyNewCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return KeyNewCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -30,7 +30,7 @@ func (cmd *KeyNewCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	cmd.log.Debug().
+	cmd.Log.Debug().
 		Str("seed", cmd.Seed).
 		Msg("flags")
 
@@ -43,7 +43,7 @@ func (cmd *KeyNewCommand) Run(pctx context.Context) error {
 	switch {
 	case len(cmd.Seed) > 0:
 		if len(strings.TrimSpace(cmd.Seed)) < 1 {
-			cmd.log.Warn().Msg("seed consists with empty spaces")
+			cmd.Log.Warn().Msg("seed consists with empty spaces")
 		}
 		if len(cmd.KeyType) > 0 && cmd.KeyType == "ether" {
 			i, err := types.NewMEPrivatekeyFromSeed(cmd.Seed)

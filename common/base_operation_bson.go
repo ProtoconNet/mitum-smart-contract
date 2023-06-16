@@ -34,17 +34,17 @@ func (op BaseOperation) MarshalBSON() ([]byte, error) {
 }
 
 func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of BaseOperation")
+	e := util.StringError("failed to decode bson of BaseOperation")
 
 	var u BaseOperationBSONUnmarshaler
 
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	op.BaseHinter = hint.NewBaseHinter(ht)
@@ -52,7 +52,7 @@ func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	var fact base.Fact
 	if err := encoder.Decode(enc, u.Fact, &fact); err != nil {
-		return e(err, "failed to decode fact")
+		return e.WithMessage(err, "failed to decode fact")
 	}
 
 	op.SetFact(fact)
@@ -61,17 +61,17 @@ func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 }
 
 func (op *BaseNodeOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of BaseNodeOperation")
+	e := util.StringError("failed to decode bson of BaseNodeOperation")
 
 	var u BaseOperationBSONUnmarshaler
 
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	op.BaseOperation.BaseHinter = hint.NewBaseHinter(ht)
@@ -79,7 +79,7 @@ func (op *BaseNodeOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	var fact base.Fact
 	if err := encoder.Decode(enc, u.Fact, &fact); err != nil {
-		return e(err, "failed to decode fact")
+		return e.WithMessage(err, "failed to decode fact")
 	}
 
 	op.BaseOperation.SetFact(fact)

@@ -42,22 +42,22 @@ type OperationValueBSONUnmarshaler struct {
 }
 
 func (va *OperationValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of OperationValue")
+	e := util.StringError("failed to decode bson of OperationValue")
 	var uva OperationValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &uva); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(uva.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	va.BaseHinter = hint.NewBaseHinter(ht)
 
 	var op common.BaseOperation
 	if err := op.DecodeBSON(uva.OP, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	va.op = op

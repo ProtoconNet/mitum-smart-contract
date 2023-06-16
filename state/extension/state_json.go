@@ -26,18 +26,18 @@ type ContractAccountStateValueJSONUnmarshaler struct {
 }
 
 func (s *ContractAccountStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of ContractAccountStateValue")
+	e := util.StringError("failed to decode json of ContractAccountStateValue")
 
 	var u ContractAccountStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	s.BaseHinter = hint.NewBaseHinter(u.Hint)
 
 	var ca types.ContractAccount
 	if err := ca.DecodeJSON(u.ContractAccount, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	s.account = ca
 

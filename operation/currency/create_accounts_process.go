@@ -45,7 +45,7 @@ type CreateAccountsItemProcessor struct {
 func (opp *CreateAccountsItemProcessor) PreProcess(
 	_ context.Context, _ base.Operation, getStateFunc base.GetStateFunc,
 ) error {
-	e := util.StringErrorFunc("failed to preprocess for CreateAccountsItemProcessor")
+	e := util.StringError("failed to preprocess for CreateAccountsItemProcessor")
 
 	for i := range opp.item.Amounts() {
 		am := opp.item.Amounts()[i]
@@ -63,7 +63,7 @@ func (opp *CreateAccountsItemProcessor) PreProcess(
 
 	target, err := opp.item.Address()
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	st, err := state.NotExistsState(currency.StateKeyAccount(target), "keys of target", getStateFunc)
@@ -77,9 +77,9 @@ func (opp *CreateAccountsItemProcessor) PreProcess(
 		am := opp.item.Amounts()[i]
 		switch _, found, err := getStateFunc(currency.StateKeyBalance(target, am.Currency())); {
 		case err != nil:
-			return e(err, "")
+			return e.Wrap(err)
 		case found:
-			return e(isaac.ErrStopProcessingRetry.Errorf("target balance already exists"), "")
+			return e.Wrap(isaac.ErrStopProcessingRetry.Errorf("target balance already exists"))
 		default:
 			nb[am.Currency()] = state.NewStateMergeValue(currency.StateKeyBalance(target, am.Currency()), currency.NewBalanceStateValue(types.NewZeroAmount(am.Currency())))
 		}
@@ -92,7 +92,7 @@ func (opp *CreateAccountsItemProcessor) PreProcess(
 func (opp *CreateAccountsItemProcessor) Process(
 	_ context.Context, _ base.Operation, _ base.GetStateFunc,
 ) ([]base.StateMergeValue, error) {
-	e := util.StringErrorFunc("failed to preprocess for CreateAccountsItemProcessor")
+	e := util.StringError("failed to preprocess for CreateAccountsItemProcessor")
 
 	var (
 		nac types.Account
@@ -105,7 +105,7 @@ func (opp *CreateAccountsItemProcessor) Process(
 		nac, err = types.NewAccountFromKeys(opp.item.Keys())
 	}
 	if err != nil {
-		return nil, e(err, "")
+		return nil, e.Wrap(err)
 	}
 
 	sts := make([]base.StateMergeValue, len(opp.item.Amounts())+1)
@@ -115,7 +115,7 @@ func (opp *CreateAccountsItemProcessor) Process(
 		am := opp.item.Amounts()[i]
 		v, ok := opp.nb[am.Currency()].Value().(currency.BalanceStateValue)
 		if !ok {
-			return nil, e(errors.Errorf("not BalanceStateValue, %T", opp.nb[am.Currency()].Value()), "")
+			return nil, e.Wrap(errors.Errorf("not BalanceStateValue, %T", opp.nb[am.Currency()].Value()))
 		}
 		stv := currency.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(am.Big())))
 		sts[i+1] = state.NewStateMergeValue(opp.nb[am.Currency()].Key(), stv)
@@ -146,7 +146,7 @@ func NewCreateAccountsProcessor() types.GetNewProcessor {
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringErrorFunc("failed to create new CreateAccountsProcessor")
+		e := util.StringError("failed to create new CreateAccountsProcessor")
 
 		nopp := createAccountsProcessorPool.Get()
 		opp, ok := nopp.(*CreateAccountsProcessor)
@@ -157,7 +157,7 @@ func NewCreateAccountsProcessor() types.GetNewProcessor {
 		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
-			return nil, e(err, "")
+			return nil, e.Wrap(err)
 		}
 
 		opp.BaseOperationProcessor = b

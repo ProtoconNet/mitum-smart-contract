@@ -26,12 +26,12 @@ type SuffrageInflationFactJSONUnmarshaler struct {
 }
 
 func (fact *SuffrageInflationFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of SuffrageInflationFact")
+	e := util.StringError("failed to decode json of SuffrageInflationFact")
 
 	var uf SuffrageInflationFactJSONUnmarshaler
 
 	if err := enc.Unmarshal(b, &uf); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
@@ -40,7 +40,7 @@ func (fact *SuffrageInflationFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) er
 	for i := range uf.Items {
 		item := SuffrageInflationItem{}
 		if err := item.DecodeJSON(uf.Items[i], enc); err != nil {
-			return e(err, "")
+			return e.Wrap(err)
 		}
 		items[i] = item
 	}

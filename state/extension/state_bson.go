@@ -24,22 +24,22 @@ type ContractAccountStateValueBSONUnmarshaler struct {
 }
 
 func (s *ContractAccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of ContractAccountStateValue")
+	e := util.StringError("failed to decode bson of ContractAccountStateValue")
 
 	var u ContractAccountStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
 	var ca types.ContractAccount
 	if err := ca.DecodeBSON(u.ContractAccount, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	s.account = ca

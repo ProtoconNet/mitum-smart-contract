@@ -22,18 +22,18 @@ type FixedSuffrageCandidateLimiterRuleBSONUnMarshaler struct {
 }
 
 func (l *FixedSuffrageCandidateLimiterRule) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of FixedSuffrageCandidateLimiterRule")
+	e := util.StringError("failed to decode bson of FixedSuffrageCandidateLimiterRule")
 
 	var u FixedSuffrageCandidateLimiterRuleBSONUnMarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	l.BaseHinter = hint.NewBaseHinter(ht)
 
@@ -61,18 +61,18 @@ type MajoritySuffrageCandidateLimiterRuleBSONUnMarshaler struct {
 }
 
 func (l *MajoritySuffrageCandidateLimiterRule) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of MajoritySuffrageCandidateLimiterRule")
+	e := util.StringError("failed to decode bson of MajoritySuffrageCandidateLimiterRule")
 
 	var u MajoritySuffrageCandidateLimiterRuleBSONUnMarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 	l.BaseHinter = hint.NewBaseHinter(ht)
 

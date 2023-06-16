@@ -3,10 +3,9 @@ package digest
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
-	mitumutil "github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 func (va *AccountValue) unpack(enc encoder.Encoder, ht hint.Hint, bac []byte, bl []byte, height base.Height) error {
@@ -18,7 +17,7 @@ func (va *AccountValue) unpack(enc encoder.Encoder, ht hint.Hint, bac []byte, bl
 		return err
 	case ac != nil:
 		if v, ok := ac.(types.Account); !ok {
-			return util.ErrWrongType.Errorf("expected Account, not %T", ac)
+			return errors.Errorf("expected Account, not %T", ac)
 		} else {
 			va.ac = v
 		}
@@ -33,7 +32,7 @@ func (va *AccountValue) unpack(enc encoder.Encoder, ht hint.Hint, bac []byte, bl
 	for i := range hbl {
 		j, ok := hbl[i].(types.Amount)
 		if !ok {
-			return mitumutil.ErrWrongType.Errorf("expected currency.Amount, not %T", hbl[i])
+			return errors.Errorf("expected currency.Amount, not %T", hbl[i])
 		}
 		balance[i] = j
 	}

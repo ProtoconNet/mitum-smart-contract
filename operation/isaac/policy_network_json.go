@@ -2,7 +2,6 @@ package isaacoperation
 
 import (
 	"encoding/json"
-
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -27,17 +26,16 @@ type GenesisNetworkPolicyFactJSONUnmarshaler struct {
 }
 
 func (fact *GenesisNetworkPolicyFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode GenesisNetworkPolicyFact")
+	e := util.StringError("failed to decode GenesisNetworkPolicyFact")
 
 	var u GenesisNetworkPolicyFactJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
-
 	fact.BaseFact.SetJSONUnmarshaler(u.BaseFactJSONUnmarshaler)
 
 	if err := encoder.Decode(enc, u.Policy, &fact.policy); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return nil

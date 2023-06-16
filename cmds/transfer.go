@@ -11,7 +11,7 @@ import (
 )
 
 type TransferCommand struct {
-	baseCommand
+	BaseCommand
 	OperationFlags
 	Sender   AddressFlag          `arg:"" name:"sender" help:"sender address" required:"true"`
 	Receiver AddressFlag          `arg:"" name:"receiver" help:"receiver address" required:"true"`
@@ -21,9 +21,9 @@ type TransferCommand struct {
 }
 
 func NewTransferCommand() TransferCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return TransferCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -32,8 +32,8 @@ func (cmd *TransferCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	encs = cmd.encs
-	enc = cmd.enc
+	encs = cmd.Encoders
+	enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err

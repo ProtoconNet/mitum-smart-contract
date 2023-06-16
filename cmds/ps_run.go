@@ -50,7 +50,8 @@ func DefaultRunPS() *ps.PS {
 		PostAddOK(launch.PNameAddHinters, PAddHinters)
 
 	_ = pps.POK(launch.PNameDesign).
-		PostAddOK(launch.PNameCheckDesign, launch.PCheckDesign)
+		PostAddOK(launch.PNameCheckDesign, launch.PCheckDesign).
+		PostAddOK(launch.PNameINITObjectCache, launch.PINITObjectCache)
 
 	_ = pps.POK(launch.PNameLocal).
 		PostAddOK(launch.PNameDiscoveryFlag, launch.PDiscoveryFlag)
@@ -59,7 +60,8 @@ func DefaultRunPS() *ps.PS {
 		PreAddOK(launch.PNameCheckLocalFS, launch.PCheckLocalFS).
 		PreAddOK(launch.PNameLoadDatabase, launch.PLoadDatabase).
 		PostAddOK(launch.PNameCheckLeveldbStorage, launch.PCheckLeveldbStorage).
-		PostAddOK(launch.PNameCheckLoadFromDatabase, launch.PLoadFromDatabase).
+		PostAddOK(launch.PNameLoadFromDatabase, launch.PLoadFromDatabase).
+		PostAddOK(launch.PNameCheckBlocksOfStorage, launch.PCheckBlocksOfStorage).
 		PostAddOK(launch.PNameNodeInfo, launch.PNodeInfo)
 
 	_ = pps.POK(launch.PNameNetwork).
@@ -71,7 +73,6 @@ func DefaultRunPS() *ps.PS {
 		PreAddOK(launch.PNameLastConsensusNodesWatcher, launch.PLastConsensusNodesWatcher).
 		PostAddOK(launch.PNameBallotbox, launch.PBallotbox).
 		PostAddOK(launch.PNameLongRunningMemberlistJoin, launch.PLongRunningMemberlistJoin).
-		PostAddOK(launch.PNameCallbackBroadcaster, launch.PCallbackBroadcaster).
 		PostAddOK(launch.PNameSuffrageVoting, launch.PSuffrageVoting)
 
 	_ = pps.POK(launch.PNameStates).
@@ -84,7 +85,9 @@ func DefaultRunPS() *ps.PS {
 		PostAddOK(launch.PNamePatchLastConsensusNodesWatcher, launch.PPatchLastConsensusNodesWatcher).
 		PostAddOK(launch.PNameStatesSetHandlers, launch.PStatesSetHandlers).
 		PostAddOK(launch.PNameWatchDesign, launch.PWatchDesign).
-		PostAddOK(launch.PNamePatchMemberlist, launch.PPatchMemberlist)
+		PostAddOK(launch.PNamePatchMemberlist, launch.PPatchMemberlist).
+		PostAddOK(launch.PNameStatesNetworkHandlers, PStatesNetworkHandlers).
+		PostAddOK(launch.PNameHandoverNetworkHandlers, launch.PHandoverNetworkHandlers)
 
 	return pps
 }

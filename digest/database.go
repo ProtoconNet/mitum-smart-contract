@@ -484,7 +484,7 @@ func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, er
 		},
 		options.FindOne().SetSort(util.NewBSONFilter("height", -1).D()),
 	); err != nil {
-		if errors.Is(err, mitumutil.NewError("not found")) {
+		if errors.Is(err, mitumutil.NewIDError("not found")) {
 			return rs, false, nil
 		}
 
@@ -607,7 +607,7 @@ func (st *Database) balance(a base.Address) ([]types.Amount, base.Height, error)
 			},
 			options.FindOne().SetSort(util.NewBSONFilter("height", -1).D()),
 		); err != nil {
-			if err.Error() == mitumutil.NewError("mongo: no documents in result").Error() {
+			if err.Error() == mitumutil.NewIDError("mongo: no documents in result").Error() {
 				break
 			}
 
@@ -667,7 +667,7 @@ func (st *Database) currencies() ([]string, error) {
 			},
 			opt,
 		); err != nil {
-			if err.Error() == mitumutil.NewError("mongo: no documents in result").Error() {
+			if err.Error() == mitumutil.NewIDError("mongo: no documents in result").Error() {
 				break
 			}
 

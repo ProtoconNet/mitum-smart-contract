@@ -6,22 +6,23 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 func (it *SuffrageInflationItem) unpack(enc encoder.Encoder, ht hint.Hint, rc string, bam []byte) error {
-	e := util.StringErrorFunc("failed to unmarshal SuffrageInflationItem")
+	e := util.StringError("failed to unmarshal SuffrageInflationItem")
 
 	switch ad, err := base.DecodeAddress(rc, enc); {
 	case err != nil:
-		return e(err, "")
+		return e.Wrap(err)
 	default:
 		it.receiver = ad
 	}
 
 	if hinter, err := enc.Decode(bam); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	} else if am, ok := hinter.(types.Amount); !ok {
-		return util.ErrWrongType.Errorf("expected Amount, not %T", hinter)
+		return errors.Errorf("expected Amount, not %T", hinter)
 	} else {
 		it.amount = am
 	}

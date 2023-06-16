@@ -25,17 +25,17 @@ type AccountStateValueJSONUnmarshaler struct {
 }
 
 func (s *AccountStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode AccountStateValue")
+	e := util.StringError("failed to decode AccountStateValue")
 
 	var u AccountStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	var ac types.Account
 
 	if err := ac.DecodeJSON(u.AC, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	s.Account = ac
@@ -60,17 +60,17 @@ type BalanceStateValueJSONUnmarshaler struct {
 }
 
 func (s *BalanceStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode BalanceStateValue")
+	e := util.StringError("failed to decode BalanceStateValue")
 
 	var u BalanceStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	var am types.Amount
 
 	if err := am.DecodeJSON(u.AM, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	s.Amount = am
@@ -95,17 +95,17 @@ type CurrencyDesignStateValueJSONUnmarshaler struct {
 }
 
 func (s *CurrencyDesignStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode CurrencyDesignStateValue")
+	e := util.StringError("failed to decode CurrencyDesignStateValue")
 
 	var u CurrencyDesignStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	var cd types.CurrencyDesign
 
 	if err := cd.DecodeJSON(u.CD, enc); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	s.CurrencyDesign = cd

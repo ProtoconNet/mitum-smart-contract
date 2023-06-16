@@ -9,20 +9,20 @@ import (
 )
 
 func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, bam []byte, ga string, bpo []byte, ag string) error {
-	e := util.StringErrorFunc("failed to unmarshal CurrencyDesign")
+	e := util.StringError("failed to unmarshal CurrencyDesign")
 
 	de.BaseHinter = hint.NewBaseHinter(ht)
 
 	var am Amount
 	if err := encoder.Decode(enc, bam, &am); err != nil {
-		return e(err, "failed to decode amount")
+		return e.WithMessage(err, "failed to decode amount")
 	}
 
 	de.amount = am
 
 	switch ad, err := base.DecodeAddress(ga, enc); {
 	case err != nil:
-		return e(err, "failed to decode address")
+		return e.WithMessage(err, "failed to decode address")
 	default:
 		de.genesisAccount = ad
 	}
@@ -30,13 +30,13 @@ func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, bam []byte, 
 	var policy CurrencyPolicy
 
 	if err := encoder.Decode(enc, bpo, &policy); err != nil {
-		return e(err, "failed to decode currency policy")
+		return e.WithMessage(err, "failed to decode currency policy")
 	}
 
 	de.policy = policy
 
 	if big, err := common.NewBigFromString(ag); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	} else {
 		de.aggregate = big
 	}

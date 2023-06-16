@@ -28,11 +28,11 @@ type ContractAccountJSONUnmarshaler struct {
 }
 
 func (ca *ContractAccount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode json of ContractAccount")
+	e := util.StringError("failed to decode json of ContractAccount")
 
 	var ucs ContractAccountJSONUnmarshaler
 	if err := enc.Unmarshal(b, &ucs); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return ca.unpack(enc, ucs.Hint, ucs.IsActive, ucs.Owner)

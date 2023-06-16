@@ -24,16 +24,16 @@ type WithdrawsItemBSONUnmarshaler struct {
 }
 
 func (it *BaseWithdrawsItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringErrorFunc("failed to decode bson of BaseWithdrawsItem")
+	e := util.StringError("failed to decode bson of BaseWithdrawsItem")
 
 	var uit WithdrawsItemBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uit); err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	ht, err := hint.ParseHint(uit.Hint)
 	if err != nil {
-		return e(err, "")
+		return e.Wrap(err)
 	}
 
 	return it.unpack(enc, ht, uit.Target, uit.Amounts)

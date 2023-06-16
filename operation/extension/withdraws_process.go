@@ -127,18 +127,18 @@ func NewWithdrawsProcessor() types.GetNewProcessor {
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringErrorFunc("failed to create new WithdrawsProcessor")
+		e := util.StringError("failed to create new WithdrawsProcessor")
 
 		nopp := withdrawsProcessorPool.Get()
 		opp, ok := nopp.(*WithdrawsProcessor)
 		if !ok {
-			return nil, e(nil, "expected WithdrawsProcessor, not %T", nopp)
+			return nil, e.WithMessage(nil, "expected WithdrawsProcessor, not %T", nopp)
 		}
 
 		b, err := base.NewBaseOperationProcessor(
 			height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
 		if err != nil {
-			return nil, e(err, "")
+			return nil, e.Wrap(err)
 		}
 
 		opp.BaseOperationProcessor = b
@@ -150,11 +150,11 @@ func NewWithdrawsProcessor() types.GetNewProcessor {
 func (opp *WithdrawsProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringErrorFunc("failed to preprocess Withdraws")
+	e := util.StringError("failed to preprocess Withdraws")
 
 	fact, ok := op.Fact().(WithdrawsFact)
 	if !ok {
-		return ctx, nil, e(nil, "expected WithdrawsFact, not %T", op.Fact())
+		return ctx, nil, e.Errorf("expected WithdrawsFact, not %T", op.Fact())
 	}
 
 	if err := state.CheckExistsState(statecurrency.StateKeyAccount(fact.sender), getStateFunc); err != nil {

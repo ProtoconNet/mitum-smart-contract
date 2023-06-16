@@ -15,7 +15,7 @@ import (
 )
 
 type KeySignCommand struct {
-	baseCommand
+	BaseCommand
 	KeyString string             `arg:"" name:"privatekey" help:"privatekey string"`
 	NetworkID string             `arg:"" name:"network-id" help:"network-id"`
 	Body      *os.File           `arg:"" help:"body"`
@@ -26,9 +26,9 @@ type KeySignCommand struct {
 }
 
 func NewKeySignCommand() KeySignCommand {
-	cmd := NewbaseCommand()
+	cmd := NewBaseCommand()
 	return KeySignCommand{
-		baseCommand: *cmd,
+		BaseCommand: *cmd,
 	}
 }
 
@@ -37,7 +37,7 @@ func (cmd *KeySignCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	cmd.log.Debug().
+	cmd.Log.Debug().
 		Str("privatekey", cmd.KeyString).
 		Str("network_id", cmd.NetworkID).
 		Stringer("node", cmd.Node.Address()).
@@ -68,7 +68,7 @@ func (cmd *KeySignCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	cmd.log.Debug().Msg("successfully sign")
+	cmd.Log.Debug().Msg("successfully sign")
 
 	b, err := util.MarshalJSONIndent(ptr)
 	if err != nil {
@@ -81,11 +81,11 @@ func (cmd *KeySignCommand) Run(pctx context.Context) error {
 }
 
 func (cmd *KeySignCommand) prepare(pctx context.Context) error {
-	if _, err := cmd.baseCommand.prepare(pctx); err != nil {
+	if _, err := cmd.BaseCommand.prepare(pctx); err != nil {
 		return err
 	}
 
-	switch key, err := base.DecodePrivatekeyFromString(cmd.KeyString, cmd.enc); {
+	switch key, err := base.DecodePrivatekeyFromString(cmd.KeyString, cmd.Encoder); {
 	case err != nil:
 		return err
 	default:
@@ -123,9 +123,9 @@ func (cmd *KeySignCommand) loadBody() (interface{}, error) {
 		_, _ = fmt.Fprintln(os.Stderr, string(i))
 	}
 
-	cmd.log.Debug().Str("raw_body", string(body)).Msg("read body")
+	cmd.Log.Debug().Str("raw_body", string(body)).Msg("read body")
 
-	elem, err := cmd.enc.Decode(body)
+	elem, err := cmd.Encoder.Decode(body)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (cmd *KeySignCommand) loadBody() (interface{}, error) {
 		return nil, err
 	}
 
-	cmd.log.Debug().Str("body_type", fmt.Sprintf("%T", elem)).Msg("body loaded")
+	cmd.Log.Debug().Str("body_type", fmt.Sprintf("%T", elem)).Msg("body loaded")
 
 	return ptr, nil
 }
@@ -154,7 +154,7 @@ func (cmd *KeySignCommand) updateToken(ptr interface{}) error {
 		}
 	}
 
-	cmd.log.Debug().Interface("body_token", token).Interface("new_token", []byte(cmd.Token)).Msg("tokens")
+	cmd.Log.Debug().Interface("body_token", token).Interface("new_token", []byte(cmd.Token)).Msg("tokens")
 
 	switch {
 	case len(cmd.Token) < 1:
@@ -167,7 +167,7 @@ func (cmd *KeySignCommand) updateToken(ptr interface{}) error {
 			return errors.Errorf("different token found")
 		}
 
-		cmd.log.Debug().Msg("same token given")
+		cmd.Log.Debug().Msg("same token given")
 	}
 
 	if i, ok := ptr.(base.TokenSetter); ok {
@@ -175,7 +175,7 @@ func (cmd *KeySignCommand) updateToken(ptr interface{}) error {
 			return err
 		}
 
-		cmd.log.Debug().Interface("new_token", token).Msg("token updated")
+		cmd.Log.Debug().Interface("new_token", token).Msg("token updated")
 	}
 
 	return nil
