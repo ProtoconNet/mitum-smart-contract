@@ -1,6 +1,6 @@
 module github.com/ProtoconNet/mitum-currency/v3
 
-go 1.19
+go 1.20
 
 require (
 	github.com/ProtoconNet/mitum2 v0.0.0-20230616144716-cbf8762b98c8
