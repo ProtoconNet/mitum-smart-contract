@@ -40,9 +40,9 @@ func DefaultRunPS() *ps.PS {
 			launch.PNameStartNetwork,
 			launch.PNameStates).
 		AddOK(PNameMongoDBsDataBase, ProcessDatabase, nil, PNameDigestDesign, launch.PNameStorage).
-		AddOK(PNameDigestDataBase, ProcessDigestDatabase, nil, PNameMongoDBsDataBase).
-		AddOK(PNameDigester, ProcessDigester, nil, PNameDigestDataBase).
-		AddOK(PNameDigest, ProcessDigestAPI, nil, PNameDigestDesign, PNameDigestDataBase, launch.PNameMemberlist).
+		//AddOK(PNameDigestDataBase, ProcessDigestDatabase, nil, PNameMongoDBsDataBase).
+		AddOK(PNameDigester, ProcessDigester, nil, PNameMongoDBsDataBase).
+		AddOK(PNameDigest, ProcessDigestAPI, nil, PNameDigestDesign, PNameMongoDBsDataBase, launch.PNameMemberlist).
 		AddOK(PNameDigestStart, ProcessStartDigestAPI, nil, PNameDigest).
 		AddOK(PNameStartDigester, ProcessStartDigester, nil, PNameDigestStart)
 

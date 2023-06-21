@@ -2,51 +2,119 @@ package cmds
 
 import (
 	"context"
-
+	"github.com/ProtoconNet/mitum-currency/v3/digest"
 	mongodbstorage "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
+	"github.com/ProtoconNet/mitum2/isaac"
 	isaacdatabase "github.com/ProtoconNet/mitum2/isaac/database"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/logging"
-
-	"github.com/ProtoconNet/mitum-currency/v3/digest"
+	"github.com/pkg/errors"
 )
 
-const ProcessNameDigestDatabase = "digest_database"
+//const ProcessNameDigestDatabase = "digest_database"
 
-func ProcessDigestDatabase(ctx context.Context) (context.Context, error) {
-	var design DigestDesign
-	if err := util.LoadFromContext(ctx, ContextValueDigestDesign, &design); err != nil {
+//func ProcessDigestDatabase(ctx context.Context) (context.Context, error) {
+//	var design DigestDesign
+//	if err := util.LoadFromContext(ctx, ContextValueDigestDesign, &design); err != nil {
+//		return ctx, err
+//	}
+//
+//	if (design == DigestDesign{}) {
+//		return ctx, nil
+//	}
+//
+//	var mst *isaacdatabase.Center
+//	if err := util.LoadFromContextOK(ctx, launch.CenterDatabaseContextKey, &mst); err != nil {
+//		return ctx, err
+//	}
+//
+//	dst, err := mongodbstorage.NewDatabaseFromURI(design.Database().URI().String(), encs)
+//	if err != nil {
+//		return ctx, err
+//	}
+//
+//	st, err := loadDigestDatabase(mst, dst, false)
+//	if err != nil {
+//		return ctx, err
+//	}
+//
+//	var log *logging.Logging
+//	if err := util.LoadFromContextOK(ctx, launch.LoggingContextKey, &log); err != nil {
+//		return ctx, err
+//	}
+//
+//	_ = st.SetLogging(log)
+//
+//	return context.WithValue(ctx, ContextValueDigestDatabase, st), nil
+//}
+
+func ProcessDatabase(ctx context.Context) (context.Context, error) {
+	var l DigestDesign
+	if err := util.LoadFromContext(ctx, ContextValueDigestDesign, &l); err != nil {
 		return ctx, err
 	}
 
-	if (design == DigestDesign{}) {
+	if (l == DigestDesign{}) {
 		return ctx, nil
 	}
+	conf := l.Database()
 
-	var mst *isaacdatabase.Center
-	if err := util.LoadFromContextOK(ctx, launch.CenterDatabaseContextKey, &mst); err != nil {
+	switch {
+	case conf.URI().Scheme == "mongodb", conf.URI().Scheme == "mongodb+srv":
+		return processMongodbDatabase(ctx, l)
+	default:
+		return ctx, errors.Errorf("unsupported database type, %q", conf.URI().Scheme)
+	}
+}
+
+func processMongodbDatabase(ctx context.Context, l DigestDesign) (context.Context, error) {
+	conf := l.Database()
+
+	/*
+		ca, err := cache.NewCacheFromURI(conf.Cache().String())
+		if err != nil {
+			return ctx, err
+		}
+	*/
+
+	var encs *encoder.Encoders
+	if err := util.LoadFromContext(ctx, launch.EncodersContextKey, &encs); err != nil {
 		return ctx, err
 	}
 
-	dst, err := mongodbstorage.NewDatabaseFromURI(design.Database().URI().String(), encs)
+	st, err := mongodbstorage.NewDatabaseFromURI(conf.URI().String(), encs)
 	if err != nil {
 		return ctx, err
 	}
 
-	st, err := loadDigestDatabase(mst, dst, false)
-	if err != nil {
+	if err := st.Initialize(); err != nil {
 		return ctx, err
 	}
 
+	var db isaac.Database
+	if err := util.LoadFromContextOK(ctx, launch.CenterDatabaseContextKey, &db); err != nil {
+		return ctx, err
+	}
+
+	mst, ok := db.(*isaacdatabase.Center)
+	if !ok {
+		return ctx, errors.Errorf("expected isaacdatabase.Center, not %T", db)
+	}
+
+	dst, err := loadDigestDatabase(mst, st, false)
+	if err != nil {
+		return ctx, err
+	}
 	var log *logging.Logging
 	if err := util.LoadFromContextOK(ctx, launch.LoggingContextKey, &log); err != nil {
 		return ctx, err
 	}
 
-	_ = st.SetLogging(log)
+	_ = dst.SetLogging(log)
 
-	return context.WithValue(ctx, ContextValueDigestDatabase, st), nil
+	return context.WithValue(ctx, ContextValueDigestDatabase, dst), nil
 }
 
 func loadDigestDatabase(mst *isaacdatabase.Center, st *mongodbstorage.Database, readonly bool) (*digest.Database, error) {
