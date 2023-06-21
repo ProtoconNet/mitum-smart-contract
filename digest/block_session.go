@@ -21,18 +21,19 @@ var bulkWriteLimit = 500
 
 type BlockSession struct {
 	sync.RWMutex
-	block           base.BlockMap
-	ops             []base.Operation
-	opstree         fixedtree.Tree
-	sts             []base.State
-	st              *Database
-	opsTreeNodes    map[string]base.OperationFixedtreeNode
-	blockModels     []mongo.WriteModel
-	operationModels []mongo.WriteModel
-	accountModels   []mongo.WriteModel
-	balanceModels   []mongo.WriteModel
-	currencyModels  []mongo.WriteModel
-	statesValue     *sync.Map
+	block              base.BlockMap
+	ops                []base.Operation
+	opstree            fixedtree.Tree
+	sts                []base.State
+	st                 *Database
+	opsTreeNodes       map[string]base.OperationFixedtreeNode
+	blockModels        []mongo.WriteModel
+	operationModels    []mongo.WriteModel
+	accountModels      []mongo.WriteModel
+	balanceModels      []mongo.WriteModel
+	currencyModels     []mongo.WriteModel
+	statesValue        *sync.Map
+	balanceAddressList []string
 }
 
 func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opstree fixedtree.Tree, sts []base.State) (*BlockSession, error) {
@@ -93,19 +94,32 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 		return err
 	}
 
+	if len(bs.operationModels) > 0 {
+
+	}
 	if err := bs.writeModels(ctx, defaultColNameOperation, bs.operationModels); err != nil {
 		return err
 	}
 
-	if err := bs.writeModels(ctx, defaultColNameCurrency, bs.currencyModels); err != nil {
-		return err
+	if len(bs.currencyModels) > 0 {
+		if err := bs.writeModels(ctx, defaultColNameCurrency, bs.currencyModels); err != nil {
+			return err
+		}
 	}
 
-	if err := bs.writeModels(ctx, defaultColNameAccount, bs.accountModels); err != nil {
-		return err
+	if len(bs.accountModels) > 0 {
+		if err := bs.writeModels(ctx, defaultColNameAccount, bs.accountModels); err != nil {
+			return err
+		}
 	}
 
-	return bs.writeModels(ctx, defaultColNameBalance, bs.balanceModels)
+	if len(bs.balanceModels) > 0 {
+		if err := bs.writeModels(ctx, defaultColNameBalance, bs.balanceModels); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (bs *BlockSession) Close() error {
@@ -218,11 +232,12 @@ func (bs *BlockSession) prepareAccounts() error {
 			}
 			accountModels = append(accountModels, j...)
 		case statecurrency.IsStateBalanceKey(st.Key()):
-			j, err := bs.handleBalanceState(st)
+			j, address, err := bs.handleBalanceState(st)
 			if err != nil {
 				return err
 			}
 			balanceModels = append(balanceModels, j...)
+			bs.balanceAddressList = append(bs.balanceAddressList, address)
 		default:
 			continue
 		}
@@ -230,7 +245,6 @@ func (bs *BlockSession) prepareAccounts() error {
 
 	bs.accountModels = accountModels
 	bs.balanceModels = balanceModels
-
 	return nil
 }
 
@@ -269,12 +283,12 @@ func (bs *BlockSession) handleAccountState(st base.State) ([]mongo.WriteModel, e
 	}
 }
 
-func (bs *BlockSession) handleBalanceState(st base.State) ([]mongo.WriteModel, error) {
-	doc, err := NewBalanceDoc(st, bs.st.database.Encoder())
+func (bs *BlockSession) handleBalanceState(st base.State) ([]mongo.WriteModel, string, error) {
+	doc, address, err := NewBalanceDoc(st, bs.st.database.Encoder())
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return []mongo.WriteModel{mongo.NewInsertOneModel().SetDocument(doc)}, nil
+	return []mongo.WriteModel{mongo.NewInsertOneModel().SetDocument(doc)}, address, nil
 }
 
 func (bs *BlockSession) handleCurrencyState(st base.State) ([]mongo.WriteModel, error) {

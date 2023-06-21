@@ -62,22 +62,22 @@ type BalanceDoc struct {
 }
 
 // NewBalanceDoc gets the State of Amount
-func NewBalanceDoc(st base.State, enc encoder.Encoder) (BalanceDoc, error) {
+func NewBalanceDoc(st base.State, enc encoder.Encoder) (BalanceDoc, string, error) {
 	am, err := currency.StateBalanceValue(st)
 	if err != nil {
-		return BalanceDoc{}, errors.Wrap(err, "BalanceDoc needs Amount state")
+		return BalanceDoc{}, "", errors.Wrap(err, "BalanceDoc needs Amount state")
 	}
 
 	b, err := mongodbstorage.NewBaseDoc(nil, st, enc)
 	if err != nil {
-		return BalanceDoc{}, err
+		return BalanceDoc{}, "", err
 	}
 
 	return BalanceDoc{
 		BaseDoc: b,
 		st:      st,
 		am:      am,
-	}, nil
+	}, st.Key()[:len(st.Key())-len(currency.StateKeyBalanceSuffix)-len(am.Currency())-1], nil
 }
 
 func (doc BalanceDoc) MarshalBSON() ([]byte, error) {
@@ -90,6 +90,7 @@ func (doc BalanceDoc) MarshalBSON() ([]byte, error) {
 	m["address"] = address
 	m["currency"] = doc.am.Currency().String()
 	m["height"] = doc.st.Height()
+	m["amount"] = doc.am.Big().String()
 
 	return bsonenc.Marshal(m)
 }

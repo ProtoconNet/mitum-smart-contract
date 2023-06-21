@@ -97,6 +97,10 @@ func stringOffsetQuery(offset string) string {
 	return fmt.Sprintf("offset=%s", offset)
 }
 
+func stringCurrencyQuery(currencyId string) string {
+	return fmt.Sprintf("currency=%s", currencyId)
+}
+
 func parseBoolQuery(s string) bool {
 	return s == "1"
 }

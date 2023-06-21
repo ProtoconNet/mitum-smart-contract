@@ -103,13 +103,15 @@ func (hd *Handlers) handleOperationsInGroup(offset string, reverse bool, l int64
 	}
 
 	var vas []Hal
-	switch l, e := hd.loadOperationsHALFromDatabase(filter, reverse, l); {
+	var opsCount int64
+	switch l, count, e := hd.loadOperationsHALFromDatabase(filter, reverse, l); {
 	case e != nil:
 		return nil, false, e
 	case len(l) < 1:
 		return nil, false, mitumutil.ErrNotFound.Errorf("operations not found")
 	default:
 		vas = l
+		opsCount = count
 	}
 
 	h, err := hd.combineURL(HandlerPathOperations)
@@ -120,6 +122,7 @@ func (hd *Handlers) handleOperationsInGroup(offset string, reverse bool, l int64
 	if next := nextOffsetOfOperations(h, vas, reverse); len(next) > 0 {
 		hal = hal.AddLink("next", NewHalLink(next, nil))
 	}
+	hal.AddExtras("total_operations", opsCount)
 
 	b, err := hd.enc.Marshal(hal)
 	return b, int64(len(vas)) == hd.itemsLimiter("operations"), err
@@ -187,13 +190,15 @@ func (hd *Handlers) handleOperationsByHeightInGroup(
 	}
 
 	var vas []Hal
-	switch l, e := hd.loadOperationsHALFromDatabase(filter, reverse, l); {
+	var opsCount int64
+	switch l, count, e := hd.loadOperationsHALFromDatabase(filter, reverse, l); {
 	case e != nil:
 		return nil, false, e
 	case len(l) < 1:
 		return nil, false, mitumutil.ErrNotFound.Errorf("operations not found")
 	default:
 		vas = l
+		opsCount = count
 	}
 
 	h, err := hd.combineURL(HandlerPathOperationsByHeight, "height", height.String())
@@ -204,6 +209,7 @@ func (hd *Handlers) handleOperationsByHeightInGroup(
 	if next := nextOffsetOfOperationsByHeight(h, vas, reverse); len(next) > 0 {
 		hal = hal.AddLink("next", NewHalLink(next, nil))
 	}
+	hal.AddExtras("total_operations", opsCount)
 
 	b, err := hd.enc.Marshal(hal)
 	return b, int64(len(vas)) == hd.itemsLimiter("operations"), err
@@ -378,7 +384,7 @@ func nextOffsetOfOperationsByHeight(baseSelf string, vas []Hal, reverse bool) st
 	return next
 }
 
-func (hd *Handlers) loadOperationsHALFromDatabase(filter bson.M, reverse bool, l int64) ([]Hal, error) {
+func (hd *Handlers) loadOperationsHALFromDatabase(filter bson.M, reverse bool, l int64) ([]Hal, int64, error) {
 	var limit int64
 	if l < 0 {
 		limit = hd.itemsLimiter("operations")
@@ -387,22 +393,23 @@ func (hd *Handlers) loadOperationsHALFromDatabase(filter bson.M, reverse bool, l
 	}
 
 	var vas []Hal
+	var opsCount int64
 	if err := hd.database.Operations(
 		filter, true, reverse, limit,
-		func(_ mitumutil.Hash, va OperationValue) (bool, error) {
+		func(_ mitumutil.Hash, va OperationValue, count int64) (bool, error) {
 			hal, err := hd.buildOperationHal(va)
 			if err != nil {
 				return false, err
 			}
 			vas = append(vas, hal)
-
+			opsCount = count
 			return true, nil
 		},
 	); err != nil {
-		return nil, err
+		return nil, opsCount, err
 	} else if len(vas) < 1 {
-		return nil, nil
+		return nil, opsCount, nil
 	}
 
-	return vas, nil
+	return vas, opsCount, nil
 }
