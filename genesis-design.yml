@@ -36,6 +36,6 @@ facts:
           new_account_min_balance: "1"
           feeer:
             _hint: mitum-currency-fixed-feeer-v0.0.1
-            receiver: 2E5qNuz9HsXydeTTdG1a3SZtj1iBWNUyVyfHYNcs4gSgmca
+            receiver: FQacpLf7kQQQQGhHv43pehSZn4mCjz1qViky5DG36ZPAmca
             amount: "1"
         aggregate: "1000000000000000000000000000"
