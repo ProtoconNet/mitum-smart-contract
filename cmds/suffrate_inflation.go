@@ -34,19 +34,19 @@ func (v *SuffrageInflationItemFlag) UnmarshalText(b []byte) error {
 
 	af := &AddressFlag{}
 	if err := af.UnmarshalText([]byte(a)); err != nil {
-		return util.ErrInvalid.Errorf("invalid inflation receiver address: %w", err)
+		return util.ErrInvalid.Errorf("invalid inflation receiver address: %v", err)
 	}
 
 	receiver, err := af.Encode(enc)
 	if err != nil {
-		return util.ErrInvalid.Errorf("invalid inflation receiver address: %w", err)
+		return util.ErrInvalid.Errorf("invalid inflation receiver address: %v", err)
 	}
 
 	v.receiver = receiver
 
 	cf := &CurrencyAmountFlag{}
 	if err := cf.UnmarshalText([]byte(c)); err != nil {
-		return util.ErrInvalid.Errorf("invalid inflation amount: %w", err)
+		return util.ErrInvalid.Errorf("invalid inflation amount: %v", err)
 	}
 	v.amount = types.NewAmount(cf.Big, cf.CID)
 

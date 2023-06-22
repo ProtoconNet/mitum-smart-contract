@@ -36,7 +36,7 @@ func (de CurrencyDesign) IsValid([]byte) error {
 		de.amount,
 		de.aggregate,
 	); err != nil {
-		return util.ErrInvalid.Errorf("invalid currency balance: %w", err)
+		return util.ErrInvalid.Errorf("invalid currency balance: %v", err)
 	}
 
 	switch {
@@ -48,12 +48,12 @@ func (de CurrencyDesign) IsValid([]byte) error {
 
 	if de.genesisAccount != nil {
 		if err := de.genesisAccount.IsValid(nil); err != nil {
-			return util.ErrInvalid.Errorf("invalid CurrencyDesign: %w", err)
+			return util.ErrInvalid.Errorf("invalid CurrencyDesign: %v", err)
 		}
 	}
 
 	if err := de.policy.IsValid(nil); err != nil {
-		return util.ErrInvalid.Errorf("invalid CurrencyPolicy: %w", err)
+		return util.ErrInvalid.Errorf("invalid CurrencyPolicy: %v", err)
 	}
 
 	return nil

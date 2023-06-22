@@ -109,7 +109,7 @@ func (fa FixedFeeer) IsValid([]byte) error {
 	}
 
 	if err := util.CheckIsValiders(nil, false, fa.receiver); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver for fixed feeer: %w", err)
+		return util.ErrInvalid.Errorf("invalid receiver for fixed feeer: %v", err)
 	}
 
 	if !fa.amount.OverNil() {
@@ -185,7 +185,7 @@ func (fa RatioFeeer) IsValid([]byte) error {
 	}
 
 	if err := util.CheckIsValiders(nil, false, fa.receiver); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver for ratio feeer: %w", err)
+		return util.ErrInvalid.Errorf("invalid receiver for ratio feeer: %v", err)
 	}
 
 	if fa.ratio < 0 || fa.ratio > 1 {

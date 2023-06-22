@@ -9,7 +9,6 @@ var (
 	PNameDigest           = ps.Name("digest")
 	PNameDigestStart      = ps.Name("digest_star")
 	PNameMongoDBsDataBase = ps.Name("mongodb_database")
-	PNameDigestDataBase   = ps.Name("digest_database")
 )
 
 func DefaultRunPS() *ps.PS {
@@ -40,7 +39,6 @@ func DefaultRunPS() *ps.PS {
 			launch.PNameStartNetwork,
 			launch.PNameStates).
 		AddOK(PNameMongoDBsDataBase, ProcessDatabase, nil, PNameDigestDesign, launch.PNameStorage).
-		//AddOK(PNameDigestDataBase, ProcessDigestDatabase, nil, PNameMongoDBsDataBase).
 		AddOK(PNameDigester, ProcessDigester, nil, PNameMongoDBsDataBase).
 		AddOK(PNameDigest, ProcessDigestAPI, nil, PNameDigestDesign, PNameMongoDBsDataBase, launch.PNameMemberlist).
 		AddOK(PNameDigestStart, ProcessStartDigestAPI, nil, PNameDigest).

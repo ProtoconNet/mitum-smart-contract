@@ -66,7 +66,7 @@ func (fact GenesisCurrenciesFact) IsValid(b []byte) error {
 	}
 
 	if err := util.CheckIsValiders(nil, false, fact.genesisNodeKey, fact.keys); err != nil {
-		return util.ErrInvalid.Errorf("invalid fact: %w", err)
+		return util.ErrInvalid.Errorf("invalid fact: %v", err)
 	}
 
 	founds := map[types.CurrencyID]struct{}{}

@@ -250,7 +250,7 @@ func (hd *Handlers) handleAccounts(w http.ResponseWriter, r *http.Request) {
 	var offsetAddress string
 	switch i, h, a, err := hd.parseAccountsQueries(r.URL.Query().Get("publickey"), offset); {
 	case err != nil:
-		HTTP2ProblemWithError(w, fmt.Errorf("invalue accounts query: %w", err), http.StatusBadRequest)
+		HTTP2ProblemWithError(w, fmt.Errorf("invalue accounts query: %v", err), http.StatusBadRequest)
 
 		return
 	default:

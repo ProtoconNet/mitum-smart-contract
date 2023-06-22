@@ -158,15 +158,15 @@ func (opp *WithdrawsProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(statecurrency.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %q: %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %q: %v", fact.sender, err), nil
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be ca withdraw sender, %q: %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be ca withdraw sender, %q: %v", fact.sender, err), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("invalid signing: %w", err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("invalid signing: %v", err), nil
 	}
 
 	for i := range fact.items {
@@ -181,7 +181,7 @@ func (opp *WithdrawsProcessor) PreProcess(
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess WithdrawsItem: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess WithdrawsItem: %v", err), nil
 		}
 
 		c.Close()
@@ -201,11 +201,11 @@ func (opp *WithdrawsProcessor) Process( // nolint:dupl
 
 	feeReceiveBalSts, required, err := opp.calculateItemsFee(op, getStateFunc)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %w", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %v", err), nil
 	}
 	senderBalSts, err := currency.CheckEnoughBalance(fact.sender, required, getStateFunc)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to check enough balance: %w", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check enough balance: %v", err), nil
 	} else {
 		opp.required = required
 	}
@@ -223,7 +223,7 @@ func (opp *WithdrawsProcessor) Process( // nolint:dupl
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess WithdrawsItem: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess WithdrawsItem: %v", err), nil
 		}
 
 		ns[i] = c
@@ -233,7 +233,7 @@ func (opp *WithdrawsProcessor) Process( // nolint:dupl
 	for i := range ns {
 		s, err := ns[i].Process(ctx, op, getStateFunc)
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("failed to process WithdrawsItem: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to process WithdrawsItem: %v", err), nil
 		}
 		stateMergeValues = append(stateMergeValues, s...)
 

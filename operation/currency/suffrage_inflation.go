@@ -62,7 +62,7 @@ func (fact SuffrageInflationFact) IsValid(b []byte) error {
 	for i := range fact.items {
 		item := fact.items[i]
 		if err := item.IsValid(nil); err != nil {
-			return util.ErrInvalid.Errorf("invalid SuffrageInflationItem: %w", err)
+			return util.ErrInvalid.Errorf("invalid SuffrageInflationItem: %v", err)
 		}
 
 		k := item.receiver.String() + "-" + item.amount.Currency().String()

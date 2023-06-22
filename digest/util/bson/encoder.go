@@ -125,7 +125,7 @@ func (enc *Encoder) DecodeWithFixedHintType(s string, size int) (interface{}, er
 
 	e := util.StringError("failed to decode with fixed hint type")
 	if size < 1 {
-		return nil, e.Errorf("size < 1", nil)
+		return nil, e.Errorf("size < 1")
 	}
 
 	i, found := enc.poolGet(s)

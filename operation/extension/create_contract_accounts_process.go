@@ -209,15 +209,15 @@ func (opp *CreateContractAccountsProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(currencystate.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %q: %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %q: %v", fact.sender, err), nil
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be create-contract-account sender, %q: %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be create-contract-account sender, %q: %v", fact.sender, err), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("invalid signing: %w", err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("invalid signing: %v", err), nil
 	}
 
 	for i := range fact.items {
@@ -231,7 +231,7 @@ func (opp *CreateContractAccountsProcessor) PreProcess(
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateContractAccountsItem: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateContractAccountsItem: %v", err), nil
 		}
 
 		c.Close()
@@ -256,9 +256,9 @@ func (opp *CreateContractAccountsProcessor) Process( // nolint:dupl
 	)
 
 	if feeReceiveBalSts, required, err = opp.calculateItemsFee(op, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %w", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %v", err), nil
 	} else if senderBalSts, err = currency.CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %s : %w", fact.sender, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %s : %v", fact.sender, err), nil
 	} else {
 		opp.required = required
 	}
@@ -275,7 +275,7 @@ func (opp *CreateContractAccountsProcessor) Process( // nolint:dupl
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateContractAccountsItem: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateContractAccountsItem: %v", err), nil
 		}
 
 		ns[i] = c
@@ -286,7 +286,7 @@ func (opp *CreateContractAccountsProcessor) Process( // nolint:dupl
 	for i := range ns {
 		s, err := ns[i].Process(ctx, op, getStateFunc)
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("failed to process CreateContractAccountsItem: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to process CreateContractAccountsItem: %v", err), nil
 		}
 		stateMergeValues = append(stateMergeValues, s...)
 	}

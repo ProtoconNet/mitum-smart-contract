@@ -13,43 +13,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-//const ProcessNameDigestDatabase = "digest_database"
-
-//func ProcessDigestDatabase(ctx context.Context) (context.Context, error) {
-//	var design DigestDesign
-//	if err := util.LoadFromContext(ctx, ContextValueDigestDesign, &design); err != nil {
-//		return ctx, err
-//	}
-//
-//	if (design == DigestDesign{}) {
-//		return ctx, nil
-//	}
-//
-//	var mst *isaacdatabase.Center
-//	if err := util.LoadFromContextOK(ctx, launch.CenterDatabaseContextKey, &mst); err != nil {
-//		return ctx, err
-//	}
-//
-//	dst, err := mongodbstorage.NewDatabaseFromURI(design.Database().URI().String(), encs)
-//	if err != nil {
-//		return ctx, err
-//	}
-//
-//	st, err := loadDigestDatabase(mst, dst, false)
-//	if err != nil {
-//		return ctx, err
-//	}
-//
-//	var log *logging.Logging
-//	if err := util.LoadFromContextOK(ctx, launch.LoggingContextKey, &log); err != nil {
-//		return ctx, err
-//	}
-//
-//	_ = st.SetLogging(log)
-//
-//	return context.WithValue(ctx, ContextValueDigestDatabase, st), nil
-//}
-
 func ProcessDatabase(ctx context.Context) (context.Context, error) {
 	var l DigestDesign
 	if err := util.LoadFromContext(ctx, ContextValueDigestDesign, &l); err != nil {

@@ -35,7 +35,7 @@ func NewAddressFromKeys(keys AccountKeys) (Address, error) {
 
 func (ca Address) IsValid([]byte) error {
 	if err := ca.BaseStringAddress.IsValid(nil); err != nil {
-		return util.ErrInvalid.Errorf("invalid mitum currency address: %w", err)
+		return util.ErrInvalid.Errorf("invalid mitum currency address: %v", err)
 	}
 
 	return nil
@@ -74,7 +74,7 @@ func NewEthAddressFromKeys(keys AccountKeys) (EthAddress, error) {
 
 func (ca EthAddress) IsValid([]byte) error {
 	if err := ca.BaseStringAddress.IsValid(nil); err != nil {
-		return util.ErrInvalid.Errorf("invalid mitum currency address: %w", err)
+		return util.ErrInvalid.Errorf("invalid mitum currency address: %v", err)
 	}
 
 	return nil

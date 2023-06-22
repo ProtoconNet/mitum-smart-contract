@@ -44,7 +44,7 @@ func (fact CurrencyRegisterFact) IsValid(b []byte) error {
 	}
 
 	if err := util.CheckIsValiders(nil, false, fact.currency); err != nil {
-		return util.ErrInvalid.Errorf("invalid fact: %w", err)
+		return util.ErrInvalid.Errorf("invalid fact: %v", err)
 	}
 
 	if fact.currency.GenesisAccount() == nil {

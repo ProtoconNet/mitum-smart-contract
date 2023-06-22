@@ -154,15 +154,15 @@ func (opp *TransfersProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(currency.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("failed to check existence of sender %v : %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("failed to check existence of sender %v : %v", fact.sender, err), nil
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot transfer amounts, %q: %w", fact.Sender(), err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot transfer amounts, %q: %v", fact.Sender(), err), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("invalid signing :  %w", err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("invalid signing :  %v", err), nil
 	}
 
 	for i := range fact.items {
@@ -176,7 +176,7 @@ func (opp *TransfersProcessor) PreProcess(
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess transfer item: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess transfer item: %v", err), nil
 		}
 		c.Close()
 	}
@@ -200,9 +200,9 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 	)
 
 	if feeReceiveBalSts, required, err = opp.calculateItemsFee(op, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %w", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %v", err), nil
 	} else if senderBalSts, err = CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to check enough balance: %w", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check enough balance: %v", err), nil
 	} else {
 		opp.required = required
 	}
@@ -219,7 +219,7 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess transfer item: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess transfer item: %v", err), nil
 		}
 
 		ns[i] = c
@@ -230,7 +230,7 @@ func (opp *TransfersProcessor) Process( // nolint:dupl
 	for i := range opp.ns {
 		s, err := opp.ns[i].Process(ctx, op, getStateFunc)
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("failed to process transfer item: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to process transfer item: %v", err), nil
 		}
 		stmvs = append(stmvs, s...)
 	}
