@@ -9,18 +9,15 @@
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/spikeekips/mitum-currency.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/spikeekips/mitum-currency/alerts/)
 
 *mitum-currency* is the cryptocurrency case of mitum model, based on
-[*mitum*](https://github.com/spikeekips/mitum). This project was started for
+[*mitum*](https://github.com/ProtoconNet/mitum2). This project was started for
 creating the first model case of *mitum*, but it can be used for simple
 cryptocurrency blockchain network (at your own risk).
-
-~~For more details, see the [documentation](https://mitum-currency-doc.readthedocs.io/en/latest/?badge=master).~~
 
 #### Features,
 
 * account: account address and keypair is not same.
 * simple transaction: creating account, transfer balance.
-* supports multiple keypairs: *btc*, *ethereum*, *stellar* keypairs.
-* *mongodb*: as mitum does, *mongodb* is the primary storage.
+* supports multiple keypairs: *btc*, *ethereum*, keypairs.
 * supports multiple currencies
 
 #### Installation
@@ -28,9 +25,9 @@ cryptocurrency blockchain network (at your own risk).
 > NOTE: at this time, *mitum* and *mitum-currency* is actively developed, so
 before building mitum-currency, you will be better with building the latest
 mitum source.
-> `$ git clone https://github.com/spikeekips/mitum`
+> `$ git clone https://github.com/ProtoconNet/mitum2`
 >
-> and then, add `replace github.com/spikeekips/mitum => <your mitum source directory>` to `go.mod` of *mitum-currency*.
+> and then, add `replace github.com/ProtoconNet/mitum2 => <your mitum source directory>` to `go.mod` of *mitum-currency*.
 
 Build it from source
 ```sh
@@ -45,8 +42,8 @@ At the first time, you can simply start node with example configuration.
 > To start, you need to run *mongodb* on localhost(port, 27017).
 
 ```
-$ ./mc node init ./standalone.yml
-$ ./mc node run ./standalone.yml
+$ ./mc init --design=./standalone.yml genesis-design.yml
+$ ./mc run ./standalone.yml --dev.allow-consensus
 ```
 
 > Please check `$ ./mc --help` for detailed usage.
