@@ -52,6 +52,17 @@ func (ks BaseAccountKeys) MarshalBSON() ([]byte, error) {
 	)
 }
 
+func (ks ContractAccountKeys) MarshalBSON() ([]byte, error) {
+	return bsonenc.Marshal(
+		bson.M{
+			"_hint":     ks.Hint().String(),
+			"hash":      ks.Hash().String(),
+			"keys":      ks.keys,
+			"threshold": ks.threshold,
+		},
+	)
+}
+
 type KeysBSONUnmarshaler struct {
 	Hint      string   `bson:"_hint"`
 	Hash      string   `bson:"hash"`
@@ -61,6 +72,43 @@ type KeysBSONUnmarshaler struct {
 
 func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringError("failed to decode bson of BaseAccountKeys")
+
+	var uks KeysBSONUnmarshaler
+	if err := bson.Unmarshal(b, &uks); err != nil {
+		return e.Wrap(err)
+	}
+
+	ht, err := hint.ParseHint(uks.Hint)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
+	ks.BaseHinter = hint.NewBaseHinter(ht)
+
+	hks, err := enc.DecodeSlice(uks.Keys)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
+	keys := make([]AccountKey, len(hks))
+	for i := range hks {
+		j, ok := hks[i].(BaseAccountKey)
+		if !ok {
+			return errors.Errorf("expected BaseAccountKey, not %T", hks[i])
+		}
+
+		keys[i] = j
+	}
+	ks.keys = keys
+	ks.threshold = uks.Threshold
+
+	ks.h = valuehash.NewBytesFromString(uks.Hash)
+
+	return nil
+}
+
+func (ks *ContractAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringError("failed to decode bson of ContractAccountKeys")
 
 	var uks KeysBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uks); err != nil {

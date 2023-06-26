@@ -57,6 +57,15 @@ func (ks BaseAccountKeys) MarshalJSON() ([]byte, error) {
 	})
 }
 
+func (ks ContractAccountKeys) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(KeysJSONMarshaler{
+		BaseHinter: ks.BaseHinter,
+		Hash:       ks.h,
+		Keys:       ks.keys,
+		Threshold:  ks.threshold,
+	})
+}
+
 type KeysJSONUnMarshaler struct {
 	Hint      hint.Hint             `json:"_hint"`
 	Hash      valuehash.HashDecoder `json:"hash"`
@@ -65,6 +74,17 @@ type KeysJSONUnMarshaler struct {
 }
 
 func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+	e := util.StringError("failed to decode json of BaseAccountKeys")
+
+	var uks KeysJSONUnMarshaler
+	if err := enc.Unmarshal(b, &uks); err != nil {
+		return e.Wrap(err)
+	}
+
+	return ks.unpack(enc, uks.Hint, uks.Hash, uks.Keys, uks.Threshold)
+}
+
+func (ks *ContractAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	e := util.StringError("failed to decode json of BaseAccountKeys")
 
 	var uks KeysJSONUnMarshaler

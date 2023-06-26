@@ -229,6 +229,7 @@ func (opp *CreateContractAccountsProcessor) PreProcess(
 
 		c.h = op.Hash()
 		c.item = fact.items[i]
+		c.sender = fact.sender
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
 			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateContractAccountsItem: %v", err), nil
@@ -273,6 +274,7 @@ func (opp *CreateContractAccountsProcessor) Process( // nolint:dupl
 
 		c.h = op.Hash()
 		c.item = fact.items[i]
+		c.sender = fact.sender
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
 			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateContractAccountsItem: %v", err), nil
