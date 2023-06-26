@@ -14,6 +14,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/ProtoconNet/mitum2/util/ps"
 	"github.com/arl/statsviz"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"net"
@@ -343,7 +344,14 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return ctx, err
 	}
 
-	handlers, err := cmd.setDigestHandlers(ctx, isaacparams, cache)
+	var dnt *digest.HTTP2Server
+	if err := util.LoadFromContext(ctx, ContextValueDigestNetwork, &dnt); err != nil {
+		return ctx, err
+	}
+
+	router := dnt.Router()
+
+	handlers, err := cmd.setDigestHandlers(ctx, isaacparams, cache, router)
 	if err != nil {
 		return ctx, err
 	}
@@ -352,11 +360,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return ctx, err
 	}
 
-	var dnt *digest.HTTP2Server
-	if err := util.LoadFromContext(ctx, ContextValueDigestNetwork, &dnt); err != nil {
-		return ctx, err
-	}
-	dnt.SetRouter(handlers.Router())
+	//dnt.SetRouter(handlers.Router())
 
 	return ctx, nil
 }
@@ -376,13 +380,14 @@ func (cmd *RunCommand) setDigestHandlers(
 	ctx context.Context,
 	params *isaac.Params,
 	cache digest.Cache,
+	router *mux.Router,
 ) (*digest.Handlers, error) {
 	var st *digest.Database
 	if err := util.LoadFromContext(ctx, ContextValueDigestDatabase, &st); err != nil {
 		return nil, err
 	}
 
-	handlers := digest.NewHandlers(ctx, params.NetworkID(), encs, enc, st, cache)
+	handlers := digest.NewHandlers(ctx, params.NetworkID(), encs, enc, st, cache, router)
 
 	h, err := cmd.setDigestNetworkClient(ctx, params, handlers)
 	if err != nil {

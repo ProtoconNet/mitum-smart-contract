@@ -19,6 +19,12 @@ import (
 
 var bulkWriteLimit = 500
 
+type BlockSessioner interface {
+	Prepare() error
+	Commit(context.Context) error
+	Close() error
+}
+
 type BlockSession struct {
 	sync.RWMutex
 	block              base.BlockMap

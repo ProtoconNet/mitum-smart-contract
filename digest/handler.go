@@ -49,31 +49,9 @@ var (
 	HandlerPathSend                       = `/builder/send`
 )
 
-var RateLimitHandlerMap = map[string]string{
-	"node-info":                       HandlerPathNodeInfo,
-	"currencies":                      HandlerPathCurrencies,
-	"currency":                        HandlerPathCurrency,
-	"block-manifests":                 HandlerPathManifests,
-	"block-operations":                HandlerPathOperations,
-	"block-operation":                 HandlerPathOperation,
-	"block-by-height":                 HandlerPathBlockByHeight,
-	"block-by-hash":                   HandlerPathBlockByHash,
-	"block-operations-by-height":      HandlerPathOperationsByHeight,
-	"block-manifest-by-height":        HandlerPathManifestByHeight,
-	"block-manifest-by-hash":          HandlerPathManifestByHash,
-	"account":                         HandlerPathAccount,
-	"account-operations":              HandlerPathAccountOperations,
-	"accounts":                        HandlerPathAccounts,
-	"builder-operation-fact-template": HandlerPathOperationBuildFactTemplate,
-	"builder-operation-fact":          HandlerPathOperationBuildFact,
-	"builder-operation-sign":          HandlerPathOperationBuildSign,
-	"builder-operation":               HandlerPathOperationBuild,
-	"builder-send":                    HandlerPathSend,
-}
-
 var (
 	UnknownProblem     = NewProblem(DefaultProblemType, "unknown problem occurred")
-	unknownProblemJSON []byte
+	UnknownProblemJSON []byte
 )
 
 var GlobalItemsLimit int64 = 10
@@ -82,7 +60,7 @@ func init() {
 	if b, err := Marshal(UnknownProblem); err != nil {
 		panic(err)
 	} else {
-		unknownProblemJSON = b
+		UnknownProblemJSON = b
 	}
 }
 
@@ -110,6 +88,7 @@ func NewHandlers(
 	enc encoder.Encoder,
 	st *Database,
 	cache Cache,
+	router *mux.Router,
 ) *Handlers {
 	var log *logging.Logging
 	if err := util.LoadFromContextOK(ctx, launch.LoggingContextKey, &log); err != nil {
@@ -123,7 +102,7 @@ func NewHandlers(
 		enc:             enc,
 		database:        st,
 		cache:           cache,
-		router:          mux.NewRouter(),
+		router:          router,
 		routes:          map[string]*mux.Route{},
 		itemsLimiter:    DefaultItemsLimiter,
 		rg:              &singleflight.Group{},

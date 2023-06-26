@@ -10,6 +10,7 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	isaacdatabase "github.com/ProtoconNet/mitum2/isaac/database"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -95,6 +96,18 @@ func (st *Database) Readonly() bool {
 
 func (st *Database) Close() error {
 	return st.database.Close()
+}
+
+func (st *Database) DatabaseClient() *mongodbstorage.Client {
+	return st.database.Client()
+}
+
+func (st *Database) DatabaseEncoder() encoder.Encoder {
+	return st.database.Encoder()
+}
+
+func (st *Database) DatabaseEncoders() *encoder.Encoders {
+	return st.database.Encoders()
 }
 
 func (st *Database) Initialize() error {
@@ -944,6 +957,34 @@ func (st *Database) filterAccountByPublickey(
 	}
 
 	return stopped || called == limit, nil
+}
+
+func (st *Database) CleanByHeightColName(
+	ctx context.Context,
+	height base.Height,
+	colName, key, value string,
+) error {
+	if height <= base.GenesisHeight {
+		return st.clean(ctx)
+	}
+
+	opts := options.BulkWrite().SetOrdered(true)
+	removeByHeight := mongo.NewDeleteManyModel().SetFilter(
+		bson.M{key: value, "height": bson.M{"$lte": height}},
+	)
+
+	res, err := st.database.Client().Collection(colName).BulkWrite(
+		ctx,
+		[]mongo.WriteModel{removeByHeight},
+		opts,
+	)
+	if err != nil {
+		return err
+	}
+
+	st.Log().Debug().Str("collection", colName).Interface("result", res).Msg("clean collection by height")
+
+	return st.setLastBlock(height - 1)
 }
 
 func (st *Database) cleanBalanceByHeightAndAccount(ctx context.Context, height base.Height, address string) error {

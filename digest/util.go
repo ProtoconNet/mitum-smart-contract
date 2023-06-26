@@ -161,7 +161,7 @@ func HTTP2WritePoblem(w http.ResponseWriter, pr Problem, status int) {
 
 	var output []byte
 	if b, err := Marshal(pr.title); err != nil {
-		output = unknownProblemJSON
+		output = UnknownProblemJSON
 	} else {
 		output = b
 	}

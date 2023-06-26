@@ -17,9 +17,8 @@ import (
 )
 
 const (
-	PNameDigester            = ps.Name("digester")
-	PNameStartDigester       = ps.Name("start_digester")
-	HookNameDigesterFollowUp = ps.Name("followup_digester")
+	PNameDigester      = ps.Name("digester")
+	PNameStartDigester = ps.Name("start_digester")
 )
 
 func ProcessDigester(ctx context.Context) (context.Context, error) {
