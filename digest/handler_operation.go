@@ -59,11 +59,11 @@ func (hd *Handlers) handleOperationInGroup(h mitumutil.Hash) ([]byte, error) {
 }
 
 func (hd *Handlers) handleOperations(w http.ResponseWriter, r *http.Request) {
-	limit := parseLimitQuery(r.URL.Query().Get("limit"))
-	offset := parseStringQuery(r.URL.Query().Get("offset"))
-	reverse := parseBoolQuery(r.URL.Query().Get("reverse"))
+	limit := ParseLimitQuery(r.URL.Query().Get("limit"))
+	offset := ParseStringQuery(r.URL.Query().Get("offset"))
+	reverse := ParseBoolQuery(r.URL.Query().Get("reverse"))
 
-	cachekey := CacheKey(r.URL.Path, stringOffsetQuery(offset), stringBoolQuery("reverse", reverse))
+	cachekey := CacheKey(r.URL.Path, StringOffsetQuery(offset), StringBoolQuery("reverse", reverse))
 	if err := LoadFromCache(hd.cache, cachekey, w); err == nil {
 		return
 	}
@@ -129,11 +129,11 @@ func (hd *Handlers) handleOperationsInGroup(offset string, reverse bool, l int64
 }
 
 func (hd *Handlers) handleOperationsByHeight(w http.ResponseWriter, r *http.Request) {
-	limit := parseLimitQuery(r.URL.Query().Get("limit"))
-	offset := parseStringQuery(r.URL.Query().Get("offset"))
-	reverse := parseBoolQuery(r.URL.Query().Get("reverse"))
+	limit := ParseLimitQuery(r.URL.Query().Get("limit"))
+	offset := ParseStringQuery(r.URL.Query().Get("offset"))
+	reverse := ParseBoolQuery(r.URL.Query().Get("reverse"))
 
-	cachekey := CacheKey(r.URL.Path, stringOffsetQuery(offset), stringBoolQuery("reverse", reverse))
+	cachekey := CacheKey(r.URL.Path, StringOffsetQuery(offset), StringBoolQuery("reverse", reverse))
 	if err := LoadFromCache(hd.cache, cachekey, w); err == nil {
 		return
 	}
@@ -270,14 +270,14 @@ func (*Handlers) buildOperationsHal(baseSelf string, vas []Hal, offset string, r
 
 	self := baseSelf
 	if len(offset) > 0 {
-		self = addQueryValue(baseSelf, stringOffsetQuery(offset))
+		self = AddQueryValue(baseSelf, StringOffsetQuery(offset))
 	}
 	if reverse {
-		self = addQueryValue(self, stringBoolQuery("reverse", reverse))
+		self = AddQueryValue(self, StringBoolQuery("reverse", reverse))
 	}
 	hal = NewBaseHal(vas, NewHalLink(self, nil))
 
-	hal = hal.AddLink("reverse", NewHalLink(addQueryValue(baseSelf, stringBoolQuery("reverse", !reverse)), nil))
+	hal = hal.AddLink("reverse", NewHalLink(AddQueryValue(baseSelf, StringBoolQuery("reverse", !reverse)), nil))
 
 	return hal
 }
@@ -351,11 +351,11 @@ func nextOffsetOfOperations(baseSelf string, vas []Hal, reverse bool) string {
 
 	next := baseSelf
 	if len(nextoffset) > 0 {
-		next = addQueryValue(next, stringOffsetQuery(nextoffset))
+		next = AddQueryValue(next, StringOffsetQuery(nextoffset))
 	}
 
 	if reverse {
-		next = addQueryValue(next, stringBoolQuery("reverse", reverse))
+		next = AddQueryValue(next, StringBoolQuery("reverse", reverse))
 	}
 
 	return next
@@ -374,11 +374,11 @@ func nextOffsetOfOperationsByHeight(baseSelf string, vas []Hal, reverse bool) st
 
 	next := baseSelf
 	if len(nextoffset) > 0 {
-		next = addQueryValue(next, stringOffsetQuery(nextoffset))
+		next = AddQueryValue(next, StringOffsetQuery(nextoffset))
 	}
 
 	if reverse {
-		next = addQueryValue(next, stringBoolQuery("reverse", reverse))
+		next = AddQueryValue(next, StringBoolQuery("reverse", reverse))
 	}
 
 	return next

@@ -23,14 +23,6 @@ var JSON = jsoniter.Config{
 	ValidateJsonRawMessage: false,
 }.Froze()
 
-func Marshal(v interface{}) ([]byte, error) {
-	return JSON.Marshal(v)
-}
-
-func Unmarshal(b []byte, v interface{}) error {
-	return JSON.Unmarshal(b, v)
-}
-
 func IsAccountState(st base.State) (types.Account, bool, error) {
 	if !currency.IsStateAccountKey(st.Key()) {
 		return types.Account{}, false, nil
@@ -81,7 +73,7 @@ func parseHashFromPath(s string) (util.Hash, error) {
 	return h, nil
 }
 
-func parseLimitQuery(s string) int64 {
+func ParseLimitQuery(s string) int64 {
 	n, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return int64(-1)
@@ -89,11 +81,11 @@ func parseLimitQuery(s string) int64 {
 	return n
 }
 
-func parseStringQuery(s string) string {
+func ParseStringQuery(s string) string {
 	return strings.TrimSpace(s)
 }
 
-func stringOffsetQuery(offset string) string {
+func StringOffsetQuery(offset string) string {
 	return fmt.Sprintf("offset=%s", offset)
 }
 
@@ -101,11 +93,11 @@ func stringCurrencyQuery(currencyId string) string {
 	return fmt.Sprintf("currency=%s", currencyId)
 }
 
-func parseBoolQuery(s string) bool {
+func ParseBoolQuery(s string) bool {
 	return s == "1"
 }
 
-func stringBoolQuery(key string, v bool) string { // nolint:unparam
+func StringBoolQuery(key string, v bool) string { // nolint:unparam
 	if v {
 		return fmt.Sprintf("%s=1", key)
 	}
@@ -113,7 +105,7 @@ func stringBoolQuery(key string, v bool) string { // nolint:unparam
 	return ""
 }
 
-func addQueryValue(b, s string) string {
+func AddQueryValue(b, s string) string {
 	if len(s) < 1 {
 		return b
 	}
@@ -160,7 +152,7 @@ func HTTP2WritePoblem(w http.ResponseWriter, pr Problem, status int) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
 	var output []byte
-	if b, err := Marshal(pr.title); err != nil {
+	if b, err := JSON.Marshal(pr.title); err != nil {
 		output = UnknownProblemJSON
 	} else {
 		output = b

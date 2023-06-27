@@ -135,11 +135,11 @@ func (hd *Handlers) buildManifestHal(manifest base.Manifest, ops uint64) (Hal, e
 }
 
 func (hd *Handlers) handleManifests(w http.ResponseWriter, r *http.Request) {
-	limit := parseLimitQuery(r.URL.Query().Get("limit"))
-	offset := parseStringQuery(r.URL.Query().Get("offset"))
-	reverse := parseBoolQuery(r.URL.Query().Get("reverse"))
+	limit := ParseLimitQuery(r.URL.Query().Get("limit"))
+	offset := ParseStringQuery(r.URL.Query().Get("offset"))
+	reverse := ParseBoolQuery(r.URL.Query().Get("reverse"))
 
-	cachekey := CacheKey(r.URL.Path, stringOffsetQuery(offset), stringBoolQuery("reverse", reverse))
+	cachekey := CacheKey(r.URL.Path, StringOffsetQuery(offset), StringBoolQuery("reverse", reverse))
 	if err := LoadFromCache(hd.cache, cachekey, w); err == nil {
 		return
 	}
@@ -233,10 +233,10 @@ func (hd *Handlers) buildManifestsHAL(vas []Hal, offset string, reverse bool) (H
 	}
 	self := baseSelf
 	if len(offset) > 0 {
-		self = addQueryValue(baseSelf, stringOffsetQuery(offset))
+		self = AddQueryValue(baseSelf, StringOffsetQuery(offset))
 	}
 	if reverse {
-		self = addQueryValue(baseSelf, stringBoolQuery("reverse", reverse))
+		self = AddQueryValue(baseSelf, StringBoolQuery("reverse", reverse))
 	}
 	var hal Hal
 	hal = NewBaseHal(vas, NewHalLink(self, nil))
@@ -250,17 +250,17 @@ func (hd *Handlers) buildManifestsHAL(vas []Hal, offset string, reverse bool) (H
 	if len(nextoffset) > 0 {
 		next := baseSelf
 		if len(nextoffset) > 0 {
-			next = addQueryValue(next, stringOffsetQuery(nextoffset))
+			next = AddQueryValue(next, StringOffsetQuery(nextoffset))
 		}
 
 		if reverse {
-			next = addQueryValue(next, stringBoolQuery("reverse", reverse))
+			next = AddQueryValue(next, StringBoolQuery("reverse", reverse))
 		}
 
 		hal = hal.AddLink("next", NewHalLink(next, nil))
 	}
 
-	hal = hal.AddLink("reverse", NewHalLink(addQueryValue(baseSelf, stringBoolQuery("reverse", !reverse)), nil))
+	hal = hal.AddLink("reverse", NewHalLink(AddQueryValue(baseSelf, StringBoolQuery("reverse", !reverse)), nil))
 
 	return hal, nil
 }

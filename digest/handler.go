@@ -57,7 +57,7 @@ var (
 var GlobalItemsLimit int64 = 10
 
 func init() {
-	if b, err := Marshal(UnknownProblem); err != nil {
+	if b, err := JSON.Marshal(UnknownProblem); err != nil {
 		panic(err)
 	} else {
 		UnknownProblemJSON = b

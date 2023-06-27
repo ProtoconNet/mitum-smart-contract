@@ -113,11 +113,11 @@ func (hd *Handlers) handleAccountOperations(w http.ResponseWriter, r *http.Reque
 		address = a
 	}
 
-	limit := parseLimitQuery(r.URL.Query().Get("limit"))
-	offset := parseStringQuery(r.URL.Query().Get("offset"))
-	reverse := parseBoolQuery(r.URL.Query().Get("reverse"))
+	limit := ParseLimitQuery(r.URL.Query().Get("limit"))
+	offset := ParseStringQuery(r.URL.Query().Get("offset"))
+	reverse := ParseBoolQuery(r.URL.Query().Get("reverse"))
 
-	cachekey := CacheKey(r.URL.Path, stringOffsetQuery(offset), stringBoolQuery("reverse", reverse))
+	cachekey := CacheKey(r.URL.Path, StringOffsetQuery(offset), StringBoolQuery("reverse", reverse))
 	if err := LoadFromCache(hd.cache, cachekey, w); err == nil {
 		return
 	}
@@ -203,10 +203,10 @@ func (hd *Handlers) buildAccountOperationsHal(
 
 	self := baseSelf
 	if len(offset) > 0 {
-		self = addQueryValue(baseSelf, stringOffsetQuery(offset))
+		self = AddQueryValue(baseSelf, StringOffsetQuery(offset))
 	}
 	if reverse {
-		self = addQueryValue(baseSelf, stringBoolQuery("reverse", reverse))
+		self = AddQueryValue(baseSelf, StringBoolQuery("reverse", reverse))
 	}
 
 	var hal Hal
@@ -227,23 +227,23 @@ func (hd *Handlers) buildAccountOperationsHal(
 	if len(nextoffset) > 0 {
 		next := baseSelf
 		if len(nextoffset) > 0 {
-			next = addQueryValue(next, stringOffsetQuery(nextoffset))
+			next = AddQueryValue(next, StringOffsetQuery(nextoffset))
 		}
 
 		if reverse {
-			next = addQueryValue(next, stringBoolQuery("reverse", reverse))
+			next = AddQueryValue(next, StringBoolQuery("reverse", reverse))
 		}
 
 		hal = hal.AddLink("next", NewHalLink(next, nil))
 	}
 
-	hal = hal.AddLink("reverse", NewHalLink(addQueryValue(baseSelf, stringBoolQuery("reverse", !reverse)), nil))
+	hal = hal.AddLink("reverse", NewHalLink(AddQueryValue(baseSelf, StringBoolQuery("reverse", !reverse)), nil))
 
 	return hal, nil
 }
 
 func (hd *Handlers) handleAccounts(w http.ResponseWriter, r *http.Request) {
-	offset := parseStringQuery(r.URL.Query().Get("offset"))
+	offset := ParseStringQuery(r.URL.Query().Get("offset"))
 
 	var pub base.Publickey
 	offsetHeight := base.NilHeight
@@ -337,7 +337,7 @@ func (*Handlers) buildAccountsHal(
 
 	self := baseSelf
 	if len(offset) > 0 {
-		self = addQueryValue(baseSelf, stringOffsetQuery(offset))
+		self = AddQueryValue(baseSelf, StringOffsetQuery(offset))
 	}
 
 	var hal Hal
@@ -351,7 +351,7 @@ func (*Handlers) buildAccountsHal(
 	if len(nextoffset) > 0 {
 		next := baseSelf
 		if len(nextoffset) > 0 {
-			next = addQueryValue(next, stringOffsetQuery(nextoffset))
+			next = AddQueryValue(next, StringOffsetQuery(nextoffset))
 		}
 
 		hal = hal.AddLink("next", NewHalLink(next, nil))

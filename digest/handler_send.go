@@ -29,7 +29,7 @@ func (hd *Handlers) handleSend(w http.ResponseWriter, r *http.Request) {
 
 	var hal Hal
 	var v json.RawMessage
-	if err := Unmarshal(body.Bytes(), &v); err != nil {
+	if err := JSON.Unmarshal(body.Bytes(), &v); err != nil {
 		HTTP2ProblemWithError(w, err, http.StatusBadRequest)
 		return
 	} else if hinter, err := hd.enc.Decode(body.Bytes()); err != nil {

@@ -39,7 +39,7 @@ type BaseHalJSONUnpacker struct {
 
 func (hal *BaseHal) UnmarshalJSON(b []byte) error {
 	var uh BaseHalJSONUnpacker
-	if err := Unmarshal(b, &uh); err != nil {
+	if err := JSON.Unmarshal(b, &uh); err != nil {
 		return err
 	}
 
@@ -59,7 +59,7 @@ func (hl HalLink) MarshalJSON() ([]byte, error) {
 	}
 	all["href"] = hl.href
 
-	return Marshal(all)
+	return JSON.Marshal(all)
 }
 
 type HalLinkJSONUnpacker struct {
@@ -69,7 +69,7 @@ type HalLinkJSONUnpacker struct {
 
 func (hl *HalLink) UnmarshalJSON(b []byte) error {
 	var uh HalLinkJSONUnpacker
-	if err := Unmarshal(b, &uh); err != nil {
+	if err := JSON.Unmarshal(b, &uh); err != nil {
 		return err
 	}
 
