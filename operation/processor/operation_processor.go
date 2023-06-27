@@ -23,6 +23,8 @@ var operationProcessorPool = sync.Pool{
 	},
 }
 
+type GetLastBlockFunc func() (base.BlockMap, bool, error)
+
 const (
 	DuplicationTypeSender   types.DuplicationType = "sender"
 	DuplicationTypeCurrency types.DuplicationType = "currency"

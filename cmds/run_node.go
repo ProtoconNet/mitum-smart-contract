@@ -301,15 +301,15 @@ func (cmd *RunCommand) runHTTPState(bind string) error {
 		return errors.Wrap(err, "failed to parse --http-state")
 	}
 
-	mux := http.NewServeMux()
-	if err := statsviz.Register(mux); err != nil {
+	m := http.NewServeMux()
+	if err := statsviz.Register(m); err != nil {
 		return errors.Wrap(err, "failed to register statsviz for http-state")
 	}
 
 	cmd.log.Debug().Stringer("bind", addr).Msg("statsviz started")
 
 	go func() {
-		_ = http.ListenAndServe(addr.String(), mux)
+		_ = http.ListenAndServe(addr.String(), m)
 	}()
 
 	return nil
