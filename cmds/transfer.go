@@ -20,13 +20,6 @@ type TransferCommand struct {
 	receiver base.Address
 }
 
-func NewTransferCommand() TransferCommand {
-	cmd := NewBaseCommand()
-	return TransferCommand{
-		BaseCommand: *cmd,
-	}
-}
-
 func (cmd *TransferCommand) Run(pctx context.Context) error {
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err

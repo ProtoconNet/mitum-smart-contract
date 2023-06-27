@@ -16,13 +16,6 @@ type SuffrageDisjoinCommand struct {
 	node  base.Address
 }
 
-func NewSuffrageDisjoinCommand() SuffrageDisjoinCommand {
-	cmd := NewBaseCommand()
-	return SuffrageDisjoinCommand{
-		BaseCommand: *cmd,
-	}
-}
-
 func (cmd *SuffrageDisjoinCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err

@@ -18,13 +18,6 @@ type KeyAddressCommand struct {
 	AddressType string    `help:"key type for address. select btc or ether" default:"btc"`
 }
 
-func NewKeyAddressCommand() KeyAddressCommand {
-	cmd := NewBaseCommand()
-	return KeyAddressCommand{
-		BaseCommand: *cmd,
-	}
-}
-
 func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err

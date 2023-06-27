@@ -20,13 +20,6 @@ type KeyUpdaterCommand struct {
 	keys      types.BaseAccountKeys
 }
 
-func NewKeyUpdaterCommand() KeyUpdaterCommand {
-	cmd := NewBaseCommand()
-	return KeyUpdaterCommand{
-		BaseCommand: *cmd,
-	}
-}
-
 func (cmd *KeyUpdaterCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err

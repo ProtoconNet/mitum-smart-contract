@@ -16,13 +16,6 @@ type SuffrageCandidateCommand struct {
 	node      base.Address
 }
 
-func NewSuffrageCandidateCommand() SuffrageCandidateCommand {
-	cmd := NewBaseCommand()
-	return SuffrageCandidateCommand{
-		BaseCommand: *cmd,
-	}
-}
-
 func (cmd *SuffrageCandidateCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err

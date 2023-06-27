@@ -20,13 +20,6 @@ type CreateContractAccountCommand struct {
 	keys        types.BaseAccountKeys
 }
 
-func NewCreateContractAccountCommand() CreateContractAccountCommand {
-	cmd := NewBaseCommand()
-	return CreateContractAccountCommand{
-		BaseCommand: *cmd,
-	}
-}
-
 func (cmd *CreateContractAccountCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err

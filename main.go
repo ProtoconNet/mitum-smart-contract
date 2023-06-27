@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	launchcmd "github.com/ProtoconNet/mitum2/launch/cmd"
 	"os"
 
 	"github.com/ProtoconNet/mitum-currency/v3/cmds"
@@ -23,17 +24,26 @@ var (
 )
 
 //revive:disable:nested-structs
-type CLI struct { //nolint:govet //...
+var CLI struct { //nolint:govet //...
 	launch.BaseFlags
-	Import    cmds.ImportCommand    `cmd:"" help:"import from block data"`
-	Init      cmds.INITCommand      `cmd:"" help:"init node"`
-	Run       cmds.RunCommand       `cmd:"" help:"run node"`
-	Storage   cmds.Storage          `cmd:""`
-	Operation cmds.OperationCommand `cmd:"" help:"create operation"`
-	Network   cmds.NetworkCommand   `cmd:"" help:"network"`
-	Key       cmds.KeyCommand       `cmd:"" help:"key"`
-	Handover  cmds.HandoverCommands `cmd:""`
-	Version   struct{}              `cmd:"" help:"version"`
+	Init      cmds.INITCommand  `cmd:"" help:"init node"`
+	Run       cmds.RunCommand   `cmd:"" help:"run node"`
+	Storage   launchcmd.Storage `cmd:""`
+	Operation struct {
+		Currency cmds.CurrencyCommand `cmd:"" help:"currency operation"`
+		Suffrage cmds.SuffrageCommand `cmd:"" help:"suffrage operation"`
+	} `cmd:"" help:"create operation"`
+	Network struct {
+		Client launchcmd.NetworkClientCommand `cmd:"" help:"network client"`
+	} `cmd:"" help:"network"`
+	Key struct {
+		New     cmds.KeyNewCommand       `cmd:"" help:"generate new key"`
+		Address cmds.KeyAddressCommand   `cmd:"" help:"generate address from key"`
+		Load    launchcmd.KeyLoadCommand `cmd:"" help:"load key"`
+		Sign    launchcmd.KeySignCommand `cmd:"" help:"sign"`
+	} `cmd:"" help:"key"`
+	Handover launchcmd.HandoverCommands `cmd:""`
+	Version  struct{}                   `cmd:"" help:"version"`
 }
 
 //revive:enable:nested-structs
@@ -51,17 +61,7 @@ var flagDefaults = kong.Vars{
 }
 
 func main() {
-	cli := CLI{
-		Import:    cmds.NewImportCommand(),
-		Init:      cmds.NewINITCommand(),
-		Run:       cmds.NewRunCommand(),
-		Storage:   cmds.NewStorageCommand(),
-		Operation: cmds.NewOperationCommand(),
-		Network:   cmds.NewNetworkCommand(),
-		Key:       cmds.NewKeyCommand(),
-		Handover:  cmds.NewHandOverCommand(),
-	}
-	kctx := kong.Parse(&cli, flagDefaults)
+	kctx := kong.Parse(&CLI, flagDefaults)
 
 	if err := checkVersion(); err != nil {
 		kctx.FatalIfErrorf(err)
@@ -74,7 +74,7 @@ func main() {
 	}
 	pctx := context.Background()
 	pctx = context.WithValue(pctx, launch.VersionContextKey, version)
-	pctx = context.WithValue(pctx, launch.FlagsContextKey, cli.BaseFlags)
+	pctx = context.WithValue(pctx, launch.FlagsContextKey, CLI.BaseFlags)
 	pctx = context.WithValue(pctx, launch.KongContextContextKey, kctx)
 
 	pss := launch.DefaultMainPS()
@@ -85,7 +85,7 @@ func main() {
 	default:
 		pctx = i
 
-		kctx = kong.Parse(&cli, kong.BindTo(pctx, (*context.Context)(nil)), flagDefaults)
+		kctx = kong.Parse(&CLI, kong.BindTo(pctx, (*context.Context)(nil)), flagDefaults)
 	}
 
 	var log *logging.Logging
@@ -108,10 +108,6 @@ func main() {
 }
 
 func checkVersion() error {
-	if len(Version) < 1 {
-		return errors.Errorf("empty version")
-	}
-
 	v, err := util.ParseVersion(Version)
 	if err != nil {
 		return err

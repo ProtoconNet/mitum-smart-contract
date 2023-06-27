@@ -16,13 +16,6 @@ type SuffrageJoinCommand struct {
 	node  base.Address
 }
 
-func NewSuffrageJoinCommand() SuffrageJoinCommand {
-	cmd := NewBaseCommand()
-	return SuffrageJoinCommand{
-		BaseCommand: *cmd,
-	}
-}
-
 func (cmd *SuffrageJoinCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err

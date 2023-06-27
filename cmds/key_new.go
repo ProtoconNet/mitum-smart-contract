@@ -18,13 +18,6 @@ type KeyNewCommand struct {
 	KeyType string `help:"select btc or ether" default:"btc"`
 }
 
-func NewKeyNewCommand() KeyNewCommand {
-	cmd := NewBaseCommand()
-	return KeyNewCommand{
-		BaseCommand: *cmd,
-	}
-}
-
 func (cmd *KeyNewCommand) Run(pctx context.Context) error {
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err

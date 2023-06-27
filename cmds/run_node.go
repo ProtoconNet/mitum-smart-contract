@@ -351,7 +351,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 
 	router := dnt.Router()
 
-	handlers, err := cmd.setDigestHandlers(ctx, isaacparams, cache, router)
+	handlers, err := cmd.setDigestDefaultHandlers(ctx, isaacparams, cache, router)
 	if err != nil {
 		return ctx, err
 	}
@@ -376,7 +376,7 @@ func (cmd *RunCommand) loadCache(_ context.Context, design DigestDesign) (digest
 	return c, nil
 }
 
-func (cmd *RunCommand) setDigestHandlers(
+func (cmd *RunCommand) setDigestDefaultHandlers(
 	ctx context.Context,
 	params *isaac.Params,
 	cache digest.Cache,

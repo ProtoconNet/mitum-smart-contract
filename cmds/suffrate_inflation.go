@@ -74,13 +74,6 @@ type SuffrageInflationCommand struct {
 	items []currency.SuffrageInflationItem
 }
 
-func NewSuffrageInflationCommand() SuffrageInflationCommand {
-	cmd := NewBaseCommand()
-	return SuffrageInflationCommand{
-		BaseCommand: *cmd,
-	}
-}
-
 func (cmd *SuffrageInflationCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err

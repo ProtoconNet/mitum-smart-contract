@@ -20,13 +20,6 @@ type WithdrawCommand struct {
 	target  base.Address
 }
 
-func NewWithdrawCommand() WithdrawCommand {
-	cmd := NewBaseCommand()
-	return WithdrawCommand{
-		BaseCommand: *cmd,
-	}
-}
-
 func (cmd *WithdrawCommand) Run(pctx context.Context) error {
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err

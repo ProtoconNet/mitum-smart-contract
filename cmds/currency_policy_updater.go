@@ -21,13 +21,6 @@ type CurrencyPolicyUpdaterCommand struct {
 	po                      types.CurrencyPolicy
 }
 
-func NewCurrencyPolicyUpdaterCommand() CurrencyPolicyUpdaterCommand {
-	cmd := NewBaseCommand()
-	return CurrencyPolicyUpdaterCommand{
-		BaseCommand: *cmd,
-	}
-}
-
 func (cmd *CurrencyPolicyUpdaterCommand) Run(pctx context.Context) error { // nolint:dupl
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err
