@@ -193,6 +193,29 @@ func (enc *Encoder) DecodeSlice(b []byte) ([]interface{}, error) {
 	return s, nil
 }
 
+func (enc *Encoder) DecodeMap(b []byte) (map[string]interface{}, error) {
+	if isNil(b) {
+		return nil, nil
+	}
+
+	var r map[string]bson.Raw
+	if err := bson.Unmarshal(b, &r); err != nil {
+		return nil, errors.Wrap(err, "failed to decode map")
+	}
+
+	s := map[string]interface{}{}
+	for i := range r {
+		j, err := enc.Decode(r[i])
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to decode map")
+		}
+
+		s[i] = j
+	}
+
+	return s, nil
+}
+
 func (enc *Encoder) addDecodeDetail(d encoder.DecodeDetail) error {
 	if err := enc.decoders.Add(d.Hint, d); err != nil {
 		return util.ErrInvalid.WithMessage(err, "failed to add DecodeDetail in bson encoder")
