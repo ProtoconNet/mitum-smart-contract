@@ -214,3 +214,21 @@ func (v *CurrencyAmountFlag) UnmarshalText(b []byte) error {
 func (v *CurrencyAmountFlag) String() string {
 	return v.CID.String() + "," + v.Big.String()
 }
+
+type ContractIDFlag struct {
+	ID types.ContractID
+}
+
+func (v *ContractIDFlag) UnmarshalText(b []byte) error {
+	id := types.ContractID(string(b))
+	if err := id.IsValid(nil); err != nil {
+		return err
+	}
+	v.ID = id
+
+	return nil
+}
+
+func (v *ContractIDFlag) String() string {
+	return v.ID.String()
+}
