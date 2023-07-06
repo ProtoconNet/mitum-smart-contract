@@ -26,9 +26,9 @@ var (
 //revive:disable:nested-structs
 var CLI struct { //nolint:govet //...
 	launch.BaseFlags
-	Init      cmds.INITCommand  `cmd:"" help:"init node"`
-	Run       cmds.RunCommand   `cmd:"" help:"run node"`
-	Storage   launchcmd.Storage `cmd:""`
+	Init      cmds.INITCommand `cmd:"" help:"init node"`
+	Run       cmds.RunCommand  `cmd:"" help:"run node"`
+	Storage   cmds.Storage     `cmd:""`
 	Operation struct {
 		Currency cmds.CurrencyCommand `cmd:"" help:"currency operation"`
 		Suffrage cmds.SuffrageCommand `cmd:"" help:"suffrage operation"`
