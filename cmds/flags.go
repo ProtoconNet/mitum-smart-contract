@@ -170,7 +170,7 @@ type CurrencyIDFlag struct {
 func (v *CurrencyIDFlag) UnmarshalText(b []byte) error {
 	cid := types.CurrencyID(string(b))
 	if err := cid.IsValid(nil); err != nil {
-		return err
+		return fmt.Errorf("invalid currency id, %q, %wqq", string(b), err)
 	}
 	v.CID = cid
 

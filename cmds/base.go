@@ -30,6 +30,7 @@ func NewBaseCommand() *BaseCommand {
 }
 
 func (cmd *BaseCommand) prepare(pctx context.Context) (context.Context, error) {
+	cmd.Out = os.Stdout
 	pps := ps.NewPS("cmd")
 
 	_ = pps.

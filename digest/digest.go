@@ -168,8 +168,15 @@ func (di *Digester) digest(ctx context.Context, blk base.BlockMap) error {
 	return di.database.SetLastBlock(blk.Manifest().Height())
 }
 
-func DigestBlock(ctx context.Context, st *Database, blk base.BlockMap, ops []base.Operation, opstree fixedtree.Tree, sts []base.State) error {
-	bs, err := NewBlockSession(st, blk, ops, opstree, sts)
+func DigestBlock(
+	ctx context.Context,
+	st *Database,
+	blk base.BlockMap,
+	ops []base.Operation,
+	opsTree fixedtree.Tree,
+	sts []base.State,
+) error {
+	bs, err := NewBlockSession(st, blk, ops, opsTree, sts)
 	if err != nil {
 		return err
 	}
