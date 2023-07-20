@@ -71,7 +71,12 @@ func (it BaseCreateContractAccountsItem) Keys() types.AccountKeys {
 }
 
 func (it BaseCreateContractAccountsItem) Address() (base.Address, error) {
-	return types.NewAddressFromKeys(it.keys)
+	if it.addressType == types.AddressHint.Type() {
+		return types.NewAddressFromKeys(it.keys)
+	} else if it.addressType == types.EthAddressHint.Type() {
+		return types.NewEthAddressFromKeys(it.keys)
+	}
+	return nil, util.ErrInvalid.Errorf("invalid address hint")
 }
 
 func (it BaseCreateContractAccountsItem) AddressType() hint.Type {
