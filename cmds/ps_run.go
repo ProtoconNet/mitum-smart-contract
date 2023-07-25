@@ -44,9 +44,6 @@ func DefaultRunPS() *ps.PS {
 		AddOK(PNameDigestStart, ProcessStartDigestAPI, nil, PNameDigest).
 		AddOK(PNameStartDigester, ProcessStartDigester, nil, PNameDigestStart)
 
-	_ = pps.POK(launch.PNameEncoder).
-		PostAddOK(launch.PNameAddHinters, PAddHinters)
-
 	_ = pps.POK(launch.PNameDesign).
 		PostAddOK(launch.PNameCheckDesign, launch.PCheckDesign).
 		PostAddOK(launch.PNameINITObjectCache, launch.PINITObjectCache)

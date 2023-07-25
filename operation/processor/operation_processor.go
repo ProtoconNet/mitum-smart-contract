@@ -42,43 +42,14 @@ type OperationProcessor struct {
 	*logging.Logging
 	*base.BaseOperationProcessor
 	processorHintSet     *hint.CompatibleSet
-	duplicated           map[string]types.DuplicationType
+	Duplicated           map[string]types.DuplicationType
 	duplicatedNewAddress map[string]struct{}
 	processorClosers     *sync.Map
 	GetStateFunc         base.GetStateFunc
 	CollectFee           func(*OperationProcessor, types.AddFee) error
+	CheckDuplicationFunc func(*OperationProcessor, base.Operation) error
+	GetNewProcessorFunc  func(*OperationProcessor, base.Operation) (base.OperationProcessor, bool, error)
 }
-
-/*
-func NewOperationProcessor(
-	height base.Height,
-	getStateFunc base.GetStateFunc,
-	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
-	newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
-) (*OperationProcessor, error) {
-	e := util.StringError("failed to create new OperationProcessor")
-
-	b, err := base.NewBaseOperationProcessor(
-		height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
-	if err != nil {
-		return nil, e.Wrap(err)
-	}
-
-	return &OperationProcessor{
-		id: util.UUID().String(),
-		Logging: logging.NewLogging(func(c zerolog.Context) zerolog.Context {
-			return c.Str("module", "mitum-currency-operations-processor")
-		}),
-		BaseOperationProcessor: b,
-		processorHintSet:       hint.NewCompatibleSet(),
-		fee:                    map[CurrencyID]Big{},
-		duplicated:             map[string]DuplicationType{},
-		duplicatedNewAddress:   map[string]struct{}{},
-		processorClosers:       &sync.Map{},
-		GetStateFunc:           getStateFunc,
-	}, nil
-}
-*/
 
 func NewOperationProcessor() *OperationProcessor {
 	m := sync.Map{}
@@ -88,7 +59,7 @@ func NewOperationProcessor() *OperationProcessor {
 			return c.Str("module", "mitum-currency-operations-processor")
 		}),
 		processorHintSet:     hint.NewCompatibleSet(),
-		duplicated:           map[string]types.DuplicationType{},
+		Duplicated:           map[string]types.DuplicationType{},
 		duplicatedNewAddress: map[string]struct{}{},
 		processorClosers:     &m,
 	}
@@ -106,8 +77,8 @@ func (opr *OperationProcessor) New(
 		nopr.processorHintSet = opr.processorHintSet
 	}
 
-	if nopr.duplicated == nil {
-		nopr.duplicated = make(map[string]types.DuplicationType)
+	if nopr.Duplicated == nil {
+		nopr.Duplicated = make(map[string]types.DuplicationType)
 	}
 
 	// if nopr.duplicatedNewAddress == nil {
@@ -130,6 +101,8 @@ func (opr *OperationProcessor) New(
 
 	nopr.BaseOperationProcessor = b
 	nopr.GetStateFunc = getStateFunc
+	nopr.CheckDuplicationFunc = opr.CheckDuplicationFunc
+	nopr.GetNewProcessorFunc = opr.GetNewProcessorFunc
 	return nopr, nil
 }
 
@@ -146,6 +119,28 @@ func (opr *OperationProcessor) SetProcessor(
 	return nil
 }
 
+func (opr *OperationProcessor) SetCheckDuplicationFunc(
+	f func(*OperationProcessor, base.Operation) error,
+) error {
+	if f == nil {
+		return errors.Errorf("Set nil func to CheckDuplicationFunc")
+	}
+	opr.CheckDuplicationFunc = f
+
+	return nil
+}
+
+func (opr *OperationProcessor) SetGetNewProcessorFunc(
+	f func(*OperationProcessor, base.Operation) (base.OperationProcessor, bool, error),
+) error {
+	if f == nil {
+		return errors.Errorf("Set nil func to GetNewProcessorFunc")
+	}
+	opr.GetNewProcessorFunc = f
+
+	return nil
+}
+
 func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (context.Context, base.OperationProcessReasonError, error) {
 	e := util.StringError("failed to preprocess for OperationProcessor")
 
@@ -154,7 +149,11 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation
 	}
 
 	var sp base.OperationProcessor
-	switch i, known, err := opr.getNewProcessor(op); {
+
+	if opr.GetNewProcessorFunc == nil {
+		return ctx, nil, e.Errorf("GetNewProcessorFunc is nil")
+	}
+	switch i, known, err := opr.GetNewProcessorFunc(opr, op); {
 	case err != nil:
 		return ctx, base.NewBaseOperationProcessReasonError(err.Error()), nil
 	case !known:
@@ -163,11 +162,11 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation
 		sp = i
 	}
 
-	switch _, reasonerr, err := sp.PreProcess(ctx, op, getStateFunc); {
+	switch _, reasonErr, err := sp.PreProcess(ctx, op, getStateFunc); {
 	case err != nil:
 		return ctx, nil, e.Wrap(err)
-	case reasonerr != nil:
-		return ctx, reasonerr, nil
+	case reasonErr != nil:
+		return ctx, reasonErr, nil
 	}
 
 	return ctx, nil, nil
@@ -176,12 +175,16 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation
 func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
 	e := util.StringError("failed to process for OperationProcessor")
 
-	if err := opr.checkDuplication(op); err != nil {
+	if err := opr.CheckDuplicationFunc(opr, op); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("duplication found: %v", err), nil
 	}
 
 	var sp base.OperationProcessor
-	switch i, known, err := opr.getNewProcessor(op); {
+	if opr.GetNewProcessorFunc == nil {
+		return nil, nil, e.Errorf("GetNewProcessorFunc is nil")
+	}
+
+	switch i, known, err := opr.GetNewProcessorFunc(opr, op); {
 	case err != nil:
 		return nil, nil, e.Wrap(err)
 	case !known:
@@ -190,32 +193,12 @@ func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, g
 		sp = i
 	}
 
-	stateMergeValues, reasonerr, err := sp.Process(ctx, op, getStateFunc)
-	// opr.collecFee(stateMergeValues...)
+	stateMergeValues, reasonErr, err := sp.Process(ctx, op, getStateFunc)
 
-	return stateMergeValues, reasonerr, err
+	return stateMergeValues, reasonErr, err
 }
 
-/*
-func (opr *OperationProcessor) process(op base.OperationProcessor) error {
-	var sp base.OperationProcessor
-
-	switch t := op.(type) {
-	case *TransfersProcessor:
-		sp = t
-	case *CreateAccountsProcessor:
-		sp = t
-	case *KeyUpdaterProcessor:
-		sp = t
-	default:
-		return op.Process(opr.pool.Get, opr.pool.Set)
-	}
-
-	return sp.Process(opr.pool.Get, opr.setState)
-}
-*/
-
-func (opr *OperationProcessor) checkDuplication(op base.Operation) error {
+func CheckDuplication(opr *OperationProcessor, op base.Operation) error {
 	opr.Lock()
 	defer opr.Unlock()
 
@@ -289,7 +272,7 @@ func (opr *OperationProcessor) checkDuplication(op base.Operation) error {
 	// }
 
 	if len(newAddresses) > 0 {
-		if err := opr.checkNewAddressDuplication(newAddresses); err != nil {
+		if err := opr.CheckNewAddressDuplication(newAddresses); err != nil {
 			return err
 		}
 	}
@@ -297,7 +280,7 @@ func (opr *OperationProcessor) checkDuplication(op base.Operation) error {
 	return nil
 }
 
-func (opr *OperationProcessor) checkNewAddressDuplication(as []base.Address) error {
+func (opr *OperationProcessor) CheckNewAddressDuplication(as []base.Address) error {
 	for i := range as {
 		if _, found := opr.duplicatedNewAddress[as[i].String()]; found {
 			return errors.Errorf("new address already processed")
@@ -329,8 +312,8 @@ func (opr *OperationProcessor) Cancel() error {
 	return nil
 }
 
-func (opr *OperationProcessor) getNewProcessor(op base.Operation) (base.OperationProcessor, bool, error) {
-	switch i, err := opr.getNewProcessorFromHintset(op); {
+func GetNewProcessor(opr *OperationProcessor, op base.Operation) (base.OperationProcessor, bool, error) {
+	switch i, err := opr.GetNewProcessorFromHintset(op); {
 	case err != nil:
 		return nil, false, err
 	case i != nil:
@@ -352,7 +335,7 @@ func (opr *OperationProcessor) getNewProcessor(op base.Operation) (base.Operatio
 	}
 }
 
-func (opr *OperationProcessor) getNewProcessorFromHintset(op base.Operation) (base.OperationProcessor, error) {
+func (opr *OperationProcessor) GetNewProcessorFromHintset(op base.Operation) (base.OperationProcessor, error) {
 	var f types.GetNewProcessor
 	if hinter, ok := op.(hint.Hinter); !ok {
 		return nil, nil
@@ -370,16 +353,16 @@ func (opr *OperationProcessor) getNewProcessorFromHintset(op base.Operation) (ba
 	}
 
 	h := op.(util.Hasher).Hash().String()
-	_, iscloser := opp.(io.Closer)
-	if iscloser {
+	_, isCloser := opp.(io.Closer)
+	if isCloser {
 		opr.processorClosers.Store(h, opp)
-		iscloser = true
+		isCloser = true
 	}
 
 	opr.Log().Debug().
 		Str("operation", h).
 		Str("processor", fmt.Sprintf("%T", opp)).
-		Bool("is_closer", iscloser).
+		Bool("is_closer", isCloser).
 		Msg("operation processor created")
 
 	return opp, nil
@@ -398,7 +381,7 @@ func (opr *OperationProcessor) close() {
 	})
 
 	// opr.pool = nil
-	opr.duplicated = nil
+	opr.Duplicated = nil
 	opr.duplicatedNewAddress = nil
 	opr.processorClosers = &sync.Map{}
 

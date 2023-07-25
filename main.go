@@ -34,7 +34,7 @@ var CLI struct { //nolint:govet //...
 		Suffrage cmds.SuffrageCommand `cmd:"" help:"suffrage operation"`
 	} `cmd:"" help:"create operation"`
 	Network struct {
-		Client launchcmd.NetworkClientCommand `cmd:"" help:"network client"`
+		Client cmds.NetworkClientCommand `cmd:"" help:"network client"`
 	} `cmd:"" help:"network"`
 	Key struct {
 		New     cmds.KeyNewCommand       `cmd:"" help:"generate new key"`

@@ -74,8 +74,8 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 	_ = pps.POK(launch.PNameStates).
 		PreAddOK(ps.Name("when-new-block-saved-in-consensus-state-func"), cmd.pWhenNewBlockSavedInConsensusStateFunc).
 		PreAddOK(ps.Name("when-new-block-confirmed-func"), cmd.pWhenNewBlockConfirmed)
-	_ = pps.POK(launch.PNameStates).
-		PreAddOK(PNameOperationProcessorsMap, POperationProcessorsMap)
+	_ = pps.POK(launch.PNameEncoder).
+		PostAddOK(launch.PNameAddHinters, PAddHinters)
 	_ = pps.POK(PNameDigest).
 		PostAddOK(PNameDigestAPIHandlers, cmd.pDigestAPIHandlers)
 	_ = pps.POK(PNameDigester).
