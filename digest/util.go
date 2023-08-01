@@ -140,10 +140,10 @@ func HTTP2NotSupported(w http.ResponseWriter, err error) {
 }
 
 func HTTP2ProblemWithError(w http.ResponseWriter, err error, status int) {
-	HTTP2WritePoblem(w, NewProblemFromError(err), status)
+	HTTP2WriteProblem(w, NewProblemFromError(err), status)
 }
 
-func HTTP2WritePoblem(w http.ResponseWriter, pr Problem, status int) {
+func HTTP2WriteProblem(w http.ResponseWriter, pr Problem, status int) {
 	if status == 0 {
 		status = http.StatusInternalServerError
 	}

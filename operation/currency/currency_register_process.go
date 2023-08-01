@@ -115,7 +115,7 @@ func (opp *CurrencyRegisterProcessor) PreProcess(
 	case err != nil:
 		return ctx, nil, err
 	case found:
-		return ctx, nil, base.NewBaseOperationProcessReasonError("currency already registered, %q", design.Currency())
+		return ctx, nil, base.NewBaseOperationProcessReasonError("currency already registered, %v", design.Currency())
 	default:
 	}
 
@@ -123,7 +123,7 @@ func (opp *CurrencyRegisterProcessor) PreProcess(
 	case err != nil:
 		return ctx, nil, err
 	case found:
-		return ctx, nil, base.NewBaseOperationProcessReasonError("genesis account has already the currency, %q", design.Currency())
+		return ctx, nil, base.NewBaseOperationProcessReasonError("genesis account has already the currency, %v", design.Currency())
 	default:
 	}
 

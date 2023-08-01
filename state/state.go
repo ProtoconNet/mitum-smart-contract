@@ -69,7 +69,7 @@ func ExistsState(
 	case err != nil:
 		return nil, err
 	case !found:
-		return nil, base.NewBaseOperationProcessReasonError("%s does not exist", name)
+		return nil, base.NewBaseOperationProcessReasonError("%v does not exist", name)
 	default:
 		return st, nil
 	}
@@ -85,7 +85,7 @@ func NotExistsState(
 	case err != nil:
 		return nil, err
 	case found:
-		return nil, base.NewBaseOperationProcessReasonError("%s already exists", name)
+		return nil, base.NewBaseOperationProcessReasonError("%v already exists", name)
 	case !found:
 		st = common.NewBaseState(base.NilHeight, k, nil, nil, nil)
 	}
@@ -121,13 +121,13 @@ func CheckFactSignsByState(
 	keys, err := currency.StateKeysValue(st)
 	switch {
 	case err != nil:
-		return base.NewBaseOperationProcessReasonError("failed to get Keys %v", err)
+		return base.NewBaseOperationProcessReasonError("failed to get Keys: %w", err)
 	case keys == nil:
 		return base.NewBaseOperationProcessReasonError("empty keys found")
 	}
 
 	if err := types.CheckThreshold(fs, keys); err != nil {
-		return base.NewBaseOperationProcessReasonError("failed to check threshold %v", err)
+		return base.NewBaseOperationProcessReasonError("failed to check threshold: %w", err)
 	}
 
 	return nil

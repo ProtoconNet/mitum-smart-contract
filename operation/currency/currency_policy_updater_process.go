@@ -106,7 +106,7 @@ func (opp *CurrencyPolicyUpdaterProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(statecurrency.StateKeyCurrencyDesign(fact.currency), getStateFunc); err != nil {
-		return ctx, nil, base.NewBaseOperationProcessReasonError("currency not found, %q", fact.currency)
+		return ctx, nil, base.NewBaseOperationProcessReasonError("currency not found, %v", fact.currency)
 	}
 
 	return ctx, nil, nil
@@ -125,12 +125,12 @@ func (opp *CurrencyPolicyUpdaterProcessor) Process(
 
 	st, err := state.ExistsState(statecurrency.StateKeyCurrencyDesign(fact.currency), "currency design", getStateFunc)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of currency %v : %v", fact.currency, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of currency %v: %w", fact.currency, err), nil
 	}
 
 	de, err := statecurrency.StateCurrencyDesignValue(st)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to get currency design of %v : %v", fact.currency, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to get currency design of %v: %w", fact.currency, err), nil
 	}
 
 	de.SetPolicy(fact.policy)

@@ -176,7 +176,7 @@ func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, g
 	e := util.StringError("failed to process for OperationProcessor")
 
 	if err := opr.CheckDuplicationFunc(opr, op); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("duplication found: %v", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("duplication found: %w", err), nil
 	}
 
 	var sp base.OperationProcessor

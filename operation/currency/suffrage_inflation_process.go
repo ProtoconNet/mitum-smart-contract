@@ -85,7 +85,7 @@ func (opp *SuffrageInflationProcessor) PreProcess(
 	}
 
 	if err := base.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, nop.NodeSigns()); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("not enough signs: %v", err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("not enough signs: %w", err), nil
 	}
 
 	for i := range fact.Items() {
@@ -93,17 +93,17 @@ func (opp *SuffrageInflationProcessor) PreProcess(
 
 		err := state.CheckExistsState(currency.StateKeyCurrencyDesign(item.Amount().Currency()), getStateFunc)
 		if err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("currency not found, %q: %v", item.Amount().Currency(), err.Error()), nil
+			return ctx, base.NewBaseOperationProcessReasonError("currency not found, %q: %w", item.Amount().Currency(), err.Error()), nil
 		}
 
 		err = state.CheckExistsState(currency.StateKeyAccount(item.Receiver()), getStateFunc)
 		if err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("receiver not found, %q: %v", item.Receiver(), err.Error()), nil
+			return ctx, base.NewBaseOperationProcessReasonError("receiver not found, %q: %w", item.Receiver(), err.Error()), nil
 		}
 
 		err = state.CheckNotExistsState(extension.StateKeyContractAccount(item.Receiver()), getStateFunc)
 		if err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be suffrage-inflation receiver, %q: %v", item.Receiver(), err.Error()), nil
+			return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be suffrage-inflation receiver, %q: %w", item.Receiver(), err.Error()), nil
 		}
 	}
 
@@ -133,13 +133,13 @@ func (opp *SuffrageInflationProcessor) Process(
 		k := currency.StateKeyBalance(item.Receiver(), item.Amount().Currency())
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
-			return nil, base.NewBaseOperationProcessReasonError("failed to find receiver balance state, %q: %v", k, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to find receiver balance state, %q: %w", k, err), nil
 		case !found:
 			ab = types.NewZeroAmount(item.Amount().Currency())
 		default:
 			b, err := currency.StateBalanceValue(st)
 			if err != nil {
-				return nil, base.NewBaseOperationProcessReasonError("failed to get balance value, %q: %v", k, err), nil
+				return nil, base.NewBaseOperationProcessReasonError("failed to get balance value, %q: %w", k, err), nil
 			}
 			ab = b
 		}
@@ -159,20 +159,20 @@ func (opp *SuffrageInflationProcessor) Process(
 		k := currency.StateKeyCurrencyDesign(cid)
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
-			return nil, base.NewBaseOperationProcessReasonError("failed to find currency design state, %q: %v", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to find currency design state, %v %w", cid, err), nil
 		case !found:
-			return nil, base.NewBaseOperationProcessReasonError("currency not found, %q: %v", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("currency not found, %v: %w", cid, err), nil
 		default:
 			d, err := currency.StateCurrencyDesignValue(st)
 			if err != nil {
-				return nil, base.NewBaseOperationProcessReasonError("failed to get currency design value, %q: %v", cid, err), nil
+				return nil, base.NewBaseOperationProcessReasonError("failed to get currency design value, %v: %w", cid, err), nil
 			}
 			de = d
 		}
 
 		ade, err := de.AddAggregate(big)
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("failed to add aggregate, %q: %v", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to add aggregate, %v: %w", cid, err), nil
 		}
 
 		sts = append(sts, state.NewStateMergeValue(k, currency.NewCurrencyDesignStateValue(ade)))

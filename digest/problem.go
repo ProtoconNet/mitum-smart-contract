@@ -85,13 +85,13 @@ func makeSplitedError(err error) (title, detail string) {
 	if len(err.Error()) < 1 {
 		return "", ""
 	}
-	errorSlice := strings.Split(err.Error(), "-")
+	errorSlice := strings.Split(err.Error(), ":")
 	switch {
 	case len(errorSlice) > 2:
-		return errorSlice[len(errorSlice)-1], strings.Join(errorSlice[:len(errorSlice)-1], "")
+		return errorSlice[0], strings.Join(errorSlice[1:len(errorSlice)], "")
 	case len(errorSlice) < 2:
-		return errorSlice[0], ""
+		return errorSlice[0], errorSlice[0]
 	default:
-		return strings.TrimSpace(errorSlice[1]), strings.TrimSpace(errorSlice[0])
+		return strings.TrimSpace(errorSlice[0]), strings.TrimSpace(errorSlice[1])
 	}
 }
