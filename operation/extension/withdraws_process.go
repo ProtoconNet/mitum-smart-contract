@@ -158,15 +158,15 @@ func (opp *WithdrawsProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(statecurrency.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %q: %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %q; %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be ca withdraw sender, %q: %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be ca withdraw sender, %q; %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("invalid signing: %w", err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("invalid signing; %w", err), nil
 	}
 
 	for i := range fact.items {
@@ -181,7 +181,7 @@ func (opp *WithdrawsProcessor) PreProcess(
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess WithdrawsItem: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess WithdrawsItem; %w", err), nil
 		}
 
 		c.Close()

@@ -45,7 +45,7 @@ func (hd *Handlers) handleOperationInGroup(h mitumutil.Hash) ([]byte, error) {
 	case err != nil:
 		return nil, err
 	case !found:
-		return nil, mitumutil.ErrNotFound.Errorf("operation not found")
+		return nil, mitumutil.ErrNotFound.Errorf("operation %v in handleOperation", h)
 	default:
 		hal, err := hd.buildOperationHal(va)
 		if err != nil {
@@ -108,7 +108,7 @@ func (hd *Handlers) handleOperationsInGroup(offset string, reverse bool, l int64
 	case e != nil:
 		return nil, false, e
 	case len(l) < 1:
-		return nil, false, mitumutil.ErrNotFound.Errorf("operations not found")
+		return nil, false, mitumutil.ErrNotFound.Errorf("operations in handleOperations")
 	default:
 		vas = l
 		opsCount = count
@@ -195,7 +195,7 @@ func (hd *Handlers) handleOperationsByHeightInGroup(
 	case e != nil:
 		return nil, false, e
 	case len(l) < 1:
-		return nil, false, mitumutil.ErrNotFound.Errorf("operations not found")
+		return nil, false, mitumutil.ErrNotFound.Errorf("operations in handleOperationsByHeight")
 	default:
 		vas = l
 		opsCount = count

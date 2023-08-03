@@ -60,7 +60,7 @@ func NewDatabase(client *Client, encs *encoder.Encoders, enc encoder.Encoder) (*
 	if enc == nil {
 		e := encs.Find(bsonenc.BSONEncoderHint)
 		if e != nil {
-			return nil, mitumutil.ErrNotFound.Errorf("encoder not found for %q", bsonenc.BSONEncoderHint)
+			return nil, mitumutil.ErrNotFound.Errorf("encoder for %q", bsonenc.BSONEncoderHint)
 		} else {
 			enc = e
 		}
@@ -101,7 +101,7 @@ func NewDatabaseFromURI(uri string, encs *encoder.Encoders) (*Database, error) {
 
 	var be encoder.Encoder
 	if e := encs.Find(bsonenc.BSONEncoderHint); e == nil { // NOTE get latest bson encoder
-		return nil, mitumutil.ErrNotFound.Errorf("encoder not found for %q", bsonenc.BSONEncoderHint)
+		return nil, mitumutil.ErrNotFound.Errorf("encoder for %q", bsonenc.BSONEncoderHint)
 	} else {
 		be = e
 	}

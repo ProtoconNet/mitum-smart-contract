@@ -85,7 +85,7 @@ func (cs ContractAccount) Equal(b ContractAccount) bool {
 var (
 	MinLengthContractID = 3
 	MaxLengthContractID = 10
-	ReValidContractID   = regexp.MustCompile(`^[A-Z0-9][A-Z0-9-_\.\!\$\*\@]*[A-Z0-9]$`)
+	REContractIDExp     = regexp.MustCompile(`^[A-Z0-9][A-Z0-9-_\.\!\$\*\@]*[A-Z0-9]$`)
 )
 
 type ContractID string
@@ -102,7 +102,8 @@ func (cid ContractID) IsValid([]byte) error {
 	if l := len(cid); l < MinLengthContractID || l > MaxLengthContractID {
 		return util.ErrInvalid.Errorf(
 			"invalid length of contract id, %d <= %d <= %d", MinLengthContractID, l, MaxLengthContractID)
-	} else if !ReValidContractID.Match([]byte(cid)) {
+	}
+	if !REContractIDExp.Match([]byte(cid)) {
 		return util.ErrInvalid.Errorf("wrong contract id, %q", cid)
 	}
 

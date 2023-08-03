@@ -85,7 +85,7 @@ func makeSplitedError(err error) (title, detail string) {
 	if len(err.Error()) < 1 {
 		return "", ""
 	}
-	errorSlice := strings.Split(err.Error(), ":")
+	errorSlice := strings.Split(err.Error(), ";")
 	switch {
 	case len(errorSlice) > 2:
 		return errorSlice[0], strings.Join(errorSlice[1:len(errorSlice)], "")

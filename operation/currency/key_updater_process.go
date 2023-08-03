@@ -72,17 +72,17 @@ func (opp *KeyUpdaterProcessor) PreProcess(
 	}
 
 	if err := state.CheckFactSignsByState(fact.target, op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("invalid signing: %w", err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("invalid signing; %w", err), nil
 	}
 
 	if st, err := state.ExistsState(currency.StateKeyAccount(fact.target), "target keys", getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("failed to check existence of target %q: %w", fact.target, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("failed to check existence of target %q; %w", fact.target, err), nil
 	} else if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Target()), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account not allowed for key updater, %q: %w", fact.Target(), err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account not allowed for key updater, %q; %w", fact.Target(), err), nil
 	} else if ks, err := currency.StateKeysValue(st); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("failed to get state value of keys %q : %w", fact.keys.Hash(), err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("failed to get state value of keys %q ; %w", fact.keys.Hash(), err), nil
 	} else if ks.Equal(fact.Keys()) {
-		return ctx, base.NewBaseOperationProcessReasonError("same Keys as existing %q: %w", fact.keys.Hash(), err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("same Keys as existing %q; %w", fact.keys.Hash(), err), nil
 	}
 
 	return ctx, nil, nil
@@ -102,22 +102,22 @@ func (opp *KeyUpdaterProcessor) Process( // nolint:dupl
 	var tgAccSt base.State
 	var err error
 	if tgAccSt, err = state.ExistsState(currency.StateKeyAccount(fact.target), "target keys", getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of target %q : %w", fact.target, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of target %q ; %w", fact.target, err), nil
 	}
 
 	var fee common.Big
 	var policy types.CurrencyPolicy
 	if policy, err = state.ExistsCurrencyPolicy(fact.currency, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of currency %q: %w", fact.currency, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of currency %q; %w", fact.currency, err), nil
 	} else if fee, err = policy.Feeer().Fee(common.ZeroBig); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to check fee of currency %v: %w", fact.currency, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check fee of currency %v; %w", fact.currency, err), nil
 	}
 
 	var tgBalSt base.State
 	if tgBalSt, err = state.ExistsState(currency.StateKeyBalance(fact.target, fact.currency), "balance of target", getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of target balance %q : %w", fact.target, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of target balance %q ; %w", fact.target, err), nil
 	} else if b, err := currency.StateBalanceValue(tgBalSt); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of target balance %v, %q : %w", fact.currency, fact.target, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of target balance %v, %q ; %w", fact.currency, fact.target, err), nil
 	} else if b.Big().Compare(fee) < 0 {
 		return nil, base.NewBaseOperationProcessReasonError("insufficient balance with fee %v ,%q", fact.currency, fact.target), nil
 	}

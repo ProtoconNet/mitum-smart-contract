@@ -209,7 +209,7 @@ func (opp *CreateContractAccountsProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(currencystate.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %q: %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %q; %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.sender), getStateFunc); err != nil {
@@ -232,7 +232,7 @@ func (opp *CreateContractAccountsProcessor) PreProcess(
 		c.sender = fact.sender
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateContractAccountsItem: %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess CreateContractAccountsItem; %w", err), nil
 		}
 
 		c.Close()

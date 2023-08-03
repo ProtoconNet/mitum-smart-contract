@@ -199,7 +199,7 @@ func (bs *BlockSession) prepareOperations() error {
 
 		found, inState, reason := node(op.Fact().Hash())
 		if !found {
-			return mitumutil.ErrNotFound.Errorf("operation, %s not found in operations tree", op.Fact().Hash().String())
+			return mitumutil.ErrNotFound.Errorf("operation, %v in operations tree", op.Fact().Hash().String())
 		}
 
 		doc, err := NewOperationDoc(

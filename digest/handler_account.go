@@ -36,7 +36,7 @@ func (hd *Handlers) handleAccount(w http.ResponseWriter, r *http.Request) {
 		return hd.handleAccountInGroup(address)
 	}); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			err = mitumutil.ErrNotFound.Errorf("account, %s not found", address)
+			err = mitumutil.ErrNotFound.Errorf("account, %v in handleAccount", address.String())
 		} else {
 			hd.Log().Err(err).Str("address", address.String()).Msg("failed to get account")
 		}
@@ -178,7 +178,7 @@ func (hd *Handlers) handleAccountOperationsInGroup(
 	); err != nil {
 		return nil, false, err
 	} else if len(vas) < 1 {
-		return nil, false, mitumutil.ErrNotFound.Errorf("operations not found")
+		return nil, false, mitumutil.ErrNotFound.Errorf("operations in handleAccountsOperations")
 	}
 
 	i, err := hd.buildAccountOperationsHal(address, vas, offset, reverse)
