@@ -52,7 +52,7 @@ func LoadMEPublickey(s string) (MEPublickey, error) {
 	if err != nil {
 		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "failed to load publickey")
 	}
-	pk, err := crypto.UnmarshalPubkey(h)
+	pk, err := crypto.DecompressPubkey(h)
 	if err != nil {
 		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "failed to unmarshal publickey")
 	}
@@ -131,7 +131,7 @@ func (k *MEPublickey) ensure() MEPublickey {
 		return *k
 	}
 
-	k.s = fmt.Sprintf("%s%s", hex.EncodeToString(crypto.FromECDSAPub(k.k)), k.Hint().Type().String())
+	k.s = fmt.Sprintf("%s%s", hex.EncodeToString(crypto.CompressPubkey(k.k)), k.Hint().Type().String())
 	k.b = []byte(k.s)
 
 	return *k

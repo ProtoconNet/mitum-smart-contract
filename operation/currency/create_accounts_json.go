@@ -37,7 +37,6 @@ func (fact *CreateAccountsFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
-
 	return fact.unpack(enc, uf.Sender, uf.Items)
 }
 
