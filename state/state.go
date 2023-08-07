@@ -40,7 +40,7 @@ func CheckNotExistsState(
 	case err != nil:
 		return err
 	case found:
-		return base.NewBaseOperationProcessReasonError("state, %q already exists", key)
+		return base.NewBaseOperationProcessReasonError("state, %v already exists", key)
 	default:
 		return nil
 	}
@@ -54,7 +54,7 @@ func CheckExistsState(
 	case err != nil:
 		return err
 	case !found:
-		return base.NewBaseOperationProcessReasonError("state, %q does not exist", key)
+		return base.NewBaseOperationProcessReasonError("state, %v does not exist", key)
 	default:
 		return nil
 	}

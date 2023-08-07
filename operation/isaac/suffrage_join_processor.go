@@ -106,22 +106,22 @@ func (p *SuffrageJoinProcessor) PreProcess(ctx context.Context, op base.Operatio
 	n := fact.Candidate()
 
 	if _, found := p.preprocessed[n.String()]; found {
-		return ctx, base.NewBaseOperationProcessReasonError("already preprocessed, %q", n), nil
+		return ctx, base.NewBaseOperationProcessReasonError("already preprocessed, %v", n), nil
 	}
 
 	if p.suffrage.Exists(n) {
-		return ctx, base.NewBaseOperationProcessReasonError("candidate already in suffrage, %q", n), nil
+		return ctx, base.NewBaseOperationProcessReasonError("candidate already in suffrage, %v", n), nil
 	}
 
 	var info base.SuffrageCandidateStateValue
 
 	switch i, found := p.candidates[n.String()]; {
 	case !found:
-		return ctx, base.NewBaseOperationProcessReasonError("candidate not in candidates, %q", n), nil
+		return ctx, base.NewBaseOperationProcessReasonError("candidate not in candidates, %v", n), nil
 	case fact.Start() != i.Start():
 		return ctx, base.NewBaseOperationProcessReasonError("start does not match"), nil
 	case i.Deadline() < p.Height():
-		return ctx, base.NewBaseOperationProcessReasonError("candidate expired, %q", n), nil
+		return ctx, base.NewBaseOperationProcessReasonError("candidate expired, %v", n), nil
 	default:
 		info = i
 	}

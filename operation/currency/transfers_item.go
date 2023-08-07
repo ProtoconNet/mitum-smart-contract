@@ -45,7 +45,7 @@ func (it BaseTransfersItem) IsValid([]byte) error {
 	for i := range it.amounts {
 		am := it.amounts[i]
 		if _, found := founds[am.Currency()]; found {
-			return util.ErrInvalid.Errorf("duplicated currency found, %q", am.Currency())
+			return util.ErrInvalid.Errorf("duplicated currency found, %v", am.Currency())
 		}
 		founds[am.Currency()] = struct{}{}
 

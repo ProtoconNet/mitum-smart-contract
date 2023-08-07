@@ -60,7 +60,7 @@ func (cmd *KeyUpdaterCommand) parseFlags() error {
 
 	a, err := cmd.Target.Encode(enc)
 	if err != nil {
-		return errors.Wrapf(err, "invalid sender format, %q", cmd.Target.String())
+		return errors.Wrapf(err, "invalid sender format, %v", cmd.Target.String())
 	}
 	cmd.target = a
 

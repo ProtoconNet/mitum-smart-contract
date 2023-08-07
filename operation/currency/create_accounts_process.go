@@ -177,11 +177,11 @@ func (opp *CreateAccountsProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(currency.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("failed to check existence of sender %q; %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("failed to check existence of sender %v; %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be create-account sender, %q; %w", fact.Sender(), err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be create-account sender, %v; %w", fact.Sender(), err), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
@@ -226,7 +226,7 @@ func (opp *CreateAccountsProcessor) Process( // nolint:dupl
 	if feeReceiveBalSts, required, err = opp.calculateItemsFee(op, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee; %w", err), nil
 	} else if senderBalSts, err = CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %q ; %w", fact.sender, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %v ; %w", fact.sender, err), nil
 	} else {
 		opp.required = required
 	}

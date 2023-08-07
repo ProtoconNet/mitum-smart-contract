@@ -97,9 +97,9 @@ func (fact WithdrawsFact) IsValid(b []byte) error {
 		k := it.Target().String()
 		switch _, found := foundTargets[k]; {
 		case found:
-			return util.ErrInvalid.Errorf("duplicate target found, %s", it.Target())
+			return util.ErrInvalid.Errorf("duplicate target found, %v", it.Target())
 		case fact.sender.Equal(it.Target()):
-			return util.ErrInvalid.Errorf("target is same with sender, %q", fact.sender)
+			return util.ErrInvalid.Errorf("target is same with sender, %v", fact.sender)
 		default:
 			foundTargets[k] = struct{}{}
 		}

@@ -32,7 +32,7 @@ func NewHTTPConnInfo(u *url.URL, insecure bool) HTTPConnInfo {
 func NewHTTPConnInfoFromString(s string, insecure bool) (HTTPConnInfo, error) {
 	u, err := NormalizeURLString(s)
 	if err != nil {
-		return HTTPConnInfo{}, errors.Wrapf(err, "wrong node url, %q", s)
+		return HTTPConnInfo{}, errors.Wrapf(err, "wrong node url, %v", s)
 	}
 	return NewHTTPConnInfo(u, insecure), nil
 }
@@ -120,7 +120,7 @@ func ParseURL(s string, allowEmpty bool) (*url.URL, error) { // nolint:unparam
 func NormalizeURLString(s string) (*url.URL, error) {
 	u, err := ParseURL(s, false)
 	if err != nil {
-		return nil, errors.Wrapf(err, "invalid url, %q", s)
+		return nil, errors.Wrapf(err, "invalid url, %v", s)
 	}
 
 	return NormalizeURL(u), nil
@@ -175,14 +175,14 @@ func IsValidURL(u *url.URL) error {
 		return util.ErrInvalid.Errorf("empty url")
 	}
 	if u.Scheme == "" {
-		return util.ErrInvalid.Errorf("empty scheme, %q", u.String())
+		return util.ErrInvalid.Errorf("empty scheme, %v", u.String())
 	}
 
 	switch {
 	case u.Host == "":
-		return util.ErrInvalid.Errorf("empty host, %q", u.String())
+		return util.ErrInvalid.Errorf("empty host, %v", u.String())
 	case strings.HasPrefix(u.Host, ":") && u.Host == fmt.Sprintf(":%s", u.Port()):
-		return util.ErrInvalid.Errorf("empty host, %q", u.String())
+		return util.ErrInvalid.Errorf("empty host, %v", u.String())
 	}
 
 	return nil

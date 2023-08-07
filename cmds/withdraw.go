@@ -52,9 +52,9 @@ func (cmd *WithdrawCommand) parseFlags() error {
 	}
 
 	if sender, err := cmd.Sender.Encode(enc); err != nil {
-		return errors.Wrapf(err, "invalid sender format, %q", cmd.Sender.String())
+		return errors.Wrapf(err, "invalid sender format, %v", cmd.Sender.String())
 	} else if target, err := cmd.Target.Encode(enc); err != nil {
-		return errors.Wrapf(err, "invalid target format, %q", cmd.Target.String())
+		return errors.Wrapf(err, "invalid target format, %v", cmd.Target.String())
 	} else {
 		cmd.sender = sender
 		cmd.target = target

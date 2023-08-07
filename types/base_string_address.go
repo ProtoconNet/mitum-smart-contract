@@ -38,11 +38,11 @@ func (ad BaseStringAddress) IsValid([]byte) error {
 
 	p := ad.s[:len(ad.s)-base.AddressTypeSize]
 	if reBlankStringAddressString.MatchString(p) {
-		return util.ErrInvalid.Errorf("string address string, %q has blank", ad)
+		return util.ErrInvalid.Errorf("string address string, %v has blank", ad)
 	}
 
 	if !reStringAddressString.MatchString(p) {
-		return util.ErrInvalid.Errorf("invalid string address string, %q", ad)
+		return util.ErrInvalid.Errorf("invalid string address string, %v", ad)
 	}
 
 	switch {

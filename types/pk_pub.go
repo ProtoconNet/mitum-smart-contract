@@ -17,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// MEPublickey is the default publickey of mitum, it is based on BTC Privatekey.
+// MEPublickey is the optional public key of mitum, it is based on Ether Privatekey.
 type MEPublickey struct {
 	k *ecdsa.PublicKey
 	s string
@@ -39,22 +39,22 @@ func ParseMEPublickey(s string) (MEPublickey, error) {
 
 	switch {
 	case !strings.HasSuffix(s, t):
-		return MEPublickey{}, util.ErrInvalid.Errorf("unknown publickey string")
+		return MEPublickey{}, util.ErrInvalid.Errorf("unknown public key string")
 	case len(s) <= len(t):
-		return MEPublickey{}, util.ErrInvalid.Errorf("invalid publickey string; too short")
+		return MEPublickey{}, util.ErrInvalid.Errorf("invalid public key string; too short")
 	}
 
-	return LoadMEPublickey(s[:len(s)-len(t)])
+	return LoadMEPublicKey(s[:len(s)-len(t)])
 }
 
-func LoadMEPublickey(s string) (MEPublickey, error) {
+func LoadMEPublicKey(s string) (MEPublickey, error) {
 	h, err := hex.DecodeString(s)
 	if err != nil {
-		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "failed to load publickey")
+		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "failed to load public key")
 	}
 	pk, err := crypto.DecompressPubkey(h)
 	if err != nil {
-		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "failed to unmarshal publickey")
+		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "failed to unmarshal public key")
 	}
 
 	return NewMEPublickey(pk), nil
@@ -70,16 +70,16 @@ func (k MEPublickey) Bytes() []byte {
 
 func (k MEPublickey) IsValid([]byte) error {
 	if err := k.BaseHinter.IsValid(MEPublickeyHint.Type().Bytes()); err != nil {
-		return util.ErrInvalid.WithMessage(err, "wrong hint in publickey")
+		return util.ErrInvalid.WithMessage(err, "wrong hint in public key")
 	}
 
 	switch {
 	case k.k == nil:
-		return util.ErrInvalid.Errorf("empty btc publickey in publickey")
+		return util.ErrInvalid.Errorf("empty btc public key in MEPublickey")
 	case len(k.s) < 1:
-		return util.ErrInvalid.Errorf("empty publickey string")
+		return util.ErrInvalid.Errorf("empty public key string")
 	case len(k.b) < 1:
-		return util.ErrInvalid.Errorf("empty publickey []byte")
+		return util.ErrInvalid.Errorf("empty public key []byte")
 	}
 
 	return nil
@@ -116,9 +116,9 @@ func (k MEPublickey) MarshalText() ([]byte, error) {
 }
 
 func (k *MEPublickey) UnmarshalText(b []byte) error {
-	u, err := LoadMEPublickey(string(b))
+	u, err := LoadMEPublicKey(string(b))
 	if err != nil {
-		return errors.Wrap(err, "failed to UnmarshalText for publickey")
+		return errors.Wrap(err, "failed to UnmarshalText for public key")
 	}
 
 	*k = u.ensure()

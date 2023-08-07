@@ -262,7 +262,7 @@ func CheckDuplication(opr *OperationProcessor, op base.Operation) error {
 	// 		case DuplicationTypeSender:
 	// 			return errors.Errorf("violates only one sender in proposal")
 	// 		case DuplicationTypeCurrency:
-	// 			return errors.Errorf("duplicated currency id, %q found in proposal", did)
+	// 			return errors.Errorf("duplicated currency id, %v found in proposal", did)
 	// 		default:
 	// 			return errors.Errorf("violates duplication in proposal")
 	// 		}

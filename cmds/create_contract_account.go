@@ -49,7 +49,7 @@ func (cmd *CreateContractAccountCommand) parseFlags() error {
 
 	a, err := cmd.Sender.Encode(enc)
 	if err != nil {
-		return errors.Wrapf(err, "invalid sender format, %q", cmd.Sender.String())
+		return errors.Wrapf(err, "invalid sender format, %v", cmd.Sender.String())
 	}
 	cmd.sender = a
 

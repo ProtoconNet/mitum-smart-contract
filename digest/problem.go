@@ -76,7 +76,7 @@ func makeProblemNamespace(t string) string {
 
 func parseProblemNamespace(s string) (string, error) {
 	if !strings.HasPrefix(s, ProblemNamespace) {
-		return "", errors.Errorf("invalid problem namespace: %q", s)
+		return "", errors.Errorf("invalid problem namespace: %v", s)
 	}
 	return s[len(ProblemNamespace)+1:], nil
 }
@@ -88,7 +88,7 @@ func makeSplitedError(err error) (title, detail string) {
 	errorSlice := strings.Split(err.Error(), ";")
 	switch {
 	case len(errorSlice) > 2:
-		return errorSlice[0], strings.Join(errorSlice[1:len(errorSlice)], "")
+		return strings.Join(errorSlice[:len(errorSlice)-1], ""), errorSlice[len(errorSlice)-1]
 	case len(errorSlice) < 2:
 		return errorSlice[0], errorSlice[0]
 	default:

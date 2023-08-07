@@ -64,9 +64,9 @@ func (cmd *TransferCommand) parseFlags() error {
 	}
 
 	if sender, err := cmd.Sender.Encode(enc); err != nil {
-		return errors.Wrapf(err, "invalid sender format, %q", cmd.Sender.String())
+		return errors.Wrapf(err, "invalid sender format, %v", cmd.Sender.String())
 	} else if receiver, err := cmd.Receiver.Encode(enc); err != nil {
-		return errors.Wrapf(err, "invalid sender format, %q", cmd.Sender.String())
+		return errors.Wrapf(err, "invalid sender format, %v", cmd.Sender.String())
 	} else {
 		cmd.sender = sender
 		cmd.receiver = receiver

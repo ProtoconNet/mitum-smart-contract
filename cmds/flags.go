@@ -34,14 +34,14 @@ func (v *KeyFlag) UnmarshalText(b []byte) error {
 
 	var pk base.Publickey
 	if k, err := base.DecodePublickeyFromString(l[0], enc); err != nil {
-		return errors.Wrapf(err, "invalid public key, %q for --key", l[0])
+		return errors.Wrapf(err, "invalid public key, %v for --key", l[0])
 	} else {
 		pk = k
 	}
 
 	var weight uint = 100
 	if i, err := strconv.ParseUint(l[1], 10, 8); err != nil {
-		return errors.Wrapf(err, "invalid weight, %q for --key", l[1])
+		return errors.Wrapf(err, "invalid weight, %v for --key", l[1])
 	} else if i > 0 && i <= 100 {
 		weight = uint(i)
 	}
@@ -94,7 +94,7 @@ func (v PrivatekeyFlag) Empty() bool {
 
 func (v *PrivatekeyFlag) UnmarshalText(b []byte) error {
 	if k, err := base.DecodePrivatekeyFromString(string(b), enc); err != nil {
-		return errors.Wrapf(err, "invalid private key, %q", string(b))
+		return errors.Wrapf(err, "invalid private key, %v", string(b))
 	} else if err := k.IsValid(nil); err != nil {
 		return err
 	} else {

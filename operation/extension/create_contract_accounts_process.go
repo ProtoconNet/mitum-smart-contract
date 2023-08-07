@@ -95,7 +95,7 @@ func (opp *CreateContractAccountsItemProcessor) PreProcess(
 		case err != nil:
 			return err
 		case found:
-			return isaac.ErrStopProcessingRetry.Errorf("target balance already exists, %q", target)
+			return isaac.ErrStopProcessingRetry.Errorf("target balance already exists, %v", target)
 		default:
 			nb[am.Currency()] = state.NewStateMergeValue(currencystate.StateKeyBalance(target, am.Currency()), currencystate.NewBalanceStateValue(types.NewZeroAmount(am.Currency())))
 		}
@@ -209,11 +209,11 @@ func (opp *CreateContractAccountsProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(currencystate.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %q; %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %v; %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be create-contract-account sender, %q: %v", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be create-contract-account sender, %v: %v", fact.sender, err), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {

@@ -27,7 +27,7 @@ func (cid CurrencyID) IsValid([]byte) error {
 		return util.ErrInvalid.Errorf(
 			"invalid length of currency id, %d <= %d <= %d", MinLengthCurrencyID, l, MaxLengthCurrencyID)
 	} else if !ReValidCurrencyID.Match([]byte(cid)) {
-		return util.ErrInvalid.Errorf("wrong currency id, %q", cid)
+		return util.ErrInvalid.Errorf("wrong currency id, %v", cid)
 	}
 
 	return nil

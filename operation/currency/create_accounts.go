@@ -109,7 +109,7 @@ func (fact CreateAccountsFact) IsValid(b []byte) error {
 		case err != nil:
 			return err
 		case fact.sender.Equal(a):
-			return util.ErrInvalid.Errorf("target address is same with sender, %q", fact.sender)
+			return util.ErrInvalid.Errorf("target address is same with sender, %v", fact.sender)
 		default:
 			foundKeys[k] = struct{}{}
 		}

@@ -85,7 +85,7 @@ func (p *SuffrageDisjoinProcessor) PreProcess(ctx context.Context, op base.Opera
 	n := fact.Node()
 
 	if _, found := p.preprocessed[n.String()]; found {
-		return ctx, base.NewBaseOperationProcessReasonError("already preprocessed, %q", n), nil
+		return ctx, base.NewBaseOperationProcessReasonError("already preprocessed, %v", n), nil
 	}
 
 	var expelpreprocessed []base.Address

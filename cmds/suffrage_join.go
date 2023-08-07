@@ -51,7 +51,7 @@ func (cmd *SuffrageJoinCommand) parseFlags() error {
 
 	a, err := cmd.Node.Encode(enc)
 	if err != nil {
-		return errors.Wrapf(err, "invalid node format, %q", cmd.Node.String())
+		return errors.Wrapf(err, "invalid node format, %v", cmd.Node.String())
 	}
 	cmd.node = a
 

@@ -96,9 +96,9 @@ func (fact TransfersFact) IsValid(b []byte) error {
 		k := it.Receiver().String()
 		switch _, found := foundReceivers[k]; {
 		case found:
-			return util.ErrInvalid.Errorf("duplicated receiver found, %s", it.Receiver())
+			return util.ErrInvalid.Errorf("duplicated receiver found, %v", it.Receiver())
 		case fact.sender.Equal(it.Receiver()):
-			return util.ErrInvalid.Errorf("receiver is same with sender, %q", fact.sender)
+			return util.ErrInvalid.Errorf("receiver is same with sender, %v", fact.sender)
 		default:
 			foundReceivers[k] = struct{}{}
 		}

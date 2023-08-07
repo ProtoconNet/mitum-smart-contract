@@ -93,17 +93,17 @@ func (opp *SuffrageInflationProcessor) PreProcess(
 
 		err := state.CheckExistsState(currency.StateKeyCurrencyDesign(item.Amount().Currency()), getStateFunc)
 		if err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("currency not found, %q; %w", item.Amount().Currency(), err.Error()), nil
+			return ctx, base.NewBaseOperationProcessReasonError("currency not found, %v; %w", item.Amount().Currency(), err.Error()), nil
 		}
 
 		err = state.CheckExistsState(currency.StateKeyAccount(item.Receiver()), getStateFunc)
 		if err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("receiver not found, %q; %w", item.Receiver(), err.Error()), nil
+			return ctx, base.NewBaseOperationProcessReasonError("receiver not found, %v; %w", item.Receiver(), err.Error()), nil
 		}
 
 		err = state.CheckNotExistsState(extension.StateKeyContractAccount(item.Receiver()), getStateFunc)
 		if err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be suffrage-inflation receiver, %q; %w", item.Receiver(), err.Error()), nil
+			return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be suffrage-inflation receiver, %v; %w", item.Receiver(), err.Error()), nil
 		}
 	}
 
@@ -133,13 +133,13 @@ func (opp *SuffrageInflationProcessor) Process(
 		k := currency.StateKeyBalance(item.Receiver(), item.Amount().Currency())
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
-			return nil, base.NewBaseOperationProcessReasonError("failed to find receiver balance state, %q; %w", k, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("failed to find receiver balance state, %v; %w", k, err), nil
 		case !found:
 			ab = types.NewZeroAmount(item.Amount().Currency())
 		default:
 			b, err := currency.StateBalanceValue(st)
 			if err != nil {
-				return nil, base.NewBaseOperationProcessReasonError("failed to get balance value, %q; %w", k, err), nil
+				return nil, base.NewBaseOperationProcessReasonError("failed to get balance value, %v; %w", k, err), nil
 			}
 			ab = b
 		}

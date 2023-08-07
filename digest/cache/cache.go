@@ -21,7 +21,7 @@ type Cache interface {
 func NewCacheFromURI(uri string) (Cache, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
-		return nil, errors.Wrapf(err, "invalid uri of cache, %q", uri)
+		return nil, errors.Wrapf(err, "invalid uri of cache, %v", uri)
 	}
 	switch {
 	case u.Scheme == "gcache":

@@ -58,7 +58,7 @@ func (opp *WithdrawsItemProcessor) PreProcess(
 		return err
 	}
 	if !v.Owner().Equal(opp.sender) {
-		return errors.Errorf("contract account owner is not matched with %q", opp.sender)
+		return errors.Errorf("contract account owner is not matched with %v", opp.sender)
 	}
 
 	tb := map[types.CurrencyID]base.StateMergeValue{}
@@ -158,11 +158,11 @@ func (opp *WithdrawsProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(statecurrency.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %q; %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %v; %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be ca withdraw sender, %q; %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be ca withdraw sender, %v; %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {

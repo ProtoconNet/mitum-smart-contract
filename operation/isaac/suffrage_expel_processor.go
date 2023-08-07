@@ -84,11 +84,11 @@ func (p *SuffrageExpelProcessor) PreProcess(ctx context.Context, op base.Operati
 	n := fact.Node()
 
 	if _, found := p.preprocessed[n.String()]; found {
-		return ctx, base.NewBaseOperationProcessReasonError("already preprocessed, %q", n), nil
+		return ctx, base.NewBaseOperationProcessReasonError("already preprocessed, %v", n), nil
 	}
 
 	if !p.suffrage.Exists(n) {
-		return ctx, base.NewBaseOperationProcessReasonError("not in suffrage, %q", n), nil
+		return ctx, base.NewBaseOperationProcessReasonError("not in suffrage, %v", n), nil
 	}
 
 	switch reasonerr, err := p.PreProcessConstraintFunc(ctx, op, getStateFunc); {

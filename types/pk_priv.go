@@ -61,9 +61,9 @@ func ParseMEPrivatekey(s string) (MEPrivatekey, error) {
 
 	switch {
 	case !strings.HasSuffix(s, t):
-		return MEPrivatekey{}, util.ErrInvalid.Errorf("unknown privatekey string")
+		return MEPrivatekey{}, util.ErrInvalid.Errorf("unknown private key string")
 	case len(s) <= len(t):
-		return MEPrivatekey{}, util.ErrInvalid.Errorf("invalid privatekey string; too short")
+		return MEPrivatekey{}, util.ErrInvalid.Errorf("invalid private key string; too short")
 	}
 
 	return LoadMEPrivatekey(s[:len(s)-len(t)])
@@ -102,16 +102,16 @@ func (k MEPrivatekey) Bytes() []byte {
 
 func (k MEPrivatekey) IsValid([]byte) error {
 	if err := k.BaseHinter.IsValid(MEPrivatekeyHint.Type().Bytes()); err != nil {
-		return util.ErrInvalid.WithMessage(err, "wrong hint in privatekey")
+		return util.ErrInvalid.WithMessage(err, "wrong hint in private key")
 	}
 
 	switch {
 	case k.priv == nil:
-		return util.ErrInvalid.Errorf("empty btc privatekey")
+		return util.ErrInvalid.Errorf("empty btc private key")
 	case len(k.s) < 1:
-		return util.ErrInvalid.Errorf("empty privatekey string")
+		return util.ErrInvalid.Errorf("empty private key string")
 	case len(k.b) < 1:
-		return util.ErrInvalid.Errorf("empty privatekey []byte")
+		return util.ErrInvalid.Errorf("empty private key []byte")
 	}
 
 	return nil

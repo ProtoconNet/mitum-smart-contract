@@ -22,9 +22,9 @@ func (fl *CurrencyFixedFeeerFlags) IsValid([]byte) error {
 
 	var receiver base.Address
 	if a, err := fl.Receiver.Encode(enc); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver format, %q: %v", fl.Receiver.String(), err)
+		return util.ErrInvalid.Errorf("invalid receiver format, %v: %v", fl.Receiver.String(), err)
 	} else if err := a.IsValid(nil); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver address, %q: %v", fl.Receiver.String(), err)
+		return util.ErrInvalid.Errorf("invalid receiver address, %v: %v", fl.Receiver.String(), err)
 	} else {
 		receiver = a
 	}
@@ -48,9 +48,9 @@ func (fl *CurrencyRatioFeeerFlags) IsValid([]byte) error {
 
 	var receiver base.Address
 	if a, err := fl.Receiver.Encode(enc); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver format, %q: %v", fl.Receiver.String(), err)
+		return util.ErrInvalid.Errorf("invalid receiver format, %v: %v", fl.Receiver.String(), err)
 	} else if err := a.IsValid(nil); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver address, %q: %v", fl.Receiver.String(), err)
+		return util.ErrInvalid.Errorf("invalid receiver address, %v: %v", fl.Receiver.String(), err)
 	} else {
 		receiver = a
 	}
@@ -96,7 +96,7 @@ func (fl *CurrencyDesignFlags) IsValid([]byte) error {
 	case types.FeeerRatio:
 		feeer = fl.CurrencyRatioFeeerFlags.feeer
 	default:
-		return util.ErrInvalid.Errorf("unknown feeer type, %q", t)
+		return util.ErrInvalid.Errorf("unknown feeer type, %v", t)
 	}
 
 	if feeer == nil {

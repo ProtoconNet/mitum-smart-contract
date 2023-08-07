@@ -27,7 +27,7 @@ func NewBig(i int64) Big {
 func NewBigFromString(s string) (Big, error) {
 	i, ok := new(big.Int).SetString(s, 10)
 	if !ok {
-		return Big{}, errors.Errorf("not proper Big string, %q", s)
+		return Big{}, errors.Errorf("not proper Big string, %v", s)
 	}
 	return NewBigFromBigInt(i), nil
 }
@@ -37,7 +37,7 @@ func MustBigFromString(s string) Big {
 	if ok {
 		return NewBigFromBigInt(i)
 	}
-	panic(errors.Errorf("not proper Big string, %q", s))
+	panic(errors.Errorf("not proper Big string, %v", s))
 }
 
 func NewBigFromInterface(a interface{}) (Big, error) {

@@ -53,7 +53,7 @@ func parseHeightFromPath(s string) (base.Height, error) {
 	if len(s) < 1 {
 		return base.NilHeight, errors.Errorf("empty height")
 	} else if len(s) > 1 && strings.HasPrefix(s, "0") {
-		return base.NilHeight, errors.Errorf("invalid height, %q", s)
+		return base.NilHeight, errors.Errorf("invalid height, %v", s)
 	}
 
 	return base.ParseHeightString(s)

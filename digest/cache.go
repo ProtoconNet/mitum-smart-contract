@@ -30,7 +30,7 @@ type Cache interface {
 func NewCacheFromURI(uri string) (Cache, error) {
 	u, err := util.ParseURL(uri, false)
 	if err != nil {
-		return nil, errors.Wrapf(err, "invalid uri of cache, %q", uri)
+		return nil, errors.Wrapf(err, "invalid uri of cache, %v", uri)
 	}
 	switch {
 	case u.Scheme == "memory":
@@ -39,7 +39,7 @@ func NewCacheFromURI(uri string) (Cache, error) {
 	case u.Scheme == "memcached":
 		return NewMemcached(u.Host)
 	default:
-		return nil, errors.Errorf("unsupported uri of cache, %q", uri)
+		return nil, errors.Errorf("unsupported uri of cache, %v", uri)
 	}
 }
 

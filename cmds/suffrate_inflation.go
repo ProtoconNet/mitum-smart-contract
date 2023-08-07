@@ -27,7 +27,7 @@ func (v *SuffrageInflationItemFlag) UnmarshalText(b []byte) error {
 
 	l := strings.SplitN(string(b), ",", 3)
 	if len(l) != 3 {
-		return util.ErrInvalid.Errorf("invalid inflation amount, %q", string(b))
+		return util.ErrInvalid.Errorf("invalid inflation amount, %v", string(b))
 	}
 
 	a, c := l[0], l[1]+","+l[2]
@@ -129,7 +129,7 @@ func (cmd *SuffrageInflationCommand) parseFlags() error {
 
 	a, err := cmd.Node.Encode(enc)
 	if err != nil {
-		return errors.Wrapf(err, "invalid node format, %q", cmd.Node.String())
+		return errors.Wrapf(err, "invalid node format, %v", cmd.Node.String())
 	}
 	cmd.node = a
 

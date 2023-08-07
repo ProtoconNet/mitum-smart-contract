@@ -100,11 +100,11 @@ func (p *SuffrageCandidateProcessor) PreProcess(
 	fact := op.Fact().(SuffrageCandidateFact) //nolint:forcetypeassert //...
 
 	if _, found := p.preprocessed[fact.Address().String()]; found {
-		return ctx, base.NewBaseOperationProcessReasonError("candidate already preprocessed, %q", fact.Address()), nil
+		return ctx, base.NewBaseOperationProcessReasonError("candidate already preprocessed, %v", fact.Address()), nil
 	}
 
 	if _, found := p.suffrages[fact.Address().String()]; found {
-		return ctx, base.NewBaseOperationProcessReasonError("candidate already in suffrage, %q", fact.Address()), nil
+		return ctx, base.NewBaseOperationProcessReasonError("candidate already in suffrage, %v", fact.Address()), nil
 	}
 
 	switch record, found := p.existings[fact.Address().String()]; {
