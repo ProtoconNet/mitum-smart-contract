@@ -7,24 +7,24 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (cs ContractAccount) MarshalBSON() ([]byte, error) {
+func (cs ContractAccountStatus) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":    cs.Hint().String(),
-			"isactive": cs.isActive,
-			"owner":    cs.owner,
+			"_hint":               cs.Hint().String(),
+			"is_contract_account": cs.isContractAccount,
+			"owner":               cs.owner,
 		},
 	)
 }
 
 type ContractAccountBSONUnmarshaler struct {
-	Hint     string `json:"_hint"`
-	IsActive bool   `bson:"isactive"`
-	Owner    string `bson:"owner"`
+	Hint              string `bson:"_hint"`
+	IsContractAccount bool   `bson:"is_contract_account"`
+	Owner             string `bson:"owner"`
 }
 
-func (cs *ContractAccount) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of ContractAccount")
+func (cs *ContractAccountStatus) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringError("failed to decode bson of ContractAccountStatus")
 
 	var ucs ContractAccountBSONUnmarshaler
 	if err := bsonenc.Unmarshal(b, &ucs); err != nil {
@@ -35,6 +35,6 @@ func (cs *ContractAccount) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	if err != nil {
 		return e.Wrap(err)
 	}
-
-	return cs.unpack(enc, ht, ucs.IsActive, ucs.Owner)
+	
+	return cs.unpack(enc, ht, ucs.IsContractAccount, ucs.Owner)
 }

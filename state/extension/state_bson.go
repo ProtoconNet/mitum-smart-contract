@@ -37,7 +37,7 @@ func (s *ContractAccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) e
 	}
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
-	var ca types.ContractAccount
+	var ca types.ContractAccountStatus
 	if err := ca.DecodeBSON(u.ContractAccount, enc); err != nil {
 		return e.Wrap(err)
 	}

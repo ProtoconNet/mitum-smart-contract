@@ -9,52 +9,52 @@ import (
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
 
-var ContractAccountHint = hint.MustNewHint("mitum-currency-contract-account-status-v0.0.1")
+var ContractAccountStatusHint = hint.MustNewHint("mitum-currency-contract-account-status-v0.0.1")
 
-type ContractAccount struct {
+type ContractAccountStatus struct {
 	hint.BaseHinter
-	owner    base.Address
-	isActive bool
+	owner             base.Address
+	isContractAccount bool
 }
 
-func NewContractAccount(owner base.Address, isActive bool) ContractAccount {
-	us := ContractAccount{
-		BaseHinter: hint.NewBaseHinter(ContractAccountHint),
-		owner:      owner,
-		isActive:   isActive,
+func NewContractAccountStatus(owner base.Address, isContractAccount bool) ContractAccountStatus {
+	us := ContractAccountStatus{
+		BaseHinter:        hint.NewBaseHinter(ContractAccountStatusHint),
+		owner:             owner,
+		isContractAccount: isContractAccount,
 	}
 	return us
 }
 
-func (cs ContractAccount) Bytes() []byte {
+func (cs ContractAccountStatus) Bytes() []byte {
 	var v int8
-	if cs.isActive {
+	if cs.isContractAccount {
 		v = 1
 	}
 
 	return util.ConcatBytesSlice(cs.owner.Bytes(), []byte{byte(v)})
 }
 
-func (cs ContractAccount) Hash() util.Hash {
+func (cs ContractAccountStatus) Hash() util.Hash {
 	return cs.GenerateHash()
 }
 
-func (cs ContractAccount) GenerateHash() util.Hash {
+func (cs ContractAccountStatus) GenerateHash() util.Hash {
 	return valuehash.NewSHA256(cs.Bytes())
 }
 
-func (cs ContractAccount) IsValid([]byte) error { // nolint:revive
+func (cs ContractAccountStatus) IsValid([]byte) error { // nolint:revive
 	return nil
 }
 
-func (cs ContractAccount) Owner() base.Address { // nolint:revive
+func (cs ContractAccountStatus) Owner() base.Address { // nolint:revive
 	return cs.owner
 }
 
-func (cs ContractAccount) SetOwner(a base.Address) (ContractAccount, error) { // nolint:revive
+func (cs ContractAccountStatus) SetOwner(a base.Address) (ContractAccountStatus, error) { // nolint:revive
 	err := a.IsValid(nil)
 	if err != nil {
-		return ContractAccount{}, err
+		return ContractAccountStatus{}, err
 	}
 
 	cs.owner = a
@@ -62,17 +62,17 @@ func (cs ContractAccount) SetOwner(a base.Address) (ContractAccount, error) { //
 	return cs, nil
 }
 
-func (cs ContractAccount) IsActive() bool { // nolint:revive
-	return cs.isActive
+func (cs ContractAccountStatus) IsContractAccount() bool { // nolint:revive
+	return cs.isContractAccount
 }
 
-func (cs ContractAccount) SetIsActive(b bool) ContractAccount { // nolint:revive
-	cs.isActive = b
+func (cs ContractAccountStatus) SetIsContractAccount(b bool) ContractAccountStatus { // nolint:revive
+	cs.isContractAccount = b
 	return cs
 }
 
-func (cs ContractAccount) Equal(b ContractAccount) bool {
-	if cs.isActive != b.isActive {
+func (cs ContractAccountStatus) Equal(b ContractAccountStatus) bool {
+	if cs.isContractAccount != b.isContractAccount {
 		return false
 	}
 	if !cs.owner.Equal(b.owner) {

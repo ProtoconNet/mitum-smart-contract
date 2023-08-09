@@ -6,6 +6,7 @@ import (
 	mongodbstorage "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
 	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	isaacdatabase "github.com/ProtoconNet/mitum2/isaac/database"
@@ -517,6 +518,15 @@ func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, er
 		rs = rs.SetBalance(am).
 			SetHeight(lastHeight)
 	}
+	// NOTE load contract account status
+	//switch status, lastHeight, err := st.contractAccountStatus(a); {
+	//case err != nil:
+	//	rs = rs.SetContractAccountStatus(types.NewContractAccountStatus(nil, false)).
+	//		SetHeight(lastHeight)
+	//default:
+	//	rs = rs.SetContractAccountStatus(status).
+	//		SetHeight(lastHeight)
+	//}
 
 	return rs, true, nil
 }
@@ -661,6 +671,47 @@ func (st *Database) balance(a base.Address) ([]types.Amount, base.Height, error)
 	}
 
 	return ams, lastHeight, nil
+}
+
+func (st *Database) contractAccountStatus(a base.Address) (types.ContractAccountStatus, base.Height, error) {
+	lastHeight := base.NilHeight
+
+	filter := util.NewBSONFilter("address", a)
+	filter.Add("contract", true)
+
+	opt := options.FindOne().SetSort(
+		util.NewBSONFilter("height", -1).D(),
+	)
+	var sta base.State
+	if err := st.database.Client().GetByFilter(
+		defaultColNameAccount,
+		filter.D(),
+		func(res *mongo.SingleResult) error {
+			i, err := LoadContractAccountStatus(res.Decode, st.database.Encoders())
+			if err != nil {
+				return err
+			}
+			sta = i
+			return nil
+		},
+		opt,
+	); err != nil {
+		return types.ContractAccountStatus{}, lastHeight, err
+	}
+
+	if sta != nil {
+		cas, err := extension.StateContractAccountValue(sta)
+		if err != nil {
+			return types.ContractAccountStatus{}, lastHeight, err
+		}
+		if h := sta.Height(); h > lastHeight {
+			lastHeight = h
+		}
+
+		return cas, lastHeight, nil
+	} else {
+		return types.ContractAccountStatus{}, lastHeight, errors.Errorf("state is nil")
+	}
 }
 
 func (st *Database) currencies() ([]string, error) {

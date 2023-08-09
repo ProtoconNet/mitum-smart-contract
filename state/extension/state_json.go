@@ -10,7 +10,7 @@ import (
 
 type ContractAccountStateValueJSONMarshaler struct {
 	hint.BaseHinter
-	ContractAccount types.ContractAccount `json:"contractaccount"`
+	ContractAccount types.ContractAccountStatus `json:"contractaccount"`
 }
 
 func (s ContractAccountStateValue) MarshalJSON() ([]byte, error) {
@@ -35,7 +35,7 @@ func (s *ContractAccountStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) e
 
 	s.BaseHinter = hint.NewBaseHinter(u.Hint)
 
-	var ca types.ContractAccount
+	var ca types.ContractAccountStatus
 	if err := ca.DecodeJSON(u.ContractAccount, enc); err != nil {
 		return e.Wrap(err)
 	}

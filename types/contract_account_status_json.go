@@ -9,31 +9,31 @@ import (
 
 type ContractAccountJSONMarshaler struct {
 	hint.BaseHinter
-	IsActive bool         `json:"isactive"`
-	Owner    base.Address `json:"owner"`
+	IsContractAccount bool         `json:"is_contract_account"`
+	Owner             base.Address `json:"owner"`
 }
 
-func (cs ContractAccount) MarshalJSON() ([]byte, error) {
+func (cs ContractAccountStatus) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(ContractAccountJSONMarshaler{
-		BaseHinter: cs.BaseHinter,
-		IsActive:   cs.isActive,
-		Owner:      cs.owner,
+		BaseHinter:        cs.BaseHinter,
+		IsContractAccount: cs.isContractAccount,
+		Owner:             cs.owner,
 	})
 }
 
 type ContractAccountJSONUnmarshaler struct {
-	Hint     hint.Hint `json:"_hint"`
-	IsActive bool      `json:"isactive"`
-	Owner    string    `json:"owner"`
+	Hint              hint.Hint `json:"_hint"`
+	IsContractAccount bool      `json:"is_contract_account"`
+	Owner             string    `json:"owner"`
 }
 
-func (ca *ContractAccount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of ContractAccount")
+func (ca *ContractAccountStatus) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+	e := util.StringError("failed to decode json of ContractAccountStatus")
 
 	var ucs ContractAccountJSONUnmarshaler
 	if err := enc.Unmarshal(b, &ucs); err != nil {
 		return e.Wrap(err)
 	}
 
-	return ca.unpack(enc, ucs.Hint, ucs.IsActive, ucs.Owner)
+	return ca.unpack(enc, ucs.Hint, ucs.IsContractAccount, ucs.Owner)
 }

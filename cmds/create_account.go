@@ -79,9 +79,19 @@ func (cmd *CreateAccountCommand) parseFlags() error {
 			ks[i] = cmd.Keys[i].Key
 		}
 
-		if kys, err := types.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
-			return err
-		} else if err := kys.IsValid(nil); err != nil {
+		var kys types.BaseAccountKeys
+		switch {
+		case cmd.AddressType == "ether":
+			if kys, err = types.NewBaseMEAccountKeys(ks, cmd.Threshold); err != nil {
+				return err
+			}
+		default:
+			if kys, err = types.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
+				return err
+			}
+		}
+
+		if err := kys.IsValid(nil); err != nil {
 			return err
 		} else {
 			cmd.keys = kys

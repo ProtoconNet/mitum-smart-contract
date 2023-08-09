@@ -7,13 +7,13 @@ import (
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
-func (cs *ContractAccount) unpack(
+func (cs *ContractAccountStatus) unpack(
 	enc encoder.Encoder,
 	ht hint.Hint,
 	ia bool,
 	ow string,
 ) error {
-	e := util.StringError("failed to unmarshal ContractAccount")
+	e := util.StringError("failed to unmarshal ContractAccountStatus")
 
 	cs.BaseHinter = hint.NewBaseHinter(ht)
 
@@ -24,7 +24,7 @@ func (cs *ContractAccount) unpack(
 		cs.owner = a
 	}
 
-	cs.isActive = ia
+	cs.isContractAccount = ia
 
 	return nil
 }

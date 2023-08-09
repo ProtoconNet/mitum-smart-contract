@@ -24,7 +24,14 @@ func (ky *BaseAccountKey) unpack(enc encoder.Encoder, ht hint.Hint, w uint, sk s
 	return nil
 }
 
-func (ks *BaseAccountKeys) unpack(enc encoder.Encoder, ht hint.Hint, h valuehash.HashDecoder, bks []byte, th uint) error {
+func (ks *BaseAccountKeys) unpack(
+	enc encoder.Encoder,
+	ht hint.Hint,
+	h util.Hash,
+	bks []byte,
+	th uint,
+	adTy string,
+) error {
 	e := util.StringError("failed to unmarshal BaseAccountKeys")
 
 	ks.BaseHinter = hint.NewBaseHinter(ht)
@@ -45,8 +52,10 @@ func (ks *BaseAccountKeys) unpack(enc encoder.Encoder, ht hint.Hint, h valuehash
 	}
 	ks.keys = keys
 
-	ks.h = h.Hash()
+	ks.h = h
+
 	ks.threshold = th
+	ks.addressType = hint.Type(adTy)
 
 	return nil
 }

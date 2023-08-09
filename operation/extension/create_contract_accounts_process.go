@@ -137,7 +137,7 @@ func (opp *CreateContractAccountsItemProcessor) Process(
 	}
 	sts[0] = state.NewStateMergeValue(opp.ns.Key(), currencystate.NewAccountStateValue(ncac))
 
-	cas := types.NewContractAccount(opp.oac.Address(), true)
+	cas := types.NewContractAccountStatus(opp.oac.Address(), true)
 	sts[1] = state.NewStateMergeValue(opp.oas.Key(), extension.NewContractAccountStateValue(cas))
 
 	for i := range opp.item.Amounts() {

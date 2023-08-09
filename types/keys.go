@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
 	"sort"
 
@@ -85,9 +86,10 @@ func (ky BaseAccountKey) Equal(b AccountKey) bool {
 
 type BaseAccountKeys struct {
 	hint.BaseHinter
-	h         util.Hash
-	keys      []AccountKey
-	threshold uint
+	h           util.Hash
+	keys        []AccountKey
+	threshold   uint
+	addressType hint.Type
 }
 
 func EmptyBaseAccountKeys() BaseAccountKeys {
@@ -95,7 +97,18 @@ func EmptyBaseAccountKeys() BaseAccountKeys {
 }
 
 func NewBaseAccountKeys(keys []AccountKey, threshold uint) (BaseAccountKeys, error) {
-	ks := BaseAccountKeys{BaseHinter: hint.NewBaseHinter(AccountKeysHint), keys: keys, threshold: threshold}
+	ks := BaseAccountKeys{BaseHinter: hint.NewBaseHinter(AccountKeysHint), keys: keys, threshold: threshold, addressType: AddressHint.Type()}
+	h, err := ks.GenerateHash()
+	if err != nil {
+		return BaseAccountKeys{}, err
+	}
+	ks.h = h
+
+	return ks, ks.IsValid(nil)
+}
+
+func NewBaseMEAccountKeys(keys []AccountKey, threshold uint) (BaseAccountKeys, error) {
+	ks := BaseAccountKeys{BaseHinter: hint.NewBaseHinter(AccountKeysHint), keys: keys, threshold: threshold, addressType: EthAddressHint.Type()}
 	h, err := ks.GenerateHash()
 	if err != nil {
 		return BaseAccountKeys{}, err
@@ -110,18 +123,20 @@ func (ks BaseAccountKeys) Hash() util.Hash {
 }
 
 func (ks BaseAccountKeys) GenerateHash() (util.Hash, error) {
-	return valuehash.NewSHA256(ks.Bytes()), nil
-}
+	if ks.addressType == EthAddressHint.Type() {
+		h := crypto.Keccak256(ks.Bytes()[:])
+		//dst := make([]byte, hex.EncodedLen(len(h[12:])))
+		//hex.Encode(dst, h[12:])
+		//copy(b[:], dst[:])
 
-func (ks BaseAccountKeys) GenerateKeccakHash() (util.Hash, error) {
-	var b valuehash.L32
-	h := crypto.Keccak256(ks.Bytes()[:])
-	copy(b[:], h[:])
-	return b, nil
+		return common.NewHashFromBytes(h[12:]), nil
+	} else {
+		return valuehash.NewSHA256(ks.Bytes()), nil
+	}
 }
 
 func (ks BaseAccountKeys) Bytes() []byte {
-	bs := make([][]byte, len(ks.keys)+1)
+	bs := make([][]byte, len(ks.keys)+2)
 
 	// NOTE sorted by Key.Key()
 	sort.Slice(ks.keys, func(i, j int) bool {
@@ -132,6 +147,7 @@ func (ks BaseAccountKeys) Bytes() []byte {
 	}
 
 	bs[len(ks.keys)] = util.UintToBytes(ks.threshold)
+	bs[len(ks.keys)+1] = ks.addressType.Bytes()
 
 	return util.ConcatBytesSlice(bs...)
 }
@@ -199,7 +215,7 @@ func (ks BaseAccountKeys) Key(k base.Publickey) (AccountKey, bool) {
 		}
 	}
 
-	return BaseAccountKey{}, false
+	return nil, false
 }
 
 func (ks BaseAccountKeys) Equal(b AccountKeys) bool {
@@ -215,13 +231,13 @@ func (ks BaseAccountKeys) Equal(b AccountKeys) bool {
 		return bytes.Compare(ks.keys[i].Key().Bytes(), ks.keys[j].Key().Bytes()) < 0
 	})
 
-	bkeys := b.Keys()
-	sort.Slice(bkeys, func(i, j int) bool {
-		return bytes.Compare(bkeys[i].Key().Bytes(), bkeys[j].Key().Bytes()) < 0
+	bKeys := b.Keys()
+	sort.Slice(bKeys, func(i, j int) bool {
+		return bytes.Compare(bKeys[i].Key().Bytes(), bKeys[j].Key().Bytes()) < 0
 	})
 
 	for i := range ks.keys {
-		if !ks.keys[i].Equal(bkeys[i]) {
+		if !ks.keys[i].Equal(bKeys[i]) {
 			return false
 		}
 	}
@@ -326,13 +342,13 @@ func (ks ContractAccountKeys) Equal(b AccountKeys) bool {
 		return bytes.Compare(ks.keys[i].Key().Bytes(), ks.keys[j].Key().Bytes()) < 0
 	})
 
-	bkeys := b.Keys()
-	sort.Slice(bkeys, func(i, j int) bool {
-		return bytes.Compare(bkeys[i].Key().Bytes(), bkeys[j].Key().Bytes()) < 0
+	bKeys := b.Keys()
+	sort.Slice(bKeys, func(i, j int) bool {
+		return bytes.Compare(bKeys[i].Key().Bytes(), bKeys[j].Key().Bytes()) < 0
 	})
 
 	for i := range ks.keys {
-		if !ks.keys[i].Equal(bkeys[i]) {
+		if !ks.keys[i].Equal(bKeys[i]) {
 			return false
 		}
 	}

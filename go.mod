@@ -2,6 +2,9 @@ module github.com/ProtoconNet/mitum-currency/v3
 
 go 1.20
 
+replace github.com/ProtoconNet/mitum2 => /Users/soonkukkang/go/src/github.com/spikeekips/mitum2
+
+
 require (
 	github.com/ProtoconNet/mitum2 v0.0.0-20230704001603-99ed1a35ce71
 	github.com/alecthomas/kong v0.7.1

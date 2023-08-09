@@ -15,7 +15,7 @@ type KeyAddressCommand struct {
 	BaseCommand
 	Threshold   uint      `arg:"" name:"threshold" help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
 	Keys        []KeyFlag `arg:"" name:"key" help:"key for address (ex: \"<public key>,<weight>\")" sep:"@" optional:""`
-	AddressType string    `help:"key type for address. select btc or ether" default:"btc"`
+	AddressType string    `help:"key type for address. select mitum or ether" default:"mitum"`
 }
 
 func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
@@ -28,23 +28,35 @@ func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
 		ks[i] = cmd.Keys[i].Key
 	}
 
-	keys, err := types.NewBaseAccountKeys(ks, cmd.Threshold)
-	if err != nil {
-		return err
-	}
-
-	cmd.Log.Debug().Int("number_of_keys", len(ks)).Interface("keys", keys).Msg("keys loaded")
-
 	var a base.Address
-	if len(cmd.AddressType) > 0 && cmd.AddressType == "ether" {
+	var keys types.BaseAccountKeys
+	var err error
+	if cmd.AddressType == "ether" {
+		keys, err = types.NewBaseMEAccountKeys(ks, cmd.Threshold)
+		if err != nil {
+			return err
+		}
+
+		cmd.Log.Debug().Int("number_of_keys", len(ks)).Interface("keys", keys).Msg("keys loaded")
+
 		a, err = types.NewEthAddressFromKeys(keys)
+		if err != nil {
+			return err
+		}
 	} else {
+		keys, err = types.NewBaseAccountKeys(ks, cmd.Threshold)
+		if err != nil {
+			return err
+		}
+
+		cmd.Log.Debug().Int("number_of_keys", len(ks)).Interface("keys", keys).Msg("keys loaded")
+
 		a, err = types.NewAddressFromKeys(keys)
+		if err != nil {
+			return err
+		}
 	}
 
-	if err != nil {
-		return err
-	}
 	cmd.print(a.String())
 
 	return nil

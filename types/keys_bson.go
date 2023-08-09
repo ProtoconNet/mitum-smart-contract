@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 
@@ -44,10 +45,11 @@ func (ky *BaseAccountKey) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 func (ks BaseAccountKeys) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":     ks.Hint().String(),
-			"hash":      ks.Hash().String(),
-			"keys":      ks.keys,
-			"threshold": ks.threshold,
+			"_hint":        ks.Hint().String(),
+			"hash":         ks.Hash().String(),
+			"keys":         ks.keys,
+			"threshold":    ks.threshold,
+			"address_type": ks.addressType,
 		},
 	)
 }
@@ -64,10 +66,11 @@ func (ks ContractAccountKeys) MarshalBSON() ([]byte, error) {
 }
 
 type KeysBSONUnmarshaler struct {
-	Hint      string   `bson:"_hint"`
-	Hash      string   `bson:"hash"`
-	Keys      bson.Raw `bson:"keys"`
-	Threshold uint     `bson:"threshold"`
+	Hint        string   `bson:"_hint"`
+	Hash        string   `bson:"hash"`
+	Keys        bson.Raw `bson:"keys"`
+	Threshold   uint     `bson:"threshold"`
+	AddressType string   `bson:"address_type"`
 }
 
 func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -101,8 +104,13 @@ func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	}
 	ks.keys = keys
 	ks.threshold = uks.Threshold
+	ks.addressType = hint.Type(uks.AddressType)
 
-	ks.h = valuehash.NewBytesFromString(uks.Hash)
+	if ks.addressType == AddressHint.Type() {
+		ks.h = valuehash.NewBytesFromString(uks.Hash)
+	} else {
+		ks.h = common.NewBytesFromString(uks.Hash)
+	}
 
 	return nil
 }

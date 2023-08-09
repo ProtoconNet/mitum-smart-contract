@@ -4,6 +4,7 @@ import (
 	mongodbstorage "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -91,6 +92,45 @@ func (doc BalanceDoc) MarshalBSON() ([]byte, error) {
 	m["currency"] = doc.am.Currency().String()
 	m["height"] = doc.st.Height()
 	m["amount"] = doc.am.Big().String()
+
+	return bsonenc.Marshal(m)
+}
+
+type ContractAccountStatusDoc struct {
+	mongodbstorage.BaseDoc
+	st  base.State
+	cas types.ContractAccountStatus
+}
+
+func NewContractAccountStatusDoc(st base.State, enc encoder.Encoder) (ContractAccountStatusDoc, error) {
+	cd, err := extension.StateContractAccountValue(st)
+	if err != nil {
+		return ContractAccountStatusDoc{}, errors.Wrap(err, "ContractAccountStatusDoc needs ContractAccountStatus state")
+	}
+
+	b, err := mongodbstorage.NewBaseDoc(nil, st, enc)
+	if err != nil {
+		return ContractAccountStatusDoc{}, err
+	}
+
+	return ContractAccountStatusDoc{
+		BaseDoc: b,
+		st:      st,
+		cas:     cd,
+	}, nil
+}
+
+func (doc ContractAccountStatusDoc) MarshalBSON() ([]byte, error) {
+	m, err := doc.BaseDoc.M()
+	if err != nil {
+		return nil, err
+	}
+
+	address := doc.st.Key()[:len(doc.st.Key())-len(extension.StateKeyContractAccountSuffix)]
+	m["address"] = address
+	m["owner"] = doc.cas.Owner().String()
+	m["height"] = doc.st.Height()
+	m["contract"] = true
 
 	return bsonenc.Marshal(m)
 }

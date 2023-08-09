@@ -1,12 +1,9 @@
 package types
 
 import (
-	"encoding/hex"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
-	"github.com/ProtoconNet/mitum2/util/valuehash"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -52,24 +49,11 @@ func NewEthAddress(s string) EthAddress {
 }
 
 func NewEthAddressFromKeys(keys AccountKeys) (EthAddress, error) {
-	if err := keys.IsValid(nil); err != nil {
-		return EthAddress{}, err
-	}
-
-	k, ok := keys.(BaseAccountKeys)
-	if !ok {
-		return EthAddress{}, errors.Errorf("expected BaseAccountKeys, not %T", keys)
-	}
-	h, err := k.GenerateKeccakHash()
-	if err != nil {
-		return EthAddress{}, err
-	}
-	v, ok := h.(valuehash.L32)
-	if !ok {
-		return EthAddress{}, errors.Errorf("expected valuehash.L32, not %T", h)
-	}
-
-	return NewEthAddress(hex.EncodeToString(v[12:])), nil
+	//var b valuehash.L32
+	//copy(b[:], keys.Hash().Bytes()[:])
+	//
+	//return NewEthAddress(hex.EncodeToString(b[12:])), nil
+	return NewEthAddress(keys.Hash().String()), nil
 }
 
 func (ca EthAddress) IsValid([]byte) error {

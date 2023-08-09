@@ -86,6 +86,22 @@ func LoadCurrency(decoder func(interface{}) error, encs *encoder.Encoders) (base
 	}
 }
 
+func LoadContractAccountStatus(decoder func(interface{}) error, encs *encoder.Encoders) (base.State, error) {
+	var b bson.Raw
+
+	if err := decoder(&b); err != nil {
+		return nil, err
+	}
+
+	if _, hinter, err := mongodbstorage.LoadDataFromDoc(b, encs); err != nil {
+		return nil, err
+	} else if st, ok := hinter.(base.State); !ok {
+		return nil, errors.Errorf("not base.State: %T", hinter)
+	} else {
+		return st, nil
+	}
+}
+
 func LoadManifest(decoder func(interface{}) error, encs *encoder.Encoders) (base.Manifest, uint64, error) {
 	var b bson.Raw
 

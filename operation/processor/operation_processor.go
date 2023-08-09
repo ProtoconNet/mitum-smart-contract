@@ -194,7 +194,6 @@ func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, g
 	}
 
 	stateMergeValues, reasonErr, err := sp.Process(ctx, op, getStateFunc)
-
 	return stateMergeValues, reasonErr, err
 }
 

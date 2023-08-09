@@ -52,9 +52,9 @@ func (kd *KeyDesign) IsValid([]byte) error {
 
 type AccountKeysDesign struct {
 	Threshold  uint
-	KeysDesign []*KeyDesign          `yaml:"keys"`
-	Keys       types.BaseAccountKeys `yaml:"-"`
-	Address    types.Address         `yaml:"-"`
+	KeysDesign []*KeyDesign      `yaml:"keys"`
+	Keys       types.AccountKeys `yaml:"-"`
+	Address    types.Address     `yaml:"-"`
 }
 
 func (akd *AccountKeysDesign) IsValid([]byte) error {

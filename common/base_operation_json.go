@@ -2,7 +2,6 @@ package common
 
 import (
 	"encoding/json"
-
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"

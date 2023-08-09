@@ -29,7 +29,7 @@ type BlockSession struct {
 	sync.RWMutex
 	block              base.BlockMap
 	ops                []base.Operation
-	opstree            fixedtree.Tree
+	opsTree            fixedtree.Tree
 	sts                []base.State
 	st                 *Database
 	opsTreeNodes       map[string]base.OperationFixedtreeNode
@@ -42,7 +42,7 @@ type BlockSession struct {
 	balanceAddressList []string
 }
 
-func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opstree fixedtree.Tree, sts []base.State) (*BlockSession, error) {
+func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opsTree fixedtree.Tree, sts []base.State) (*BlockSession, error) {
 	if st.Readonly() {
 		return nil, errors.Errorf("readonly mode")
 	}
@@ -56,7 +56,7 @@ func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opst
 		st:          nst,
 		block:       blk,
 		ops:         ops,
-		opstree:     opstree,
+		opsTree:     opsTree,
 		sts:         sts,
 		statesValue: &sync.Map{},
 	}, nil
@@ -138,7 +138,7 @@ func (bs *BlockSession) Close() error {
 func (bs *BlockSession) prepareOperationsTree() error {
 	nodes := map[string]base.OperationFixedtreeNode{}
 
-	if err := bs.opstree.Traverse(func(_ uint64, no fixedtree.Node) (bool, error) {
+	if err := bs.opsTree.Traverse(func(_ uint64, no fixedtree.Node) (bool, error) {
 		nno := no.(base.OperationFixedtreeNode)
 		nodes[nno.Key()] = nno
 
@@ -244,6 +244,12 @@ func (bs *BlockSession) prepareAccounts() error {
 			}
 			balanceModels = append(balanceModels, j...)
 			bs.balanceAddressList = append(bs.balanceAddressList, address)
+		//case stateextension.IsStateContractAccountKey(st.Key()):
+		//	j, err := bs.handleContractAccountState(st)
+		//	if err != nil {
+		//		return err
+		//	}
+		//	accountModels = append(accountModels, j...)
 		default:
 			continue
 		}
@@ -295,6 +301,14 @@ func (bs *BlockSession) handleBalanceState(st base.State) ([]mongo.WriteModel, s
 		return nil, "", err
 	}
 	return []mongo.WriteModel{mongo.NewInsertOneModel().SetDocument(doc)}, address, nil
+}
+
+func (bs *BlockSession) handleContractAccountState(st base.State) ([]mongo.WriteModel, error) {
+	doc, err := NewContractAccountStatusDoc(st, bs.st.database.Encoder())
+	if err != nil {
+		return nil, err
+	}
+	return []mongo.WriteModel{mongo.NewInsertOneModel().SetDocument(doc)}, nil
 }
 
 func (bs *BlockSession) handleCurrencyState(st base.State) ([]mongo.WriteModel, error) {

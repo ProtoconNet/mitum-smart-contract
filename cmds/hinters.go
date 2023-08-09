@@ -29,6 +29,7 @@ var AddedHinters = []encoder.DecodeDetail{
 	{Hint: types.AddressHint, Instance: types.Address{}},
 	{Hint: types.AmountHint, Instance: types.Amount{}},
 	{Hint: types.ContractAccountKeysHint, Instance: types.ContractAccountKeys{}},
+	{Hint: types.ContractAccountStatusHint, Instance: types.ContractAccountStatus{}},
 	{Hint: types.CurrencyDesignHint, Instance: types.CurrencyDesign{}},
 	{Hint: types.CurrencyPolicyHint, Instance: types.CurrencyPolicy{}},
 	{Hint: types.EthAddressHint, Instance: types.EthAddress{}},
