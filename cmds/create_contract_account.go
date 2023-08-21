@@ -17,7 +17,7 @@ type CreateContractAccountCommand struct {
 	Amounts     []CurrencyAmountFlag `arg:"" name:"currency-amount" help:"amount (ex: \"<currency>,<amount>\")"`
 	AddressType string               `help:"address type for new account select mitum or ether" default:"mitum"`
 	sender      base.Address
-	keys        types.BaseAccountKeys
+	keys        types.AccountKeys
 }
 
 func (cmd *CreateContractAccountCommand) Run(pctx context.Context) error { // nolint:dupl
@@ -67,10 +67,10 @@ func (cmd *CreateContractAccountCommand) parseFlags() error {
 			ks[i] = cmd.Keys[i].Key
 		}
 
-		var kys types.BaseAccountKeys
+		var kys types.AccountKeys
 		switch {
 		case cmd.AddressType == "ether":
-			if kys, err = types.NewBaseMEAccountKeys(ks, cmd.Threshold); err != nil {
+			if kys, err = types.NewEthAccountKeys(ks, cmd.Threshold); err != nil {
 				return err
 			}
 		default:

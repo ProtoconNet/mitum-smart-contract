@@ -44,19 +44,26 @@ func (ky *BaseAccountKey) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 
 type KeysJSONMarshaler struct {
 	hint.BaseHinter
-	Hash        util.Hash    `json:"hash"`
-	Keys        []AccountKey `json:"keys"`
-	Threshold   uint         `json:"threshold"`
-	AddressType hint.Type    `json:"address_type"`
+	Hash      util.Hash    `json:"hash"`
+	Keys      []AccountKey `json:"keys"`
+	Threshold uint         `json:"threshold"`
 }
 
 func (ks BaseAccountKeys) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(KeysJSONMarshaler{
-		BaseHinter:  ks.BaseHinter,
-		Hash:        ks.h,
-		Keys:        ks.keys,
-		Threshold:   ks.threshold,
-		AddressType: ks.addressType,
+		BaseHinter: ks.BaseHinter,
+		Hash:       ks.h,
+		Keys:       ks.keys,
+		Threshold:  ks.threshold,
+	})
+}
+
+func (ks EthAccountKeys) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(KeysJSONMarshaler{
+		BaseHinter: ks.BaseHinter,
+		Hash:       ks.h,
+		Keys:       ks.keys,
+		Threshold:  ks.threshold,
 	})
 }
 
@@ -70,17 +77,16 @@ func (ks ContractAccountKeys) MarshalJSON() ([]byte, error) {
 }
 
 type KeysJSONUnMarshaler struct {
-	Hint        hint.Hint       `json:"_hint"`
-	Keys        json.RawMessage `json:"keys"`
-	Threshold   uint            `json:"threshold"`
-	AddressType string          `json:"address_type"`
+	Hint      hint.Hint       `json:"_hint"`
+	Keys      json.RawMessage `json:"keys"`
+	Threshold uint            `json:"threshold"`
 }
 
 type KeysHashJSONUnMarshaler struct {
 	Hash valuehash.HashDecoder `json:"hash"`
 }
 
-type MEKeysHashJSONUnMarshaler struct {
+type EthKeysHashJSONUnMarshaler struct {
 	Hash common.HashDecoder `json:"hash"`
 }
 
@@ -93,20 +99,31 @@ func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	}
 
 	var hash util.Hash
-	if uks.AddressType == EthAddressHint.Type().String() {
-		var uhs MEKeysHashJSONUnMarshaler
-		if err := enc.Unmarshal(b, &uhs); err != nil {
-			return e.Wrap(err)
-		}
-		hash = uhs.Hash.Hash()
-	} else {
-		var uhs KeysHashJSONUnMarshaler
-		if err := enc.Unmarshal(b, &uhs); err != nil {
-			return e.Wrap(err)
-		}
-		hash = uhs.Hash.Hash()
+	var uhs KeysHashJSONUnMarshaler
+	if err := enc.Unmarshal(b, &uhs); err != nil {
+		return e.Wrap(err)
 	}
-	return ks.unpack(enc, uks.Hint, hash, uks.Keys, uks.Threshold, uks.AddressType)
+	hash = uhs.Hash.Hash()
+
+	return ks.unpack(enc, uks.Hint, hash, uks.Keys, uks.Threshold)
+}
+
+func (ks *EthAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+	e := util.StringError("failed to decode json of EthAccountKeys")
+
+	var uks KeysJSONUnMarshaler
+	if err := enc.Unmarshal(b, &uks); err != nil {
+		return e.Wrap(err)
+	}
+
+	var hash util.Hash
+	var uhs EthKeysHashJSONUnMarshaler
+	if err := enc.Unmarshal(b, &uhs); err != nil {
+		return e.Wrap(err)
+	}
+	hash = uhs.Hash.Hash()
+
+	return ks.unpack(enc, uks.Hint, hash, uks.Keys, uks.Threshold)
 }
 
 func (ks *ContractAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {

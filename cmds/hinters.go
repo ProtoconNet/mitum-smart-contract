@@ -26,6 +26,7 @@ var AddedHinters = []encoder.DecodeDetail{
 	{Hint: types.AccountHint, Instance: types.Account{}},
 	{Hint: types.AccountKeyHint, Instance: types.BaseAccountKey{}},
 	{Hint: types.AccountKeysHint, Instance: types.BaseAccountKeys{}},
+	{Hint: types.EthAccountKeysHint, Instance: types.EthAccountKeys{}},
 	{Hint: types.AddressHint, Instance: types.Address{}},
 	{Hint: types.AmountHint, Instance: types.Amount{}},
 	{Hint: types.ContractAccountKeysHint, Instance: types.ContractAccountKeys{}},

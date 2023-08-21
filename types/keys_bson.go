@@ -45,11 +45,21 @@ func (ky *BaseAccountKey) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 func (ks BaseAccountKeys) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":        ks.Hint().String(),
-			"hash":         ks.Hash().String(),
-			"keys":         ks.keys,
-			"threshold":    ks.threshold,
-			"address_type": ks.addressType,
+			"_hint":     ks.Hint().String(),
+			"hash":      ks.Hash().String(),
+			"keys":      ks.keys,
+			"threshold": ks.threshold,
+		},
+	)
+}
+
+func (ks EthAccountKeys) MarshalBSON() ([]byte, error) {
+	return bsonenc.Marshal(
+		bson.M{
+			"_hint":     ks.Hint().String(),
+			"hash":      ks.Hash().String(),
+			"keys":      ks.keys,
+			"threshold": ks.threshold,
 		},
 	)
 }
@@ -66,11 +76,10 @@ func (ks ContractAccountKeys) MarshalBSON() ([]byte, error) {
 }
 
 type KeysBSONUnmarshaler struct {
-	Hint        string   `bson:"_hint"`
-	Hash        string   `bson:"hash"`
-	Keys        bson.Raw `bson:"keys"`
-	Threshold   uint     `bson:"threshold"`
-	AddressType string   `bson:"address_type"`
+	Hint      string   `bson:"_hint"`
+	Hash      string   `bson:"hash"`
+	Keys      bson.Raw `bson:"keys"`
+	Threshold uint     `bson:"threshold"`
 }
 
 func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -104,13 +113,45 @@ func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	}
 	ks.keys = keys
 	ks.threshold = uks.Threshold
-	ks.addressType = hint.Type(uks.AddressType)
 
-	if ks.addressType == AddressHint.Type() {
-		ks.h = valuehash.NewBytesFromString(uks.Hash)
-	} else {
-		ks.h = common.NewBytesFromString(uks.Hash)
+	ks.h = valuehash.NewBytesFromString(uks.Hash)
+
+	return nil
+}
+
+func (ks *EthAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringError("failed to decode bson of EthAccountKeys")
+
+	var uks KeysBSONUnmarshaler
+	if err := bson.Unmarshal(b, &uks); err != nil {
+		return e.Wrap(err)
 	}
+
+	ht, err := hint.ParseHint(uks.Hint)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
+	ks.BaseHinter = hint.NewBaseHinter(ht)
+
+	hks, err := enc.DecodeSlice(uks.Keys)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
+	keys := make([]AccountKey, len(hks))
+	for i := range hks {
+		j, ok := hks[i].(BaseAccountKey)
+		if !ok {
+			return errors.Errorf("expected BaseAccountKey, not %T", hks[i])
+		}
+
+		keys[i] = j
+	}
+	ks.keys = keys
+	ks.threshold = uks.Threshold
+
+	ks.h = common.NewBytesFromString(uks.Hash)
 
 	return nil
 }

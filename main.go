@@ -39,7 +39,7 @@ var CLI struct { //nolint:govet //...
 	Key struct {
 		New     cmds.KeyNewCommand       `cmd:"" help:"generate new key"`
 		Address cmds.KeyAddressCommand   `cmd:"" help:"generate address from key"`
-		Load    launchcmd.KeyLoadCommand `cmd:"" help:"load key"`
+		Load    cmds.KeyLoadCommand      `cmd:"" help:"load key"`
 		Sign    launchcmd.KeySignCommand `cmd:"" help:"sign"`
 	} `cmd:"" help:"key"`
 	Handover launchcmd.HandoverCommands `cmd:""`

@@ -29,10 +29,10 @@ func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
 	}
 
 	var a base.Address
-	var keys types.BaseAccountKeys
+	var keys types.AccountKeys
 	var err error
 	if cmd.AddressType == "ether" {
-		keys, err = types.NewBaseMEAccountKeys(ks, cmd.Threshold)
+		keys, err = types.NewEthAccountKeys(ks, cmd.Threshold)
 		if err != nil {
 			return err
 		}
