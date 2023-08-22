@@ -13,22 +13,22 @@ var ContractAccountStatusHint = hint.MustNewHint("mitum-currency-contract-accoun
 
 type ContractAccountStatus struct {
 	hint.BaseHinter
-	owner             base.Address
-	isContractAccount bool
+	owner    base.Address
+	isActive bool
 }
 
-func NewContractAccountStatus(owner base.Address, isContractAccount bool) ContractAccountStatus {
+func NewContractAccountStatus(owner base.Address, isActive bool) ContractAccountStatus {
 	us := ContractAccountStatus{
-		BaseHinter:        hint.NewBaseHinter(ContractAccountStatusHint),
-		owner:             owner,
-		isContractAccount: isContractAccount,
+		BaseHinter: hint.NewBaseHinter(ContractAccountStatusHint),
+		owner:      owner,
+		isActive:   isActive,
 	}
 	return us
 }
 
 func (cs ContractAccountStatus) Bytes() []byte {
 	var v int8
-	if cs.isContractAccount {
+	if cs.isActive {
 		v = 1
 	}
 
@@ -62,17 +62,17 @@ func (cs ContractAccountStatus) SetOwner(a base.Address) (ContractAccountStatus,
 	return cs, nil
 }
 
-func (cs ContractAccountStatus) IsContractAccount() bool { // nolint:revive
-	return cs.isContractAccount
+func (cs ContractAccountStatus) IsActive() bool { // nolint:revive
+	return cs.isActive
 }
 
-func (cs ContractAccountStatus) SetIsContractAccount(b bool) ContractAccountStatus { // nolint:revive
-	cs.isContractAccount = b
+func (cs ContractAccountStatus) SetIsActive(b bool) ContractAccountStatus { // nolint:revive
+	cs.isActive = b
 	return cs
 }
 
 func (cs ContractAccountStatus) Equal(b ContractAccountStatus) bool {
-	if cs.isContractAccount != b.isContractAccount {
+	if cs.isActive != b.isActive {
 		return false
 	}
 	if !cs.owner.Equal(b.owner) {

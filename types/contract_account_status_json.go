@@ -9,22 +9,22 @@ import (
 
 type ContractAccountJSONMarshaler struct {
 	hint.BaseHinter
-	IsContractAccount bool         `json:"is_contract_account"`
-	Owner             base.Address `json:"owner"`
+	IsActive bool         `json:"is_active"`
+	Owner    base.Address `json:"owner"`
 }
 
 func (cs ContractAccountStatus) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(ContractAccountJSONMarshaler{
-		BaseHinter:        cs.BaseHinter,
-		IsContractAccount: cs.isContractAccount,
-		Owner:             cs.owner,
+		BaseHinter: cs.BaseHinter,
+		IsActive:   cs.isActive,
+		Owner:      cs.owner,
 	})
 }
 
 type ContractAccountJSONUnmarshaler struct {
-	Hint              hint.Hint `json:"_hint"`
-	IsContractAccount bool      `json:"is_contract_account"`
-	Owner             string    `json:"owner"`
+	Hint     hint.Hint `json:"_hint"`
+	IsActive bool      `json:"is_active"`
+	Owner    string    `json:"owner"`
 }
 
 func (ca *ContractAccountStatus) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -35,5 +35,5 @@ func (ca *ContractAccountStatus) DecodeJSON(b []byte, enc *jsonenc.Encoder) erro
 		return e.Wrap(err)
 	}
 
-	return ca.unpack(enc, ucs.Hint, ucs.IsContractAccount, ucs.Owner)
+	return ca.unpack(enc, ucs.Hint, ucs.IsActive, ucs.Owner)
 }

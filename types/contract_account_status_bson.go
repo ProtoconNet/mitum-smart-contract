@@ -10,17 +10,17 @@ import (
 func (cs ContractAccountStatus) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":               cs.Hint().String(),
-			"is_contract_account": cs.isContractAccount,
-			"owner":               cs.owner,
+			"_hint":     cs.Hint().String(),
+			"is_active": cs.isActive,
+			"owner":     cs.owner,
 		},
 	)
 }
 
 type ContractAccountBSONUnmarshaler struct {
-	Hint              string `bson:"_hint"`
-	IsContractAccount bool   `bson:"is_contract_account"`
-	Owner             string `bson:"owner"`
+	Hint     string `bson:"_hint"`
+	IsActive bool   `bson:"is_active"`
+	Owner    string `bson:"owner"`
 }
 
 func (cs *ContractAccountStatus) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -35,6 +35,6 @@ func (cs *ContractAccountStatus) DecodeBSON(b []byte, enc *bsonenc.Encoder) erro
 	if err != nil {
 		return e.Wrap(err)
 	}
-	
-	return cs.unpack(enc, ht, ucs.IsContractAccount, ucs.Owner)
+
+	return cs.unpack(enc, ht, ucs.IsActive, ucs.Owner)
 }

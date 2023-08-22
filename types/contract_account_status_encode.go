@@ -24,7 +24,7 @@ func (cs *ContractAccountStatus) unpack(
 		cs.owner = a
 	}
 
-	cs.isContractAccount = ia
+	cs.isActive = ia
 
 	return nil
 }
