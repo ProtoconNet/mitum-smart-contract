@@ -31,15 +31,15 @@ func init() {
 }
 
 type KeyDesign struct {
-	PublickeyString string `yaml:"publickey"`
+	PublicKeyString string `yaml:"publickey"`
 	Weight          uint
 	Key             types.BaseAccountKey `yaml:"-"`
 }
 
 func (kd *KeyDesign) IsValid([]byte) error {
-	je := encs.Find(jsonenc.JSONEncoderHint)
+	je, _ := encs.Find(jsonenc.JSONEncoderHint)
 
-	if pub, err := base.DecodePublickeyFromString(kd.PublickeyString, je); err != nil {
+	if pub, err := base.DecodePublickeyFromString(kd.PublicKeyString, je); err != nil {
 		return mitumutil.ErrInvalid.Wrap(err)
 	} else if k, err := types.NewBaseAccountKey(pub, kd.Weight); err != nil {
 		return mitumutil.ErrInvalid.Wrap(err)
@@ -232,7 +232,7 @@ type DigestDesign struct {
 }
 
 func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
-	e := mitumutil.StringError("failed to Set DigestDesign")
+	e := mitumutil.StringError("set DigestDesign")
 
 	nctx := context.WithValue(
 		context.Background(),
@@ -321,16 +321,16 @@ func (d *DigestDesign) Set(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }
 
-func (no *DigestDesign) Network() config.LocalNetwork {
-	return no.network
+func (d *DigestDesign) Network() config.LocalNetwork {
+	return d.network
 }
 
-func (no *DigestDesign) Cache() *url.URL {
-	return no.cache
+func (d *DigestDesign) Cache() *url.URL {
+	return d.cache
 }
 
-func (no *DigestDesign) Database() config.BaseDatabase {
-	return no.database
+func (d *DigestDesign) Database() config.BaseDatabase {
+	return d.database
 }
 
 func (d DigestDesign) MarshalZerologObject(e *zerolog.Event) {
@@ -341,7 +341,7 @@ func (d DigestDesign) MarshalZerologObject(e *zerolog.Event) {
 }
 
 func loadPrivatekeyFromVault(path string, enc *jsonenc.Encoder) (base.Privatekey, error) {
-	e := mitumutil.StringError("failed to load privatekey from vault")
+	e := mitumutil.StringError("load private key from vault")
 
 	clientConfig := vault.DefaultConfig()
 

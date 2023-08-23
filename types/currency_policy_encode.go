@@ -8,7 +8,7 @@ import (
 )
 
 func (po *CurrencyPolicy) unpack(enc encoder.Encoder, ht hint.Hint, mn string, bfe []byte) error {
-	e := util.StringError("failed to unmarshal CurrencyPolicy")
+	e := util.StringError("unmarshal CurrencyPolicy")
 
 	if big, err := common.NewBigFromString(mn); err != nil {
 		return e.Wrap(err)

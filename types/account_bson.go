@@ -30,7 +30,7 @@ type AccountBSONUnmarshaler struct {
 }
 
 func (ac *Account) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of Account")
+	e := util.StringError("decode bson of Account")
 
 	var uac AccountBSONUnmarshaler
 	if err := enc.Unmarshal(b, &uac); err != nil {

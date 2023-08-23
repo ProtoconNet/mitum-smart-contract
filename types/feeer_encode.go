@@ -9,7 +9,7 @@ import (
 )
 
 func (fa *FixedFeeer) unpack(enc encoder.Encoder, ht hint.Hint, rc string, am string) error {
-	e := util.StringError("failed to unmarshal FixedFeeer")
+	e := util.StringError("unmarshal FixedFeeer")
 
 	switch ad, err := base.DecodeAddress(rc, enc); {
 	case err != nil:
@@ -35,7 +35,7 @@ func (fa *RatioFeeer) unpack(
 	ratio float64,
 	min, max string,
 ) error {
-	e := util.StringError("failed to unmarshal RatioFeeer")
+	e := util.StringError("unmarshal RatioFeeer")
 
 	switch ad, err := base.DecodeAddress(rc, enc); {
 	case err != nil:

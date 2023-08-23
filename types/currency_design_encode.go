@@ -9,7 +9,7 @@ import (
 )
 
 func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, bam []byte, ga string, bpo []byte, ag string) error {
-	e := util.StringError("failed to unmarshal CurrencyDesign")
+	e := util.StringError("unmarshal CurrencyDesign")
 
 	de.BaseHinter = hint.NewBaseHinter(ht)
 

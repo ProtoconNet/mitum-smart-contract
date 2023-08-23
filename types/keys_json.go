@@ -32,7 +32,7 @@ type KeyJSONUnmarshaler struct {
 }
 
 func (ky *BaseAccountKey) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of BaseAccountKey")
+	e := util.StringError("decode json of BaseAccountKey")
 
 	var uk KeyJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uk); err != nil {
@@ -91,7 +91,7 @@ type EthKeysHashJSONUnMarshaler struct {
 }
 
 func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of BaseAccountKeys")
+	e := util.StringError("decode json of BaseAccountKeys")
 
 	var uks KeysJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uks); err != nil {
@@ -109,7 +109,7 @@ func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 }
 
 func (ks *EthAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of EthAccountKeys")
+	e := util.StringError("decode json of EthAccountKeys")
 
 	var uks KeysJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uks); err != nil {
@@ -127,7 +127,7 @@ func (ks *EthAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 }
 
 func (ks *ContractAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of BaseAccountKeys")
+	e := util.StringError("decode json of BaseAccountKeys")
 
 	var uks KeysJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uks); err != nil {

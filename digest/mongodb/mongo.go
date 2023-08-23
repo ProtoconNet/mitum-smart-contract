@@ -324,7 +324,7 @@ func (cl *Client) Raw() *mongo.Client {
 }
 
 func (cl *Client) CopyCollection(source *Client, fromCol, toCol string) error {
-	var limit int = 100
+	var limit = 100
 	var models []mongo.WriteModel
 	err := source.Find(context.Background(), fromCol, bson.D{}, func(cursor *mongo.Cursor) (bool, error) {
 		if len(models) == limit {

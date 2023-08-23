@@ -25,19 +25,19 @@ func (cmd *INITCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	//revive:disable:modifies-parameter
-	pctx = context.WithValue(pctx, launch.DesignFlagContextKey, cmd.DesignFlag)
-	pctx = context.WithValue(pctx, launch.DevFlagsContextKey, cmd.DevFlags)
-	pctx = context.WithValue(pctx, launch.GenesisDesignFileContextKey, cmd.GenesisDesign)
-	pctx = context.WithValue(pctx, launch.VaultContextKey, cmd.Vault)
-	//revive:enable:modifies-parameter
+	nctx := util.ContextWithValues(pctx, map[util.ContextKey]interface{}{
+		launch.DesignFlagContextKey:        cmd.DesignFlag,
+		launch.DevFlagsContextKey:          cmd.DevFlags,
+		launch.GenesisDesignFileContextKey: cmd.GenesisDesign,
+		launch.VaultContextKey:             cmd.Vault,
+	})
 
 	pps := DefaultINITPS()
 	_ = pps.SetLogging(log)
 
 	log.Log().Debug().Interface("process", pps.Verbose()).Msg("process ready")
 
-	pctx, err := pps.Run(pctx) //revive:disable-line:modifies-parameter
+	nctx, err := pps.Run(nctx) //revive:disable-line:modifies-parameter
 	defer func() {
 		log.Log().Debug().Interface("process", pps.Verbose()).Msg("process will be closed")
 

@@ -41,7 +41,7 @@ type OperationProcessor struct {
 	sync.RWMutex
 	*logging.Logging
 	*base.BaseOperationProcessor
-	processorHintSet     *hint.CompatibleSet
+	processorHintSet     *hint.CompatibleSet[types.GetNewProcessor]
 	Duplicated           map[string]types.DuplicationType
 	duplicatedNewAddress map[string]struct{}
 	processorClosers     *sync.Map
@@ -58,7 +58,7 @@ func NewOperationProcessor() *OperationProcessor {
 		Logging: logging.NewLogging(func(c zerolog.Context) zerolog.Context {
 			return c.Str("module", "mitum-currency-operations-processor")
 		}),
-		processorHintSet:     hint.NewCompatibleSet(),
+		processorHintSet:     hint.NewCompatibleSet[types.GetNewProcessor](1 << 9),
 		Duplicated:           map[string]types.DuplicationType{},
 		duplicatedNewAddress: map[string]struct{}{},
 		processorClosers:     &m,
@@ -70,7 +70,7 @@ func (opr *OperationProcessor) New(
 	getStateFunc base.GetStateFunc,
 	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	newProcessConstraintFunc base.NewOperationProcessorProcessFunc) (*OperationProcessor, error) {
-	e := util.StringError("failed to create new OperationProcessor")
+	e := util.StringError("create new OperationProcessor")
 
 	nopr := operationProcessorPool.Get().(*OperationProcessor)
 	if nopr.processorHintSet == nil {
@@ -142,7 +142,7 @@ func (opr *OperationProcessor) SetGetNewProcessorFunc(
 }
 
 func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringError("failed to preprocess for OperationProcessor")
+	e := util.StringError("preprocess for OperationProcessor")
 
 	if opr.processorClosers == nil {
 		opr.processorClosers = &sync.Map{}
@@ -173,7 +173,7 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation
 }
 
 func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
-	e := util.StringError("failed to process for OperationProcessor")
+	e := util.StringError("process for OperationProcessor")
 
 	if err := opr.CheckDuplicationFunc(opr, op); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("duplication found; %w", err), nil
@@ -338,12 +338,10 @@ func (opr *OperationProcessor) GetNewProcessorFromHintset(op base.Operation) (ba
 	var f types.GetNewProcessor
 	if hinter, ok := op.(hint.Hinter); !ok {
 		return nil, nil
-	} else if i := opr.processorHintSet.Find(hinter.Hint()); i == nil {
+	} else if i, found := opr.processorHintSet.Find(hinter.Hint()); !found {
 		return nil, nil
-	} else if j, ok := i.(types.GetNewProcessor); !ok {
-		return nil, errors.Errorf("invalid GetNewProcessor func, %T", i)
 	} else {
-		f = j
+		f = i
 	}
 
 	opp, err := f(opr.Height(), opr.GetStateFunc, nil, nil)

@@ -177,7 +177,7 @@ type baseStateJSONUnmarshaler struct {
 }
 
 func (s *BaseState) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to unmarshal BaseState")
+	e := util.StringError("unmarshal BaseState")
 
 	var u baseStateJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
@@ -301,7 +301,7 @@ func (s *BaseStateValueMerger) Close() error {
 	s.Lock()
 	defer s.Unlock()
 
-	e := util.StringError("failed to close BaseStateValueMerger")
+	e := util.StringError("close BaseStateValueMerger")
 
 	if s.value == nil {
 		return e.Errorf("empty value")
@@ -375,7 +375,7 @@ func (v BaseStateMergeValue) defaultMerger(height base.Height, st base.State) ba
 }
 
 func DecodeStateValue(b []byte, enc encoder.Encoder) (base.StateValue, error) {
-	e := util.StringError("failed to decode StateValue")
+	e := util.StringError("decode StateValue")
 
 	var s base.StateValue
 	if err := encoder.Decode(enc, b, &s); err != nil {

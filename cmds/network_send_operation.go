@@ -20,7 +20,8 @@ import (
 type BaseNetworkClientCommand struct { //nolint:govet //...
 	BaseCommand
 	launchcmd.BaseNetworkClientNodeInfoFlags
-	Client *isaacnetwork.QuicstreamClient `kong:"-"`
+	Client   *isaacnetwork.BaseClient `kong:"-"`
+	ClientID string                   `name:"client-id" help:"client id"`
 }
 
 func (cmd *BaseNetworkClientCommand) Prepare(pctx context.Context) error {
@@ -32,20 +33,32 @@ func (cmd *BaseNetworkClientCommand) Prepare(pctx context.Context) error {
 		return errors.Errorf(`expected "<network-id>"`)
 	}
 
-	if _, err := cmd.Remote.ConnInfo(); err != nil {
-		return err
-	}
-
 	if cmd.Timeout < 1 {
 		cmd.Timeout = isaac.DefaultTimeoutRequest * 2
 	}
 
-	cmd.Client = launch.NewNetworkClient(cmd.Encoders, cmd.Encoder, base.NetworkID(cmd.NetworkID))
+	connectionPool, err := launch.NewConnectionPool(
+		1<<9, //nolint:gomnd //...
+		base.NetworkID(cmd.NetworkID),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	cmd.Client = isaacnetwork.NewBaseClient(
+		cmd.Encoders, cmd.Encoder,
+		connectionPool.Dial,
+		connectionPool.CloseAll,
+	)
+
+	cmd.Client.SetClientID(cmd.ClientID)
 
 	cmd.Log.Debug().
 		Stringer("remote", cmd.Remote).
 		Stringer("timeout", cmd.Timeout).
 		Str("network_id", cmd.NetworkID).
+		Str("client_id", cmd.ClientID).
 		Bool("has_body", cmd.Body != nil).
 		Msg("flags")
 
@@ -74,11 +87,17 @@ func (cmd *BaseNetworkClientCommand) Print(v interface{}, out io.Writer) error {
 
 type NetworkClientCommand struct { //nolint:govet //...
 	//revive:disable:line-length-limit
+	//revive:disable:nested-structs
 	NodeInfo          launchcmd.NetworkClientNodeInfoCommand          `cmd:"" name:"node-info" help:"remote node info"`
 	SendOperation     NetworkClientSendOperationCommand               `cmd:"" name:"send-operation" help:"send operation"`
 	State             launchcmd.NetworkClientStateCommand             `cmd:"" name:"state" help:"get state"`
 	LastBlockMap      launchcmd.NetworkClientLastBlockMapCommand      `cmd:"" name:"last-blockmap" help:"get last blockmap"`
 	SetAllowConsensus launchcmd.NetworkClientSetAllowConsensusCommand `cmd:"" name:"set-allow-consensus" help:"set to enter consensus"`
+	Design            struct {
+		Read  launchcmd.NetworkClientReadDesignCommand  `cmd:"" name:"read" help:"read design value"`
+		Write launchcmd.NetworkClientWriteDesignCommand `cmd:"" name:"write" help:"write design value"`
+	} `cmd:"" name:"design" help:""`
+	//revive:enable:nested-structs
 	//revive:enable:line-length-limit
 }
 
@@ -91,6 +110,10 @@ func (cmd *NetworkClientSendOperationCommand) Run(pctx context.Context) error {
 		return err
 	}
 
+	defer func() {
+		_ = cmd.Client.Close()
+	}()
+
 	buf := bytes.NewBuffer(nil)
 
 	if _, err := io.Copy(buf, cmd.Body); err != nil {
@@ -102,12 +125,10 @@ func (cmd *NetworkClientSendOperationCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	ci, _ := cmd.Remote.ConnInfo()
-
 	ctx, cancel := context.WithTimeout(pctx, cmd.Timeout)
 	defer cancel()
 
-	switch sent, err := cmd.Client.SendOperation(ctx, ci, op); {
+	switch sent, err := cmd.Client.SendOperation(ctx, cmd.Remote.ConnInfo(), op); {
 	case err != nil:
 		cmd.Log.Error().Err(err).Msg("not sent")
 

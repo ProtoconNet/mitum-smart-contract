@@ -52,7 +52,7 @@ func (op *BaseOperation) decodeJSON(b []byte, enc *jsonenc.Encoder, u *BaseOpera
 }
 
 func (op *BaseOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode BaseOperation")
+	e := util.StringError("decode BaseOperation")
 
 	var u BaseOperationJSONUnmarshaler
 
@@ -79,7 +79,7 @@ func (op BaseNodeOperation) MarshalJSON() ([]byte, error) {
 }
 
 func (op *BaseNodeOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode BaseNodeOperation")
+	e := util.StringError("decode BaseNodeOperation")
 
 	var u BaseOperationJSONUnmarshaler
 

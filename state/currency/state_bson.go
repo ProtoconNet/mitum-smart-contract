@@ -8,11 +8,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (s AccountStateValue) MarshalBSON() ([]byte, error) {
+func (a AccountStateValue) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":   s.Hint().String(),
-			"account": s.Account,
+			"_hint":   a.Hint().String(),
+			"account": a.Account,
 		},
 	)
 }
@@ -22,8 +22,8 @@ type AccountStateValueBSONUnmarshaler struct {
 	Account bson.Raw `bson:"account"`
 }
 
-func (s *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode AccountStateValue")
+func (a *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringError("decode AccountStateValue")
 
 	var u AccountStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
@@ -35,23 +35,23 @@ func (s *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	s.BaseHinter = hint.NewBaseHinter(ht)
+	a.BaseHinter = hint.NewBaseHinter(ht)
 
 	var ac types.Account
 	if err := ac.DecodeBSON(u.Account, enc); err != nil {
 		return e.Wrap(err)
 	}
 
-	s.Account = ac
+	a.Account = ac
 
 	return nil
 }
 
-func (s BalanceStateValue) MarshalBSON() ([]byte, error) {
+func (b BalanceStateValue) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":  s.Hint().String(),
-			"amount": s.Amount,
+			"_hint":  b.Hint().String(),
+			"amount": b.Amount,
 		},
 	)
 }
@@ -61,11 +61,11 @@ type BalanceStateValueBSONUnmarshaler struct {
 	Amount bson.Raw `bson:"amount"`
 }
 
-func (s *BalanceStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode BalanceStateValue")
+func (b *BalanceStateValue) DecodeBSON(v []byte, enc *bsonenc.Encoder) error {
+	e := util.StringError("decode BalanceStateValue")
 
 	var u BalanceStateValueBSONUnmarshaler
-	if err := enc.Unmarshal(b, &u); err != nil {
+	if err := enc.Unmarshal(v, &u); err != nil {
 		return e.Wrap(err)
 	}
 
@@ -73,23 +73,23 @@ func (s *BalanceStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	if err != nil {
 		return e.Wrap(err)
 	}
-	s.BaseHinter = hint.NewBaseHinter(ht)
+	b.BaseHinter = hint.NewBaseHinter(ht)
 
 	var am types.Amount
 	if err := am.DecodeBSON(u.Amount, enc); err != nil {
 		return e.Wrap(err)
 	}
 
-	s.Amount = am
+	b.Amount = am
 
 	return nil
 }
 
-func (s CurrencyDesignStateValue) MarshalBSON() ([]byte, error) {
+func (c CurrencyDesignStateValue) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":          s.Hint().String(),
-			"currencydesign": s.CurrencyDesign,
+			"_hint":          c.Hint().String(),
+			"currencydesign": c.CurrencyDesign,
 		},
 	)
 }
@@ -99,8 +99,8 @@ type CurrencyDesignStateValueBSONUnmarshaler struct {
 	CurrencyDesign bson.Raw `bson:"currencydesign"`
 }
 
-func (s *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode CurrencyDesignStateValue")
+func (c *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringError("decode CurrencyDesignStateValue")
 
 	var u CurrencyDesignStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
@@ -111,14 +111,14 @@ func (s *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 	if err != nil {
 		return e.Wrap(err)
 	}
-	s.BaseHinter = hint.NewBaseHinter(ht)
+	c.BaseHinter = hint.NewBaseHinter(ht)
 
 	var cd types.CurrencyDesign
 	if err := cd.DecodeBSON(u.CurrencyDesign, enc); err != nil {
 		return e.Wrap(err)
 	}
 
-	s.CurrencyDesign = cd
+	c.CurrencyDesign = cd
 
 	return nil
 }

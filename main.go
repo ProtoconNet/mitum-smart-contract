@@ -20,7 +20,6 @@ var (
 	BuildTime = "-"
 	GitBranch = "master"
 	GitCommit = "-"
-	version   util.Version
 )
 
 //revive:disable:nested-structs
@@ -63,19 +62,21 @@ var flagDefaults = kong.Vars{
 func main() {
 	kctx := kong.Parse(&CLI, flagDefaults)
 
-	if err := checkVersion(); err != nil {
+	bi, err := util.ParseBuildInfo(Version, GitBranch, GitCommit, BuildTime)
+	if err != nil {
 		kctx.FatalIfErrorf(err)
 	}
 
 	if kctx.Command() == "version" {
-		showVersion()
+		_, _ = fmt.Fprintln(os.Stdout, bi.String())
 
 		return
 	}
-	pctx := context.Background()
-	pctx = context.WithValue(pctx, launch.VersionContextKey, version)
-	pctx = context.WithValue(pctx, launch.FlagsContextKey, CLI.BaseFlags)
-	pctx = context.WithValue(pctx, launch.KongContextContextKey, kctx)
+	pctx := util.ContextWithValues(context.Background(), map[util.ContextKey]interface{}{
+		launch.VersionContextKey:     bi.Version,
+		launch.FlagsContextKey:       CLI.BaseFlags,
+		launch.KongContextContextKey: kctx,
+	})
 
 	pss := launch.DefaultMainPS()
 
@@ -105,27 +106,4 @@ func main() {
 
 		kctx.FatalIfErrorf(err)
 	}
-}
-
-func checkVersion() error {
-	v, err := util.ParseVersion(Version)
-	if err != nil {
-		return err
-	}
-
-	if err := v.IsValid(nil); err != nil {
-		return err
-	}
-
-	version = v
-
-	return nil
-}
-
-func showVersion() {
-	_, _ = fmt.Fprintf(os.Stdout, `version: %s
- branch: %s
- commit: %s
-  build: %s
-`, version, GitBranch, GitCommit, BuildTime)
 }

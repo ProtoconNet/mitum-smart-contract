@@ -112,7 +112,7 @@ type BaseNodeBSONUnMarshaler struct {
 }
 
 func (n *BaseNode) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of BaseNode")
+	e := util.StringError("decode bson of BaseNode")
 
 	var u BaseNodeBSONUnMarshaler
 

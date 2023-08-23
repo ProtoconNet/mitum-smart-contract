@@ -8,11 +8,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (s ContractAccountStateValue) MarshalBSON() ([]byte, error) {
+func (c ContractAccountStateValue) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":           s.Hint().String(),
-			"contractaccount": s.account,
+			"_hint":           c.Hint().String(),
+			"contractaccount": c.account,
 		},
 	)
 
@@ -23,8 +23,8 @@ type ContractAccountStateValueBSONUnmarshaler struct {
 	ContractAccount bson.Raw `bson:"contractaccount"`
 }
 
-func (s *ContractAccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of ContractAccountStateValue")
+func (c *ContractAccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringError("decode bson of ContractAccountStateValue")
 
 	var u ContractAccountStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
@@ -35,14 +35,14 @@ func (s *ContractAccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) e
 	if err != nil {
 		return e.Wrap(err)
 	}
-	s.BaseHinter = hint.NewBaseHinter(ht)
+	c.BaseHinter = hint.NewBaseHinter(ht)
 
 	var ca types.ContractAccountStatus
 	if err := ca.DecodeBSON(u.ContractAccount, enc); err != nil {
 		return e.Wrap(err)
 	}
 
-	s.account = ca
+	c.account = ca
 
 	return nil
 }

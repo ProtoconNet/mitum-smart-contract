@@ -15,13 +15,13 @@ import (
 var BSONEncoderHint = hint.MustNewHint("bson-encoder-v2.0.0")
 
 type Encoder struct {
-	decoders *hint.CompatibleSet
+	decoders *hint.CompatibleSet[encoder.DecodeDetail]
 	pool     util.ObjectPool
 }
 
 func NewEncoder() *Encoder {
 	return &Encoder{
-		decoders: hint.NewCompatibleSet(),
+		decoders: hint.NewCompatibleSet[encoder.DecodeDetail](1 << 10),
 	}
 }
 
@@ -98,21 +98,14 @@ func (enc *Encoder) DecodeWithHintType(b []byte, t hint.Type) (interface{}, erro
 		return nil, nil
 	}
 
-	ht, v := enc.decoders.FindBytType(t)
-	if v == nil {
-		return encoder.DecodeDetail{},
-			errors.Errorf("failed to find decoder by type in json decoders, %q", t)
+	ht, v, found := enc.decoders.FindBytType(t)
+	if !found {
+		return nil, errors.Errorf("find decoder by type in json decoders, %q", t)
 	}
 
-	d, ok := v.(encoder.DecodeDetail)
-	if !ok {
-		return encoder.DecodeDetail{},
-			errors.Errorf("failed to find decoder by type in json decoders, %q; not DecodeDetail, %T", ht, v)
-	}
-
-	i, err := d.Decode(b, ht)
+	i, err := v.Decode(b, ht)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "failed to decode, %q in json decoders", ht)
+		return nil, errors.WithMessagef(err, "decode, %q in json decoders", ht)
 	}
 
 	return i, nil
@@ -123,7 +116,7 @@ func (enc *Encoder) DecodeWithFixedHintType(s string, size int) (interface{}, er
 		return nil, nil
 	}
 
-	e := util.StringError("failed to decode with fixed hint type")
+	e := util.StringError("decode with fixed hint type")
 	if size < 1 {
 		return nil, e.Errorf("size < 1")
 	}
@@ -153,7 +146,7 @@ func (enc *Encoder) DecodeWithFixedHintType(s string, size int) (interface{}, er
 }
 
 func (enc *Encoder) decodeWithFixedHintType(s string, size int) (interface{}, error) {
-	e := util.StringError("failed to decode with fixed hint type")
+	e := util.StringError("decode with fixed hint type")
 
 	body, t, err := hint.ParseFixedTypedString(s, size)
 	if err != nil {
@@ -218,35 +211,29 @@ func (enc *Encoder) DecodeMap(b []byte) (map[string]interface{}, error) {
 
 func (enc *Encoder) addDecodeDetail(d encoder.DecodeDetail) error {
 	if err := enc.decoders.Add(d.Hint, d); err != nil {
-		return util.ErrInvalid.WithMessage(err, "failed to add DecodeDetail in bson encoder")
+		return util.ErrInvalid.WithMessage(err, "add DecodeDetail in bson encoder")
 	}
 
 	return nil
 }
 
 func (enc *Encoder) decodeWithHint(b []byte, ht hint.Hint) (interface{}, error) {
-	v := enc.decoders.Find(ht)
-	if v == nil {
+	v, found := enc.decoders.Find(ht)
+	if !found {
 		return nil,
-			util.ErrNotFound.Errorf("failed to find decoder by hint, %q in bson decoders", ht)
+			util.ErrNotFound.Errorf("find decoder by hint, %q in bson decoders", ht)
 	}
 
-	d, ok := v.(encoder.DecodeDetail)
-	if !ok {
-		return nil,
-			errors.Errorf("failed to find decoder by hint in bson decoders, %q; not DecodeDetail, %T", ht, v)
-	}
-
-	i, err := d.Decode(b, ht)
+	i, err := v.Decode(b, ht)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "failed to decode, %q in bson decoders", ht)
+		return nil, errors.WithMessagef(err, "decode, %q in bson decoders", ht)
 	}
 
 	return i, nil
 }
 
 func (*Encoder) guessHint(b []byte) (hint.Hint, error) {
-	e := util.StringError("failed to guess hint")
+	e := util.StringError("guess hint")
 
 	var head HintedHead
 	if err := bson.Unmarshal(b, &head); err != nil {
@@ -266,7 +253,7 @@ func (*Encoder) guessHint(b []byte) (hint.Hint, error) {
 }
 
 func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.DecodeDetail {
-	e := util.StringError("failed to analyze in bson encoder")
+	e := util.StringError("analyze in bson encoder")
 
 	ptr, elem := encoder.Ptr(v)
 

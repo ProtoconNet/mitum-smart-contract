@@ -28,7 +28,7 @@ type KeyBSONUnmarshaler struct {
 }
 
 func (ky *BaseAccountKey) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of BaseAccountKey")
+	e := util.StringError("decode bson of BaseAccountKey")
 
 	var uk KeyBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uk); err != nil {
@@ -83,7 +83,7 @@ type KeysBSONUnmarshaler struct {
 }
 
 func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of BaseAccountKeys")
+	e := util.StringError("decode bson of BaseAccountKeys")
 
 	var uks KeysBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uks); err != nil {
@@ -120,7 +120,7 @@ func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 }
 
 func (ks *EthAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of EthAccountKeys")
+	e := util.StringError("decode bson of EthAccountKeys")
 
 	var uks KeysBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uks); err != nil {
@@ -157,7 +157,7 @@ func (ks *EthAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 }
 
 func (ks *ContractAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of ContractAccountKeys")
+	e := util.StringError("decode bson of ContractAccountKeys")
 
 	var uks KeysBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uks); err != nil {

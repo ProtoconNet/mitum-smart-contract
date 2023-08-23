@@ -70,12 +70,12 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 		return nil, err
 
 	default:
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*9)
 		defer cancel()
 
-		var nodeList []quicstream.UDPConnInfo
+		var nodeList []quicstream.ConnInfo
 		memberList.Members(func(node quicmemberlist.Member) bool {
-			nodeList = append(nodeList, node.UDPConnInfo())
+			nodeList = append(nodeList, node.ConnInfo())
 			return true
 		})
 		for i := range nodeList {

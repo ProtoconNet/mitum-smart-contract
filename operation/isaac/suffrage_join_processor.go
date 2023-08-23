@@ -28,7 +28,7 @@ func NewSuffrageJoinProcessor(
 	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 ) (*SuffrageJoinProcessor, error) {
-	e := util.StringError("failed to create new SuffrageJoinProcessor")
+	e := util.StringError("create new SuffrageJoinProcessor")
 
 	b, err := base.NewBaseOperationProcessor(
 		height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)

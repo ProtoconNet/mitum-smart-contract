@@ -67,9 +67,9 @@ func LoadDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id */, inter
 		return nil, nil, err
 	}
 
-	enc := encs.Find(ht)
-	if enc == nil {
-		return nil, nil, util.ErrNotFound.Errorf("encoder not found for %q", bsonenc.BSONEncoderHint)
+	enc, found := encs.Find(ht)
+	if !found {
+		return nil, nil, util.ErrNotFound.Errorf("encoder not found for %q", ht)
 	}
 
 	if !bd.H {
@@ -111,9 +111,9 @@ func LoadManifestDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id *
 		return nil, nil, 0, err
 	}
 
-	enc := encs.Find(ht)
-	if enc == nil {
-		return nil, nil, 0, util.ErrNotFound.Errorf("encoder not found for %q", bsonenc.BSONEncoderHint)
+	enc, found := encs.Find(ht)
+	if !found {
+		return nil, nil, 0, util.ErrNotFound.Errorf("encoder not found for %q", ht)
 	}
 
 	if !bd.H {

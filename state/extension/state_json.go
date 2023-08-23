@@ -13,10 +13,10 @@ type ContractAccountStateValueJSONMarshaler struct {
 	ContractAccount types.ContractAccountStatus `json:"contractaccount"`
 }
 
-func (s ContractAccountStateValue) MarshalJSON() ([]byte, error) {
+func (c ContractAccountStateValue) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(ContractAccountStateValueJSONMarshaler{
-		BaseHinter:      s.BaseHinter,
-		ContractAccount: s.account,
+		BaseHinter:      c.BaseHinter,
+		ContractAccount: c.account,
 	})
 }
 
@@ -25,21 +25,21 @@ type ContractAccountStateValueJSONUnmarshaler struct {
 	ContractAccount json.RawMessage `json:"contractaccount"`
 }
 
-func (s *ContractAccountStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of ContractAccountStateValue")
+func (c *ContractAccountStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+	e := util.StringError("decode json of ContractAccountStateValue")
 
 	var u ContractAccountStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
 		return e.Wrap(err)
 	}
 
-	s.BaseHinter = hint.NewBaseHinter(u.Hint)
+	c.BaseHinter = hint.NewBaseHinter(u.Hint)
 
 	var ca types.ContractAccountStatus
 	if err := ca.DecodeJSON(u.ContractAccount, enc); err != nil {
 		return e.Wrap(err)
 	}
-	s.account = ca
+	c.account = ca
 
 	return nil
 }

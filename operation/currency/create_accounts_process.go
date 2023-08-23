@@ -45,7 +45,7 @@ type CreateAccountsItemProcessor struct {
 func (opp *CreateAccountsItemProcessor) PreProcess(
 	_ context.Context, _ base.Operation, getStateFunc base.GetStateFunc,
 ) error {
-	e := util.StringError("failed to preprocess for CreateAccountsItemProcessor")
+	e := util.StringError("preprocess for CreateAccountsItemProcessor")
 
 	for i := range opp.item.Amounts() {
 		am := opp.item.Amounts()[i]
@@ -92,7 +92,7 @@ func (opp *CreateAccountsItemProcessor) PreProcess(
 func (opp *CreateAccountsItemProcessor) Process(
 	_ context.Context, _ base.Operation, _ base.GetStateFunc,
 ) ([]base.StateMergeValue, error) {
-	e := util.StringError("failed to preprocess for CreateAccountsItemProcessor")
+	e := util.StringError("preprocess for CreateAccountsItemProcessor")
 
 	var (
 		nac types.Account
@@ -146,7 +146,7 @@ func NewCreateAccountsProcessor() types.GetNewProcessor {
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringError("failed to create new CreateAccountsProcessor")
+		e := util.StringError("create new CreateAccountsProcessor")
 
 		nopp := createAccountsProcessorPool.Get()
 		opp, ok := nopp.(*CreateAccountsProcessor)

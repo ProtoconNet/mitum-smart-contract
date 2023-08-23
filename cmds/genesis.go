@@ -53,7 +53,7 @@ func NewGenesisBlockGenerator(
 }
 
 func (g *GenesisBlockGenerator) Generate() (base.BlockMap, error) {
-	e := util.StringError("failed to generate genesis block")
+	e := util.StringError("generate genesis block")
 
 	if err := g.generateOperations(); err != nil {
 		return nil, e.Wrap(err)
@@ -138,7 +138,7 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 }
 
 func (g *GenesisBlockGenerator) joinOperation(i base.Fact) (base.Operation, error) {
-	e := util.StringError("failed to make join operation")
+	e := util.StringError("make join operation")
 
 	basefact, ok := i.(isaacoperation.SuffrageGenesisJoinFact)
 	if !ok {
@@ -162,7 +162,7 @@ func (g *GenesisBlockGenerator) joinOperation(i base.Fact) (base.Operation, erro
 }
 
 func (g *GenesisBlockGenerator) networkPolicyOperation(i base.Fact) (base.Operation, error) {
-	e := util.StringError("failed to make join operation")
+	e := util.StringError("make join operation")
 
 	basefact, ok := i.(isaacoperation.GenesisNetworkPolicyFact)
 	if !ok {
@@ -186,7 +186,7 @@ func (g *GenesisBlockGenerator) networkPolicyOperation(i base.Fact) (base.Operat
 }
 
 func (g *GenesisBlockGenerator) genesisCurrenciesOperation(i base.Fact, token []byte) (base.Operation, error) {
-	e := util.StringError("failed to make genesisCurrencies operation")
+	e := util.StringError("make genesisCurrencies operation")
 
 	basefact, ok := i.(currency.GenesisCurrenciesFact)
 	if !ok {
@@ -210,7 +210,7 @@ func (g *GenesisBlockGenerator) genesisCurrenciesOperation(i base.Fact, token []
 }
 
 func (g *GenesisBlockGenerator) newProposal(ops []util.Hash) error {
-	e := util.StringError("failed to make genesis proposal")
+	e := util.StringError("make genesis proposal")
 
 	nops := make([]util.Hash, len(ops)+len(g.ops))
 	copy(nops[:len(ops)], ops)
@@ -238,7 +238,7 @@ func (g *GenesisBlockGenerator) newProposal(ops []util.Hash) error {
 }
 
 func (g *GenesisBlockGenerator) initVoetproof() error {
-	e := util.StringError("failed to make genesis init voteproof")
+	e := util.StringError("make genesis init voteproof")
 
 	fact := isaac.NewINITBallotFact(base.GenesisPoint, nil, g.proposal.Fact().Hash(), nil)
 	if err := fact.IsValid(nil); err != nil {
@@ -273,7 +273,7 @@ func (g *GenesisBlockGenerator) initVoetproof() error {
 }
 
 func (g *GenesisBlockGenerator) acceptVoteproof(proposal, newblock util.Hash) error {
-	e := util.StringError("failed to make genesis accept voteproof")
+	e := util.StringError("make genesis accept voteproof")
 
 	fact := isaac.NewACCEPTBallotFact(base.GenesisPoint, proposal, newblock, nil)
 	if err := fact.IsValid(nil); err != nil {
@@ -308,7 +308,7 @@ func (g *GenesisBlockGenerator) acceptVoteproof(proposal, newblock util.Hash) er
 }
 
 func (g *GenesisBlockGenerator) process() error {
-	e := util.StringError("failed to process")
+	e := util.StringError("process blockgenerator")
 
 	if err := g.initVoetproof(); err != nil {
 		return e.Wrap(err)
@@ -344,7 +344,7 @@ func (g *GenesisBlockGenerator) process() error {
 }
 
 func (g *GenesisBlockGenerator) closeDatabase() error {
-	e := util.StringError("failed to close database")
+	e := util.StringError("close database")
 
 	if err := g.db.MergeAllPermanent(); err != nil {
 		return e.WithMessage(err, "failed to merge temps")

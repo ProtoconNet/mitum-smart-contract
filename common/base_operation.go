@@ -94,7 +94,7 @@ func (op *BaseOperation) Sign(priv base.Privatekey, networkID base.NetworkID) er
 }
 
 func (op *BaseOperation) sign(priv base.Privatekey, networkID base.NetworkID) (found int, sign base.BaseSign, _ error) {
-	e := util.StringError("failed to sign BaseOperation")
+	e := util.StringError("sign BaseOperation")
 
 	found = -1
 
@@ -263,7 +263,7 @@ func (op *BaseNodeOperation) SetNodeSigns(signs []base.NodeSign) error {
 
 func (op *BaseNodeOperation) AddNodeSigns(signs []base.NodeSign) (added bool, _ error) {
 	updates := util.FilterSlice(signs, func(sign base.NodeSign) bool {
-		return slices.IndexFunc[base.Sign](op.signs, func(s base.Sign) bool {
+		return slices.IndexFunc(op.signs, func(s base.Sign) bool {
 			nodesign, ok := s.(base.NodeSign)
 			if !ok {
 				return false

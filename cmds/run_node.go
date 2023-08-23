@@ -36,10 +36,6 @@ type RunCommand struct { //nolint:govet //...
 	holded          bool
 }
 
-func NewRunCommand() RunCommand {
-	return RunCommand{}
-}
-
 func (cmd *RunCommand) Run(pctx context.Context) error {
 	var log *logging.Logging
 	if err := util.LoadFromContextOK(pctx, launch.LoggingContextKey, &log); err != nil {
@@ -63,10 +59,12 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		}
 	}
 
-	pctx = context.WithValue(pctx, launch.DesignFlagContextKey, cmd.DesignFlag)
-	pctx = context.WithValue(pctx, launch.DevFlagsContextKey, cmd.DevFlags)
-	pctx = context.WithValue(pctx, launch.DiscoveryFlagContextKey, cmd.Discovery)
-	pctx = context.WithValue(pctx, launch.VaultContextKey, cmd.Vault)
+	nctx := util.ContextWithValues(pctx, map[util.ContextKey]interface{}{
+		launch.DesignFlagContextKey:    cmd.DesignFlag,
+		launch.DevFlagsContextKey:      cmd.DevFlags,
+		launch.DiscoveryFlagContextKey: cmd.Discovery,
+		launch.VaultContextKey:         cmd.Vault,
+	})
 
 	pps := DefaultRunPS()
 
@@ -85,7 +83,7 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 
 	log.Log().Debug().Interface("process", pps.Verbose()).Msg("process ready")
 
-	pctx, err := pps.Run(pctx)
+	nctx, err := pps.Run(nctx)
 	defer func() {
 		log.Log().Debug().Interface("process", pps.Verbose()).Msg("process will be closed")
 
@@ -103,7 +101,7 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		Interface("hold", cmd.Hold.Height()).
 		Msg("node started")
 
-	return cmd.run(pctx)
+	return cmd.run(nctx)
 }
 
 var errHoldStop = util.NewIDError("hold stop")
@@ -146,7 +144,7 @@ func (cmd *RunCommand) run(pctx context.Context) error {
 }
 
 func (cmd *RunCommand) runStates(ctx, pctx context.Context) (func(), error) {
-	var discoveries *util.Locked[[]quicstream.UDPConnInfo]
+	var discoveries *util.Locked[[]quicstream.ConnInfo]
 	var states *isaacstates.States
 
 	if err := util.LoadFromContextOK(pctx,
@@ -316,12 +314,12 @@ func (cmd *RunCommand) runHTTPState(bind string) error {
 }
 
 func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context, error) {
-	var isaacparams *isaac.Params
+	var params *launch.LocalParams
 	var local base.LocalNode
 
 	if err := util.LoadFromContextOK(ctx,
 		launch.LocalContextKey, &local,
-		launch.ISAACParamsContextKey, &isaacparams,
+		launch.LocalParamsContextKey, &params,
 	); err != nil {
 		return nil, err
 	}
@@ -351,7 +349,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 
 	router := dnt.Router()
 
-	handlers, err := cmd.setDigestDefaultHandlers(ctx, isaacparams, cache, router)
+	handlers, err := cmd.setDigestDefaultHandlers(ctx, params, cache, router)
 	if err != nil {
 		return ctx, err
 	}
@@ -378,7 +376,7 @@ func (cmd *RunCommand) loadCache(_ context.Context, design DigestDesign) (digest
 
 func (cmd *RunCommand) setDigestDefaultHandlers(
 	ctx context.Context,
-	params *isaac.Params,
+	params *launch.LocalParams,
 	cache digest.Cache,
 	router *mux.Router,
 ) (*digest.Handlers, error) {
@@ -387,7 +385,7 @@ func (cmd *RunCommand) setDigestDefaultHandlers(
 		return nil, err
 	}
 
-	handlers := digest.NewHandlers(ctx, params.NetworkID(), encs, enc, st, cache, router)
+	handlers := digest.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router)
 
 	h, err := cmd.setDigestNetworkClient(ctx, params, handlers)
 	if err != nil {
@@ -400,7 +398,7 @@ func (cmd *RunCommand) setDigestDefaultHandlers(
 
 func (cmd *RunCommand) setDigestNetworkClient(
 	ctx context.Context,
-	params *isaac.Params,
+	params *launch.LocalParams,
 	handlers *digest.Handlers,
 ) (*digest.Handlers, error) {
 	var memberList *quicmemberlist.Memberlist
@@ -408,13 +406,23 @@ func (cmd *RunCommand) setDigestNetworkClient(
 		return nil, err
 	}
 
-	client := launch.NewNetworkClient( //nolint:gomnd //...
+	connectionPool, err := launch.NewConnectionPool(
+		1<<9,
+		params.ISAAC.NetworkID(),
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	client := isaacnetwork.NewBaseClient( //nolint:gomnd //...
 		encs, enc,
-		(*params).NetworkID(),
+		connectionPool.Dial,
+		connectionPool.CloseAll,
 	)
 
 	handlers = handlers.SetNetworkClientFunc(
-		func() (*isaacnetwork.QuicstreamClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
+		func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
 			return client, memberList, nil
 		},
 	)

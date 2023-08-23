@@ -10,7 +10,7 @@ import (
 )
 
 func (ky *BaseAccountKey) unpack(enc encoder.Encoder, ht hint.Hint, w uint, sk string) error {
-	e := util.StringError("failed to unmarshal BaseAccountKey")
+	e := util.StringError("unmarshal BaseAccountKey")
 
 	ky.BaseHinter = hint.NewBaseHinter(ht)
 	switch pk, err := base.DecodePublickeyFromString(sk, enc); {
@@ -31,7 +31,7 @@ func (ks *BaseAccountKeys) unpack(
 	bks []byte,
 	th uint,
 ) error {
-	e := util.StringError("failed to unmarshal BaseAccountKeys")
+	e := util.StringError("unmarshal BaseAccountKeys")
 
 	ks.BaseHinter = hint.NewBaseHinter(ht)
 
@@ -65,7 +65,7 @@ func (ks *EthAccountKeys) unpack(
 	bks []byte,
 	th uint,
 ) error {
-	e := util.StringError("failed to unmarshal EthAccountKeys")
+	e := util.StringError("unmarshal EthAccountKeys")
 
 	ks.BaseHinter = hint.NewBaseHinter(ht)
 
@@ -93,7 +93,7 @@ func (ks *EthAccountKeys) unpack(
 }
 
 func (ks *ContractAccountKeys) unpack(enc encoder.Encoder, ht hint.Hint, h valuehash.HashDecoder, bks []byte, th uint) error {
-	e := util.StringError("failed to unmarshal BaseAccountKeys")
+	e := util.StringError("unmarshal BaseAccountKeys")
 
 	ks.BaseHinter = hint.NewBaseHinter(ht)
 

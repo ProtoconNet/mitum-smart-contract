@@ -28,7 +28,7 @@ type CurrencyPolicyJSONUnmarshaler struct {
 }
 
 func (po *CurrencyPolicy) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of CurrencyPolicy")
+	e := util.StringError("decode json of CurrencyPolicy")
 
 	var upo CurrencyPolicyJSONUnmarshaler
 	if err := enc.Unmarshal(b, &upo); err != nil {

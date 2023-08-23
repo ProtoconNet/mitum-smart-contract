@@ -13,7 +13,7 @@ func (cs *ContractAccountStatus) unpack(
 	ia bool,
 	ow string,
 ) error {
-	e := util.StringError("failed to unmarshal ContractAccountStatus")
+	e := util.StringError("unmarshal ContractAccountStatus")
 
 	cs.BaseHinter = hint.NewBaseHinter(ht)
 

@@ -34,7 +34,7 @@ func (op BaseOperation) MarshalBSON() ([]byte, error) {
 }
 
 func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of BaseOperation")
+	e := util.StringError("decode bson of BaseOperation")
 
 	var u BaseOperationBSONUnmarshaler
 
@@ -61,7 +61,7 @@ func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 }
 
 func (op *BaseNodeOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of BaseNodeOperation")
+	e := util.StringError("decode bson of BaseNodeOperation")
 
 	var u BaseOperationBSONUnmarshaler
 

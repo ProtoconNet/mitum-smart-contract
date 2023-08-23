@@ -13,7 +13,7 @@ func (fa NilFeeer) MarshalBSON() ([]byte, error) {
 }
 
 func (fa *NilFeeer) UnmarsahlBSON(b []byte) error {
-	e := util.StringError("failed to unmarshal bson of NilFeeer")
+	e := util.StringError("unmarshal bson of NilFeeer")
 
 	var head bsonenc.HintedHead
 	if err := bsonenc.Unmarshal(b, &head); err != nil {
@@ -48,7 +48,7 @@ type FixedFeeerBSONUnmarshaler struct {
 }
 
 func (fa *FixedFeeer) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of FixedFeeer")
+	e := util.StringError("decode bson of FixedFeeer")
 
 	var ufa FixedFeeerBSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {
@@ -84,7 +84,7 @@ type RatioFeeerBSONUnmarshaler struct {
 }
 
 func (fa *RatioFeeer) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of RatioFeeer")
+	e := util.StringError("decode bson of RatioFeeer")
 
 	var ufa RatioFeeerBSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {

@@ -38,7 +38,7 @@ type BaseStateBSONUnmarshaler struct {
 }
 
 func (s *BaseState) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to unmarshal BaseState")
+	e := util.StringError("unmarshal BaseState")
 
 	var u BaseStateBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {

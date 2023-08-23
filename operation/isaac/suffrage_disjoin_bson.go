@@ -29,7 +29,7 @@ type SuffrageDisjoinFactBSONUnMarshaler struct {
 }
 
 func (fact *SuffrageDisjoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of SuffrageDisjoinFact")
+	e := util.StringError("decode bson of SuffrageDisjoinFact")
 
 	var u common.BaseFactBSONUnmarshaler
 

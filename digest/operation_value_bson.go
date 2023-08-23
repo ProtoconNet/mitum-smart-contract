@@ -42,7 +42,7 @@ type OperationValueBSONUnmarshaler struct {
 }
 
 func (va *OperationValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of OperationValue")
+	e := util.StringError("decode bson of OperationValue")
 	var uva OperationValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &uva); err != nil {
 		return e.Wrap(err)

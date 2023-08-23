@@ -58,9 +58,9 @@ type Database struct {
 func NewDatabase(client *Client, encs *encoder.Encoders, enc encoder.Encoder) (*Database, error) {
 	// NOTE call Initialize() later.
 	if enc == nil {
-		e := encs.Find(bsonenc.BSONEncoderHint)
-		if e != nil {
-			return nil, mitumutil.ErrNotFound.Errorf("encoder for %q", bsonenc.BSONEncoderHint)
+		e, found := encs.Find(bsonenc.BSONEncoderHint)
+		if !found {
+			return nil, mitumutil.ErrNotFound.Errorf("unknown encoder hint, %q", bsonenc.BSONEncoderHint)
 		} else {
 			enc = e
 		}
@@ -100,8 +100,8 @@ func NewDatabaseFromURI(uri string, encs *encoder.Encoders) (*Database, error) {
 	}
 
 	var be encoder.Encoder
-	if e := encs.Find(bsonenc.BSONEncoderHint); e == nil { // NOTE get latest bson encoder
-		return nil, mitumutil.ErrNotFound.Errorf("encoder for %q", bsonenc.BSONEncoderHint)
+	if e, found := encs.Find(bsonenc.BSONEncoderHint); !found { // NOTE get latest bson encoder
+		return nil, mitumutil.ErrNotFound.Errorf("unknown encoder hint, %q", bsonenc.BSONEncoderHint)
 	} else {
 		be = e
 	}

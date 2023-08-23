@@ -10,7 +10,7 @@ import (
 )
 
 func (ac *Account) unpack(enc encoder.Encoder, ht hint.Hint, h valuehash.HashDecoder, ad string, bks []byte) error {
-	e := util.StringError("failed to unmarshal Account")
+	e := util.StringError("unmarshal Account")
 
 	ac.BaseHinter = hint.NewBaseHinter(ht)
 	switch ad, err := base.DecodeAddress(ad, enc); {

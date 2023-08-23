@@ -11,7 +11,7 @@ func (fact *SuffrageJoinFact) unpack(
 	candidate string,
 	height base.Height,
 ) error {
-	e := util.StringError("failed to unmarshal SuffrageJoinFact")
+	e := util.StringError("unmarshal SuffrageJoinFact")
 
 	switch i, err := base.DecodeAddress(candidate, enc); {
 	case err != nil:

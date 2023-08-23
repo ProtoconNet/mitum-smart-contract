@@ -10,7 +10,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	quicstreamheader "github.com/ProtoconNet/mitum2/network/quicstream/header"
 	"io"
 	"math/big"
 	"net"
@@ -24,9 +23,7 @@ import (
 	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
-	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/ProtoconNet/mitum2/util/ps"
@@ -138,9 +135,8 @@ func PrettyPrint(out io.Writer, i interface{}) {
 	_, _ = fmt.Fprintln(out, string(b))
 }
 
-func AttachHandlerSendOperation(pctx context.Context, handlers *quicstream.PrefixHandler) error {
+func AttachHandlerSendOperation(pctx context.Context) error {
 	var log *logging.Logging
-	var encs *encoder.Encoders
 	var params *launch.LocalParams
 	var db isaac.Database
 	var pool *isaacdatabase.TempPool
@@ -150,7 +146,6 @@ func AttachHandlerSendOperation(pctx context.Context, handlers *quicstream.Prefi
 
 	if err := util.LoadFromContext(pctx,
 		launch.LoggingContextKey, &log,
-		launch.EncodersContextKey, &encs,
 		launch.LocalParamsContextKey, &params,
 		launch.CenterDatabaseContextKey, &db,
 		launch.PoolDatabaseContextKey, &pool,
@@ -166,7 +161,10 @@ func AttachHandlerSendOperation(pctx context.Context, handlers *quicstream.Prefi
 		return err
 	}
 
-	handlers.Add(isaacnetwork.HandlerPrefixSendOperation, quicstreamheader.NewHandler(encs, 0,
+	var gerror error
+
+	launch.EnsureHandlerAdd(pctx, &gerror,
+		isaacnetwork.HandlerPrefixSendOperationString,
 		isaacnetwork.QuicstreamHandlerSendOperation(
 			params.ISAAC.NetworkID(),
 			pool,
@@ -186,9 +184,10 @@ func AttachHandlerSendOperation(pctx context.Context, handlers *quicstream.Prefi
 			},
 			params.MISC.MaxMessageSize,
 		),
-		nil))
+		nil,
+	)
 
-	return nil
+	return gerror
 }
 
 func SendOperationFilterFunc(ctx context.Context) (
@@ -196,7 +195,7 @@ func SendOperationFilterFunc(ctx context.Context) (
 	error,
 ) {
 	var db isaac.Database
-	var oprs *hint.CompatibleSet
+	var oprs *hint.CompatibleSet[isaac.NewOperationProcessorInternalFunc]
 	var f ProposalOperationFactHintFunc
 
 	if err := util.LoadFromContextOK(ctx,

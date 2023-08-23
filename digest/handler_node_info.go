@@ -4,6 +4,9 @@ import (
 	"context"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
+	quicstreamheader "github.com/ProtoconNet/mitum2/network/quicstream/header"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/pkg/errors"
 	"net/http"
 	"time"
 
@@ -45,26 +48,23 @@ func (hd *Handlers) handleNodeInfo(w http.ResponseWriter, r *http.Request) {
 func (hd *Handlers) handleNodeInfoInGroup() (interface{}, error) {
 	client, memberList, err := hd.client()
 
-	var nodeInfoList []isaacnetwork.NodeInfo
+	var nodeInfoList []map[string]interface{}
 	switch {
 	case err != nil:
 		return nil, err
 
 	default:
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-		defer cancel()
-
-		var nodeList []quicstream.UDPConnInfo
+		var nodeList []quicstream.ConnInfo
 		memberList.Members(func(node quicmemberlist.Member) bool {
-			nodeList = append(nodeList, node.UDPConnInfo())
+			nodeList = append(nodeList, node.ConnInfo())
 			return true
 		})
 		for i := range nodeList {
-			nodeInfo, _, err := client.NodeInfo(ctx, nodeList[i])
+			nodeInfo, err := NodeInfo(client, nodeList[i])
 			if err != nil {
 				return nil, err
 			}
-			nodeInfoList = append(nodeInfoList, nodeInfo)
+			nodeInfoList = append(nodeInfoList, *nodeInfo)
 		}
 	}
 
@@ -75,8 +75,71 @@ func (hd *Handlers) handleNodeInfoInGroup() (interface{}, error) {
 	}
 }
 
-func (hd *Handlers) buildNodeInfoHal(ni []isaacnetwork.NodeInfo) (Hal, error) {
+func (hd *Handlers) buildNodeInfoHal(ni []map[string]interface{}) (Hal, error) {
 	var hal Hal = NewBaseHal(ni, NewHalLink(HandlerPathNodeInfo, nil))
 
 	return hal, nil
+}
+
+func NodeInfo(client *isaacnetwork.BaseClient, connInfo quicstream.ConnInfo) (*map[string]interface{}, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*9)
+	defer cancel()
+
+	stream, _, err := client.Dial(ctx, connInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		_ = client.Close()
+	}()
+
+	header := isaacnetwork.NewNodeInfoRequestHeader()
+
+	var nodeInfo *map[string]interface{}
+	err = stream(ctx, func(ctx context.Context, broker *quicstreamheader.ClientBroker) error {
+		if err := broker.WriteRequestHead(ctx, header); err != nil {
+			return err
+		}
+
+		var enc encoder.Encoder
+
+		switch rEnc, rh, err := broker.ReadResponseHead(ctx); {
+		case err != nil:
+			return err
+		case !rh.OK():
+			return errors.Errorf("not ok")
+		case rh.Err() != nil:
+			return rh.Err()
+		default:
+			enc = rEnc
+		}
+
+		switch bodyType, bodyLength, r, err := broker.ReadBodyErr(ctx); {
+		case err != nil:
+			return err
+		case bodyType == quicstreamheader.EmptyBodyType,
+			bodyType == quicstreamheader.FixedLengthBodyType && bodyLength < 1:
+			return errors.Errorf("empty body")
+		default:
+			var v interface{}
+			if err := enc.StreamDecoder(r).Decode(&v); err != nil {
+				return err
+			}
+
+			ni, ok := v.(map[string]interface{})
+			if !ok {
+				return errors.Errorf("expected map[string]interface{}, not %T", v)
+			}
+
+			nodeInfo = &ni
+
+			return nil
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return nodeInfo, nil
 }

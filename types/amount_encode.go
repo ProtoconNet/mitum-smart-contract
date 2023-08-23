@@ -7,7 +7,7 @@ import (
 )
 
 func (am *Amount) unpack(enc encoder.Encoder, cid string, big string) error {
-	e := util.StringError("failed to unmarshal Account")
+	e := util.StringError("unmarshal Account")
 
 	am.cid = CurrencyID(cid)
 

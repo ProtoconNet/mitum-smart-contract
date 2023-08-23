@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 )
 
-var defaultLimitWriteModels int = 200
+var defaultLimitWriteModels = 200
 
 func checkURI(uri string) (connstring.ConnString, error) {
 	cs, err := connstring.Parse(uri)
