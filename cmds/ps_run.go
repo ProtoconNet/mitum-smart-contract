@@ -52,7 +52,7 @@ func DefaultRunPS() *ps.PS {
 		PostAddOK(launch.PNameDiscoveryFlag, launch.PDiscoveryFlag)
 
 	_ = pps.POK(launch.PNameStorage).
-		PreAddOK(launch.PNameCheckLocalFS, launch.PCheckLocalFS).
+		PreAddOK(launch.PNameCheckLocalFS, launch.PCheckAndCreateLocalFS).
 		PreAddOK(launch.PNameLoadDatabase, launch.PLoadDatabase).
 		PostAddOK(launch.PNameCheckLeveldbStorage, launch.PCheckLeveldbStorage).
 		PostAddOK(launch.PNameLoadFromDatabase, launch.PLoadFromDatabase).
