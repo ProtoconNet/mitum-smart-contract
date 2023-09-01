@@ -13,15 +13,16 @@ var ContractAccountStatusHint = hint.MustNewHint("mitum-currency-contract-accoun
 
 type ContractAccountStatus struct {
 	hint.BaseHinter
-	owner    base.Address
-	isActive bool
+	owner     base.Address
+	operators []base.Address
+	isActive  bool
 }
 
-func NewContractAccountStatus(owner base.Address, isActive bool) ContractAccountStatus {
+func NewContractAccountStatus(owner base.Address) ContractAccountStatus {
 	us := ContractAccountStatus{
 		BaseHinter: hint.NewBaseHinter(ContractAccountStatusHint),
 		owner:      owner,
-		isActive:   isActive,
+		isActive:   false,
 	}
 	return us
 }
