@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/pkg/errors"
@@ -38,17 +39,6 @@ func (cmd *CreateAccountCommand) Run(pctx context.Context) error { // nolint:dup
 		return err
 	}
 
-	/*
-		sl, err := LoadSealAndAddOperation(
-			cmd.Seal.Bytes(),
-			cmd.Privatekey,
-			cmd.NetworkID.NetworkID(),
-			op,
-		)
-		if err != nil {
-			return err
-		}
-	*/
 	PrettyPrint(cmd.Out, op)
 
 	return nil
@@ -102,7 +92,7 @@ func (cmd *CreateAccountCommand) parseFlags() error {
 }
 
 func (cmd *CreateAccountCommand) createOperation() (base.Operation, error) { // nolint:dupl}
-	var items []currency.CreateAccountsItem
+	var items []currency.CreateAccountItem
 
 	ams := make([]types.Amount, len(cmd.Amounts))
 	for i := range cmd.Amounts {
@@ -121,15 +111,15 @@ func (cmd *CreateAccountCommand) createOperation() (base.Operation, error) { // 
 		addrType = types.EthAddressHint.Type()
 	}
 
-	item := currency.NewCreateAccountsItemMultiAmounts(cmd.keys, ams, addrType)
+	item := currency.NewCreateAccountItemMultiAmounts(cmd.keys, ams, addrType)
 	if err := item.IsValid(nil); err != nil {
 		return nil, err
 	}
 	items = append(items, item)
 
-	fact := currency.NewCreateAccountsFact([]byte(cmd.Token), cmd.sender, items)
+	fact := currency.NewCreateAccountFact([]byte(cmd.Token), cmd.sender, items)
 
-	op, err := currency.NewCreateAccounts(fact)
+	op, err := currency.NewCreateAccount(fact)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create create-account operation")
 	}
@@ -140,63 +130,3 @@ func (cmd *CreateAccountCommand) createOperation() (base.Operation, error) { // 
 
 	return op, nil
 }
-
-/*
-func LoadSeal(b []byte, networkID base.NetworkID) (base.Seal, error) {
-	if len(bytes.TrimSpace(b)) < 1 {
-		return nil, errors.Errorf("empty input")
-	}
-
-	var sl base.Seal
-	if err := encoder.Decode(b, enc, &sl); err != nil {
-		return nil, err
-	}
-
-	if err := sl.IsValid(networkID); err != nil {
-		return nil, errors.Wrap(err, "invalid seal")
-	}
-
-	return sl, nil
-}
-
-func LoadSealAndAddOperation(
-	b []byte,
-	privatekey key.Privatekey,
-	networkID base.NetworkID,
-	op operation.Operation,
-) (operation.Seal, error) {
-	if b == nil {
-		bs, err := operation.NewBaseSeal(
-			privatekey,
-			[]operation.Operation{op},
-			networkID,
-		)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create operation.Seal")
-		}
-		return bs, nil
-	}
-
-	var sl operation.Seal
-	if s, err := LoadSeal(b, networkID); err != nil {
-		return nil, err
-	} else if so, ok := s.(operation.Seal); !ok {
-		return nil, errors.Errorf("seal is not operation.Seal, %T", s)
-	} else if _, ok := so.(operation.SealUpdater); !ok {
-		return nil, errors.Errorf("seal is not operation.SealUpdater, %T", s)
-	} else {
-		sl = so
-	}
-
-	// NOTE add operation to existing seal
-	sl = sl.(operation.SealUpdater).SetOperations([]operation.Operation{op}).(operation.Seal)
-
-	s, err := SignSeal(sl, privatekey, networkID)
-	if err != nil {
-		return nil, err
-	}
-	sl = s.(operation.Seal)
-
-	return sl, nil
-}
-*/

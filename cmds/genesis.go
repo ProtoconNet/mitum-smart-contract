@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	isaacoperation "github.com/ProtoconNet/mitum-currency/v3/operation/isaac"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
@@ -120,11 +121,11 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 			}
 
 			g.ops[i], err = g.networkPolicyOperation(fact)
-		case ht.IsCompatible(currency.GenesisCurrenciesFactHint):
+		case ht.IsCompatible(currency.RegisterGenesisCurrencyFactHint):
 			if _, found := factTypes[ht.String()]; found {
-				return errors.Errorf("multiple GenesisCurrencies operation found")
+				return errors.Errorf("multiple RegisterGenesisCurrency operation found")
 			}
-			g.ops[i], err = g.genesisCurrenciesOperation(fact, g.networkID)
+			g.ops[i], err = g.registerGenesisCurrencyOperation(fact, g.networkID)
 		}
 
 		if err != nil {
@@ -185,22 +186,22 @@ func (g *GenesisBlockGenerator) networkPolicyOperation(i base.Fact) (base.Operat
 	return op, nil
 }
 
-func (g *GenesisBlockGenerator) genesisCurrenciesOperation(i base.Fact, token []byte) (base.Operation, error) {
-	e := util.StringError("make genesisCurrencies operation")
+func (g *GenesisBlockGenerator) registerGenesisCurrencyOperation(i base.Fact, token []byte) (base.Operation, error) {
+	e := util.StringError("make registerGenesisCurrency operation")
 
-	basefact, ok := i.(currency.GenesisCurrenciesFact)
+	basefact, ok := i.(currency.RegisterGenesisCurrencyFact)
 	if !ok {
-		return nil, e.WithMessage(nil, "expected GenesisCurrenciesFact, not %T", i)
+		return nil, e.WithMessage(nil, "expected RegisterGenesisCurrencyFact, not %T", i)
 	}
 	acks, err := types.NewBaseAccountKeys(basefact.Keys().Keys(), basefact.Keys().Threshold())
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
-	fact := currency.NewGenesisCurrenciesFact(token, basefact.GenesisNodeKey(), acks, basefact.Currencies())
+	fact := currency.NewRegisterGenesisCurrencyFact(token, basefact.GenesisNodeKey(), acks, basefact.Currencies())
 	if err := fact.IsValid(g.networkID); err != nil {
 		return nil, e.Wrap(err)
 	}
-	op := currency.NewGenesisCurrencies(fact)
+	op := currency.NewRegisterGenesisCurrency(fact)
 	if err := op.Sign(g.local.Privatekey(), g.networkID); err != nil {
 		return nil, e.Wrap(err)
 	}

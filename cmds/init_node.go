@@ -37,7 +37,7 @@ func (cmd *INITCommand) Run(pctx context.Context) error {
 
 	log.Log().Debug().Interface("process", pps.Verbose()).Msg("process ready")
 
-	nctx, err := pps.Run(nctx) //revive:disable-line:modifies-parameter
+	_, err := pps.Run(nctx) //revive:disable-line:modifies-parameter
 	defer func() {
 		log.Log().Debug().Interface("process", pps.Verbose()).Msg("process will be closed")
 

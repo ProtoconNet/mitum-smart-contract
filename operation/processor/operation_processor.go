@@ -3,12 +3,13 @@ package processor
 import (
 	"context"
 	"fmt"
+	"io"
+	"sync"
+
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"io"
-	"sync"
 
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -206,10 +207,10 @@ func CheckDuplication(opr *OperationProcessor, op base.Operation) error {
 	var newAddresses []base.Address
 
 	switch t := op.(type) {
-	case currency.CreateAccounts:
-		fact, ok := t.Fact().(currency.CreateAccountsFact)
+	case currency.CreateAccount:
+		fact, ok := t.Fact().(currency.CreateAccountFact)
 		if !ok {
-			return errors.Errorf("expected GenesisCurrenciesFact, not %T", t.Fact())
+			return errors.Errorf("expected RegisterGenesisCurrencyFact, not %T", t.Fact())
 		}
 		as, err := fact.Targets()
 		if err != nil {
@@ -218,10 +219,10 @@ func CheckDuplication(opr *OperationProcessor, op base.Operation) error {
 		newAddresses = as
 		// did = fact.Sender().String()
 		// didtype = DuplicationTypeSender
-	case currency.KeyUpdater:
-		fact, ok := t.Fact().(currency.KeyUpdaterFact)
+	case currency.UpdateKey:
+		fact, ok := t.Fact().(currency.UpdateKeyFact)
 		if !ok {
-			return errors.Errorf("expected KeyUpdaterFact, not %T", t.Fact())
+			return errors.Errorf("expected UpdateKeyFact, not %T", t.Fact())
 		}
 		as, err := fact.Addresses()
 		if err != nil {
@@ -230,24 +231,24 @@ func CheckDuplication(opr *OperationProcessor, op base.Operation) error {
 		newAddresses = as
 		// did = fact.Target().String()
 		// didtype = DuplicationTypeSender
-	// case Transfers:
-	// 	fact, ok := t.Fact().(TransfersFact)
+	// case Transfer:
+	// 	fact, ok := t.Fact().(TransferFact)
 	// 	if !ok {
-	// 		return errors.Errorf("expected TransfersFact, not %T", t.Fact())
+	// 		return errors.Errorf("expected TransferFact, not %T", t.Fact())
 	// 	}
 	// 	did = fact.Sender().String()
 	// 	didtype = DuplicationTypeSender
-	// case CurrencyRegister:
-	// 	fact, ok := t.Fact().(CurrencyRegisterFact)
+	// case RegisterCurrency:
+	// 	fact, ok := t.Fact().(RegisterCurrencyFact)
 	// 	if !ok {
-	// 		return errors.Errorf("expected CurrencyRegisterFact, not %T", t.Fact())
+	// 		return errors.Errorf("expected RegisterCurrencyFact, not %T", t.Fact())
 	// 	}
 	//  did = fact.Currency().amount.Currency().String()
 	// 	didtype = DuplicationTypeCurrency
-	// case CurrencyPolicyUpdater:
-	// 	fact, ok := t.Fact().(CurrencyPolicyUpdaterFact)
+	// case UpdateCurrency:
+	// 	fact, ok := t.Fact().(UpdateCurrencyFact)
 	// 	if !ok {
-	// 		return errors.Errorf("expected CurrencyPolicyUpdaterFact, not %T", t.Fact())
+	// 		return errors.Errorf("expected UpdateCurrencyFact, not %T", t.Fact())
 	// 	}
 	//  did = fact.Currency().amount.Currency().String()
 	// 	didtype = DuplicationTypeCurrency
@@ -320,14 +321,14 @@ func GetNewProcessor(opr *OperationProcessor, op base.Operation) (base.Operation
 	}
 
 	switch t := op.(type) {
-	case currency.CreateAccounts,
-		currency.KeyUpdater,
-		currency.Transfers,
-		currency.CurrencyRegister,
-		currency.CurrencyPolicyUpdater,
-		currency.SuffrageInflation,
-		extension.CreateContractAccounts,
-		extension.Withdraws:
+	case currency.CreateAccount,
+		currency.UpdateKey,
+		currency.Transfer,
+		currency.RegisterCurrency,
+		currency.UpdateCurrency,
+		currency.Mint,
+		extension.CreateContractAccount,
+		extension.Withdraw:
 		return nil, false, errors.Errorf("%T needs SetProcessor", t)
 	default:
 		return nil, false, nil

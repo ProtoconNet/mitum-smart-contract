@@ -2,10 +2,11 @@ package digest
 
 import (
 	"fmt"
-	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 
 	"github.com/ProtoconNet/mitum2/base"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
@@ -238,8 +239,8 @@ func (hd *Handlers) buildOperationHal(va OperationValue) (Hal, error) {
 	// hal = hal.AddLink("manifest", NewHalLink(h, nil))
 
 	if va.InState() {
-		if t, ok := va.Operation().(currency.CreateAccounts); ok {
-			items := t.Fact().(currency.CreateAccountsFact).Items()
+		if t, ok := va.Operation().(currency.CreateAccount); ok {
+			items := t.Fact().(currency.CreateAccountFact).Items()
 			for i := range items {
 				a, err := items[i].Address()
 				if err != nil {

@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+
 	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
@@ -90,7 +91,7 @@ func (cmd *CreateContractAccountCommand) parseFlags() error {
 }
 
 func (cmd *CreateContractAccountCommand) createOperation() (base.Operation, error) { // nolint:dupl}
-	var items []extension.CreateContractAccountsItem
+	var items []extension.CreateContractAccountItem
 
 	ams := make([]types.Amount, len(cmd.Amounts))
 	for i := range cmd.Amounts {
@@ -109,15 +110,15 @@ func (cmd *CreateContractAccountCommand) createOperation() (base.Operation, erro
 		addrType = types.EthAddressHint.Type()
 	}
 
-	item := extension.NewCreateContractAccountsItemMultiAmounts(cmd.keys, ams, addrType)
+	item := extension.NewCreateContractAccountItemMultiAmounts(cmd.keys, ams, addrType)
 	if err := item.IsValid(nil); err != nil {
 		return nil, err
 	}
 	items = append(items, item)
 
-	fact := extension.NewCreateContractAccountsFact([]byte(cmd.Token), cmd.sender, items)
+	fact := extension.NewCreateContractAccountFact([]byte(cmd.Token), cmd.sender, items)
 
-	op, err := extension.NewCreateContractAccounts(fact)
+	op, err := extension.NewCreateContractAccount(fact)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create create-contract-account operation")
 	}

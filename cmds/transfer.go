@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 
@@ -37,18 +38,6 @@ func (cmd *TransferCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	/*
-		sl, err := LoadSealAndAddOperation(
-			cmd.Seal.Bytes(),
-			cmd.Privatekey,
-			cmd.NetworkID.NetworkID(),
-			op,
-		)
-		if err != nil {
-			return err
-		}
-	*/
-
 	PrettyPrint(cmd.Out, op)
 
 	return nil
@@ -76,7 +65,7 @@ func (cmd *TransferCommand) parseFlags() error {
 }
 
 func (cmd *TransferCommand) createOperation() (base.Operation, error) { // nolint:dupl
-	var items []currency.TransfersItem
+	var items []currency.TransferItem
 
 	ams := make([]types.Amount, len(cmd.Amounts))
 	for i := range cmd.Amounts {
@@ -89,43 +78,22 @@ func (cmd *TransferCommand) createOperation() (base.Operation, error) { // nolin
 		ams[i] = am
 	}
 
-	item := currency.NewTransfersItemMultiAmounts(cmd.receiver, ams)
+	item := currency.NewTransferItemMultiAmounts(cmd.receiver, ams)
 	if err := item.IsValid(nil); err != nil {
 		return nil, err
 	}
 	items = append(items, item)
 
-	fact := currency.NewTransfersFact([]byte(cmd.Token), cmd.sender, items)
+	fact := currency.NewTransferFact([]byte(cmd.Token), cmd.sender, items)
 
-	op, err := currency.NewTransfers(fact)
+	op, err := currency.NewTransfer(fact)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create transfers operation")
+		return nil, errors.Wrap(err, "failed to create transfer operation")
 	}
 	err = op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create create-account operation")
+		return nil, errors.Wrap(err, "failed to create transfer operation")
 	}
 
 	return op, nil
 }
-
-/*
-func loadOperations(b []byte, networkID base.NetworkID) ([]operation.Operation, error) {
-	if len(bytes.TrimSpace(b)) < 1 {
-		return nil, nil
-	}
-
-	var sl seal.Seal
-	if s, err := LoadSeal(b, networkID); err != nil {
-		return nil, err
-	} else if so, ok := s.(operation.Seal); !ok {
-		return nil, errors.Errorf("seal is not operation.Seal, %T", s)
-	} else if _, ok := so.(operation.SealUpdater); !ok {
-		return nil, errors.Errorf("seal is not operation.SealUpdater, %T", s)
-	} else {
-		sl = so
-	}
-
-	return sl.(operation.Seal).Operations(), nil
-}
-*/

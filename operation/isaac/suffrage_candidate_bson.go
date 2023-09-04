@@ -59,7 +59,7 @@ func (op SuffrageCandidate) MarshalBSON() ([]byte, error) {
 }
 
 func (op *SuffrageCandidate) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of GenesisCurrencies")
+	e := util.StringError("failed to decode bson of RegisterGenesisCurrency")
 	var ubo common.BaseNodeOperation
 
 	err := ubo.DecodeBSON(b, enc)

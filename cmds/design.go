@@ -2,9 +2,10 @@ package cmds
 
 import (
 	"context"
+	"net/url"
+
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
-	"net/url"
 
 	vault "github.com/hashicorp/vault/api"
 	"github.com/pkg/errors"
@@ -84,12 +85,12 @@ func (akd *AccountKeysDesign) IsValid([]byte) error {
 	return nil
 }
 
-type GenesisCurrenciesDesign struct {
+type GenesisCurrencyDesign struct {
 	AccountKeys *AccountKeysDesign `yaml:"account-keys"`
 	Currencies  []*CurrencyDesign  `yaml:"currencies"`
 }
 
-func (de *GenesisCurrenciesDesign) IsValid([]byte) error {
+func (de *GenesisCurrencyDesign) IsValid([]byte) error {
 	if de.AccountKeys == nil {
 		return errors.Errorf("empty account-keys")
 	}

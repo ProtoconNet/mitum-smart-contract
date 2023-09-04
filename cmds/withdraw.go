@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+
 	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 
@@ -64,7 +65,7 @@ func (cmd *WithdrawCommand) parseFlags() error {
 }
 
 func (cmd *WithdrawCommand) createOperation() (base.Operation, error) { // nolint:dupl
-	var items []extension.WithdrawsItem
+	var items []extension.WithdrawItem
 
 	ams := make([]types.Amount, len(cmd.Amounts))
 	for i := range cmd.Amounts {
@@ -77,21 +78,21 @@ func (cmd *WithdrawCommand) createOperation() (base.Operation, error) { // nolin
 		ams[i] = am
 	}
 
-	item := extension.NewWithdrawsItemMultiAmounts(cmd.target, ams)
+	item := extension.NewWithdrawItemMultiAmounts(cmd.target, ams)
 	if err := item.IsValid(nil); err != nil {
 		return nil, err
 	}
 	items = append(items, item)
 
-	fact := extension.NewWithdrawsFact([]byte(cmd.Token), cmd.sender, items)
+	fact := extension.NewWithdrawFact([]byte(cmd.Token), cmd.sender, items)
 
-	op, err := extension.NewWithdraws(fact)
+	op, err := extension.NewWithdraw(fact)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create withdraws operation")
+		return nil, errors.Wrap(err, "failed to create withdraw operation")
 	}
 	err = op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create withdraws operation")
+		return nil, errors.Wrap(err, "failed to create withdraw operation")
 	}
 
 	return op, nil
