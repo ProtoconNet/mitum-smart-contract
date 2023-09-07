@@ -33,7 +33,7 @@ type RegisterGenesisCurrencyFactJSONUnMarshaler struct {
 }
 
 func (fact *RegisterGenesisCurrencyFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of RegisterGenesisCurrencyFact")
+	e := util.StringError("decode json of RegisterGenesisCurrencyFact")
 
 	var uf RegisterGenesisCurrencyFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {

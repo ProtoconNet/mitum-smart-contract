@@ -98,7 +98,7 @@ func CheckBindIsOpen(network, bind string, timeout time.Duration) error {
 
 	select {
 	case err := <-errchan:
-		return errors.Wrap(err, "failed to open bind")
+		return errors.Wrap(err, "open bind")
 	case <-time.After(timeout):
 		return nil
 	}

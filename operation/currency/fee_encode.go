@@ -11,7 +11,7 @@ func (fact *FeeOperationFact) unpack(
 	enc encoder.Encoder,
 	bam []byte,
 ) error {
-	e := util.StringError("failed to unmarshal FeeOperationFact")
+	e := util.StringError("unmarshal FeeOperationFact")
 
 	ham, err := enc.DecodeSlice(bam)
 	if err != nil {

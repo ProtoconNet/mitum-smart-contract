@@ -31,7 +31,7 @@ type BaseTransferItemJSONUnpacker struct {
 }
 
 func (it *BaseTransferItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of BaseTransferItem")
+	e := util.StringError("decode json of BaseTransferItem")
 
 	var uit BaseTransferItemJSONUnpacker
 	if err := enc.Unmarshal(b, &uit); err != nil {

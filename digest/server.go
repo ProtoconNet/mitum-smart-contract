@@ -33,7 +33,7 @@ type HTTP2Server struct {
 
 func NewHTTP2Server(bind, host string, certs []tls.Certificate) (*HTTP2Server, error) {
 	if err := util.CheckBindIsOpen("tcp", bind, time.Second*1); err != nil {
-		return nil, errors.Wrap(err, "failed to open digest server")
+		return nil, errors.Wrap(err, "open digest server")
 	}
 
 	idleTimeout := time.Second * 10

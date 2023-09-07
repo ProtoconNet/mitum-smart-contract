@@ -121,11 +121,11 @@ func (cmd *CreateAccountCommand) createOperation() (base.Operation, error) { // 
 
 	op, err := currency.NewCreateAccount(fact)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create create-account operation")
+		return nil, errors.Wrap(err, "create create-account operation")
 	}
 	err = op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create create-account operation")
+		return nil, errors.Wrap(err, "create create-account operation")
 	}
 
 	return op, nil

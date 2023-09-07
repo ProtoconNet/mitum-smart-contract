@@ -153,9 +153,9 @@ func (st *Database) loadLastBlock() error {
 
 	switch m, found, err := st.manifestByFilter(util.NewBSONFilter("height", height).D()); {
 	case err != nil:
-		return errors.Wrapf(err, "failed to find last block of height, %v", height)
+		return errors.Wrapf(err, "find last block of height, %v", height)
 	case !found:
-		return mitumutil.ErrNotFound.Errorf("failed to find last block of height, %v", height)
+		return mitumutil.ErrNotFound.Errorf("find last block of height, %v", height)
 	default:
 		return st.setLastBlock(m, false, false)
 	}
@@ -352,9 +352,9 @@ func (st *Database) CleanByHeight(height base.Height) error {
 
 	switch m, found, err := st.ManifestByHeight(height - 1); {
 	case err != nil:
-		return errors.Wrapf(err, "failed to find block of height, %v", height-1)
+		return errors.Wrapf(err, "find block of height, %v", height-1)
 	case !found:
-		return mitumutil.ErrNotFound.Errorf("failed to find block of height, %v", height-1)
+		return mitumutil.ErrNotFound.Errorf("find block of height, %v", height-1)
 	default:
 		_ = st.stateCache.Purge()
 		_ = st.operationFactCache.Purge()
@@ -964,18 +964,18 @@ func (st *Database) lastVoteproofs(height base.Height) (base.Voteproof, base.Vot
 	var initVoteproof, acceptVoteproof base.Voteproof
 	switch i, found, err := st.voteproofByFilter(util.NewBSONFilter("height", height).Add("stage", base.StageINIT.String()).D()); {
 	case err != nil:
-		return nil, nil, errors.Wrapf(err, "failed to find last init voteproof of height, %v", height)
+		return nil, nil, errors.Wrapf(err, "find last init voteproof of height, %v", height)
 	case !found:
-		return nil, nil, mitumutil.ErrNotFound.Errorf("failed to find last init voteproof of height, %v", height)
+		return nil, nil, mitumutil.ErrNotFound.Errorf("find last init voteproof of height, %v", height)
 	default:
 		initVoteproof = i
 	}
 
 	switch i, found, err := st.voteproofByFilter(util.NewBSONFilter("height", height).Add("stage", base.StageACCEPT.String()).D()); {
 	case err != nil:
-		return nil, nil, errors.Wrapf(err, "failed to find last accept voteproof of height, %v", height)
+		return nil, nil, errors.Wrapf(err, "find last accept voteproof of height, %v", height)
 	case !found:
-		return nil, nil, mitumutil.ErrNotFound.Errorf("failed to find last accept voteproof of height, %v", height)
+		return nil, nil, mitumutil.ErrNotFound.Errorf("find last accept voteproof of height, %v", height)
 	default:
 		acceptVoteproof = i
 	}

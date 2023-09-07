@@ -36,7 +36,7 @@ func (cmd *UpdateCurrencyCommand) Run(pctx context.Context) error { // nolint:du
 
 	var op base.Operation
 	if i, err := cmd.createOperation(); err != nil {
-		return errors.Wrap(err, "failed to create update-currency operation")
+		return errors.Wrap(err, "create update-currency operation")
 	} else if err := i.IsValid(cmd.OperationFlags.NetworkID); err != nil {
 		return errors.Wrap(err, "invalid update-currency operation")
 	} else {
@@ -107,7 +107,7 @@ func (cmd *UpdateCurrencyCommand) createOperation() (currency.UpdateCurrency, er
 
 	err = op.NodeSign(cmd.Privatekey, cmd.NetworkID.NetworkID(), cmd.node)
 	if err != nil {
-		return currency.UpdateCurrency{}, errors.Wrap(err, "failed to create update-currency operation")
+		return currency.UpdateCurrency{}, errors.Wrap(err, "create update-currency operation")
 	}
 
 	return op, nil

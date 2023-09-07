@@ -104,7 +104,7 @@ end:
 				return false, nil
 			}, 15, time.Second*1)
 			if err != nil {
-				di.Log().Error().Err(err).Int64("block", blk.Manifest().Height().Int64()).Msg("failed to digest block")
+				di.Log().Error().Err(err).Int64("block", blk.Manifest().Height().Int64()).Msg("digest block")
 			} else {
 				di.Log().Info().Int64("block", blk.Manifest().Height().Int64()).Msg("block digested")
 			}

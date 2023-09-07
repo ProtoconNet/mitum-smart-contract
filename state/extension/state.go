@@ -16,13 +16,13 @@ var StateKeyContractAccountSuffix = ":contractaccount"
 
 type ContractAccountStateValue struct {
 	hint.BaseHinter
-	account types.ContractAccountStatus
+	status types.ContractAccountStatus
 }
 
-func NewContractAccountStateValue(account types.ContractAccountStatus) ContractAccountStateValue {
+func NewContractAccountStateValue(status types.ContractAccountStatus) ContractAccountStateValue {
 	return ContractAccountStateValue{
 		BaseHinter: hint.NewBaseHinter(ContractAccountStateValueHint),
-		account:    account,
+		status:     status,
 	}
 }
 
@@ -37,7 +37,7 @@ func (c ContractAccountStateValue) IsValid([]byte) error {
 		return e.Wrap(err)
 	}
 
-	if err := util.CheckIsValiders(nil, false, c.account); err != nil {
+	if err := util.CheckIsValiders(nil, false, c.status); err != nil {
 		return e.Wrap(err)
 	}
 
@@ -45,7 +45,11 @@ func (c ContractAccountStateValue) IsValid([]byte) error {
 }
 
 func (c ContractAccountStateValue) HashBytes() []byte {
-	return c.account.Bytes()
+	return c.status.Bytes()
+}
+
+func (c ContractAccountStateValue) Status() types.ContractAccountStatus {
+	return c.status
 }
 
 func StateKeyContractAccount(a base.Address) string {
@@ -66,50 +70,5 @@ func StateContractAccountValue(st base.State) (types.ContractAccountStatus, erro
 	if !ok {
 		return types.ContractAccountStatus{}, errors.Errorf("invalid contract account status value found, %T", v)
 	}
-	return cs.account, nil
+	return cs.status, nil
 }
-
-//
-//type CurrencyDesignStateValueMerger struct {
-//	*base.BaseStateValueMerger
-//}
-//
-//func NewCurrencyDesignStateValueMerger(height base.Height, key string, st base.State) *CurrencyDesignStateValueMerger {
-//	s := &CurrencyDesignStateValueMerger{
-//		BaseStateValueMerger: base.NewBaseStateValueMerger(height, key, st),
-//	}
-//
-//	return s
-//}
-//
-//func NewCurrencyDesignStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
-//	return base.NewBaseStateMergeValue(
-//		key,
-//		stv,
-//		func(height base.Height, st base.State) base.StateValueMerger {
-//			return NewCurrencyDesignStateValueMerger(height, key, st)
-//		},
-//	)
-//}
-//
-//type ContractAccountStateValueMerger struct {
-//	*base.BaseStateValueMerger
-//}
-//
-//func NewContractAccountStateValueMerger(height base.Height, key string, st base.State) *ContractAccountStateValueMerger {
-//	s := &ContractAccountStateValueMerger{
-//		BaseStateValueMerger: base.NewBaseStateValueMerger(height, key, st),
-//	}
-//
-//	return s
-//}
-//
-//func NewContractAccountStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
-//	return base.NewBaseStateMergeValue(
-//		key,
-//		stv,
-//		func(height base.Height, st base.State) base.StateValueMerger {
-//			return NewContractAccountStateValueMerger(height, key, st)
-//		},
-//	)
-//}

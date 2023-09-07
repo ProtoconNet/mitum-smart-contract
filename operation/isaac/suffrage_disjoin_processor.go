@@ -22,7 +22,7 @@ func NewSuffrageDisjoinProcessor(
 	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 ) (*SuffrageDisjoinProcessor, error) {
-	e := util.StringError("failed to create new SuffrageDisjoinProcessor")
+	e := util.StringError("create new SuffrageDisjoinProcessor")
 
 	b, err := base.NewBaseOperationProcessor(
 		height, getStateFunc, newPreProcessConstraintFunc, newProcessConstraintFunc)
@@ -70,7 +70,7 @@ func (p *SuffrageDisjoinProcessor) Close() error {
 func (p *SuffrageDisjoinProcessor) PreProcess(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	context.Context, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringError("failed to preprocess for SuffrageDisjoin")
+	e := util.StringError("preprocess for SuffrageDisjoin")
 
 	var signer base.Publickey
 
@@ -122,7 +122,7 @@ func (p *SuffrageDisjoinProcessor) PreProcess(ctx context.Context, op base.Opera
 func (p *SuffrageDisjoinProcessor) Process(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringError("failed to process for SuffrageDisjoin")
+	e := util.StringError("process for SuffrageDisjoin")
 
 	switch reasonerr, err := p.ProcessConstraintFunc(ctx, op, getStateFunc); {
 	case err != nil:

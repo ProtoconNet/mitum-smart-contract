@@ -52,7 +52,7 @@ func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	var fact base.Fact
 	if err := encoder.Decode(enc, u.Fact, &fact); err != nil {
-		return e.WithMessage(err, "failed to decode fact")
+		return e.WithMessage(err, "decode fact")
 	}
 
 	op.SetFact(fact)
@@ -79,7 +79,7 @@ func (op *BaseNodeOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	var fact base.Fact
 	if err := encoder.Decode(enc, u.Fact, &fact); err != nil {
-		return e.WithMessage(err, "failed to decode fact")
+		return e.WithMessage(err, "decode fact")
 	}
 
 	op.BaseOperation.SetFact(fact)

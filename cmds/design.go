@@ -348,19 +348,19 @@ func loadPrivatekeyFromVault(path string, enc *jsonenc.Encoder) (base.Privatekey
 
 	client, err := vault.NewClient(clientConfig)
 	if err != nil {
-		return nil, e.WithMessage(err, "failed to create vault client")
+		return nil, e.WithMessage(err, "create vault client")
 	}
 
 	secret, err := client.KVv2("secret").Get(context.Background(), path)
 	if err != nil {
-		return nil, e.WithMessage(err, "failed to read secret")
+		return nil, e.WithMessage(err, "to read secret")
 	}
 
 	i := secret.Data["string"]
 
 	privs, ok := i.(string)
 	if !ok {
-		return nil, e.WithMessage(nil, "failed to read secret; expected string but %T", i)
+		return nil, e.WithMessage(nil, "read secret; expected string but %T", i)
 	}
 
 	switch priv, err := base.DecodePrivatekeyFromString(privs, enc); {

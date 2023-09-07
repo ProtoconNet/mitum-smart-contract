@@ -30,7 +30,7 @@ type TransferFactJSONUnmarshaler struct {
 }
 
 func (fact *TransferFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of TransferFact")
+	e := util.StringError("decode json of TransferFact")
 
 	var uf TransferFactJSONUnmarshaler
 
@@ -43,18 +43,14 @@ func (fact *TransferFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	return fact.unpack(enc, uf.Sender, uf.Items)
 }
 
-type transferMarshaler struct {
-	common.BaseOperationJSONMarshaler
-}
-
 func (op Transfer) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(transferMarshaler{
+	return util.MarshalJSON(BaseOperationMarshaler{
 		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
 	})
 }
 
 func (op *Transfer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode Transfer")
+	e := util.StringError("decode Transfer")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {

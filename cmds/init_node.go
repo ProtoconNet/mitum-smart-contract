@@ -42,7 +42,7 @@ func (cmd *INITCommand) Run(pctx context.Context) error {
 		log.Log().Debug().Interface("process", pps.Verbose()).Msg("process will be closed")
 
 		if _, err = pps.Close(pctx); err != nil {
-			log.Log().Error().Err(err).Msg("failed to close")
+			log.Log().Error().Err(err).Msg("close")
 		}
 	}()
 

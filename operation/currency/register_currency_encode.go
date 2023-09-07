@@ -11,7 +11,7 @@ func (fact *RegisterCurrencyFact) unpack(
 	enc encoder.Encoder,
 	bcr []byte,
 ) error {
-	e := util.StringError("failed to unmarshal RegisterCurrencyFact")
+	e := util.StringError("unmarshal RegisterCurrencyFact")
 
 	if hinter, err := enc.Decode(bcr); err != nil {
 		return e.Wrap(err)

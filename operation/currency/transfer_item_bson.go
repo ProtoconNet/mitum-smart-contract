@@ -24,7 +24,7 @@ type TransferItemBSONUnmarshaler struct {
 }
 
 func (it *BaseTransferItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of BaseTransferItem")
+	e := util.StringError("decode bson of BaseTransferItem")
 
 	var uit TransferItemBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uit); err != nil {

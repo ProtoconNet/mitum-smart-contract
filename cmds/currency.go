@@ -7,5 +7,6 @@ type CurrencyCommand struct {
 	RegisterCurrency      RegisterCurrencyCommand      `cmd:"" name:"register-currency" help:"register new currency"`
 	UpdateCurrency        UpdateCurrencyCommand        `cmd:"" name:"update-currency" help:"update currency policy"`
 	CreateContractAccount CreateContractAccountCommand `cmd:"" name:"create-contract-account" help:"create new contract account"`
+	UpdateOperator        UpdateOperatorCommand        `cmd:"" name:"update-operator" help:"update operator of contract account"`
 	Withdraw              WithdrawCommand              `cmd:"" name:"withdraw" help:"withdraw amounts from target contract account"`
 }

@@ -10,8 +10,9 @@ import (
 func (cs *ContractAccountStatus) unpack(
 	enc encoder.Encoder,
 	ht hint.Hint,
-	ia bool,
 	ow string,
+	ia bool,
+	oprs []string,
 ) error {
 	e := util.StringError("unmarshal ContractAccountStatus")
 
@@ -19,12 +20,22 @@ func (cs *ContractAccountStatus) unpack(
 
 	switch a, err := base.DecodeAddress(ow, enc); {
 	case err != nil:
-		return e.WithMessage(err, "failed to decode address")
+		return e.WithMessage(err, "decode address")
 	default:
 		cs.owner = a
 	}
 
 	cs.isActive = ia
+	operators := make([]base.Address, len(oprs))
+	for i, opr := range oprs {
+		switch operator, err := base.DecodeAddress(opr, enc); {
+		case err != nil:
+			return e.Wrap(err)
+		default:
+			operators[i] = operator
+		}
+	}
+	cs.operators = operators
 
 	return nil
 }

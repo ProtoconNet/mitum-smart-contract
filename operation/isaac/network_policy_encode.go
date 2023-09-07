@@ -14,7 +14,7 @@ func (p *NetworkPolicy) unpack(
 	maxSuffrageSize uint64,
 	suffrageWithdrawLifespan base.Height,
 ) error {
-	e := util.StringError("failed to unmarshal NetworkPolicy")
+	e := util.StringError("unmarshal NetworkPolicy")
 
 	if err := encoder.Decode(enc, suffrageCandidateLimiterRule, &p.suffrageCandidateLimiterRule); err != nil {
 		return e.Wrap(err)

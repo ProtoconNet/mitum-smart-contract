@@ -81,8 +81,6 @@ func (cmd *KeyLoadCommand) Run(pctx context.Context) error {
 		_, _ = fmt.Fprintln(os.Stdout, string(b))
 
 		return nil
-	} else {
-		fmt.Println(err)
 	}
 
 	return nil

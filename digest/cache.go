@@ -127,7 +127,7 @@ func (ch CachedHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err := cr.Cache(); err != nil {
 		if !errors.Is(err, SkipCacheError) {
-			ch.Log().Err(err).Msg("failed to cache")
+			ch.Log().Err(err).Msg("cache")
 		}
 	}
 }

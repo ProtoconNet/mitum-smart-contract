@@ -89,7 +89,7 @@ func (cmd *MintCommand) Run(pctx context.Context) error { // nolint:dupl
 
 	var op base.Operation
 	if i, err := cmd.createOperation(); err != nil {
-		return errors.Wrap(err, "failed to create mint operation")
+		return errors.Wrap(err, "create mint operation")
 	} else if err := i.IsValid(cmd.OperationFlags.NetworkID); err != nil {
 		return errors.Wrap(err, "invalid mint operation")
 	} else {
@@ -147,7 +147,7 @@ func (cmd *MintCommand) createOperation() (currency.Mint, error) {
 
 	err = op.NodeSign(cmd.Privatekey, cmd.NetworkID.NetworkID(), cmd.node)
 	if err != nil {
-		return currency.Mint{}, errors.Wrap(err, "failed to create mint operation")
+		return currency.Mint{}, errors.Wrap(err, "create mint operation")
 	}
 
 	return op, nil

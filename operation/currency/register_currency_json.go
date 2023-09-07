@@ -28,7 +28,7 @@ type RegisterCurrencyFactJSONUnMarshaler struct {
 }
 
 func (fact *RegisterCurrencyFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode RegisterCurrencyFact")
+	e := util.StringError("decode RegisterCurrencyFact")
 
 	var uf RegisterCurrencyFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
@@ -40,18 +40,14 @@ func (fact *RegisterCurrencyFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) err
 	return fact.unpack(enc, uf.Currency)
 }
 
-type registerCurrencyMarshaler struct {
-	common.BaseOperationJSONMarshaler
-}
-
 func (op RegisterCurrency) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(registerCurrencyMarshaler{
+	return util.MarshalJSON(BaseOperationMarshaler{
 		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
 	})
 }
 
 func (op *RegisterCurrency) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode RegisterCurrency")
+	e := util.StringError("decode RegisterCurrency")
 
 	var ubo common.BaseNodeOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {

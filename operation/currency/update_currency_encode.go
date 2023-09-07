@@ -8,7 +8,7 @@ import (
 )
 
 func (fact *UpdateCurrencyFact) unpack(enc encoder.Encoder, cid string, bpo []byte) error {
-	e := util.StringError("failed to unmarshal UpdateCurrencyFact")
+	e := util.StringError("unmarshal UpdateCurrencyFact")
 
 	if hinter, err := enc.Decode(bpo); err != nil {
 		return e.Wrap(err)

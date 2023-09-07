@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	stateextension "github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"sync"
 	"time"
 
@@ -27,19 +28,20 @@ type BlockSessioner interface {
 
 type BlockSession struct {
 	sync.RWMutex
-	block              base.BlockMap
-	ops                []base.Operation
-	opsTree            fixedtree.Tree
-	sts                []base.State
-	st                 *Database
-	opsTreeNodes       map[string]base.OperationFixedtreeNode
-	blockModels        []mongo.WriteModel
-	operationModels    []mongo.WriteModel
-	accountModels      []mongo.WriteModel
-	balanceModels      []mongo.WriteModel
-	currencyModels     []mongo.WriteModel
-	statesValue        *sync.Map
-	balanceAddressList []string
+	block                 base.BlockMap
+	ops                   []base.Operation
+	opsTree               fixedtree.Tree
+	sts                   []base.State
+	st                    *Database
+	opsTreeNodes          map[string]base.OperationFixedtreeNode
+	blockModels           []mongo.WriteModel
+	operationModels       []mongo.WriteModel
+	accountModels         []mongo.WriteModel
+	contractAccountModels []mongo.WriteModel
+	balanceModels         []mongo.WriteModel
+	currencyModels        []mongo.WriteModel
+	statesValue           *sync.Map
+	balanceAddressList    []string
 }
 
 func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opsTree fixedtree.Tree, sts []base.State) (*BlockSession, error) {
@@ -115,6 +117,12 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 
 	if len(bs.accountModels) > 0 {
 		if err := bs.writeModels(ctx, defaultColNameAccount, bs.accountModels); err != nil {
+			return err
+		}
+	}
+
+	if len(bs.contractAccountModels) > 0 {
+		if err := bs.writeModels(ctx, defaultColNameContractAccount, bs.contractAccountModels); err != nil {
 			return err
 		}
 	}
@@ -227,6 +235,7 @@ func (bs *BlockSession) prepareAccounts() error {
 
 	var accountModels []mongo.WriteModel
 	var balanceModels []mongo.WriteModel
+	var contractAccountModels []mongo.WriteModel
 	for i := range bs.sts {
 		st := bs.sts[i]
 
@@ -244,18 +253,19 @@ func (bs *BlockSession) prepareAccounts() error {
 			}
 			balanceModels = append(balanceModels, j...)
 			bs.balanceAddressList = append(bs.balanceAddressList, address)
-		//case stateextension.IsStateContractAccountKey(st.Key()):
-		//	j, err := bs.handleContractAccountState(st)
-		//	if err != nil {
-		//		return err
-		//	}
-		//	accountModels = append(accountModels, j...)
+		case stateextension.IsStateContractAccountKey(st.Key()):
+			j, err := bs.handleContractAccountState(st)
+			if err != nil {
+				return err
+			}
+			contractAccountModels = append(contractAccountModels, j...)
 		default:
 			continue
 		}
 	}
 
 	bs.accountModels = accountModels
+	bs.contractAccountModels = contractAccountModels
 	bs.balanceModels = balanceModels
 	return nil
 }
@@ -368,6 +378,7 @@ func (bs *BlockSession) close() error {
 	bs.operationModels = nil
 	bs.currencyModels = nil
 	bs.accountModels = nil
+	bs.contractAccountModels = nil
 	bs.balanceModels = nil
 
 	return bs.st.Close()

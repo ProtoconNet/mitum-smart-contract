@@ -58,6 +58,7 @@ var AddedHinters = []encoder.DecodeDetail{
 	{Hint: extension.CreateContractAccountHint, Instance: extension.CreateContractAccount{}},
 	{Hint: extension.CreateContractAccountItemMultiAmountsHint, Instance: extension.CreateContractAccountItemMultiAmounts{}},
 	{Hint: extension.CreateContractAccountItemSingleAmountHint, Instance: extension.CreateContractAccountItemSingleAmount{}},
+	{Hint: extension.UpdateOperatorHint, Instance: extension.UpdateOperator{}},
 	{Hint: extension.WithdrawHint, Instance: extension.Withdraw{}},
 	{Hint: extension.WithdrawItemMultiAmountsHint, Instance: extension.WithdrawItemMultiAmounts{}},
 	{Hint: extension.WithdrawItemSingleAmountHint, Instance: extension.WithdrawItemSingleAmount{}},
@@ -92,6 +93,7 @@ var AddedSupportedHinters = []encoder.DecodeDetail{
 	{Hint: currency.TransferFactHint, Instance: currency.TransferFact{}},
 
 	{Hint: extension.CreateContractAccountFactHint, Instance: extension.CreateContractAccountFact{}},
+	{Hint: extension.UpdateOperatorFactHint, Instance: extension.UpdateOperatorFact{}},
 	{Hint: extension.WithdrawFactHint, Instance: extension.WithdrawFact{}},
 
 	{Hint: isaacoperation.GenesisNetworkPolicyFactHint, Instance: isaacoperation.GenesisNetworkPolicyFact{}},
@@ -119,13 +121,13 @@ func init() {
 func LoadHinters(enc encoder.Encoder) error {
 	for i := range Hinters {
 		if err := enc.Add(Hinters[i]); err != nil {
-			return errors.Wrap(err, "failed to add to encoder")
+			return errors.Wrap(err, "add to encoder")
 		}
 	}
 
 	for i := range SupportedProposalOperationFactHinters {
 		if err := enc.Add(SupportedProposalOperationFactHinters[i]); err != nil {
-			return errors.Wrap(err, "failed to add to encoder")
+			return errors.Wrap(err, "add to encoder")
 		}
 	}
 

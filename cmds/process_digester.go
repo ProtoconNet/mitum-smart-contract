@@ -92,7 +92,7 @@ func PdigesterFollowUp(ctx context.Context) (context.Context, error) {
 			Msg("new blocks found to digest")
 
 		if err := digestFollowup(ctx, m.Manifest().Height()); err != nil {
-			log.Log().Error().Err(err).Msg("failed to follow up")
+			log.Log().Error().Err(err).Msg("follow up")
 
 			return ctx, err
 		}

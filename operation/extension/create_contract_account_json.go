@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
@@ -30,7 +31,7 @@ type CreateContractAccountFactJSONUnMarshaler struct {
 }
 
 func (fact *CreateContractAccountFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of CreateContractAccountFact")
+	e := util.StringError("decode json of CreateContractAccountFact")
 
 	var uf CreateContractAccountFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
@@ -42,18 +43,14 @@ func (fact *CreateContractAccountFact) DecodeJSON(b []byte, enc *jsonenc.Encoder
 	return fact.unpack(enc, uf.Owner, uf.Items)
 }
 
-type createContractAccountMarshaler struct {
-	common.BaseOperationJSONMarshaler
-}
-
 func (op CreateContractAccount) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(createContractAccountMarshaler{
+	return util.MarshalJSON(currency.BaseOperationMarshaler{
 		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
 	})
 }
 
 func (op *CreateContractAccount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of CreateContractAccount")
+	e := util.StringError("decode json of CreateContractAccount")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {

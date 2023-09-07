@@ -88,7 +88,7 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		log.Log().Debug().Interface("process", pps.Verbose()).Msg("process will be closed")
 
 		if _, err = pps.Close(pctx); err != nil {
-			log.Log().Error().Err(err).Msg("failed to close")
+			log.Log().Error().Err(err).Msg("close")
 		}
 	}()
 
@@ -164,7 +164,7 @@ func (cmd *RunCommand) runStates(ctx, pctx context.Context) (func(), error) {
 
 	return func() {
 		if err := states.Hold(); err != nil && !errors.Is(err, util.ErrDaemonAlreadyStopped) {
-			cmd.log.Error().Err(err).Msg("failed to stop states")
+			cmd.log.Error().Err(err).Msg("stop states")
 
 			return
 		}
@@ -296,12 +296,12 @@ func (cmd *RunCommand) pCheckHold(pctx context.Context) (context.Context, error)
 func (cmd *RunCommand) runHTTPState(bind string) error {
 	addr, err := net.ResolveTCPAddr("tcp", bind)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse --http-state")
+		return errors.Wrap(err, "parse --http-state")
 	}
 
 	m := http.NewServeMux()
 	if err := statsviz.Register(m); err != nil {
-		return errors.Wrap(err, "failed to register statsviz for http-state")
+		return errors.Wrap(err, "register statsviz for http-state")
 	}
 
 	cmd.log.Debug().Stringer("bind", addr).Msg("statsviz started")
@@ -366,7 +366,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 func (cmd *RunCommand) loadCache(_ context.Context, design DigestDesign) (digest.Cache, error) {
 	c, err := digest.NewCacheFromURI(design.Cache().String())
 	if err != nil {
-		cmd.log.Err(err).Str("cache", design.Cache().String()).Msg("failed to connect cache server")
+		cmd.log.Err(err).Str("cache", design.Cache().String()).Msg("connect cache server")
 		cmd.log.Warn().Msg("instead of remote cache server, internal mem cache can be available, `memory://`")
 
 		return nil, err

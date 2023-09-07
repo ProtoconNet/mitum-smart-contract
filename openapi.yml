@@ -986,7 +986,7 @@ components:
               default: a017:0.0.1
         title:
           type: string
-          example: "failed to sign"
+          example: "sign"
         type:
           type: string
           example: "https://github.com/spikeekips/mitum-currency/problems/others"

@@ -127,7 +127,7 @@ func NewWithdrawProcessor() types.GetNewProcessor {
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringError("failed to create new WithdrawProcessor")
+		e := util.StringError("create new WithdrawProcessor")
 
 		nopp := withdrawProcessorPool.Get()
 		opp, ok := nopp.(*WithdrawProcessor)
@@ -150,7 +150,7 @@ func NewWithdrawProcessor() types.GetNewProcessor {
 func (opp *WithdrawProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringError("failed to preprocess Withdraw")
+	e := util.StringError("preprocess Withdraw")
 
 	fact, ok := op.Fact().(WithdrawFact)
 	if !ok {
@@ -201,11 +201,11 @@ func (opp *WithdrawProcessor) Process( // nolint:dupl
 
 	feeReceiveBalSts, required, err := opp.calculateItemsFee(op, getStateFunc)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee: %v", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("calculate fee: %v", err), nil
 	}
 	senderBalSts, err := currency.CheckEnoughBalance(fact.sender, required, getStateFunc)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to check enough balance: %v", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check enough balance: %v", err), nil
 	} else {
 		opp.required = required
 	}
@@ -233,7 +233,7 @@ func (opp *WithdrawProcessor) Process( // nolint:dupl
 	for i := range ns {
 		s, err := ns[i].Process(ctx, op, getStateFunc)
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("failed to process WithdrawItem: %v", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("process WithdrawItem: %v", err), nil
 		}
 		stateMergeValues = append(stateMergeValues, s...)
 

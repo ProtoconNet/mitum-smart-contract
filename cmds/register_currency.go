@@ -151,7 +151,7 @@ func (cmd *RegisterCurrencyCommand) Run(pctx context.Context) error { // nolint:
 
 	var op base.Operation
 	if i, err := cmd.createOperation(); err != nil {
-		return errors.Wrap(err, "failed to create register-currency operation")
+		return errors.Wrap(err, "create register-currency operation")
 	} else if err := i.IsValid([]byte(cmd.OperationFlags.NetworkID)); err != nil {
 		return errors.Wrap(err, "invalid register-currency operation")
 	} else {
@@ -193,7 +193,7 @@ func (cmd *RegisterCurrencyCommand) createOperation() (currency.RegisterCurrency
 
 	err = op.NodeSign(cmd.Privatekey, cmd.NetworkID.NetworkID(), cmd.node)
 	if err != nil {
-		return currency.RegisterCurrency{}, errors.Wrap(err, "failed to create register-currency operation")
+		return currency.RegisterCurrency{}, errors.Wrap(err, "create register-currency operation")
 	}
 
 	return op, nil

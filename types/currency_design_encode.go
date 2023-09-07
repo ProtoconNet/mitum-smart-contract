@@ -15,14 +15,14 @@ func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, bam []byte, 
 
 	var am Amount
 	if err := encoder.Decode(enc, bam, &am); err != nil {
-		return e.WithMessage(err, "failed to decode amount")
+		return e.WithMessage(err, "decode amount")
 	}
 
 	de.amount = am
 
 	switch ad, err := base.DecodeAddress(ga, enc); {
 	case err != nil:
-		return e.WithMessage(err, "failed to decode address")
+		return e.WithMessage(err, "decode address")
 	default:
 		de.genesisAccount = ad
 	}
@@ -30,7 +30,7 @@ func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, bam []byte, 
 	var policy CurrencyPolicy
 
 	if err := encoder.Decode(enc, bpo, &policy); err != nil {
-		return e.WithMessage(err, "failed to decode currency policy")
+		return e.WithMessage(err, "decode currency policy")
 	}
 
 	de.policy = policy

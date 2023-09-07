@@ -46,7 +46,7 @@ func NewSuffrageExpelProcessor(
 
 		suf, err := p.sufstv.Suffrage()
 		if err != nil {
-			return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"))
+			return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("get suffrage from state"))
 		}
 
 		p.suffrage = suf

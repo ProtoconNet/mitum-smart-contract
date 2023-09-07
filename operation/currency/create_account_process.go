@@ -177,7 +177,7 @@ func (opp *CreateAccountProcessor) PreProcess(
 	}
 
 	if err := state.CheckExistsState(currency.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("failed to check existence of sender %v; %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("check existence of sender %v; %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
@@ -224,7 +224,7 @@ func (opp *CreateAccountProcessor) Process( // nolint:dupl
 	)
 
 	if feeReceiveBalSts, required, err = opp.calculateItemsFee(op, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to calculate fee; %w", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("calculate fee; %w", err), nil
 	} else if senderBalSts, err = CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %v ; %w", fact.sender, err), nil
 	} else {
@@ -254,7 +254,7 @@ func (opp *CreateAccountProcessor) Process( // nolint:dupl
 	for i := range opp.ns {
 		s, err := opp.ns[i].Process(ctx, op, getStateFunc)
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("failed to process CreateAccountItem; %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("process CreateAccountItem; %w", err), nil
 		}
 		stateMergeValues = append(stateMergeValues, s...)
 	}

@@ -24,7 +24,7 @@ type BaseWithdrawItemBSONUnmarshaler struct {
 }
 
 func (it *BaseWithdrawItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of BaseWithdrawItem")
+	e := util.StringError("decode bson of BaseWithdrawItem")
 
 	var uit BaseWithdrawItemBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uit); err != nil {

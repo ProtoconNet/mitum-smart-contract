@@ -31,7 +31,7 @@ type BaseWithdrawItemJSONUnmarshaler struct {
 }
 
 func (it *BaseWithdrawItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of BaseWithdrawItem")
+	e := util.StringError("decode json of BaseWithdrawItem")
 
 	var uit BaseWithdrawItemJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uit); err != nil {

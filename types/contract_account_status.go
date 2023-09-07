@@ -1,7 +1,9 @@
 package types // nolint: dupl, revive
 
 import (
+	"bytes"
 	"regexp"
+	"sort"
 
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -14,15 +16,21 @@ var ContractAccountStatusHint = hint.MustNewHint("mitum-currency-contract-accoun
 type ContractAccountStatus struct {
 	hint.BaseHinter
 	owner     base.Address
-	operators []base.Address
 	isActive  bool
+	design    hint.Hint
+	operators []base.Address
 }
 
-func NewContractAccountStatus(owner base.Address) ContractAccountStatus {
+func NewContractAccountStatus(owner base.Address, operators []base.Address) ContractAccountStatus {
+	sort.Slice(operators, func(i, j int) bool {
+		return bytes.Compare(operators[i].Bytes(), operators[j].Bytes()) < 0
+	})
+
 	us := ContractAccountStatus{
 		BaseHinter: hint.NewBaseHinter(ContractAccountStatusHint),
 		owner:      owner,
 		isActive:   false,
+		operators:  operators,
 	}
 	return us
 }
@@ -32,8 +40,12 @@ func (cs ContractAccountStatus) Bytes() []byte {
 	if cs.isActive {
 		v = 1
 	}
+	operators := make([][]byte, len(cs.operators))
+	for i := range cs.operators {
+		operators[i] = cs.operators[i].Bytes()
+	}
 
-	return util.ConcatBytesSlice(cs.owner.Bytes(), []byte{byte(v)})
+	return util.ConcatBytesSlice(cs.owner.Bytes(), []byte{byte(v)}, util.ConcatBytesSlice(operators...))
 }
 
 func (cs ContractAccountStatus) Hash() util.Hash {
@@ -52,15 +64,45 @@ func (cs ContractAccountStatus) Owner() base.Address { // nolint:revive
 	return cs.owner
 }
 
-func (cs ContractAccountStatus) SetOwner(a base.Address) (ContractAccountStatus, error) { // nolint:revive
+func (cs *ContractAccountStatus) SetOwner(a base.Address) error { // nolint:revive
 	err := a.IsValid(nil)
 	if err != nil {
-		return ContractAccountStatus{}, err
+		return err
 	}
 
 	cs.owner = a
 
-	return cs, nil
+	return nil
+}
+
+func (cs ContractAccountStatus) Operators() []base.Address { // nolint:revive
+	return cs.operators
+}
+
+func (cs *ContractAccountStatus) SetOperators(operators []base.Address) error {
+	sort.Slice(operators, func(i, j int) bool {
+		return bytes.Compare(operators[i].Bytes(), operators[j].Bytes()) < 0
+	})
+
+	for i := range operators {
+		err := operators[i].IsValid(nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	cs.operators = operators
+
+	return nil
+}
+
+func (cs ContractAccountStatus) IsOperator(ad base.Address) bool { // nolint:revive
+	for i := range cs.Operators() {
+		if ad.Equal(cs.Operators()[i]) {
+			return true
+		}
+	}
+	return false
 }
 
 func (cs ContractAccountStatus) IsActive() bool { // nolint:revive
@@ -78,6 +120,12 @@ func (cs ContractAccountStatus) Equal(b ContractAccountStatus) bool {
 	}
 	if !cs.owner.Equal(b.owner) {
 		return false
+	}
+
+	for i := range cs.operators {
+		if !cs.operators[i].Equal(b.operators[i]) {
+			return false
+		}
 	}
 
 	return true

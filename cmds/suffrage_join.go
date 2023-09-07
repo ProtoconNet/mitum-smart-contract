@@ -30,7 +30,7 @@ func (cmd *SuffrageJoinCommand) Run(pctx context.Context) error { // nolint:dupl
 
 	var op base.Operation
 	if i, err := cmd.createOperation(); err != nil {
-		return errors.Wrap(err, "failed to create suffrage-join operation")
+		return errors.Wrap(err, "create suffrage-join operation")
 	} else if err := i.IsValid([]byte(cmd.OperationFlags.NetworkID)); err != nil {
 		return errors.Wrap(err, "invalid suffrage-join operation")
 	} else {
@@ -63,7 +63,7 @@ func (cmd *SuffrageJoinCommand) createOperation() (isaacoperation.SuffrageJoin, 
 
 	op := isaacoperation.NewSuffrageJoin(fact)
 	if err := op.NodeSign(cmd.Privatekey, cmd.NetworkID.NetworkID(), cmd.node); err != nil {
-		return isaacoperation.SuffrageJoin{}, errors.Wrap(err, "failed to create suffrage-join operation")
+		return isaacoperation.SuffrageJoin{}, errors.Wrap(err, "create suffrage-join operation")
 	}
 
 	return op, nil

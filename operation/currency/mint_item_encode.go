@@ -10,7 +10,7 @@ import (
 )
 
 func (it *MintItem) unpack(enc encoder.Encoder, ht hint.Hint, rc string, bam []byte) error {
-	e := util.StringError("failed to unmarshal MintItem")
+	e := util.StringError("unmarshal MintItem")
 
 	switch ad, err := base.DecodeAddress(rc, enc); {
 	case err != nil:

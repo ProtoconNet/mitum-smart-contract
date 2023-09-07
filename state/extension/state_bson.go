@@ -12,7 +12,7 @@ func (c ContractAccountStateValue) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
 			"_hint":           c.Hint().String(),
-			"contractaccount": c.account,
+			"contractaccount": c.status,
 		},
 	)
 
@@ -42,7 +42,7 @@ func (c *ContractAccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) e
 		return e.Wrap(err)
 	}
 
-	c.account = ca
+	c.status = ca
 
 	return nil
 }

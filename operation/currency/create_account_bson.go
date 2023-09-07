@@ -29,7 +29,7 @@ type CreateAccountFactBSONUnmarshaler struct {
 }
 
 func (fact *CreateAccountFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of CreateAccountFact")
+	e := util.StringError("decode bson of CreateAccountFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
@@ -66,7 +66,7 @@ func (op CreateAccount) MarshalBSON() ([]byte, error) {
 }
 
 func (op *CreateAccount) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of CreateAccount")
+	e := util.StringError("decode bson of CreateAccount")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {

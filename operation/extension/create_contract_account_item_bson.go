@@ -26,7 +26,7 @@ type CreateContractAccountItemBSONUnmarshaler struct {
 }
 
 func (it *BaseCreateContractAccountItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of BaseCreateContractAccountItem")
+	e := util.StringError("decode bson of BaseCreateContractAccountItem")
 
 	var uit CreateContractAccountItemBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uit); err != nil {

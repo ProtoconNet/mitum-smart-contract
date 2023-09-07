@@ -29,7 +29,7 @@ func CopyBytes(b []byte) []byte {
 func GenerateChecksum(i io.Reader) (string, error) {
 	sha := sha256.New()
 	if _, err := io.Copy(sha, i); err != nil {
-		return "", errors.Wrap(err, "failed to get checksum")
+		return "", errors.Wrap(err, "get checksum")
 	}
 
 	return fmt.Sprintf("%x", sha.Sum(nil)), nil

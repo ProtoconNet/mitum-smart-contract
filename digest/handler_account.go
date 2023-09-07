@@ -38,7 +38,7 @@ func (hd *Handlers) handleAccount(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			err = mitumutil.ErrNotFound.Errorf("account, %v in handleAccount", address.String())
 		} else {
-			hd.Log().Err(err).Str("address", address.String()).Msg("failed to get account")
+			hd.Log().Err(err).Str("address", address.String()).Msg("get account")
 		}
 
 		HTTP2HandleError(w, err)
@@ -284,7 +284,7 @@ func (hd *Handlers) handleAccounts(w http.ResponseWriter, r *http.Request) {
 		}
 	})
 	if err != nil {
-		hd.Log().Err(err).Stringer("publickey", pub).Msg("failed to get accounts")
+		hd.Log().Err(err).Stringer("publickey", pub).Msg("get accounts")
 
 		HTTP2HandleError(w, err)
 

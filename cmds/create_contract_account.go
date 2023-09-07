@@ -120,11 +120,11 @@ func (cmd *CreateContractAccountCommand) createOperation() (base.Operation, erro
 
 	op, err := extension.NewCreateContractAccount(fact)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create create-contract-account operation")
+		return nil, errors.Wrap(err, "create create-contract-account operation")
 	}
 	err = op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create create-contract-account operation")
+		return nil, errors.Wrap(err, "create create-contract-account operation")
 	}
 
 	return op, nil

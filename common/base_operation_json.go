@@ -45,7 +45,7 @@ func (op *BaseOperation) decodeJSON(b []byte, enc *jsonenc.Encoder, u *BaseOpera
 	op.h = u.Hash.Hash()
 
 	if err := encoder.Decode(enc, u.Fact, &op.fact); err != nil {
-		return errors.WithMessage(err, "failed to decode fact")
+		return errors.WithMessage(err, "decode fact")
 	}
 
 	return nil
@@ -65,7 +65,7 @@ func (op *BaseOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	for i := range u.Signs {
 		var ub base.BaseSign
 		if err := ub.DecodeJSON(u.Signs[i], enc); err != nil {
-			return e.WithMessage(err, "failed to decode sign")
+			return e.WithMessage(err, "decode sign")
 		}
 
 		op.signs[i] = ub
@@ -92,7 +92,7 @@ func (op *BaseNodeOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	for i := range u.Signs {
 		var ub base.BaseNodeSign
 		if err := ub.DecodeJSON(u.Signs[i], enc); err != nil {
-			return e.WithMessage(err, "failed to decode sign")
+			return e.WithMessage(err, "decode sign")
 		}
 
 		op.signs[i] = ub

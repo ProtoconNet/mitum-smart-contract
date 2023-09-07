@@ -30,7 +30,7 @@ type CreateAccountFactJSONUnMarshaler struct {
 }
 
 func (fact *CreateAccountFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of CreateAccountFact")
+	e := util.StringError("decode json of CreateAccountFact")
 
 	var uf CreateAccountFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
@@ -41,18 +41,18 @@ func (fact *CreateAccountFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error 
 	return fact.unpack(enc, uf.Sender, uf.Items)
 }
 
-type createAccountMarshaler struct {
+type BaseOperationMarshaler struct {
 	common.BaseOperationJSONMarshaler
 }
 
 func (op CreateAccount) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(createAccountMarshaler{
+	return util.MarshalJSON(BaseOperationMarshaler{
 		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
 	})
 }
 
 func (op *CreateAccount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode CreateAccount")
+	e := util.StringError("decode CreateAccount")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {

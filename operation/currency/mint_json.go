@@ -27,7 +27,7 @@ type MintFactJSONUnmarshaler struct {
 }
 
 func (fact *MintFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of MintFact")
+	e := util.StringError("decode json of MintFact")
 
 	var uf MintFactJSONUnmarshaler
 

@@ -39,7 +39,7 @@ func NewRegisterCurrencyProcessor(threshold base.Threshold) types.GetNewProcesso
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringError("failed to create new RegisterCurrencyProcessor")
+		e := util.StringError("create new RegisterCurrencyProcessor")
 
 		nopp := registerCurrencyProcessorPool.Get()
 		opp, ok := nopp.(*RegisterCurrencyProcessor)
@@ -66,7 +66,7 @@ func NewRegisterCurrencyProcessor(threshold base.Threshold) types.GetNewProcesso
 
 			suf, err := sufstv.Suffrage()
 			if err != nil {
-				return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"))
+				return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("get suffrage from state"))
 			}
 
 			opp.suffrage = suf
@@ -79,7 +79,7 @@ func NewRegisterCurrencyProcessor(threshold base.Threshold) types.GetNewProcesso
 func (opp *RegisterCurrencyProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringError("failed to preprocess for RegisterCurrency")
+	e := util.StringError("preprocess for RegisterCurrency")
 
 	nop, ok := op.(RegisterCurrency)
 	if !ok {

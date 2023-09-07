@@ -27,7 +27,7 @@ type GenesisNetworkPolicyFactBSONUnMarshaler struct {
 }
 
 func (fact *GenesisNetworkPolicyFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of GenesisNetworkPolicyFact")
+	e := util.StringError("decode bson of GenesisNetworkPolicyFact")
 
 	var u common.BaseFactBSONUnmarshaler
 

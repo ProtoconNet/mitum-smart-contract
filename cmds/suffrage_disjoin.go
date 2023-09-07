@@ -30,7 +30,7 @@ func (cmd *SuffrageDisjoinCommand) Run(pctx context.Context) error { // nolint:d
 
 	var op base.Operation
 	if i, err := cmd.createOperation(); err != nil {
-		return errors.Wrap(err, "failed to create suffrage-disjoin operation")
+		return errors.Wrap(err, "create suffrage-disjoin operation")
 	} else if err := i.IsValid([]byte(cmd.OperationFlags.NetworkID)); err != nil {
 		return errors.Wrap(err, "invalid suffrage-disjoin operation")
 	} else {
@@ -63,7 +63,7 @@ func (cmd *SuffrageDisjoinCommand) createOperation() (isaacoperation.SuffrageDis
 
 	op := isaacoperation.NewSuffrageDisjoin(fact)
 	if err := op.NodeSign(cmd.Privatekey, cmd.NetworkID.NetworkID(), cmd.node); err != nil {
-		return isaacoperation.SuffrageDisjoin{}, errors.Wrap(err, "failed to create suffrage-disjoin operation")
+		return isaacoperation.SuffrageDisjoin{}, errors.Wrap(err, "create suffrage-disjoin operation")
 	}
 
 	return op, nil

@@ -113,7 +113,7 @@ func NewFeeOperationProcessor(
 	height base.Height,
 	getStateFunc base.GetStateFunc,
 ) (base.OperationProcessor, error) {
-	e := util.StringError("failed to create new FeeOperationProcessor")
+	e := util.StringError("create new FeeOperationProcessor")
 
 	b, err := base.NewBaseOperationProcessor(
 		height, getStateFunc, nil, nil)

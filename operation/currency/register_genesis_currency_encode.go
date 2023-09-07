@@ -14,7 +14,7 @@ func (fact *RegisterGenesisCurrencyFact) unpack(
 	bks []byte,
 	bcs []byte,
 ) error {
-	e := util.StringError("failed to unmarshal RegisterGenesisCurrencyFact")
+	e := util.StringError("unmarshal RegisterGenesisCurrencyFact")
 
 	switch pk, err := base.DecodePublickeyFromString(gk, enc); {
 	case err != nil:

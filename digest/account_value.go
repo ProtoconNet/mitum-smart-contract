@@ -13,10 +13,10 @@ var (
 
 type AccountValue struct {
 	hint.BaseHinter
-	ac      types.Account
-	balance []types.Amount
-	height  base.Height
-	//contractAccountStatus types.ContractAccountStatus
+	ac                    types.Account
+	balance               []types.Amount
+	height                base.Height
+	contractAccountStatus types.ContractAccountStatus
 }
 
 func NewAccountValue(st base.State) (AccountValue, error) {
@@ -31,10 +31,10 @@ func NewAccountValue(st base.State) (AccountValue, error) {
 	}
 
 	return AccountValue{
-		BaseHinter: hint.NewBaseHinter(AccountValueHint),
-		ac:         ac,
-		height:     st.Height(),
-		//contractAccountStatus: types.ContractAccountStatus{},
+		BaseHinter:            hint.NewBaseHinter(AccountValueHint),
+		ac:                    ac,
+		height:                st.Height(),
+		contractAccountStatus: types.NewContractAccountStatus(nil, nil),
 	}, nil
 }
 
@@ -46,9 +46,9 @@ func (va AccountValue) Balance() []types.Amount {
 	return va.balance
 }
 
-//func (va AccountValue) ContractAccountStatus() types.ContractAccountStatus {
-//	return va.contractAccountStatus
-//}
+func (va AccountValue) ContractAccountStatus() types.ContractAccountStatus {
+	return va.contractAccountStatus
+}
 
 func (va AccountValue) Height() base.Height {
 	return va.height
@@ -66,8 +66,8 @@ func (va AccountValue) SetBalance(balance []types.Amount) AccountValue {
 	return va
 }
 
-//func (va AccountValue) SetContractAccountStatus(status types.ContractAccountStatus) AccountValue {
-//	va.contractAccountStatus = status
-//
-//	return va
-//}
+func (va AccountValue) SetContractAccountStatus(status types.ContractAccountStatus) AccountValue {
+	va.contractAccountStatus = status
+
+	return va
+}

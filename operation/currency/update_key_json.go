@@ -34,7 +34,7 @@ type UpdateKeyFactJSONUnMarshaler struct {
 }
 
 func (fact *UpdateKeyFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode json of UpdateKeyFact")
+	e := util.StringError("decode json of UpdateKeyFact")
 
 	var uf UpdateKeyFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
@@ -46,18 +46,14 @@ func (fact *UpdateKeyFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	return fact.unpack(enc, uf.Target, uf.Keys, uf.Currency)
 }
 
-type updateKeyMarshaler struct {
-	common.BaseOperationJSONMarshaler
-}
-
 func (op UpdateKey) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(updateKeyMarshaler{
+	return util.MarshalJSON(BaseOperationMarshaler{
 		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
 	})
 }
 
 func (op *UpdateKey) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
-	e := util.StringError("failed to decode UpdateKey")
+	e := util.StringError("decode UpdateKey")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {

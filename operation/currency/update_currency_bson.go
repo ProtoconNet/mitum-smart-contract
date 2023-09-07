@@ -29,7 +29,7 @@ type UpdateCurrencyFactBSONUnmarshaler struct {
 }
 
 func (fact *UpdateCurrencyFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of UpdateCurrencyFact")
+	e := util.StringError("decode bson of UpdateCurrencyFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
@@ -66,7 +66,7 @@ func (op UpdateCurrency) MarshalBSON() ([]byte, error) {
 }
 
 func (op *UpdateCurrency) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of UpdateCurrency")
+	e := util.StringError("decode bson of UpdateCurrency")
 
 	var ubo common.BaseNodeOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {

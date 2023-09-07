@@ -8,7 +8,7 @@ import (
 )
 
 func (fact *WithdrawFact) unpack(enc encoder.Encoder, sd string, bit []byte) error {
-	e := util.StringError("failed to unmarshal WithdrawFact")
+	e := util.StringError("unmarshal WithdrawFact")
 
 	switch a, err := base.DecodeAddress(sd, enc); {
 	case err != nil:

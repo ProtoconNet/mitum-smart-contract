@@ -27,7 +27,7 @@ type MintFactBSONUnmarshaler struct {
 }
 
 func (fact *MintFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of MintFact")
+	e := util.StringError("decode bson of MintFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
@@ -65,7 +65,7 @@ func (fact *MintFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 }
 
 func (op *Mint) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of Mint")
+	e := util.StringError("decode bson of Mint")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {

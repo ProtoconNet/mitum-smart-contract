@@ -81,11 +81,11 @@ func (cmd *UpdateKeyCommand) createOperation() (base.Operation, error) { // noli
 
 	op, err := currency.NewUpdateKey(fact)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create update-key operation")
+		return nil, errors.Wrap(err, "create update-key operation")
 	}
 	err = op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create update-key operation")
+		return nil, errors.Wrap(err, "create update-key operation")
 	}
 
 	return op, nil

@@ -9,7 +9,7 @@ import (
 )
 
 func (it *BaseCreateContractAccountItem) unpack(enc encoder.Encoder, ht hint.Hint, bks []byte, bam []byte, sadtype string) error {
-	e := util.StringError("failed to unmarshal BaseCreateContractAccountItem")
+	e := util.StringError("unmarshal BaseCreateContractAccountItem")
 
 	it.BaseHinter = hint.NewBaseHinter(ht)
 

@@ -88,11 +88,11 @@ func (cmd *TransferCommand) createOperation() (base.Operation, error) { // nolin
 
 	op, err := currency.NewTransfer(fact)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create transfer operation")
+		return nil, errors.Wrap(err, "create transfer operation")
 	}
 	err = op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create transfer operation")
+		return nil, errors.Wrap(err, "create transfer operation")
 	}
 
 	return op, nil

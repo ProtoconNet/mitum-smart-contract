@@ -27,7 +27,7 @@ type FeeOperationFactBSONUnmarshaler struct {
 }
 
 func (fact *FeeOperationFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of FeeOperationFact")
+	e := util.StringError("decode bson of FeeOperationFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
@@ -54,7 +54,7 @@ func (fact *FeeOperationFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 }
 
 func (op *FeeOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of FeeOperation")
+	e := util.StringError("decode bson of FeeOperation")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {

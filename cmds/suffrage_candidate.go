@@ -30,7 +30,7 @@ func (cmd *SuffrageCandidateCommand) Run(pctx context.Context) error { // nolint
 
 	var op base.Operation
 	if i, err := cmd.createOperation(); err != nil {
-		return errors.Wrap(err, "failed to create suffrage-candidate operation")
+		return errors.Wrap(err, "create suffrage-candidate operation")
 	} else if err := i.IsValid([]byte(cmd.OperationFlags.NetworkID)); err != nil {
 		return errors.Wrap(err, "invalid suffrage-candidate operation")
 	} else {
@@ -63,7 +63,7 @@ func (cmd *SuffrageCandidateCommand) createOperation() (isaacoperation.SuffrageC
 
 	op := isaacoperation.NewSuffrageCandidate(fact)
 	if err := op.NodeSign(cmd.Privatekey, cmd.NetworkID.NetworkID(), cmd.node); err != nil {
-		return isaacoperation.SuffrageCandidate{}, errors.Wrap(err, "failed to create suffrage-candidate operation")
+		return isaacoperation.SuffrageCandidate{}, errors.Wrap(err, "create suffrage-candidate operation")
 	}
 
 	return op, nil

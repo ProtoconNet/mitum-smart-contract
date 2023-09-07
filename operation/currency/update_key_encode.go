@@ -9,7 +9,7 @@ import (
 )
 
 func (fact *UpdateKeyFact) unpack(enc encoder.Encoder, tg string, bks []byte, cid string) error {
-	e := util.StringError("failed to unmarshal UpdateKeyFact")
+	e := util.StringError("unmarshal UpdateKeyFact")
 
 	switch ad, err := base.DecodeAddress(tg, enc); {
 	case err != nil:

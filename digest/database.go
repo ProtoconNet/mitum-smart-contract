@@ -29,11 +29,12 @@ import (
 var maxLimit int64 = 50
 
 var (
-	defaultColNameAccount   = "digest_ac"
-	defaultColNameBalance   = "digest_bl"
-	defaultColNameCurrency  = "digest_cr"
-	defaultColNameOperation = "digest_op"
-	defaultColNameBlock     = "digest_bm"
+	defaultColNameAccount         = "digest_ac"
+	defaultColNameContractAccount = "digest_ca"
+	defaultColNameBalance         = "digest_bl"
+	defaultColNameCurrency        = "digest_cr"
+	defaultColNameOperation       = "digest_op"
+	defaultColNameBlock           = "digest_bm"
 )
 
 var AllCollections = []string{
@@ -117,7 +118,7 @@ func (st *Database) Initialize() error {
 
 	switch h, found, err := loadLastBlock(st); {
 	case err != nil:
-		return errors.Wrap(err, "failed to initialize digest database")
+		return errors.Wrap(err, "initialize digest database")
 	case !found:
 		st.lastBlock = base.NilHeight
 		st.Log().Debug().Msg("last block for digest not found")
@@ -186,7 +187,7 @@ func (st *Database) SetLastBlock(height base.Height) error {
 
 func (st *Database) setLastBlock(height base.Height) error {
 	if err := st.database.SetInfo(DigestStorageLastBlockKey, height.Bytes()); err != nil {
-		st.Log().Debug().Int64("height", height.Int64()).Msg("failed to set last block")
+		st.Log().Debug().Int64("height", height.Int64()).Msg("set last block")
 
 		return err
 	}
@@ -519,14 +520,13 @@ func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, er
 			SetHeight(lastHeight)
 	}
 	// NOTE load contract account status
-	//switch status, lastHeight, err := st.contractAccountStatus(a); {
-	//case err != nil:
-	//	rs = rs.SetContractAccountStatus(types.NewContractAccountStatus(nil, false)).
-	//		SetHeight(lastHeight)
-	//default:
-	//	rs = rs.SetContractAccountStatus(status).
-	//		SetHeight(lastHeight)
-	//}
+	switch status, lastHeight, err := st.contractAccountStatus(a); {
+	case err != nil:
+		return rs, true, nil
+	default:
+		rs = rs.SetContractAccountStatus(status).
+			SetHeight(lastHeight)
+	}
 
 	return rs, true, nil
 }
@@ -684,7 +684,7 @@ func (st *Database) contractAccountStatus(a base.Address) (types.ContractAccount
 	)
 	var sta base.State
 	if err := st.database.Client().GetByFilter(
-		defaultColNameAccount,
+		defaultColNameContractAccount,
 		filter.D(),
 		func(res *mongo.SingleResult) error {
 			i, err := LoadContractAccountStatus(res.Decode, st.database.Encoders())
@@ -707,7 +707,6 @@ func (st *Database) contractAccountStatus(a base.Address) (types.ContractAccount
 		if h := sta.Height(); h > lastHeight {
 			lastHeight = h
 		}
-
 		return cas, lastHeight, nil
 	} else {
 		return types.ContractAccountStatus{}, lastHeight, errors.Errorf("state is nil")
@@ -921,7 +920,7 @@ func (st *Database) partialTopHeightByPublickey(as []string) (base.Height, error
 func (st *Database) addressesByPublickey(filter bson.M) ([]string, error) {
 	r, err := st.database.Client().Collection(defaultColNameAccount).Distinct(context.Background(), "address", filter)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get distinct addresses")
+		return nil, errors.Wrap(err, "get distinct addresses")
 	}
 
 	if len(r) < 1 {
@@ -1063,7 +1062,7 @@ func (st *Database) cleanBalanceByHeightAndAccount(ctx context.Context, height b
 func loadLastBlock(st *Database) (base.Height, bool, error) {
 	switch b, found, err := st.database.Info(DigestStorageLastBlockKey); {
 	case err != nil:
-		return base.NilHeight, false, errors.Wrap(err, "failed to get last block for digest")
+		return base.NilHeight, false, errors.Wrap(err, "get last block for digest")
 	case !found:
 		return base.NilHeight, false, nil
 	default:

@@ -31,7 +31,7 @@ type UpdateKeyFactBSONUnmarshaler struct {
 }
 
 func (fact *UpdateKeyFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of UpdateKeyFact")
+	e := util.StringError("decode bson of UpdateKeyFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
@@ -68,7 +68,7 @@ func (op UpdateKey) MarshalBSON() ([]byte, error) {
 }
 
 func (op *UpdateKey) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of UpdateKey")
+	e := util.StringError("decode bson of UpdateKey")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {

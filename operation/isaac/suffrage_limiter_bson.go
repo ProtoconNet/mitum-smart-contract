@@ -22,7 +22,7 @@ type FixedSuffrageCandidateLimiterRuleBSONUnMarshaler struct {
 }
 
 func (l *FixedSuffrageCandidateLimiterRule) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of FixedSuffrageCandidateLimiterRule")
+	e := util.StringError("decode bson of FixedSuffrageCandidateLimiterRule")
 
 	var u FixedSuffrageCandidateLimiterRuleBSONUnMarshaler
 
@@ -61,7 +61,7 @@ type MajoritySuffrageCandidateLimiterRuleBSONUnMarshaler struct {
 }
 
 func (l *MajoritySuffrageCandidateLimiterRule) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of MajoritySuffrageCandidateLimiterRule")
+	e := util.StringError("decode bson of MajoritySuffrageCandidateLimiterRule")
 
 	var u MajoritySuffrageCandidateLimiterRuleBSONUnMarshaler
 

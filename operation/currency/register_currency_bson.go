@@ -27,7 +27,7 @@ type RegisterCurrencyFactBSONUnmarshaler struct {
 }
 
 func (fact *RegisterCurrencyFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of RegisterCurrencyFact")
+	e := util.StringError("decode bson of RegisterCurrencyFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
@@ -65,7 +65,7 @@ func (op RegisterCurrency) MarshalBSON() ([]byte, error) {
 }
 
 func (op *RegisterCurrency) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("failed to decode bson of RegisterCurrency")
+	e := util.StringError("decode bson of RegisterCurrency")
 
 	var ubo common.BaseNodeOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {

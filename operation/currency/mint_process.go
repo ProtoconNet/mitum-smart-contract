@@ -33,7 +33,7 @@ func NewMintProcessor(threshold base.Threshold) types.GetNewProcessor {
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringError("failed to create new MintProcessor")
+		e := util.StringError("create new MintProcessor")
 
 		nopp := mintProcessorPool.Get()
 		opp, ok := nopp.(*MintProcessor)
@@ -60,7 +60,7 @@ func NewMintProcessor(threshold base.Threshold) types.GetNewProcessor {
 
 			suf, err := sufstv.Suffrage()
 			if err != nil {
-				return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"))
+				return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("get suffrage from state"))
 			}
 
 			opp.suffrage = suf
@@ -73,7 +73,7 @@ func NewMintProcessor(threshold base.Threshold) types.GetNewProcessor {
 func (opp *MintProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringError("failed to preprocess Mint")
+	e := util.StringError("preprocess Mint")
 
 	nop, ok := op.(Mint)
 	if !ok {
@@ -115,7 +115,7 @@ func (opp *MintProcessor) Process(
 	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringError("failed to process Mint")
+	e := util.StringError("process Mint")
 
 	fact, ok := op.Fact().(MintFact)
 	if !ok {
@@ -134,13 +134,13 @@ func (opp *MintProcessor) Process(
 		k := currency.StateKeyBalance(item.Receiver(), item.Amount().Currency())
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
-			return nil, base.NewBaseOperationProcessReasonError("failed to find receiver balance state, %v; %w", k, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("find receiver balance state, %v; %w", k, err), nil
 		case !found:
 			ab = types.NewZeroAmount(item.Amount().Currency())
 		default:
 			b, err := currency.StateBalanceValue(st)
 			if err != nil {
-				return nil, base.NewBaseOperationProcessReasonError("failed to get balance value, %v; %w", k, err), nil
+				return nil, base.NewBaseOperationProcessReasonError("get balance value, %v; %w", k, err), nil
 			}
 			ab = b
 		}
@@ -160,20 +160,20 @@ func (opp *MintProcessor) Process(
 		k := currency.StateKeyCurrencyDesign(cid)
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
-			return nil, base.NewBaseOperationProcessReasonError("failed to find currency design state, %v %w", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("find currency design state, %v %w", cid, err), nil
 		case !found:
 			return nil, base.NewBaseOperationProcessReasonError("currency not found, %v; %w", cid, err), nil
 		default:
 			d, err := currency.StateCurrencyDesignValue(st)
 			if err != nil {
-				return nil, base.NewBaseOperationProcessReasonError("failed to get currency design value, %v; %w", cid, err), nil
+				return nil, base.NewBaseOperationProcessReasonError("get currency design value, %v; %w", cid, err), nil
 			}
 			de = d
 		}
 
 		ade, err := de.AddAggregate(big)
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("failed to add aggregate, %v; %w", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("add aggregate, %v; %w", cid, err), nil
 		}
 
 		sts = append(sts, state.NewStateMergeValue(k, currency.NewCurrencyDesignStateValue(ade)))

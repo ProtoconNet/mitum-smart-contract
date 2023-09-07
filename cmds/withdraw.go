@@ -88,11 +88,11 @@ func (cmd *WithdrawCommand) createOperation() (base.Operation, error) { // nolin
 
 	op, err := extension.NewWithdraw(fact)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create withdraw operation")
+		return nil, errors.Wrap(err, "create withdraw operation")
 	}
 	err = op.HashSign(cmd.Privatekey, cmd.NetworkID.NetworkID())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create withdraw operation")
+		return nil, errors.Wrap(err, "create withdraw operation")
 	}
 
 	return op, nil

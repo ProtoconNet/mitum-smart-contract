@@ -121,13 +121,13 @@ func CheckFactSignsByState(
 	keys, err := currency.StateKeysValue(st)
 	switch {
 	case err != nil:
-		return base.NewBaseOperationProcessReasonError("failed to get Keys; %w", err)
+		return base.NewBaseOperationProcessReasonError("get Keys; %w", err)
 	case keys == nil:
 		return base.NewBaseOperationProcessReasonError("empty keys found")
 	}
 
 	if err := types.CheckThreshold(fs, keys); err != nil {
-		return base.NewBaseOperationProcessReasonError("failed to check threshold; %w", err)
+		return base.NewBaseOperationProcessReasonError("check threshold; %w", err)
 	}
 
 	return nil

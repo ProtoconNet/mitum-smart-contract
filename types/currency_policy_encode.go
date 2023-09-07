@@ -20,7 +20,7 @@ func (po *CurrencyPolicy) unpack(enc encoder.Encoder, ht hint.Hint, mn string, b
 	var feeer Feeer
 	err := encoder.Decode(enc, bfe, &feeer)
 	if err != nil {
-		return e.WithMessage(err, "failed to decode feeer")
+		return e.WithMessage(err, "decode feeer")
 	}
 	po.feeer = feeer
 

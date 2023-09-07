@@ -39,7 +39,7 @@ func NewUpdateCurrencyProcessor(threshold base.Threshold) types.GetNewProcessor 
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringError("failed to create new UpdateCurrencyProcessor")
+		e := util.StringError("create new UpdateCurrencyProcessor")
 
 		nopp := updateCurrencyProcessorPool.Get()
 		opp, ok := nopp.(*UpdateCurrencyProcessor)
@@ -66,7 +66,7 @@ func NewUpdateCurrencyProcessor(threshold base.Threshold) types.GetNewProcessor 
 
 			suf, err := sufstv.Suffrage()
 			if err != nil {
-				return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("failed to get suffrage from state"))
+				return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("get suffrage from state"))
 			}
 
 			opp.suffrage = suf
@@ -79,7 +79,7 @@ func NewUpdateCurrencyProcessor(threshold base.Threshold) types.GetNewProcessor 
 func (opp *UpdateCurrencyProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringError("failed to preprocess for UpdateCurrency")
+	e := util.StringError("preprocess for UpdateCurrency")
 
 	nop, ok := op.(UpdateCurrency)
 	if !ok {
@@ -126,12 +126,12 @@ func (opp *UpdateCurrencyProcessor) Process(
 
 	st, err := state.ExistsState(statecurrency.StateKeyCurrencyDesign(fact.currency), "currency design", getStateFunc)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to check existence of currency %v; %w", fact.currency, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check existence of currency %v; %w", fact.currency, err), nil
 	}
 
 	de, err := statecurrency.StateCurrencyDesignValue(st)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to get currency design of %v; %w", fact.currency, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("get currency design of %v; %w", fact.currency, err), nil
 	}
 
 	de.SetPolicy(fact.policy)

@@ -50,11 +50,11 @@ func ParseMEPublickey(s string) (MEPublickey, error) {
 func LoadMEPublicKey(s string) (MEPublickey, error) {
 	h, err := hex.DecodeString(s)
 	if err != nil {
-		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "failed to load public key")
+		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "load public key")
 	}
 	pk, err := crypto.DecompressPubkey(h)
 	if err != nil {
-		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "failed to unmarshal public key")
+		return MEPublickey{}, util.ErrInvalid.WithMessage(err, "unmarshal public key")
 	}
 
 	return NewMEPublickey(pk), nil
@@ -118,7 +118,7 @@ func (k MEPublickey) MarshalText() ([]byte, error) {
 func (k *MEPublickey) UnmarshalText(b []byte) error {
 	u, err := LoadMEPublicKey(string(b))
 	if err != nil {
-		return errors.Wrap(err, "failed to UnmarshalText for public key")
+		return errors.Wrap(err, "UnmarshalText for public key")
 	}
 
 	*k = u.ensure()

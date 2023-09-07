@@ -1,4 +1,4 @@
-package currency // nolint: dupl
+package extension // nolint: dupl
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
@@ -10,26 +10,30 @@ import (
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
 
-func (fact TransferFact) MarshalBSON() ([]byte, error) {
+func (fact UpdateOperatorFact) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":  fact.Hint().String(),
-			"sender": fact.sender,
-			"items":  fact.items,
-			"hash":   fact.BaseFact.Hash().String(),
-			"token":  fact.BaseFact.Token(),
+			"_hint":     fact.Hint().String(),
+			"sender":    fact.sender,
+			"contract":  fact.contract,
+			"operators": fact.operators,
+			"currency":  fact.currency,
+			"hash":      fact.BaseFact.Hash().String(),
+			"token":     fact.BaseFact.Token(),
 		},
 	)
 }
 
-type TransferFactBSONUnmarshaler struct {
-	Hint   string   `bson:"_hint"`
-	Sender string   `bson:"sender"`
-	Items  bson.Raw `bson:"items"`
+type UpdateOperatorFactBSONUnmarshaler struct {
+	Hint      string   `bson:"_hint"`
+	Sender    string   `bson:"sender"`
+	Contract  string   `bson:"contract"`
+	Operators []string `bson:"operators"`
+	Currency  string   `bson:"currency"`
 }
 
-func (fact *TransferFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of TransferFact")
+func (fact *UpdateOperatorFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringError("decode bson of UpdateOperatorFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
@@ -41,7 +45,7 @@ func (fact *TransferFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	fact.BaseFact.SetHash(valuehash.NewBytesFromString(u.Hash))
 	fact.BaseFact.SetToken(u.Token)
 
-	var uf TransferFactBSONUnmarshaler
+	var uf UpdateOperatorFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
 		return e.Wrap(err)
 	}
@@ -52,10 +56,10 @@ func (fact *TransferFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
-	return fact.unpack(enc, uf.Sender, uf.Items)
+	return fact.unpack(enc, uf.Sender, uf.Contract, uf.Operators, uf.Currency)
 }
 
-func (op Transfer) MarshalBSON() ([]byte, error) {
+func (op UpdateOperator) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
 			"_hint": op.Hint().String(),
@@ -65,8 +69,8 @@ func (op Transfer) MarshalBSON() ([]byte, error) {
 		})
 }
 
-func (op *Transfer) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of Transfer")
+func (op *UpdateOperator) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringError("decode bson of UpdateOperator")
 
 	var ubo common.BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {

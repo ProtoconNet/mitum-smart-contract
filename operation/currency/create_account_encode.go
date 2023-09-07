@@ -8,7 +8,7 @@ import (
 )
 
 func (fact *CreateAccountFact) unpack(enc encoder.Encoder, sd string, bit []byte) error {
-	e := util.StringError("failed to unmarshal CreateAccountFact")
+	e := util.StringError("unmarshal CreateAccountFact")
 
 	switch ad, err := base.DecodeAddress(sd, enc); {
 	case err != nil:

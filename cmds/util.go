@@ -176,7 +176,7 @@ func AttachHandlerSendOperation(pctx context.Context) error {
 					if err := broker.SendData(ctx, isaacstates.HandoverMessageDataTypeOperation, op); err != nil {
 						log.Log().Error().Err(err).
 							Interface("operation", op.Hash()).
-							Msg("failed to send operation data to handover y broker; ignored")
+							Msg("send operation data to handover y broker; ignored")
 					}
 				}
 

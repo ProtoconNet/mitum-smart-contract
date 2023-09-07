@@ -92,6 +92,11 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 	); err != nil {
 		return pctx, err
 	} else if err := opr.SetProcessor(
+		extension.UpdateOperatorHint,
+		extension.NewUpdateOperatorProcessor(),
+	); err != nil {
+		return pctx, err
+	} else if err := opr.SetProcessor(
 		extension.WithdrawHint,
 		extension.NewWithdrawProcessor(),
 	); err != nil {
@@ -153,6 +158,15 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 	})
 
 	_ = set.Add(extension.CreateContractAccountHint, func(height base.Height) (base.OperationProcessor, error) {
+		return opr.New(
+			height,
+			db.State,
+			nil,
+			nil,
+		)
+	})
+
+	_ = set.Add(extension.UpdateOperatorHint, func(height base.Height) (base.OperationProcessor, error) {
 		return opr.New(
 			height,
 			db.State,

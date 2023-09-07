@@ -11,7 +11,7 @@ func (fact *SuffrageCandidateFact) unpack(
 	sd string,
 	pk string,
 ) error {
-	e := util.StringError("failed to unmarshal SuffrageCandidateFact")
+	e := util.StringError("unmarshal SuffrageCandidateFact")
 
 	switch ad, err := base.DecodeAddress(sd, enc); {
 	case err != nil:

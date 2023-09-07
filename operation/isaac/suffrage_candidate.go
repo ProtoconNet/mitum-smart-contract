@@ -104,7 +104,7 @@ func (op SuffrageCandidate) IsValid(networkID []byte) error {
 		foundsigner = true
 
 		if err := sfs[i].Verify(networkID, op.Fact().Hash().Bytes()); err != nil {
-			return e.WithMessage(err, "failed to verify sign by Candidate")
+			return e.WithMessage(err, "verify sign by Candidate")
 		}
 
 		break

@@ -158,7 +158,7 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation
 	case err != nil:
 		return ctx, base.NewBaseOperationProcessReasonError(err.Error()), nil
 	case !known:
-		return ctx, nil, e.Errorf("failed to getNewProcessor, %T", op)
+		return ctx, nil, e.Errorf("getNewProcessor, %T", op)
 	default:
 		sp = i
 	}
@@ -189,7 +189,7 @@ func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, g
 	case err != nil:
 		return nil, nil, e.Wrap(err)
 	case !known:
-		return nil, nil, e.Errorf("failed to getNewProcessor")
+		return nil, nil, e.Errorf("getNewProcessor")
 	default:
 		sp = i
 	}
@@ -214,7 +214,7 @@ func CheckDuplication(opr *OperationProcessor, op base.Operation) error {
 		}
 		as, err := fact.Targets()
 		if err != nil {
-			return errors.Errorf("failed to get Addresses")
+			return errors.Errorf("get Addresses")
 		}
 		newAddresses = as
 		// did = fact.Sender().String()
@@ -226,7 +226,7 @@ func CheckDuplication(opr *OperationProcessor, op base.Operation) error {
 		}
 		as, err := fact.Addresses()
 		if err != nil {
-			return errors.Errorf("failed to get Addresses")
+			return errors.Errorf("get Addresses")
 		}
 		newAddresses = as
 		// did = fact.Target().String()
@@ -328,6 +328,7 @@ func GetNewProcessor(opr *OperationProcessor, op base.Operation) (base.Operation
 		currency.UpdateCurrency,
 		currency.Mint,
 		extension.CreateContractAccount,
+		extension.UpdateOperator,
 		extension.Withdraw:
 		return nil, false, errors.Errorf("%T needs SetProcessor", t)
 	default:
@@ -370,7 +371,7 @@ func (opr *OperationProcessor) close() {
 	opr.processorClosers.Range(func(_, v interface{}) bool {
 		err := v.(io.Closer).Close()
 		if err != nil {
-			opr.Log().Error().Err(err).Str("op", fmt.Sprintf("%T", v)).Msg("failed to close operation processor")
+			opr.Log().Error().Err(err).Str("op", fmt.Sprintf("%T", v)).Msg("close operation processor")
 		} else {
 			opr.Log().Debug().Str("processor", fmt.Sprintf("%T", v)).Msg("operation processor closed")
 		}

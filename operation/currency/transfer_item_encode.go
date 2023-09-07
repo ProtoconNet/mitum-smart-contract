@@ -10,7 +10,7 @@ import (
 )
 
 func (it *BaseTransferItem) unpack(enc encoder.Encoder, ht hint.Hint, rc string, bam []byte) error {
-	e := util.StringError("failed to unmarshal BaseTransferItem")
+	e := util.StringError("unmarshal BaseTransferItem")
 
 	it.BaseHinter = hint.NewBaseHinter(ht)
 

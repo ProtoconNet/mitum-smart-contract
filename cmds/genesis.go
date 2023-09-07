@@ -348,7 +348,7 @@ func (g *GenesisBlockGenerator) closeDatabase() error {
 	e := util.StringError("close database")
 
 	if err := g.db.MergeAllPermanent(); err != nil {
-		return e.WithMessage(err, "failed to merge temps")
+		return e.WithMessage(err, "merge temps")
 	}
 
 	return nil

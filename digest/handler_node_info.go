@@ -33,7 +33,7 @@ func (hd *Handlers) handleNodeInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if v, err, shared := hd.rg.Do(cachekey, hd.handleNodeInfoInGroup); err != nil {
-		hd.Log().Err(err).Msg("failed to get node info")
+		hd.Log().Err(err).Msg("get node info")
 
 		HTTP2HandleError(w, err)
 	} else {

@@ -229,18 +229,18 @@ func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCach
 
 func (hd *Handlers) combineURL(path string, pairs ...string) (string, error) {
 	if n := len(pairs); n%2 != 0 {
-		return "", errors.Errorf("failed to combine url; uneven pairs to combine url")
+		return "", errors.Errorf("combine url; uneven pairs to combine url")
 	} else if n < 1 {
 		u, err := hd.routes[path].URL()
 		if err != nil {
-			return "", errors.Wrap(err, "failed to combine url")
+			return "", errors.Wrap(err, "combine url")
 		}
 		return u.String(), nil
 	}
 
 	u, err := hd.routes[path].URLPath(pairs...)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to combine url")
+		return "", errors.Wrap(err, "combine url")
 	}
 	return u.String(), nil
 }

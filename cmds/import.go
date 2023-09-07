@@ -86,7 +86,7 @@ func (cmd *ImportCommand) Run(pctx context.Context) error {
 		cmd.log.Debug().Interface("process", pps.Verbose()).Msg("process will be closed")
 
 		if _, err = pps.Close(nctx); err != nil {
-			cmd.log.Error().Err(err).Msg("failed to close")
+			cmd.log.Error().Err(err).Msg("close")
 		}
 	}()
 

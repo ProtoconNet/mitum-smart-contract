@@ -22,21 +22,21 @@ func (va AccountValue) MarshalBSON() ([]byte, error) {
 
 	return bsonenc.Marshal(bsonenc.MergeBSONM(
 		bson.M{
-			"_hint":   va.Hint().String(),
-			"ac":      va.ac,
-			"balance": va.balance,
-			"height":  va.height,
-			//"contract_account_status": va.contractAccountStatus,
+			"_hint":                   va.Hint().String(),
+			"ac":                      va.ac,
+			"balance":                 va.balance,
+			"height":                  va.height,
+			"contract_account_status": va.contractAccountStatus,
 		},
 	))
 }
 
 type AccountValueBSONUnmarshaler struct {
-	Hint    string      `bson:"_hint"`
-	Account bson.Raw    `bson:"ac"`
-	Balance bson.Raw    `bson:"balance"`
-	Height  base.Height `bson:"height"`
-	//ContractAccountStatus bson.Raw    `bson:"contract_account_status"`
+	Hint                  string      `bson:"_hint"`
+	Account               bson.Raw    `bson:"ac"`
+	Balance               bson.Raw    `bson:"balance"`
+	Height                base.Height `bson:"height"`
+	ContractAccountStatus bson.Raw    `bson:"contract_account_status"`
 }
 
 func (va *AccountValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -52,5 +52,5 @@ func (va *AccountValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return va.unpack(enc, ht, uva.Account, uva.Balance, uva.Height /* uva.ContractAccountStatus */)
+	return va.unpack(enc, ht, uva.Account, uva.Balance, uva.Height, uva.ContractAccountStatus)
 }
