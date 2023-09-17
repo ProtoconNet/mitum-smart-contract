@@ -14,7 +14,7 @@ facts:
         _hint: currency-fixed-suffrage-candidate-limiter-rule-v0.0.1
         limit: 1
       max_suffrage_size: 3
-  - _hint: mitum-currency-genesis-currencies-operation-fact-v0.0.1
+  - _hint: mitum-currency-register-genesis-currency-operation-fact-v0.0.1
     genesis_node_key: bXTT1hoetSKYPUmfu3bMRcs8aU342MTTzhgeCQ1bTavBmpu
     keys:
       _hint: mitum-currency-keys-v0.0.1  

@@ -88,14 +88,13 @@ func (cmd *BaseNetworkClientCommand) Print(v interface{}, out io.Writer) error {
 type NetworkClientCommand struct { //nolint:govet //...
 	//revive:disable:line-length-limit
 	//revive:disable:nested-structs
-	NodeInfo          launchcmd.NetworkClientNodeInfoCommand          `cmd:"" name:"node-info" help:"remote node info"`
-	SendOperation     NetworkClientSendOperationCommand               `cmd:"" name:"send-operation" help:"send operation"`
-	State             launchcmd.NetworkClientStateCommand             `cmd:"" name:"state" help:"get state"`
-	LastBlockMap      launchcmd.NetworkClientLastBlockMapCommand      `cmd:"" name:"last-blockmap" help:"get last blockmap"`
-	SetAllowConsensus launchcmd.NetworkClientSetAllowConsensusCommand `cmd:"" name:"set-allow-consensus" help:"set to enter consensus"`
-	Design            struct {
-		Read  launchcmd.NetworkClientReadDesignCommand  `cmd:"" name:"read" help:"read design value"`
-		Write launchcmd.NetworkClientWriteDesignCommand `cmd:"" name:"write" help:"write design value"`
+	NodeInfo      launchcmd.NetworkClientNodeInfoCommand     `cmd:"" name:"node-info" help:"remote node info"`
+	SendOperation NetworkClientSendOperationCommand          `cmd:"" name:"send-operation" help:"send operation"`
+	State         launchcmd.NetworkClientStateCommand        `cmd:"" name:"state" help:"get state"`
+	LastBlockMap  launchcmd.NetworkClientLastBlockMapCommand `cmd:"" name:"last-blockmap" help:"get last blockmap"`
+	Design        struct {
+		Read  launchcmd.NetworkClientReadNodeCommand  `cmd:"" name:"read" help:"read design value"`
+		Write launchcmd.NetworkClientWriteNodeCommand `cmd:"" name:"write" help:"write design value"`
 	} `cmd:"" name:"design" help:""`
 	//revive:enable:nested-structs
 	//revive:enable:line-length-limit

@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"io"
 	"os"
 	"path/filepath"
@@ -19,7 +20,6 @@ import (
 	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
-	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"github.com/ProtoconNet/mitum2/storage"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -276,6 +276,7 @@ func PGenerateGenesis(pctx context.Context) (context.Context, error) {
 		db,
 		launch.LocalFSDataDirectory(design.Storage.Base),
 		genesisDesign.Facts,
+		pctx,
 	)
 	_ = g.SetLogging(log)
 
@@ -367,7 +368,6 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 	var proposalMaker *isaac.ProposalMaker
 	var m *quicmemberlist.Memberlist
 	var syncSourcePool *isaac.SyncSourcePool
-	var handlers *quicstream.PrefixHandler
 	var nodeInfo *isaacnetwork.NodeInfoUpdater
 	var svVoteF isaac.SuffrageVoteFunc
 	var ballotBox *isaacstates.Ballotbox
@@ -385,7 +385,6 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 		launch.ProposalMakerContextKey, &proposalMaker,
 		launch.MemberlistContextKey, &m,
 		launch.SyncSourcePoolContextKey, &syncSourcePool,
-		launch.QuicstreamHandlersContextKey, &handlers,
 		launch.NodeInfoContextKey, &nodeInfo,
 		launch.SuffrageVotingVoteFuncContextKey, &svVoteF,
 		launch.BallotboxContextKey, &ballotBox,
@@ -405,7 +404,7 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 		isaacnetwork.HandlerPrefixLastSuffrageProofString,
 		isaacnetwork.QuicstreamHandlerLastSuffrageProof(
 			func(last util.Hash) (string, []byte, []byte, bool, error) {
-				enchint, metabytes, body, found, lastheight, err := db.LastSuffrageProofBytes()
+				enchint, metab, body, found, lastheight, err := db.LastSuffrageProofBytes()
 
 				switch {
 				case err != nil:
@@ -414,17 +413,15 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 					return enchint, nil, nil, false, storage.ErrNotFound.Errorf("last SuffrageProof not found")
 				}
 
-				switch h, err := isaacdatabase.ReadHashRecordMeta(metabytes); {
-				case err != nil:
-					return enchint, nil, nil, true, err
-				case last != nil && last.Equal(h):
-					nbody, _ := util.NewLengthedBytesSlice(0x01, [][]byte{lastheight.Bytes(), nil})
+				switch {
+				case last != nil && len(metab) > 0 && valuehash.NewBytes(metab).Equal(last):
+					nbody, _ := util.NewLengthedBytesSlice([][]byte{lastheight.Bytes(), nil})
 
 					return enchint, nil, nbody, false, nil
 				default:
-					nbody, _ := util.NewLengthedBytesSlice(0x01, [][]byte{lastheight.Bytes(), body})
+					nbody, _ := util.NewLengthedBytesSlice([][]byte{lastheight.Bytes(), body})
 
-					return enchint, metabytes, nbody, true, nil
+					return enchint, metab, nbody, true, nil
 				}
 			},
 		), nil)

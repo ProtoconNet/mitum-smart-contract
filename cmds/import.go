@@ -2,7 +2,7 @@ package cmds
 
 import (
 	"context"
-	launchcmd "github.com/ProtoconNet/mitum2/launch/cmd"
+	"github.com/ProtoconNet/mitum2/util/ps"
 
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
@@ -15,13 +15,18 @@ import (
 	"github.com/rs/zerolog"
 )
 
+var (
+	PNameImportBlocks = ps.Name("import-blocks")
+	PNameCheckStorage = ps.Name("check-blocks")
+)
+
 type ImportCommand struct { //nolint:govet //...
 	// revive:disable:line-length-limit
 	launch.DesignFlag
-	Source          string           `arg:"" name:"source directory" help:"block data directory to import" type:"existingdir"`
-	HeightRange     launch.RangeFlag `name:"range" help:"<from>-<to>" default:""`
-	Vault           string           `name:"vault" help:"privatekey path of vault"`
-	Do              bool             `name:"do" help:"really do import"`
+	Source      string           `arg:"" name:"source directory" help:"block data directory to import" type:"existingdir"`
+	HeightRange launch.RangeFlag `name:"range" help:"<from>-<to>" default:""`
+	launch.PrivatekeyFlags
+	Do              bool `name:"do" help:"really do import"`
 	log             *zerolog.Logger
 	launch.DevFlags `embed:"" prefix:"dev."`
 	fromHeight      base.Height
@@ -60,7 +65,7 @@ func (cmd *ImportCommand) Run(pctx context.Context) error {
 
 	log.Log().Debug().
 		Interface("design", cmd.DesignFlag).
-		Interface("vault", cmd.Vault).
+		Interface("privatekey", cmd.Privatekey).
 		Interface("dev", cmd.DevFlags).
 		Str("source", cmd.Source).
 		Interface("from_height", cmd.fromHeight).
@@ -70,14 +75,16 @@ func (cmd *ImportCommand) Run(pctx context.Context) error {
 
 	cmd.log = log.Log()
 
-	nctx := context.WithValue(pctx, launch.DesignFlagContextKey, cmd.DesignFlag)
-	nctx = context.WithValue(nctx, launch.DevFlagsContextKey, cmd.DevFlags)
-	nctx = context.WithValue(nctx, launch.VaultContextKey, cmd.Vault)
+	nctx := util.ContextWithValues(pctx, map[util.ContextKey]interface{}{
+		launch.DesignFlagContextKey:     cmd.DesignFlag,
+		launch.DevFlagsContextKey:       cmd.DevFlags,
+		launch.PrivatekeyFromContextKey: cmd.Privatekey,
+	})
 
-	pps := DefaultImportPS()
+	pps := launch.DefaultImportPS()
 	_ = pps.SetLogging(log)
 
-	_ = pps.AddOK(launchcmd.PNameImportBlocks, cmd.importBlocks, nil, launch.PNameStorage)
+	_ = pps.AddOK(PNameImportBlocks, cmd.importBlocks, nil, launch.PNameStorage)
 
 	cmd.log.Debug().Interface("process", pps.Verbose()).Msg("process ready")
 
@@ -86,7 +93,7 @@ func (cmd *ImportCommand) Run(pctx context.Context) error {
 		cmd.log.Debug().Interface("process", pps.Verbose()).Msg("process will be closed")
 
 		if _, err = pps.Close(nctx); err != nil {
-			cmd.log.Error().Err(err).Msg("close")
+			cmd.log.Error().Err(err).Msg("failed to close")
 		}
 	}()
 
@@ -299,9 +306,9 @@ func checkLastHeight(pctx context.Context, source string, fromHeight, toHeight b
 		lastlocalheight = i.Manifest().Height()
 	}
 
-	if toHeight > base.NilHeight && toHeight <= lastlocalheight {
+	if toHeight > base.NilHeight && toHeight > lastlocalheight {
 		return fromHeight, toHeight, last, errors.Errorf(
-			"to height should be higher than last; to=%d last=%d", toHeight, lastlocalheight)
+			"to height higher than last; to=%d last=%d", toHeight, lastlocalheight)
 	}
 
 	nfromHeight := fromHeight

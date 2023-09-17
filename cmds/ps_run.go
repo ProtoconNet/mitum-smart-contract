@@ -80,8 +80,7 @@ func DefaultRunPS() *ps.PS {
 		PreAddOK(launch.PNameBallotStuckResolver, launch.PBallotStuckResolver).
 		PostAddOK(launch.PNamePatchLastConsensusNodesWatcher, launch.PPatchLastConsensusNodesWatcher).
 		PostAddOK(launch.PNameStatesSetHandlers, launch.PStatesSetHandlers).
-		PostAddOK(launch.PNameWatchDesign, launch.PWatchDesign).
-		PostAddOK(launch.PNameNetworkHandlersReadWriteDesign, launch.PNetworkHandlersReadWriteDesign).
+		PostAddOK(launch.PNameNetworkHandlersReadWriteNode, launch.PNetworkHandlersReadWriteNode).
 		PostAddOK(launch.PNamePatchMemberlist, launch.PPatchMemberlist).
 		PostAddOK(launch.PNameStatesNetworkHandlers, PStatesNetworkHandlers).
 		PostAddOK(launch.PNameHandoverNetworkHandlers, launch.PHandoverNetworkHandlers)

@@ -10,13 +10,9 @@ import (
 
 type INITCommand struct {
 	GenesisDesign string `arg:"" name:"genesis design" help:"genesis design" type:"filepath"`
-	Vault         string `name:"vault" help:"privatekey path of vault"`
+	launch.PrivatekeyFlags
 	launch.DesignFlag
 	launch.DevFlags `embed:"" prefix:"dev."`
-}
-
-func NewINITCommand() INITCommand {
-	return INITCommand{}
 }
 
 func (cmd *INITCommand) Run(pctx context.Context) error {
@@ -29,7 +25,7 @@ func (cmd *INITCommand) Run(pctx context.Context) error {
 		launch.DesignFlagContextKey:        cmd.DesignFlag,
 		launch.DevFlagsContextKey:          cmd.DevFlags,
 		launch.GenesisDesignFileContextKey: cmd.GenesisDesign,
-		launch.VaultContextKey:             cmd.Vault,
+		launch.PrivatekeyFromContextKey:    cmd.Privatekey,
 	})
 
 	pps := DefaultINITPS()
@@ -37,12 +33,12 @@ func (cmd *INITCommand) Run(pctx context.Context) error {
 
 	log.Log().Debug().Interface("process", pps.Verbose()).Msg("process ready")
 
-	_, err := pps.Run(nctx) //revive:disable-line:modifies-parameter
+	nctx, err := pps.Run(nctx)
 	defer func() {
 		log.Log().Debug().Interface("process", pps.Verbose()).Msg("process will be closed")
 
-		if _, err = pps.Close(pctx); err != nil {
-			log.Log().Error().Err(err).Msg("close")
+		if _, err = pps.Close(nctx); err != nil {
+			log.Log().Error().Err(err).Msg("failed to close")
 		}
 	}()
 
