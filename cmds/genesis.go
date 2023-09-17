@@ -2,7 +2,7 @@ package cmds
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	isaacoperation "github.com/ProtoconNet/mitum-currency/v3/operation/isaac"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
@@ -16,6 +16,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"os"
 )
 
 type GenesisBlockGenerator struct {
@@ -30,6 +31,7 @@ type GenesisBlockGenerator struct {
 	networkID base.NetworkID
 	facts     []base.Fact
 	ops       []base.Operation
+	ctx       context.Context
 }
 
 func NewGenesisBlockGenerator(
@@ -39,6 +41,7 @@ func NewGenesisBlockGenerator(
 	db isaac.Database,
 	dataroot string,
 	facts []base.Fact,
+	ctx context.Context,
 ) *GenesisBlockGenerator {
 	return &GenesisBlockGenerator{
 		Logging: logging.NewLogging(func(zctx zerolog.Context) zerolog.Context {
@@ -50,6 +53,7 @@ func NewGenesisBlockGenerator(
 		db:        db,
 		dataroot:  dataroot,
 		facts:     facts,
+		ctx:       ctx,
 	}
 }
 
@@ -125,6 +129,7 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 			if _, found := factTypes[ht.String()]; found {
 				return errors.Errorf("multiple RegisterGenesisCurrency operation found")
 			}
+
 			g.ops[i], err = g.registerGenesisCurrencyOperation(fact, g.networkID)
 		}
 
@@ -187,6 +192,12 @@ func (g *GenesisBlockGenerator) networkPolicyOperation(i base.Fact) (base.Operat
 }
 
 func (g *GenesisBlockGenerator) registerGenesisCurrencyOperation(i base.Fact, token []byte) (base.Operation, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Panic:", r)
+			os.Exit(1)
+		}
+	}()
 	e := util.StringError("make registerGenesisCurrency operation")
 
 	basefact, ok := i.(currency.RegisterGenesisCurrencyFact)
@@ -197,6 +208,23 @@ func (g *GenesisBlockGenerator) registerGenesisCurrencyOperation(i base.Fact, to
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
+
+	var design launch.NodeDesign
+	err = util.LoadFromContextOK(g.ctx,
+		launch.DesignContextKey, &design,
+	)
+	if err != nil {
+		return nil, e.Wrap(err)
+	}
+
+	if !basefact.GenesisNodeKey().Equal(design.Privatekey.Publickey()) {
+		panic(errors.Errorf(
+			"genesisNodeKey, %v is not match with local node key, %v",
+			basefact.GenesisNodeKey().String(),
+			design.Privatekey.Publickey().String(),
+		))
+	}
+
 	fact := currency.NewRegisterGenesisCurrencyFact(token, basefact.GenesisNodeKey(), acks, basefact.Currencies())
 	if err := fact.IsValid(g.networkID); err != nil {
 		return nil, e.Wrap(err)
@@ -362,10 +390,10 @@ func (g *GenesisBlockGenerator) newProposalProcessor() (*isaac.DefaultProposalPr
 		func(key string) (base.State, bool, error) {
 			return nil, false, nil
 		},
-		func(_ context.Context, operationhash util.Hash) (base.Operation, error) {
+		func(_ context.Context, operationHash util.Hash) (base.Operation, error) {
 			for i := range g.ops {
 				op := g.ops[i]
-				if operationhash.Equal(op.Hash()) {
+				if operationHash.Equal(op.Hash()) {
 					return op, nil
 				}
 			}

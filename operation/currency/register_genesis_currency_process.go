@@ -2,7 +2,6 @@ package currency
 
 import (
 	"context"
-
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
@@ -10,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (RegisterGenesisCurrency) PreProcess(
+func (op RegisterGenesisCurrency) PreProcess(
 	ctx context.Context, _ base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
 	return ctx, nil, nil

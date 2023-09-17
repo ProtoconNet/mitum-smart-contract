@@ -15,7 +15,7 @@ func DefaultINITPS() *ps.PS {
 		AddOK(launch.PNameTimeSyncer, launch.PStartTimeSyncer, launch.PCloseTimeSyncer, launch.PNameDesign).
 		AddOK(launch.PNameLocal, launch.PLocal, nil, launch.PNameDesign).
 		AddOK(launch.PNameStorage, launch.PStorage, launch.PCloseStorage, launch.PNameLocal).
-		AddOK(PNameGenerateGenesis, PGenerateGenesis, nil, launch.PNameStorage)
+		AddOK(PNameGenerateGenesis, PGenerateGenesis, nil, launch.PNameStorage, launch.PNameDesign)
 
 	_ = pps.POK(launch.PNameEncoder).
 		PostAddOK(launch.PNameAddHinters, PAddHinters)
