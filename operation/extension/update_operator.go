@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	UpdateOperatorFactHint = hint.MustNewHint("mitum-currency-update-operator-operation-fact-v0.0.1")
-	UpdateOperatorHint     = hint.MustNewHint("mitum-currency-update-operator-operation-v0.0.1")
+	UpdateOperatorFactHint = hint.MustNewHint("mitum-currency-contract-account-update-operator-operation-fact-v0.0.1")
+	UpdateOperatorHint     = hint.MustNewHint("mitum-currency-contract-account-update-operator-operation-v0.0.1")
 )
 
 type UpdateOperatorFact struct {
