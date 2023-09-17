@@ -24,7 +24,7 @@ func NewOperationDoc(
 	height base.Height,
 	confirmedAt time.Time,
 	inState bool,
-	reason base.OperationProcessReasonError,
+	reason string,
 	index uint64,
 ) (OperationDoc, error) {
 	var addresses []string

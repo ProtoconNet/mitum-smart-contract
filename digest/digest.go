@@ -93,7 +93,6 @@ end:
 			err := util.Retry(ctx, func() (bool, error) {
 				if err := di.digest(ctx, blk); err != nil {
 					go errch(NewDigestError(err, blk.Manifest().Height()))
-
 					if errors.Is(err, context.Canceled) {
 						return false, isaac.ErrStopProcessingRetry.Wrap(err)
 					}

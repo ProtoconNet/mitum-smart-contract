@@ -17,7 +17,7 @@ type OperationValue struct {
 	height      base.Height
 	confirmedAt time.Time
 	inState     bool
-	reason      base.OperationProcessReasonError
+	reason      string
 	index       uint64
 }
 
@@ -26,7 +26,7 @@ func NewOperationValue(
 	height base.Height,
 	confirmedAt time.Time,
 	inState bool,
-	reason base.OperationProcessReasonError,
+	reason string,
 	index uint64,
 ) OperationValue {
 	return OperationValue{
@@ -60,7 +60,7 @@ func (va OperationValue) InState() bool {
 	return va.inState
 }
 
-func (va OperationValue) Reason() base.OperationProcessReasonError {
+func (va OperationValue) Reason() string {
 	return va.reason
 }
 

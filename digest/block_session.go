@@ -103,10 +103,9 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 	}
 
 	if len(bs.operationModels) > 0 {
-
-	}
-	if err := bs.writeModels(ctx, defaultColNameOperation, bs.operationModels); err != nil {
-		return err
+		if err := bs.writeModels(ctx, defaultColNameOperation, bs.operationModels); err != nil {
+			return err
+		}
 	}
 
 	if len(bs.currencyModels) > 0 {
@@ -148,7 +147,11 @@ func (bs *BlockSession) prepareOperationsTree() error {
 
 	if err := bs.opsTree.Traverse(func(_ uint64, no fixedtree.Node) (bool, error) {
 		nno := no.(base.OperationFixedtreeNode)
-		nodes[nno.Key()] = nno
+		if nno.InState() {
+			nodes[nno.Key()] = nno
+		} else {
+			nodes[nno.Key()[:len(nno.Key())-1]] = nno
+		}
 
 		return true, nil
 	}); err != nil {
@@ -205,23 +208,33 @@ func (bs *BlockSession) prepareOperations() error {
 	for i := range bs.ops {
 		op := bs.ops[i]
 
-		found, inState, reason := node(op.Fact().Hash())
-		if !found {
+		var doc OperationDoc
+		switch found, inState, reason := node(op.Fact().Hash()); {
+		case !found:
 			return mitumutil.ErrNotFound.Errorf("operation, %v in operations tree", op.Fact().Hash().String())
+		default:
+			var reasonMsg string
+			switch {
+			case reason == nil:
+				reasonMsg = ""
+			default:
+				reasonMsg = reason.Msg()
+			}
+			d, err := NewOperationDoc(
+				op,
+				bs.st.database.Encoder(),
+				bs.block.Manifest().Height(),
+				bs.block.SignedAt(),
+				inState,
+				reasonMsg,
+				uint64(i),
+			)
+			if err != nil {
+				return err
+			}
+			doc = d
 		}
 
-		doc, err := NewOperationDoc(
-			op,
-			bs.st.database.Encoder(),
-			bs.block.Manifest().Height(),
-			bs.block.SignedAt(),
-			inState,
-			reason,
-			uint64(i),
-		)
-		if err != nil {
-			return err
-		}
 		bs.operationModels[i] = mongo.NewInsertOneModel().SetDocument(doc)
 	}
 

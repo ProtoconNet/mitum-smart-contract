@@ -12,13 +12,13 @@ import (
 
 type OperationValueJSONMarshaler struct {
 	hint.BaseHinter
-	Hash        util.Hash                        `json:"hash"`
-	Operation   base.Operation                   `json:"operation"`
-	Height      base.Height                      `json:"height"`
-	ConfirmedAt localtime.Time                   `json:"confirmed_at"`
-	Reason      base.OperationProcessReasonError `json:"reason"`
-	InState     bool                             `json:"in_state"`
-	Index       uint64                           `json:"index"`
+	Hash        util.Hash      `json:"hash"`
+	Operation   base.Operation `json:"operation"`
+	Height      base.Height    `json:"height"`
+	ConfirmedAt localtime.Time `json:"confirmed_at"`
+	Reason      string         `json:"reason"`
+	InState     bool           `json:"in_state"`
+	Index       uint64         `json:"index"`
 }
 
 func (va OperationValue) MarshalJSON() ([]byte, error) {
@@ -39,7 +39,7 @@ type OperationValueJSONUnmarshaler struct {
 	Height      base.Height     `json:"height"`
 	ConfirmedAt localtime.Time  `json:"confirmed_at"`
 	InState     bool            `json:"in_state"`
-	Reason      json.RawMessage `json:"reason"`
+	Reason      string          `json:"reason"`
 	Index       uint64          `json:"index"`
 }
 
@@ -53,10 +53,7 @@ func (va *OperationValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return err
 	}
 
-	if err := enc.Unmarshal(uva.Reason, &va.reason); err != nil {
-		return err
-	}
-
+	va.reason = uva.Reason
 	va.height = uva.Height
 	va.confirmedAt = uva.ConfirmedAt.Time
 	va.inState = uva.InState
