@@ -94,7 +94,7 @@ func (opp *MintProcessor) PreProcess(
 
 		err := state.CheckExistsState(currency.StateKeyCurrencyDesign(item.Amount().Currency()), getStateFunc)
 		if err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("currency not found, %v; %v", item.Amount().Currency(), err.Error()), nil
+			return ctx, base.NewBaseOperationProcessReasonError("currency not found, %v; %w", item.Amount().Currency(), err), nil
 		}
 
 		err = state.CheckExistsState(currency.StateKeyAccount(item.Receiver()), getStateFunc)
@@ -104,7 +104,7 @@ func (opp *MintProcessor) PreProcess(
 
 		err = state.CheckNotExistsState(extension.StateKeyContractAccount(item.Receiver()), getStateFunc)
 		if err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be mint receiver, %v; %v", item.Receiver(), err.Error()), nil
+			return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be mint receiver, %v; %w", item.Receiver(), err), nil
 		}
 	}
 
@@ -160,7 +160,7 @@ func (opp *MintProcessor) Process(
 		k := currency.StateKeyCurrencyDesign(cid)
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
-			return nil, base.NewBaseOperationProcessReasonError("find currency design state, %v %w", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("find currency design state, %v; %w", cid, err), nil
 		case !found:
 			return nil, base.NewBaseOperationProcessReasonError("currency not found, %v; %w", cid, err), nil
 		default:

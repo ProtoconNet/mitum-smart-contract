@@ -26,7 +26,7 @@ func (op RegisterGenesisCurrency) Process(
 
 	newAddress, err := fact.Address()
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError(err.Error()), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to get genesis account address, %w", err), nil
 	}
 
 	ns, err := state.NotExistsState(currency.StateKeyAccount(newAddress), "key of genesis", getStateFunc)

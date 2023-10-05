@@ -108,7 +108,7 @@ func (opp *CreateContractAccountItemProcessor) PreProcess(
 func (opp *CreateContractAccountItemProcessor) Process(
 	_ context.Context, _ base.Operation, _ base.GetStateFunc,
 ) ([]base.StateMergeValue, error) {
-	e := util.StringError("preprocess for CreateContractAccountItemProcessor")
+	e := util.StringError("process for CreateContractAccountItemProcessor")
 
 	sts := make([]base.StateMergeValue, len(opp.item.Amounts())+2)
 
@@ -213,11 +213,11 @@ func (opp *CreateContractAccountProcessor) PreProcess(
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be create-contract-account sender, %v: %v", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be create-contract-account sender, %v; %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("invalid signing: %v", err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("invalid signing; %w", err), nil
 	}
 
 	for i := range fact.items {
@@ -257,9 +257,9 @@ func (opp *CreateContractAccountProcessor) Process( // nolint:dupl
 	)
 
 	if feeReceiveBalSts, required, err = opp.calculateItemsFee(op, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("calculate fee: %v", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("calculate fee; %w", err), nil
 	} else if senderBalSts, err = currency.CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %s : %v", fact.sender, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %s; %v", fact.sender, err), nil
 	} else {
 		opp.required = required
 	}

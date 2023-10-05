@@ -226,7 +226,7 @@ func (opp *CreateAccountProcessor) Process( // nolint:dupl
 	if feeReceiveBalSts, required, err = opp.calculateItemsFee(op, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("calculate fee; %w", err), nil
 	} else if senderBalSts, err = CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %v ; %w", fact.sender, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %v; %w", fact.sender, err), nil
 	} else {
 		opp.required = required
 	}
