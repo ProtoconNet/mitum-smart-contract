@@ -50,7 +50,7 @@ func (enc *Encoder) Add(d encoder.DecodeDetail) error {
 
 func (enc *Encoder) AddHinter(hr hint.Hinter) error {
 	if err := hr.Hint().IsValid(nil); err != nil {
-		return util.ErrInvalid.WithMessage(err, "add in json encoder")
+		return util.ErrInvalid.WithMessage(err, "add in bson encoder")
 	}
 
 	return enc.addDecodeDetail(enc.analyze(encoder.DecodeDetail{Hint: hr.Hint()}, hr))
@@ -100,12 +100,12 @@ func (enc *Encoder) DecodeWithHintType(b []byte, t hint.Type) (interface{}, erro
 
 	ht, v, found := enc.decoders.FindBytType(t)
 	if !found {
-		return nil, errors.Errorf("find decoder by type in json decoders, %q", t)
+		return nil, errors.Errorf("find decoder by type in bson decoders, %q", t)
 	}
 
 	i, err := v.Decode(b, ht)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "decode, %q in json decoders", ht)
+		return nil, errors.WithMessagef(err, "decode, %q in bson decoders", ht)
 	}
 
 	return i, nil
@@ -117,6 +117,7 @@ func (enc *Encoder) DecodeWithFixedHintType(s string, size int) (interface{}, er
 	}
 
 	e := util.StringError("decode with fixed hint type")
+
 	if size < 1 {
 		return nil, e.Errorf("size < 1")
 	}
@@ -126,7 +127,7 @@ func (enc *Encoder) DecodeWithFixedHintType(s string, size int) (interface{}, er
 		if i != nil {
 			err, ok := i.(error)
 			if ok {
-				return nil, err
+				return nil, e.Wrap(err)
 			}
 		}
 
@@ -137,7 +138,7 @@ func (enc *Encoder) DecodeWithFixedHintType(s string, size int) (interface{}, er
 	if err != nil {
 		enc.poolSet(s, err)
 
-		return nil, err
+		return nil, e.Wrap(err)
 	}
 
 	enc.poolSet(s, i)
@@ -151,6 +152,8 @@ func (enc *Encoder) decodeWithFixedHintType(s string, size int) (interface{}, er
 	body, t, err := hint.ParseFixedTypedString(s, size)
 	if err != nil {
 		return nil, e.WithMessage(err, "parse fixed typed string")
+	} else if _, _, found := enc.decoders.FindBytType(t); !found {
+		return nil, e.Errorf("find decoder by fixed typed hint type, %q in bson decoders", t)
 	}
 
 	i, err := enc.DecodeWithHintType([]byte(body), t)

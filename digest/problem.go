@@ -92,6 +92,6 @@ func makeSplitedError(err error) (title, detail string) {
 	case len(errorSlice) < 2:
 		return errorSlice[0], errorSlice[0]
 	default:
-		return strings.TrimSpace(errorSlice[0]), strings.TrimSpace(errorSlice[1])
+		return strings.TrimSpace(err.Error()), strings.TrimSpace(errorSlice[1])
 	}
 }

@@ -1,8 +1,8 @@
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/Masterminds/semver/v3 v3.2.1 h1:RN9w6+7QoMeJVGyfmbcgs28Br8cvmnucEXnY0rYXWg0=
 github.com/Masterminds/semver/v3 v3.2.1/go.mod h1:qvl/7zhW3nngYb5+80sSMF+FG2BjYrf8m9wsX0PNOMQ=
-github.com/ProtoconNet/mitum2 v0.0.0-20230917053416-239fc0fabf6f h1:b1kgSOEpq1wcZFYy/mjPS/5PlEbL5U2vkNlazMjcNuc=
-github.com/ProtoconNet/mitum2 v0.0.0-20230917053416-239fc0fabf6f/go.mod h1:t8g7HCeeHdv+ucjDcYsSSOXzstzhQT0d+kZ83O9tyhI=
+github.com/ProtoconNet/mitum2 v0.0.0-20231006031328-cc14784a72b1 h1:cPnRsEUykww+g5zKhNoQ6ETkjUOqduRt+Gk5apU3R8A=
+github.com/ProtoconNet/mitum2 v0.0.0-20231006031328-cc14784a72b1/go.mod h1:t8g7HCeeHdv+ucjDcYsSSOXzstzhQT0d+kZ83O9tyhI=
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=
 github.com/alecthomas/assert/v2 v2.1.0 h1:tbredtNcQnoSd3QBhQWI7QZ3XHOVkw1Moklp2ojoH/0=
 github.com/alecthomas/kong v0.8.0 h1:ryDCzutfIqJPnNn0omnrgHLbAggDQM2VWHikE1xqK7s=
