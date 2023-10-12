@@ -138,6 +138,10 @@ func (hd *Handlers) Router() *mux.Router {
 	return hd.router
 }
 
+func (hd *Handlers) Routes() map[string]*mux.Route {
+	return hd.routes
+}
+
 func (hd *Handlers) Handler() http.Handler {
 	return network.HTTPLogHandler(hd.router, hd.Logger)
 }
