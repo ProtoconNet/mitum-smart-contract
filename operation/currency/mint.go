@@ -47,7 +47,7 @@ func (fact MintFact) Bytes() []byte {
 }
 
 func (fact MintFact) IsValid(b []byte) error {
-	if err := common.IsValidOperationFact(fact, b); err != nil {
+	if err := fact.BaseHinter.IsValid(nil); err != nil {
 		return err
 	}
 
@@ -70,6 +70,10 @@ func (fact MintFact) IsValid(b []byte) error {
 			return util.ErrInvalid.Errorf("duplicated item found in MintFact")
 		}
 		founds[k] = struct{}{}
+	}
+
+	if err := common.IsValidOperationFact(fact, b); err != nil {
+		return err
 	}
 
 	return nil

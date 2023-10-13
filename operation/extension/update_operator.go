@@ -60,7 +60,7 @@ func (fact UpdateOperatorFact) Bytes() []byte {
 }
 
 func (fact UpdateOperatorFact) IsValid(b []byte) error {
-	if err := common.IsValidOperationFact(fact, b); err != nil {
+	if err := fact.BaseHinter.IsValid(nil); err != nil {
 		return err
 	}
 
@@ -83,6 +83,10 @@ func (fact UpdateOperatorFact) IsValid(b []byte) error {
 		if err := fact.operators[i].IsValid(nil); err != nil {
 			return util.ErrInvalid.Errorf("invalid operator address: %v", err)
 		}
+	}
+
+	if err := common.IsValidOperationFact(fact, b); err != nil {
+		return err
 	}
 
 	return nil

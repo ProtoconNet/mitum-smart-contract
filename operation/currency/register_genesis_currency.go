@@ -57,7 +57,7 @@ func (fact RegisterGenesisCurrencyFact) Bytes() []byte {
 }
 
 func (fact RegisterGenesisCurrencyFact) IsValid(b []byte) error {
-	if err := common.IsValidOperationFact(fact, b); err != nil {
+	if err := fact.BaseHinter.IsValid(nil); err != nil {
 		return err
 	}
 
@@ -79,6 +79,10 @@ func (fact RegisterGenesisCurrencyFact) IsValid(b []byte) error {
 		} else {
 			founds[c.Currency()] = struct{}{}
 		}
+	}
+
+	if err := common.IsValidOperationFact(fact, b); err != nil {
+		return err
 	}
 
 	return nil

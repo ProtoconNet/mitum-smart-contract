@@ -61,11 +61,11 @@ func (fact UpdateKeyFact) IsValid(b []byte) error {
 		return err
 	}
 
-	if err := common.IsValidOperationFact(fact, b); err != nil {
+	if err := util.CheckIsValiders(nil, false, fact.target, fact.keys, fact.currency); err != nil {
 		return err
 	}
 
-	if err := util.CheckIsValiders(nil, false, fact.target, fact.keys, fact.currency); err != nil {
+	if err := common.IsValidOperationFact(fact, b); err != nil {
 		return err
 	}
 

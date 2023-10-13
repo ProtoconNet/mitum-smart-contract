@@ -39,7 +39,7 @@ func (fact RegisterCurrencyFact) Bytes() []byte {
 }
 
 func (fact RegisterCurrencyFact) IsValid(b []byte) error {
-	if err := common.IsValidOperationFact(fact, b); err != nil {
+	if err := fact.BaseHinter.IsValid(nil); err != nil {
 		return err
 	}
 
@@ -49,6 +49,10 @@ func (fact RegisterCurrencyFact) IsValid(b []byte) error {
 
 	if fact.currency.GenesisAccount() == nil {
 		return util.ErrInvalid.Errorf("empty genesis account")
+	}
+
+	if err := common.IsValidOperationFact(fact, b); err != nil {
+		return err
 	}
 
 	return nil

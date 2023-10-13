@@ -45,12 +45,16 @@ func (fact UpdateCurrencyFact) Bytes() []byte {
 }
 
 func (fact UpdateCurrencyFact) IsValid(b []byte) error {
-	if err := common.IsValidOperationFact(fact, b); err != nil {
+	if err := fact.BaseHinter.IsValid(nil); err != nil {
 		return err
 	}
 
 	if err := util.CheckIsValiders(nil, false, fact.currency, fact.policy); err != nil {
 		return util.ErrInvalid.Errorf("invalid fact: %v", err)
+	}
+
+	if err := common.IsValidOperationFact(fact, b); err != nil {
+		return err
 	}
 
 	return nil
