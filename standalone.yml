@@ -14,9 +14,19 @@ digest:
   database: 
     uri: mongodb://127.0.0.1:27017/mc2
 parameters:
+  network:
+    ratelimit:
+      default:
+        default: nolimit
+        state: nolimit
+        blockmap: nolimit
+  misc:
+    max_message_size: 50000000
+    object_cache_size: 5000000
   isaac:
     threshold: 100
     interval_broadcast_ballot: 3s
     wait_preparing_init_ballot: 5s
     ballot_stuck_wait: 33s
     ballot_stuck_resolve_after: 66s
+    max_operation_size: 50000000
