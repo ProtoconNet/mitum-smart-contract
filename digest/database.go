@@ -279,13 +279,13 @@ func (st *Database) Manifest(h mitumutil.Hash) (base.Manifest, bool, error) {
 }
 */
 
-// Manifests returns block.Manifests by it's order, height.
+// Manifests returns block.Manifests by order and height.
 func (st *Database) Manifests(
 	load bool,
 	reverse bool,
 	offset base.Height,
 	limit int64,
-	callback func(base.Height, base.Manifest, uint64) (bool, error),
+	callback func(base.Height, base.Manifest, uint64, string, string, uint64) (bool, error),
 ) error {
 	var filter bson.M
 	if offset > base.NilHeight {
@@ -318,11 +318,11 @@ func (st *Database) Manifests(
 		defaultColNameBlock,
 		filter,
 		func(cursor *mongo.Cursor) (bool, error) {
-			va, ops, err := LoadManifest(cursor.Decode, st.database.Encoders())
+			va, ops, confirmed, proposer, round, err := LoadManifest(cursor.Decode, st.database.Encoders())
 			if err != nil {
 				return false, err
 			}
-			return callback(va.Height(), va, ops)
+			return callback(va.Height(), va, ops, confirmed, proposer, round)
 		},
 		opt,
 	)
@@ -430,7 +430,7 @@ func (st *Database) Operation(
 	return va, true, nil
 }
 
-// Operations returns operation.Operations by it's order, height and index.
+// Operations returns operation.Operations by order, height and index.
 func (st *Database) Operations(
 	filter bson.M,
 	load bool,
@@ -606,14 +606,6 @@ end:
 	return nil
 }
 
-func (st *Database) AccountsByBalance(
-	offsetHeight base.Height,
-	offsetAddress string,
-	limit int64,
-	callback func(AccountValue) (bool, error)) error {
-	return nil
-}
-
 func (st *Database) balance(a base.Address) ([]types.Amount, base.Height, error) {
 	lastHeight := base.NilHeight
 	var cids []string
@@ -766,59 +758,67 @@ func (st *Database) currencies() ([]string, error) {
 	return cids, nil
 }
 
-func (st *Database) ManifestByHeight(height base.Height) (base.Manifest, uint64, error) {
+func (st *Database) ManifestByHeight(height base.Height) (base.Manifest, uint64, string, string, uint64, error) {
 	q := util.NewBSONFilter("height", height).D()
 
 	var m base.Manifest
-	var operations uint64
+	var operations, round uint64
+	var confirmed, proposer string
 	if err := st.database.Client().GetByFilter(
 		defaultColNameBlock,
 		q,
 		func(res *mongo.SingleResult) error {
-			v, ops, err := LoadManifest(res.Decode, st.database.Encoders())
+			v, ops, cfrm, prps, rnd, err := LoadManifest(res.Decode, st.database.Encoders())
 			if err != nil {
 				return err
 			}
 			m = v
 			operations = ops
+			confirmed = cfrm
+			proposer = prps
+			round = rnd
 			return nil
 		},
 	); err != nil {
-		return nil, 0, mitumutil.ErrNotFound.WithMessage(err, "block manifest")
+		return nil, 0, "", "", 0, mitumutil.ErrNotFound.WithMessage(err, "block manifest")
 	}
 
 	if m != nil {
-		return m, operations, nil
+		return m, operations, confirmed, proposer, round, nil
 	} else {
-		return nil, 0, mitumutil.ErrNotFound.Wrap(errors.Errorf("block manifest"))
+		return nil, 0, "", "", 0, mitumutil.ErrNotFound.Wrap(errors.Errorf("block manifest"))
 	}
 }
 
-func (st *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, uint64, error) {
+func (st *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, uint64, string, string, uint64, error) {
 	q := util.NewBSONFilter("block", hash).D()
 
 	var m base.Manifest
-	var operations uint64
+	var operations, round uint64
+	var confirmed, proposer string
 	if err := st.database.Client().GetByFilter(
 		defaultColNameBlock,
 		q,
 		func(res *mongo.SingleResult) error {
-			v, ops, err := LoadManifest(res.Decode, st.database.Encoders())
+			v, ops, cfrm, prps, rnd, err := LoadManifest(res.Decode, st.database.Encoders())
 			if err != nil {
 				return err
 			}
 			m = v
 			operations = ops
+			confirmed = cfrm
+			proposer = prps
+			round = rnd
 			return nil
 		},
 	); err != nil {
-		return nil, 0, mitumutil.ErrNotFound.WithMessage(err, "block manifest")
+		return nil, 0, "", "", 0, mitumutil.ErrNotFound.WithMessage(err, "block manifest")
 	}
 
 	if m != nil {
-		return m, operations, nil
+		return m, operations, confirmed, proposer, round, nil
 	} else {
-		return nil, 0, mitumutil.ErrNotFound.Errorf("block manifest")
+		return nil, 0, "", "", 0, mitumutil.ErrNotFound.Errorf("block manifest")
 	}
 }
 

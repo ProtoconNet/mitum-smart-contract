@@ -11,9 +11,12 @@ import (
 
 type ManifestDoc struct {
 	mongodbstorage.BaseDoc
-	va         base.Manifest
-	operations []base.Operation
-	height     base.Height
+	va          base.Manifest
+	operations  []base.Operation
+	height      base.Height
+	confirmedAt time.Time
+	proposer    base.Address
+	round       base.Round
 }
 
 func NewManifestDoc(
@@ -22,6 +25,8 @@ func NewManifestDoc(
 	height base.Height,
 	operations []base.Operation,
 	confirmedAt time.Time,
+	proposer base.Address,
+	round base.Round,
 ) (ManifestDoc, error) {
 	b, err := mongodbstorage.NewBaseDoc(nil, manifest, enc)
 	if err != nil {
@@ -29,10 +34,13 @@ func NewManifestDoc(
 	}
 
 	return ManifestDoc{
-		BaseDoc:    b,
-		va:         manifest,
-		operations: operations,
-		height:     height,
+		BaseDoc:     b,
+		va:          manifest,
+		operations:  operations,
+		height:      height,
+		confirmedAt: confirmedAt,
+		proposer:    proposer,
+		round:       round,
 	}, nil
 }
 
@@ -45,6 +53,9 @@ func (doc ManifestDoc) MarshalBSON() ([]byte, error) {
 	m["block"] = doc.va.Hash()
 	m["operations"] = len(doc.operations)
 	m["height"] = doc.height
+	m["confirmed_at"] = doc.confirmedAt.String()
+	m["proposer"] = doc.proposer.String()
+	m["round"] = doc.round.Uint64()
 
 	return bsonenc.Marshal(m)
 }

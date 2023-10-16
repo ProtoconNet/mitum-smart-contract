@@ -166,7 +166,15 @@ func (di *Digester) digest(ctx context.Context, blk base.BlockMap) error {
 		sts = v.([]base.State) //nolint:forcetypeassert //...
 	}
 
-	if err := DigestBlock(ctx, di.database, blk, ops, opstree, sts); err != nil {
+	var proposal base.ProposalSignFact
+	switch v, found, err := reader.Item(base.BlockMapItemTypeProposal); {
+	case err != nil:
+		return err
+	case found:
+		proposal = v.(base.ProposalSignFact) //nolint:forcetypeassert //...
+	}
+
+	if err := DigestBlock(ctx, di.database, blk, ops, opstree, sts, proposal); err != nil {
 		return err
 	}
 
@@ -180,8 +188,9 @@ func DigestBlock(
 	ops []base.Operation,
 	opsTree fixedtree.Tree,
 	sts []base.State,
+	proposal base.ProposalSignFact,
 ) error {
-	bs, err := NewBlockSession(st, blk, ops, opsTree, sts)
+	bs, err := NewBlockSession(st, blk, ops, opsTree, sts, proposal)
 	if err != nil {
 		return err
 	}

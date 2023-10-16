@@ -1,0 +1,23 @@
+address: no0sas
+privatekey: Hxd92x9QuevBcnEo4qTP1UgSaaTPv3NThArhRRer1exYmpr
+# publickey: 28diDScgSoStgj2Goket5wC7xTeo2E2w5q2shZiy98yFEmpu
+network_id: mitum
+network:
+  bind: 0.0.0.0:4320
+  tls_insecure: true
+storage:
+  base: ./mitum-data
+  database: leveldb://
+digest:
+  network:
+    bind: http://0.0.0.0:54320
+    url: http://localhost:54320
+  database:
+    uri: mongodb://127.0.0.1:27017/mc
+parameters:
+  threshold: 100
+  interval_broadcast_ballot: 1s
+  wait_preparing_init_ballot: 1.5s
+  wait_preparing_next_round_init_ballot: 1s
+  timeout_request_proposal: 1s
+  max_operation_size: 500000

@@ -33,6 +33,7 @@ type BlockSession struct {
 	opsTree               fixedtree.Tree
 	sts                   []base.State
 	st                    *Database
+	proposal              base.ProposalSignFact
 	opsTreeNodes          map[string]base.OperationFixedtreeNode
 	blockModels           []mongo.WriteModel
 	operationModels       []mongo.WriteModel
@@ -44,7 +45,7 @@ type BlockSession struct {
 	balanceAddressList    []string
 }
 
-func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opsTree fixedtree.Tree, sts []base.State) (*BlockSession, error) {
+func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opsTree fixedtree.Tree, sts []base.State, proposal base.ProposalSignFact) (*BlockSession, error) {
 	if st.Readonly() {
 		return nil, errors.Errorf("readonly mode")
 	}
@@ -60,6 +61,7 @@ func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opsT
 		ops:         ops,
 		opsTree:     opsTree,
 		sts:         sts,
+		proposal:    proposal,
 		statesValue: &sync.Map{},
 	}, nil
 }
@@ -180,7 +182,7 @@ func (bs *BlockSession) prepareBlock() error {
 		bs.block.Manifest().ProposedAt(),
 	)
 
-	doc, err := NewManifestDoc(manifest, bs.st.database.Encoder(), bs.block.Manifest().Height(), bs.ops, bs.block.SignedAt())
+	doc, err := NewManifestDoc(manifest, bs.st.database.Encoder(), bs.block.Manifest().Height(), bs.ops, bs.block.SignedAt(), bs.proposal.ProposalFact().Proposer(), bs.proposal.ProposalFact().Point().Round())
 	if err != nil {
 		return err
 	}

@@ -169,7 +169,15 @@ func digestFollowup(ctx context.Context, height base.Height) error {
 			sts = v.([]base.State) //nolint:forcetypeassert //...
 		}
 
-		if err := digest.DigestBlock(ctx, st, m, ops, opstree, sts); err != nil {
+		var proposal base.ProposalSignFact
+		switch v, found, err := reader.Item(base.BlockMapItemTypeProposal); {
+		case err != nil:
+			return err
+		case found:
+			proposal = v.(base.ProposalSignFact) //nolint:forcetypeassert //...
+		}
+
+		if err := digest.DigestBlock(ctx, st, m, ops, opstree, sts, proposal); err != nil {
 			return err
 		}
 

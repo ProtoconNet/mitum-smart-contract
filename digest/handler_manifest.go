@@ -40,12 +40,12 @@ func (hd *Handlers) handleManifestByHeight(w http.ResponseWriter, r *http.Reques
 func (hd *Handlers) handleManifestByHeightInGroup(
 	height base.Height,
 ) ([]byte, error) {
-	m, ops, err := hd.database.ManifestByHeight(height)
+	m, ops, confirmed, proposer, round, err := hd.database.ManifestByHeight(height)
 	if err != nil {
 		return nil, err
 	}
 
-	hal, err := hd.buildManifestHal(m, ops)
+	hal, err := hd.buildManifestHal(m, ops, confirmed, proposer, round)
 	if err != nil {
 		return nil, err
 	}
@@ -77,12 +77,12 @@ func (hd *Handlers) handleManifestByHash(w http.ResponseWriter, r *http.Request)
 func (hd *Handlers) handleManifestByHashInGroup(
 	hash mitumutil.Hash,
 ) ([]byte, error) {
-	m, ops, err := hd.database.ManifestByHash(hash)
+	m, ops, confirmed, proposer, round, err := hd.database.ManifestByHash(hash)
 	if err != nil {
 		return nil, err
 	}
 
-	hal, err := hd.buildManifestHal(m, ops)
+	hal, err := hd.buildManifestHal(m, ops, confirmed, proposer, round)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (hd *Handlers) handleManifestByHashInGroup(
 	return b, err
 }
 
-func (hd *Handlers) buildManifestHal(manifest base.Manifest, ops uint64) (Hal, error) {
+func (hd *Handlers) buildManifestHal(manifest base.Manifest, ops uint64, confirmed, proposer string, round uint64) (Hal, error) {
 	height := manifest.Height()
 
 	var hal Hal
@@ -101,11 +101,17 @@ func (hd *Handlers) buildManifestHal(manifest base.Manifest, ops uint64) (Hal, e
 
 	var m struct {
 		base.Manifest
-		Operations uint64 `json:"operations"`
+		Operations  uint64 `json:"operations"`
+		ConfirmedAt string `json:"confirmed_at"`
+		Proposer    string `json:"proposer"`
+		Round       uint64 `json:"round"`
 	}
 
 	m.Manifest = manifest
 	m.Operations = ops
+	m.ConfirmedAt = confirmed
+	m.Proposer = proposer
+	m.Round = round
 
 	hal = NewBaseHal(m, NewHalLink(h, nil))
 
@@ -199,12 +205,12 @@ func (hd *Handlers) handleManifestsInGroup(
 	var vas []Hal
 	if err := hd.database.Manifests(
 		true, reverse, height, limit,
-		func(height base.Height, va base.Manifest, ops uint64) (bool, error) {
+		func(height base.Height, va base.Manifest, ops uint64, confirmed, proposer string, round uint64) (bool, error) {
 			if height <= base.GenesisHeight {
 				return !reverse, nil
 			}
 
-			hal, err := hd.buildManifestHal(va, ops)
+			hal, err := hd.buildManifestHal(va, ops, confirmed, proposer, round)
 			if err != nil {
 				return false, err
 			}

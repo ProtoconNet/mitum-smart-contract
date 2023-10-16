@@ -102,19 +102,19 @@ func LoadContractAccountStatus(decoder func(interface{}) error, encs *encoder.En
 	}
 }
 
-func LoadManifest(decoder func(interface{}) error, encs *encoder.Encoders) (base.Manifest, uint64, error) {
+func LoadManifest(decoder func(interface{}) error, encs *encoder.Encoders) (base.Manifest, uint64, string, string, uint64, error) {
 	var b bson.Raw
 
 	if err := decoder(&b); err != nil {
-		return nil, 0, err
+		return nil, 0, "", "", 0, err
 	}
 
-	if _, hinter, operations, err := mongodbstorage.LoadManifestDataFromDoc(b, encs); err != nil {
-		return nil, 0, err
+	if _, hinter, operations, confirmedAt, proposer, round, err := mongodbstorage.LoadManifestDataFromDoc(b, encs); err != nil {
+		return nil, 0, "", "", 0, err
 	} else if m, ok := hinter.(base.Manifest); !ok {
-		return nil, 0, errors.Errorf("not base.Manifest: %T", hinter)
+		return nil, 0, "", "", 0, errors.Errorf("not base.Manifest: %T", hinter)
 	} else {
-		return m, operations, nil
+		return m, operations, confirmedAt, proposer, round, nil
 	}
 }
 
