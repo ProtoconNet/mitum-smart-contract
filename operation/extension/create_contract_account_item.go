@@ -36,7 +36,7 @@ func (it BaseCreateContractAccountItem) Bytes() []byte {
 }
 
 func (it BaseCreateContractAccountItem) IsValid([]byte) error {
-	if n := len(it.amounts); n == 0 {
+	if len(it.amounts) < 1 {
 		return util.ErrInvalid.Errorf("empty amounts")
 	}
 
@@ -48,6 +48,23 @@ func (it BaseCreateContractAccountItem) IsValid([]byte) error {
 		return util.ErrInvalid.Errorf("invalid AddressHint")
 	}
 
+	if it.addressType == types.AddressHint.Type() {
+		if it.keys.Hint().Equal(types.EthAccountKeysHint) {
+			return util.ErrInvalid.Errorf(
+				"keys type not matched with address type, %v, %v",
+				it.keys.Hint().Type(),
+				it.addressType,
+			)
+		}
+	} else {
+		if it.keys.Hint().Equal(types.EthAccountKeysHint) {
+			return util.ErrInvalid.Errorf(
+				"keys type not matched with address type, %v, %v",
+				it.keys.Hint().Type(),
+				it.addressType,
+			)
+		}
+	}
 	founds := map[types.CurrencyID]struct{}{}
 	for i := range it.amounts {
 		am := it.amounts[i]

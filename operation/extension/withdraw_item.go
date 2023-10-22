@@ -33,11 +33,15 @@ func (it BaseWithdrawItem) Bytes() []byte {
 }
 
 func (it BaseWithdrawItem) IsValid([]byte) error {
+	if err := it.BaseHinter.IsValid(nil); err != nil {
+		return err
+	}
+
 	if err := util.CheckIsValiders(nil, false, it.target); err != nil {
 		return err
 	}
 
-	if n := len(it.amounts); n == 0 {
+	if len(it.amounts) < 1 {
 		return util.ErrInvalid.Errorf("empty amounts")
 	}
 

@@ -51,11 +51,11 @@ func (fact MintFact) IsValid(b []byte) error {
 		return err
 	}
 
-	switch l := len(fact.items); {
-	case l < 1:
+	switch n := len(fact.items); {
+	case n < 1:
 		return util.ErrInvalid.Errorf("empty items for MintFact")
-	case l > maxMintItem:
-		return util.ErrInvalid.Errorf("too many items; %d > %d", l, maxMintItem)
+	case n > maxMintItem:
+		return util.ErrInvalid.Errorf("too many items; %d > %d", n, maxMintItem)
 	}
 
 	founds := map[string]struct{}{}

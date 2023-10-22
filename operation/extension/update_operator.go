@@ -14,6 +14,8 @@ var (
 	UpdateOperatorHint     = hint.MustNewHint("mitum-currency-contract-account-update-operator-operation-v0.0.1")
 )
 
+const MaxOperators = 10
+
 type UpdateOperatorFact struct {
 	base.BaseFact
 	sender    base.Address
@@ -68,8 +70,10 @@ func (fact UpdateOperatorFact) IsValid(b []byte) error {
 		return util.ErrInvalid.Errorf("invalid fact: %v", err)
 	}
 
-	if fact.operators == nil {
+	if n := len(fact.operators); n < 1 {
 		return util.ErrInvalid.Errorf("empty operators")
+	} else if n > MaxOperators {
+		return util.ErrInvalid.Errorf("operators, %d over max, %d", n, MaxOperators)
 	}
 
 	operatorsMap := make(map[string]struct{})
