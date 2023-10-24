@@ -2,6 +2,7 @@ package bsonenc
 
 import (
 	"encoding"
+	"fmt"
 	"io"
 	"reflect"
 
@@ -193,20 +194,29 @@ func (enc *Encoder) DecodeMap(b []byte) (map[string]interface{}, error) {
 	if isNil(b) {
 		return nil, nil
 	}
-
+	fmt.Printf("%s\n", b)
 	var r map[string]bson.Raw
 	if err := bson.Unmarshal(b, &r); err != nil {
 		return nil, errors.Wrap(err, "decode map")
 	}
-
+	fmt.Println(r)
 	s := map[string]interface{}{}
-	for i := range r {
-		j, err := enc.Decode(r[i])
+	for k, v := range r {
+		var i interface{}
+		_, err := enc.guessHint(v)
 		if err != nil {
-			return nil, errors.Wrap(err, "decode map")
+			err := enc.Unmarshal(v, i)
+			if err != nil {
+				return nil, err
+			}
+			s[k] = i
+		} else {
+			j, err := enc.Decode(v)
+			if err != nil {
+				return nil, err
+			}
+			s[k] = j
 		}
-
-		s[i] = j
 	}
 
 	return s, nil

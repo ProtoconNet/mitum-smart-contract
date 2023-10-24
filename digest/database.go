@@ -504,9 +504,10 @@ func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, er
 		},
 		options.FindOne().SetSort(util.NewBSONFilter("height", -1).D()),
 	); err != nil {
-		if errors.Is(err, mitumutil.NewIDError("not found")) {
-			return rs, false, nil
-		}
+		//); err != nil {
+		//	if errors.Is(err, mitumutil.NewIDError("not found")) {
+		//		return rs, false, nil
+		//	}
 
 		return rs, false, err
 	}
@@ -743,7 +744,7 @@ func (st *Database) currencies() ([]string, error) {
 			},
 			opt,
 		); err != nil {
-			if err.Error() == mitumutil.NewIDError("mongo: no documents in result").Error() {
+			if errors.Is(err, mongo.ErrNoDocuments) {
 				break
 			}
 
@@ -783,13 +784,13 @@ func (st *Database) ManifestByHeight(height base.Height) (base.Manifest, uint64,
 			return nil
 		},
 	); err != nil {
-		return nil, 0, err
+		return nil, 0, mitumutil.ErrNotFound.WithMessage(err, "block manifest")
 	}
 
 	if m != nil {
 		return m, operations, nil
 	} else {
-		return nil, 0, errors.Errorf("manifest is nil")
+		return nil, 0, mitumutil.ErrNotFound.Wrap(errors.Errorf("block manifest"))
 	}
 }
 
@@ -811,13 +812,13 @@ func (st *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, uint64, 
 			return nil
 		},
 	); err != nil {
-		return nil, 0, err
+		return nil, 0, mitumutil.ErrNotFound.WithMessage(err, "block manifest")
 	}
 
 	if m != nil {
 		return m, operations, nil
 	} else {
-		return nil, 0, errors.Errorf("manifest is nil")
+		return nil, 0, mitumutil.ErrNotFound.Errorf("block manifest")
 	}
 }
 
@@ -841,7 +842,7 @@ func (st *Database) currency(cid string) (types.CurrencyDesign, base.State, erro
 		},
 		opt,
 	); err != nil {
-		return types.CurrencyDesign{}, nil, err
+		return types.CurrencyDesign{}, nil, mitumutil.ErrNotFound.WithMessage(err, "currency in handleCurrency")
 	}
 
 	if sta != nil {

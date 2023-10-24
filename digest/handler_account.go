@@ -52,11 +52,11 @@ func (hd *Handlers) handleAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hd *Handlers) handleAccountInGroup(address base.Address) (interface{}, error) {
-	switch va, found, err := hd.database.Account(address); {
+	switch va, _, err := hd.database.Account(address); {
 	case err != nil:
 		return nil, err
-	case !found:
-		return nil, mitumutil.ErrNotFound
+	//case !found:
+	//	return nil, mitumutil.ErrNotFound
 	default:
 		hal, err := hd.buildAccountHal(va)
 		if err != nil {

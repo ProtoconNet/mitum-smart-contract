@@ -23,6 +23,10 @@ var JSON = jsoniter.Config{
 	ValidateJsonRawMessage: false,
 }.Froze()
 
+var (
+	ErrBadRequest = util.NewIDError("bad request")
+)
+
 func IsAccountState(st base.State) (types.Account, bool, error) {
 	if !currency.IsStateAccountKey(st.Key()) {
 		return types.Account{}, false, nil
@@ -193,9 +197,9 @@ func HTTP2WriteCache(w http.ResponseWriter, key string, expire time.Duration) {
 func HTTP2HandleError(w http.ResponseWriter, err error) {
 	status := http.StatusInternalServerError
 	switch {
-	case errors.Is(err, util.NewIDError("not found")):
+	case errors.Is(err, util.ErrNotFound):
 		status = http.StatusNotFound
-	case errors.Is(err, util.NewIDError("bad request")):
+	case errors.Is(err, ErrBadRequest):
 		status = http.StatusBadRequest
 	case errors.Is(err, util.NewIDError("not supported")):
 		status = http.StatusInternalServerError

@@ -39,7 +39,7 @@ func (hd *Handlers) handleBlockInGroup(vars map[string]string) ([]byte, error) {
 	if s, found := vars["height"]; found {
 		height, err := parseHeightFromPath(s)
 		if err != nil {
-			return nil, mitumutil.NewIDError("bad request").Errorf("invalid height found for block by height: %v", err)
+			return nil, ErrBadRequest.Errorf("invalid height found for block by height: %v", err)
 		}
 
 		h, err := hd.buildBlockHalByHeight(height)

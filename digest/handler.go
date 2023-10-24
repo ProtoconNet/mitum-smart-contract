@@ -47,6 +47,9 @@ var (
 	HandlerPathOperationBuildSign         = `/builder/operation/sign`
 	HandlerPathOperationBuild             = `/builder/operation`
 	HandlerPathSend                       = `/builder/send`
+	HandelrPathEventOperation             = `/event/operation/{hash:(?i)[0-9a-z][0-9a-z]+}`
+	HandelrPathEventAccount               = `/event/account/{address:(?i)` + base.REStringAddressString + `}`
+	HandlerPathEventContract              = `/event/contract/{address:(?i)` + base.REStringAddressString + `}`
 )
 
 var (
