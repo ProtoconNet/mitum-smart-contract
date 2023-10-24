@@ -44,7 +44,7 @@ func NewRegisterCurrencyProcessor(threshold base.Threshold) types.GetNewProcesso
 		nopp := registerCurrencyProcessorPool.Get()
 		opp, ok := nopp.(*RegisterCurrencyProcessor)
 		if !ok {
-			return nil, e.Wrap(errors.Errorf("expected RegisterCurrencyProcessor, not %T", nopp))
+			return nil, e.Wrap(errors.Errorf("expected %T, not %T", &RegisterCurrencyProcessor{}, nopp))
 		}
 
 		b, err := base.NewBaseOperationProcessor(
@@ -97,7 +97,11 @@ func (opp *RegisterCurrencyProcessor) PreProcess(
 
 	design := fact.currency
 
-	_, err := state.NotExistsState(currency.StateKeyCurrencyDesign(design.Currency()), design.Currency().String(), getStateFunc)
+	_, err := state.NotExistsState(
+		currency.StateKeyCurrencyDesign(design.Currency()),
+		design.Currency().String(),
+		getStateFunc,
+	)
 	if err != nil {
 		return ctx, nil, err
 	}
@@ -137,7 +141,7 @@ func (opp *RegisterCurrencyProcessor) Process(
 ) {
 	fact, ok := op.Fact().(RegisterCurrencyFact)
 	if !ok {
-		return nil, nil, errors.Errorf("not RegisterCurrencyFact, %T", op.Fact())
+		return nil, nil, errors.Errorf("expected %T, not %T", RegisterCurrencyFact{}, op.Fact())
 	}
 
 	sts := make([]base.StateMergeValue, 4)

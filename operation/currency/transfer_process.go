@@ -150,15 +150,17 @@ func (opp *TransferProcessor) PreProcess(
 ) (context.Context, base.OperationProcessReasonError, error) {
 	fact, ok := op.Fact().(TransferFact)
 	if !ok {
-		return ctx, base.NewBaseOperationProcessReasonError("expected TransferFact, not %T", op.Fact()), nil
+		return ctx, base.NewBaseOperationProcessReasonError(
+			"expected %T, not %T", TransferFact{}, op.Fact(),
+		), nil
 	}
 
 	if err := state.CheckExistsState(currency.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("check existence of sender %v; %w", fact.sender, err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("sender account not found, %v; %w", fact.sender, err), nil
 	}
 
 	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot transfer amounts, %v; %w", fact.Sender(), err), nil
+		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot transfer currency, %v; %w", fact.Sender(), err), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
@@ -169,7 +171,7 @@ func (opp *TransferProcessor) PreProcess(
 		cip := transferItemProcessorPool.Get()
 		c, ok := cip.(*TransferItemProcessor)
 		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("expected TransferItemProcessor, not %T", cip), nil
+			return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", &TransferItemProcessor{}, cip), nil
 		}
 
 		c.h = op.Hash()
@@ -190,7 +192,7 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 ) {
 	fact, ok := op.Fact().(TransferFact)
 	if !ok {
-		return nil, base.NewBaseOperationProcessReasonError("expected TransferFact, not %T", op.Fact()), nil
+		return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", TransferFact{}, op.Fact()), nil
 	}
 
 	var (
@@ -212,7 +214,7 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 		cip := transferItemProcessorPool.Get()
 		c, ok := cip.(*TransferItemProcessor)
 		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("expected TransferItemProcessor, not %T", cip), nil
+			return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", &TransferItemProcessor{}, cip), nil
 		}
 
 		c.h = op.Hash()
@@ -238,7 +240,7 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 	for cid := range senderBalSts {
 		v, ok := senderBalSts[cid].Value().(currency.BalanceStateValue)
 		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", senderBalSts[cid].Value()), nil
+			return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", currency.BalanceStateValue{}, senderBalSts[cid].Value()), nil
 		}
 
 		var stmv base.StateMergeValue
@@ -254,7 +256,7 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 			)
 			r, ok := feeReceiveBalSts[cid].Value().(currency.BalanceStateValue)
 			if !ok {
-				return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", feeReceiveBalSts[cid].Value()), nil
+				return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", currency.BalanceStateValue{}, feeReceiveBalSts[cid].Value()), nil
 			}
 			stmvs = append(
 				stmvs,
@@ -286,7 +288,7 @@ func (opp *TransferProcessor) Close() error {
 func (opp *TransferProcessor) calculateItemsFee(op base.Operation, getStateFunc base.GetStateFunc) (map[types.CurrencyID]base.State, map[types.CurrencyID][2]common.Big, error) {
 	fact, ok := op.Fact().(TransferFact)
 	if !ok {
-		return nil, nil, errors.Errorf("expected TransferFact, not %T", op.Fact())
+		return nil, nil, errors.Errorf("expected %T, not %T", TransferFact{}, op.Fact())
 	}
 	items := make([]AmountsItem, len(fact.items))
 	for i := range fact.items {

@@ -44,7 +44,7 @@ func NewUpdateCurrencyProcessor(threshold base.Threshold) types.GetNewProcessor 
 		nopp := updateCurrencyProcessorPool.Get()
 		opp, ok := nopp.(*UpdateCurrencyProcessor)
 		if !ok {
-			return nil, e.Wrap(errors.Errorf("expected UpdateCurrencyProcessor, not %T", nopp))
+			return nil, e.Wrap(errors.Errorf("expected %T, not %T", &UpdateCurrencyProcessor{}, nopp))
 		}
 
 		b, err := base.NewBaseOperationProcessor(
@@ -83,7 +83,7 @@ func (opp *UpdateCurrencyProcessor) PreProcess(
 
 	nop, ok := op.(UpdateCurrency)
 	if !ok {
-		return ctx, nil, e.Errorf("not UpdateCurrency, %T", op)
+		return ctx, nil, e.Errorf("expected %T, not %T", UpdateCurrency{}, op)
 	}
 
 	if err := base.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, nop.NodeSigns()); err != nil {
@@ -119,7 +119,7 @@ func (opp *UpdateCurrencyProcessor) Process(
 ) {
 	fact, ok := op.Fact().(UpdateCurrencyFact)
 	if !ok {
-		return nil, nil, errors.Errorf("not UpdateCurrencyFact, %T", op.Fact())
+		return nil, nil, errors.Errorf("expected %T, not %T", UpdateCurrencyFact{}, op.Fact())
 	}
 
 	sts := make([]base.StateMergeValue, 1)

@@ -38,7 +38,7 @@ func NewMintProcessor(threshold base.Threshold) types.GetNewProcessor {
 		nopp := mintProcessorPool.Get()
 		opp, ok := nopp.(*MintProcessor)
 		if !ok {
-			return nil, e.Errorf("expected MintProcessor, not %T", nopp)
+			return nil, e.Errorf("expected %T, not %T", &MintProcessor{}, nopp)
 		}
 
 		b, err := base.NewBaseOperationProcessor(
@@ -77,12 +77,12 @@ func (opp *MintProcessor) PreProcess(
 
 	nop, ok := op.(Mint)
 	if !ok {
-		return ctx, nil, e.Errorf("expected Mint, not %T", op)
+		return ctx, nil, e.Errorf("expected %T, not %T", Mint{}, op)
 	}
 
 	fact, ok := op.Fact().(MintFact)
 	if !ok {
-		return ctx, nil, e.Errorf("expected MintFact, not %T", op.Fact())
+		return ctx, nil, e.Errorf("expected %T, not %T", MintFact{}, op.Fact())
 	}
 
 	if err := base.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, nop.NodeSigns()); err != nil {
@@ -99,12 +99,20 @@ func (opp *MintProcessor) PreProcess(
 
 		err = state.CheckExistsState(currency.StateKeyAccount(item.Receiver()), getStateFunc)
 		if err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("receiver not found, %v; %v", item.Receiver(), err.Error()), nil
+			return ctx, base.NewBaseOperationProcessReasonError(
+				"receiver account not found, %v; %v",
+				item.Receiver(),
+				err.Error(),
+			), nil
 		}
 
 		err = state.CheckNotExistsState(extension.StateKeyContractAccount(item.Receiver()), getStateFunc)
 		if err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be mint receiver, %v; %w", item.Receiver(), err), nil
+			return ctx, base.NewBaseOperationProcessReasonError(
+				"contract account cannot be mint receiver, %v; %w",
+				item.Receiver(),
+				err,
+			), nil
 		}
 	}
 
@@ -119,7 +127,7 @@ func (opp *MintProcessor) Process(
 
 	fact, ok := op.Fact().(MintFact)
 	if !ok {
-		return nil, nil, e.Errorf("expected MintFact, not %T", op.Fact())
+		return nil, nil, e.Errorf("expected %T, not %T", MintFact{}, op.Fact())
 	}
 
 	var sts []base.StateMergeValue
@@ -134,7 +142,11 @@ func (opp *MintProcessor) Process(
 		k := currency.StateKeyBalance(item.Receiver(), item.Amount().Currency())
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
-			return nil, base.NewBaseOperationProcessReasonError("find receiver balance state, %v; %w", k, err), nil
+			return nil, base.NewBaseOperationProcessReasonError(
+				"find receiver account balance state, %v; %w",
+				k,
+				err,
+			), nil
 		case !found:
 			ab = types.NewZeroAmount(item.Amount().Currency())
 		default:

@@ -69,6 +69,18 @@ func (ac Account) Hash() util.Hash {
 	return ac.h
 }
 
+func (ac Account) IsValid([]byte) error {
+	if err := ac.BaseHinter.IsValid(nil); err != nil {
+		return err
+	}
+
+	if err := util.CheckIsValiders(nil, false, ac.address, ac.keys); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (ac Account) GenerateHash() util.Hash {
 	return valuehash.NewSHA256(ac.Bytes())
 }

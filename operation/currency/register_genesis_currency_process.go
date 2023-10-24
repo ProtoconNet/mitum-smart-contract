@@ -21,7 +21,7 @@ func (op RegisterGenesisCurrency) Process(
 ) {
 	fact, ok := op.Fact().(RegisterGenesisCurrencyFact)
 	if !ok {
-		return nil, nil, errors.Errorf("expected RegisterGenesisCurrencyFact, not %T", op.Fact())
+		return nil, nil, errors.Errorf("expected %T, not %T", RegisterGenesisCurrencyFact{}, op.Fact())
 	}
 
 	newAddress, err := fact.Address()

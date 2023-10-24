@@ -17,7 +17,6 @@ type ContractAccountStatus struct {
 	hint.BaseHinter
 	owner     base.Address
 	isActive  bool
-	design    hint.Hint
 	operators []base.Address
 }
 
@@ -57,6 +56,13 @@ func (cs ContractAccountStatus) GenerateHash() util.Hash {
 }
 
 func (cs ContractAccountStatus) IsValid([]byte) error { // nolint:revive
+	if err := util.CheckIsValiders(nil, false,
+		cs.BaseHinter,
+		cs.owner,
+	); err != nil {
+		return err
+	}
+
 	return nil
 }
 
