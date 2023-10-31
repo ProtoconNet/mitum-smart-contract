@@ -1,8 +1,10 @@
 package digest
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"net"
 	"net/http"
 	"sync"
@@ -10,7 +12,12 @@ import (
 
 	"github.com/ProtoconNet/mitum-currency/v3/digest/network"
 	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
+	"github.com/ProtoconNet/mitum2/base"
+	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
+	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -18,20 +25,29 @@ import (
 	"golang.org/x/net/http2"
 )
 
+type RequestWrapper struct {
+	//Response *http.ResponseWriter
+	body *bytes.Buffer
+}
+
 type HTTP2Server struct {
 	sync.RWMutex
 	*logging.Logging
 	*mitumutil.ContextDaemon
 	bind             string
 	host             string
+	networkID        base.NetworkID
+	queue            chan RequestWrapper
 	srv              *http.Server
 	idleTimeout      time.Duration
 	activeTimeout    time.Duration
 	keepAliveTimeout time.Duration
 	router           *mux.Router
+	client           func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error)
+	enc              *jsonenc.Encoder
 }
 
-func NewHTTP2Server(bind, host string, certs []tls.Certificate) (*HTTP2Server, error) {
+func NewHTTP2Server(bind, host string, certs []tls.Certificate, enc *jsonenc.Encoder, networkID base.NetworkID) (*HTTP2Server, error) {
 	if err := util.CheckBindIsOpen("tcp", bind, time.Second*1); err != nil {
 		return nil, errors.Wrap(err, "open digest server")
 	}
@@ -43,10 +59,13 @@ func NewHTTP2Server(bind, host string, certs []tls.Certificate) (*HTTP2Server, e
 		}),
 		bind:             bind,
 		host:             host,
+		networkID:        networkID,
+		queue:            make(chan RequestWrapper, 1000),
 		idleTimeout:      idleTimeout,     // TODO can be configurable
 		activeTimeout:    time.Minute * 1, // TODO can be configurable
 		keepAliveTimeout: time.Minute * 1, // TODO can be configurable
 		router:           mux.NewRouter(),
+		enc:              enc,
 	}
 
 	srv, err := newHTTP2Server(sv, certs)
@@ -146,6 +165,15 @@ func (sv *HTTP2Server) start(ctx context.Context) error {
 		errchan <- sv.srv.Serve(listener)
 	}()
 
+	go func() {
+		for {
+			select {
+			case req := <-sv.queue:
+				sv.HandleRequest(req)
+			}
+		}
+	}()
+
 	select {
 	case err := <-errchan:
 		if err != nil && errors.Is(err, http.ErrServerClosed) {
@@ -197,6 +225,77 @@ func (sv *HTTP2Server) idleTimeoutHook() func(net.Conn, http.ConnState) {
 			}()
 		})
 	}
+}
+
+func (sv *HTTP2Server) Queue() chan RequestWrapper {
+	return sv.queue
+}
+
+func (sv *HTTP2Server) HandleRequest(wrapper RequestWrapper) {
+	var v json.RawMessage
+	if err := json.Unmarshal(wrapper.body.Bytes(), &v); err != nil {
+		return
+	} else if hinter, err := sv.enc.Decode(wrapper.body.Bytes()); err != nil {
+		return
+	} else if err := sv.sendItem(hinter); err != nil {
+		return
+	}
+}
+
+func (sv *HTTP2Server) sendItem(v interface{}) error {
+	//switch t := v.(type) {
+	//case base.Operation:
+	//	if err := t.IsValid(sv.networkID); err != nil {
+	//		return nil, err
+	//	}
+	//default:
+	//	return nil, errors.Errorf("unsupported message type, %T", v)
+	//}
+
+	return sv.sendOperation(v)
+}
+
+func (sv *HTTP2Server) sendOperation(v interface{}) error {
+	op, ok := v.(base.Operation)
+	if !ok {
+		return errors.Errorf("expected Operation, not %T", v)
+	}
+
+	client, memberList, err := sv.client()
+
+	switch {
+	case err != nil:
+		return err
+
+	default:
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*9)
+		defer cancel()
+
+		var nodeList []quicstream.ConnInfo
+		memberList.Members(func(node quicmemberlist.Member) bool {
+			nodeList = append(nodeList, node.ConnInfo())
+			return true
+		})
+		for i := range nodeList {
+			_, err := client.SendOperation(ctx, nodeList[i], op)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (sv *HTTP2Server) buildHal(op base.Operation) (Hal, error) {
+	var hal Hal = NewBaseHal(op, HalLink{})
+
+	return hal, nil
+}
+
+func (sv *HTTP2Server) SetNetworkClientFunc(f func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error)) *HTTP2Server {
+	sv.client = f
+	return sv
 }
 
 type tcpKeepAliveListener struct {

@@ -351,7 +351,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 
 	router := dnt.Router()
 
-	handlers, err := cmd.setDigestDefaultHandlers(ctx, params, cache, router)
+	handlers, err := cmd.setDigestDefaultHandlers(ctx, params, cache, router, dnt.Queue())
 	if err != nil {
 		return ctx, err
 	}
@@ -381,13 +381,14 @@ func (cmd *RunCommand) setDigestDefaultHandlers(
 	params *launch.LocalParams,
 	cache digest.Cache,
 	router *mux.Router,
+	queue chan digest.RequestWrapper,
 ) (*digest.Handlers, error) {
 	var st *digest.Database
 	if err := util.LoadFromContext(ctx, ContextValueDigestDatabase, &st); err != nil {
 		return nil, err
 	}
 
-	handlers := digest.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router)
+	handlers := digest.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router, queue)
 
 	h, err := cmd.setDigestNetworkClient(ctx, params, handlers)
 	if err != nil {

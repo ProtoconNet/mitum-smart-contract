@@ -47,6 +47,7 @@ var (
 	HandlerPathOperationBuildSign         = `/builder/operation/sign`
 	HandlerPathOperationBuild             = `/builder/operation`
 	HandlerPathSend                       = `/builder/send`
+	HandlerPathQueueSend                  = `/builder/send/queue`
 	HandelrPathEventOperation             = `/event/operation/{hash:(?i)[0-9a-z][0-9a-z]+}`
 	HandelrPathEventAccount               = `/event/account/{address:(?i)` + base.REStringAddressString + `}`
 	HandlerPathEventContract              = `/event/contract/{address:(?i)` + base.REStringAddressString + `}`
@@ -74,6 +75,7 @@ type Handlers struct {
 	enc             encoder.Encoder
 	database        *Database
 	cache           Cache
+	queue           chan RequestWrapper
 	nodeInfoHandler NodeInfoHandler
 	send            func(interface{}) (base.Operation, error)
 	client          func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error)
@@ -92,6 +94,7 @@ func NewHandlers(
 	st *Database,
 	cache Cache,
 	router *mux.Router,
+	queue chan RequestWrapper,
 ) *Handlers {
 	var log *logging.Logging
 	if err := util.LoadFromContextOK(ctx, launch.LoggingContextKey, &log); err != nil {
@@ -105,6 +108,7 @@ func NewHandlers(
 		enc:             enc,
 		database:        st,
 		cache:           cache,
+		queue:           queue,
 		router:          router,
 		routes:          map[string]*mux.Route{},
 		itemsLimiter:    DefaultItemsLimiter,
@@ -185,6 +189,8 @@ func (hd *Handlers) setHandlers() {
 	// _ = hd.setHandler(HandlerPathOperationBuild, hd.handleOperationBuild, true).
 	// 	Methods(http.MethodOptions, http.MethodGet, http.MethodPost)
 	_ = hd.setHandler(HandlerPathSend, hd.handleSend, false).
+		Methods(http.MethodOptions, http.MethodPost)
+	_ = hd.setHandler(HandlerPathQueueSend, hd.handleQueueSend, false).
 		Methods(http.MethodOptions, http.MethodPost)
 	_ = hd.setHandler(HandlerPathNodeInfo, hd.handleNodeInfo, true).
 		Methods(http.MethodOptions, "GET")

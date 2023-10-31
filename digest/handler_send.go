@@ -14,11 +14,16 @@ import (
 	"github.com/pkg/errors"
 )
 
-//func (hd *Handlers) SetSend(f func(interface{}) (base.Operation, error)) *Handlers {
-//	hd.send = f
-//
-//	return hd
-//}
+func (hd *Handlers) handleQueueSend(w http.ResponseWriter, r *http.Request) {
+	body := &bytes.Buffer{}
+	if _, err := io.Copy(body, r.Body); err != nil {
+		HTTP2ProblemWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+	var req = RequestWrapper{body: body}
+	hd.queue <- req
+	HTTP2WriteHal(hd.enc, w, NewBaseHal("Send operation successfully", HalLink{}), http.StatusOK)
+}
 
 func (hd *Handlers) handleSend(w http.ResponseWriter, r *http.Request) {
 	body := &bytes.Buffer{}
