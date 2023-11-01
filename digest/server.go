@@ -134,6 +134,13 @@ func (sv *HTTP2Server) Router() *mux.Router {
 	return sv.router
 }
 
+func (sv *HTTP2Server) SetEncoder(enc *jsonenc.Encoder) {
+	sv.Lock()
+	defer sv.Unlock()
+
+	sv.enc = enc
+}
+
 func (sv *HTTP2Server) SetRouter(router *mux.Router) {
 	sv.Lock()
 	defer sv.Unlock()
