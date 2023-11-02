@@ -1013,16 +1013,27 @@ func (st *Database) filterAccountByPublickey(
 func (st *Database) CleanByHeightColName(
 	ctx context.Context,
 	height base.Height,
-	colName, key, value string,
+	colName string,
+	args ...string,
 ) error {
 	if height <= base.GenesisHeight {
 		return st.clean(ctx)
+	} else if len(args)%2 != 0 {
+		return errors.Errorf("invalid")
 	}
 
 	opts := options.BulkWrite().SetOrdered(true)
-	removeByHeight := mongo.NewDeleteManyModel().SetFilter(
-		bson.M{key: value, "height": bson.M{"$lte": height}},
-	)
+	var filter = bson.M{}
+
+	for i := 0; i < len(args); i += 2 {
+		filter[args[i]] = args[i+1]
+	}
+	filter["height"] = bson.M{"$lte": height}
+
+	//removeByHeight := mongo.NewDeleteManyModel().SetFilter(
+	//	bson.M{key: value, "height": bson.M{"$lte": height}},
+	//)
+	removeByHeight := mongo.NewDeleteManyModel().SetFilter(filter)
 
 	res, err := st.database.Client().Collection(colName).BulkWrite(
 		ctx,

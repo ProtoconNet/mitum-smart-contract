@@ -64,7 +64,7 @@ func NewDigester(st *Database, root string, errChan chan error) *Digester {
 		}),
 		database:    st,
 		localfsRoot: root,
-		blockChan:   make(chan base.BlockMap, 100),
+		blockChan:   make(chan base.BlockMap, 200),
 		errChan:     errChan,
 	}
 
