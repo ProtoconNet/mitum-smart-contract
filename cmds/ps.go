@@ -3,6 +3,8 @@ package cmds
 import (
 	"context"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"io"
 	"os"
 	"path/filepath"
@@ -103,139 +105,163 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 		return pctx, err
 	}
 
-	_ = set.Add(currency.CreateAccountHint, func(height base.Height) (base.OperationProcessor, error) {
-		return opr.New(
-			height,
-			db.State,
-			nil,
-			nil,
-		)
-	})
+	_ = set.Add(currency.CreateAccountHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return opr.New(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
-	_ = set.Add(currency.UpdateKeyHint, func(height base.Height) (base.OperationProcessor, error) {
-		return opr.New(
-			height,
-			db.State,
-			nil,
-			nil,
-		)
-	})
+	_ = set.Add(currency.UpdateKeyHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return opr.New(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
-	_ = set.Add(currency.TransferHint, func(height base.Height) (base.OperationProcessor, error) {
-		return opr.New(
-			height,
-			db.State,
-			nil,
-			nil,
-		)
-	})
+	_ = set.Add(currency.TransferHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return opr.New(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
-	_ = set.Add(currency.RegisterCurrencyHint, func(height base.Height) (base.OperationProcessor, error) {
-		return opr.New(
-			height,
-			db.State,
-			nil,
-			nil,
-		)
-	})
+	_ = set.Add(currency.RegisterCurrencyHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return opr.New(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
-	_ = set.Add(currency.UpdateCurrencyHint, func(height base.Height) (base.OperationProcessor, error) {
-		return opr.New(
-			height,
-			db.State,
-			nil,
-			nil,
-		)
-	})
+	_ = set.Add(currency.UpdateCurrencyHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return opr.New(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
-	_ = set.Add(currency.MintHint, func(height base.Height) (base.OperationProcessor, error) {
-		return opr.New(
-			height,
-			db.State,
-			nil,
-			nil,
-		)
-	})
+	_ = set.Add(currency.MintHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return opr.New(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
-	_ = set.Add(extension.CreateContractAccountHint, func(height base.Height) (base.OperationProcessor, error) {
-		return opr.New(
-			height,
-			db.State,
-			nil,
-			nil,
-		)
-	})
+	_ = set.Add(extension.CreateContractAccountHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return opr.New(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
-	_ = set.Add(extension.UpdateOperatorHint, func(height base.Height) (base.OperationProcessor, error) {
-		return opr.New(
-			height,
-			db.State,
-			nil,
-			nil,
-		)
-	})
+	_ = set.Add(extension.UpdateOperatorHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return opr.New(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
-	_ = set.Add(extension.WithdrawHint, func(height base.Height) (base.OperationProcessor, error) {
-		return opr.New(
-			height,
-			db.State,
-			nil,
-			nil,
-		)
-	})
+	_ = set.Add(extension.WithdrawHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return opr.New(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
-	_ = set.Add(isaacoperation.SuffrageCandidateHint, func(height base.Height) (base.OperationProcessor, error) {
-		policy := db.LastNetworkPolicy()
-		if policy == nil { // NOTE Usually it means empty block data
-			return nil, nil
-		}
+	_ = set.Add(isaacoperation.SuffrageCandidateHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			policy := db.LastNetworkPolicy()
+			if policy == nil { // NOTE Usually it means empty block data
+				return nil, nil
+			}
 
-		return isaacoperation.NewSuffrageCandidateProcessor(
-			height,
-			db.State,
-			limiterF,
-			nil,
-			policy.SuffrageCandidateLifespan(),
-		)
-	})
+			return isaacoperation.NewSuffrageCandidateProcessor(
+				height,
+				getStatef,
+				limiterF,
+				nil,
+				policy.SuffrageCandidateLifespan(),
+			)
+		})
 
-	_ = set.Add(isaacoperation.SuffrageJoinHint, func(height base.Height) (base.OperationProcessor, error) {
-		policy := db.LastNetworkPolicy()
-		if policy == nil { // NOTE Usually it means empty block data
-			return nil, nil
-		}
+	_ = set.Add(isaacoperation.SuffrageJoinHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			policy := db.LastNetworkPolicy()
+			if policy == nil { // NOTE Usually it means empty block data
+				return nil, nil
+			}
 
-		return isaacoperation.NewSuffrageJoinProcessor(
-			height,
-			isaacParams.Threshold(),
-			db.State,
-			nil,
-			nil,
-		)
-	})
+			return isaacoperation.NewSuffrageJoinProcessor(
+				height,
+				isaacParams.Threshold(),
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
-	_ = set.Add(isaac.SuffrageExpelOperationHint, func(height base.Height) (base.OperationProcessor, error) {
-		policy := db.LastNetworkPolicy()
-		if policy == nil { // NOTE Usually it means empty block data
-			return nil, nil
-		}
+	_ = set.Add(isaac.SuffrageExpelOperationHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			policy := db.LastNetworkPolicy()
+			if policy == nil { // NOTE Usually it means empty block data
+				return nil, nil
+			}
 
-		return isaacoperation.NewSuffrageExpelProcessor(
-			height,
-			db.State,
-			nil,
-			nil,
-		)
-	})
+			return isaacoperation.NewSuffrageExpelProcessor(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
-	_ = set.Add(isaacoperation.SuffrageDisjoinHint, func(height base.Height) (base.OperationProcessor, error) {
-		return isaacoperation.NewSuffrageDisjoinProcessor(
-			height,
-			db.State,
-			nil,
-			nil,
-		)
-	})
+	_ = set.Add(isaacoperation.SuffrageDisjoinHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return isaacoperation.NewSuffrageDisjoinProcessor(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
+
+	_ = set.Add(isaacoperation.NetworkPolicyHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return isaacoperation.NewNetworkPolicyProcessor(
+				height,
+				isaacParams.Threshold(),
+				getStatef,
+				nil,
+				nil,
+			)
+		})
 
 	var f ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
 
@@ -256,6 +282,8 @@ func PGenerateGenesis(pctx context.Context) (context.Context, error) {
 	var local base.LocalNode
 	var isaacParams *isaac.Params
 	var db isaac.Database
+	var fsnodeinfo launch.NodeInfo
+	var eventLogging *launch.EventLogging
 
 	if err := util.LoadFromContextOK(pctx,
 		launch.LoggingContextKey, &log,
@@ -265,8 +293,19 @@ func PGenerateGenesis(pctx context.Context) (context.Context, error) {
 		launch.LocalContextKey, &local,
 		launch.ISAACParamsContextKey, &isaacParams,
 		launch.CenterDatabaseContextKey, &db,
+		launch.FSNodeInfoContextKey, &fsnodeinfo,
+		launch.EventLoggingContextKey, &eventLogging,
 	); err != nil {
 		return pctx, e.Wrap(err)
+	}
+
+	var el zerolog.Logger
+
+	switch i, found := eventLogging.Logger(launch.NodeEventLoggerName); {
+	case !found:
+		return pctx, errors.Errorf("node event logger not found")
+	default:
+		el = i
 	}
 
 	g := NewGenesisBlockGenerator(
@@ -284,6 +323,8 @@ func PGenerateGenesis(pctx context.Context) (context.Context, error) {
 		return pctx, e.Wrap(err)
 	}
 
+	el.Debug().Interface("node_info", fsnodeinfo).Msg("node initialized")
+
 	return pctx, nil
 }
 
@@ -294,10 +335,10 @@ func PEncoder(pctx context.Context) (context.Context, error) {
 	jenc := jsonenc.NewEncoder()
 	benc := bsonenc.NewEncoder()
 
-	if err := encs.AddHinter(jenc); err != nil {
+	if err := encs.AddEncoder(jenc); err != nil {
 		return pctx, e.Wrap(err)
 	}
-	if err := encs.AddHinter(benc); err != nil {
+	if err := encs.AddEncoder(benc); err != nil {
 		return pctx, e.Wrap(err)
 	}
 
@@ -368,10 +409,11 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 	var proposalMaker *isaac.ProposalMaker
 	var m *quicmemberlist.Memberlist
 	var syncSourcePool *isaac.SyncSourcePool
-	var nodeInfo *isaacnetwork.NodeInfoUpdater
+	var nodeinfo *isaacnetwork.NodeInfoUpdater
 	var svVoteF isaac.SuffrageVoteFunc
 	var ballotBox *isaacstates.Ballotbox
 	var filterNotifyMsg quicmemberlist.FilterNotifyMsgFunc
+	var lvps *isaac.LastVoteproofsHandler
 
 	if err := util.LoadFromContextOK(pctx,
 		launch.LoggingContextKey, &log,
@@ -385,10 +427,11 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 		launch.ProposalMakerContextKey, &proposalMaker,
 		launch.MemberlistContextKey, &m,
 		launch.SyncSourcePoolContextKey, &syncSourcePool,
-		launch.NodeInfoContextKey, &nodeInfo,
+		launch.NodeInfoContextKey, &nodeinfo,
 		launch.SuffrageVotingVoteFuncContextKey, &svVoteF,
 		launch.BallotboxContextKey, &ballotBox,
 		launch.FilterMemberlistNotifyMsgFuncContextKey, &filterNotifyMsg,
+		launch.LastVoteproofsHandlerContextKey, &lvps,
 	); err != nil {
 		return pctx, e.Wrap(err)
 	}
@@ -508,9 +551,13 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 		isaacnetwork.HandlerPrefixExistsInStateOperationString,
 		isaacnetwork.QuicstreamHandlerExistsInStateOperation(db.ExistsInStateOperation), nil)
 
+	if vp := lvps.Last().Cap(); vp != nil {
+		_ = nodeinfo.SetLastVote(vp.Point(), vp.Result())
+	}
+
 	launch.EnsureHandlerAdd(pctx, &gerror,
 		isaacnetwork.HandlerPrefixNodeInfoString,
-		isaacnetwork.QuicstreamHandlerNodeInfo(launch.QuicstreamHandlerGetNodeInfoFunc(enc, nodeInfo)), nil)
+		isaacnetwork.QuicstreamHandlerNodeInfo(launch.QuicstreamHandlerGetNodeInfoFunc(enc, nodeinfo)), nil)
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
 		isaacnetwork.HandlerPrefixSendBallotsString,
@@ -553,20 +600,6 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 }
 
 func PStatesNetworkHandlers(pctx context.Context) (context.Context, error) {
-	var log *logging.Logging
-	var local base.LocalNode
-	var params *launch.LocalParams
-	var states *isaacstates.States
-
-	if err := util.LoadFromContext(pctx,
-		launch.LoggingContextKey, &log,
-		launch.LocalContextKey, &local,
-		launch.LocalParamsContextKey, &params,
-		launch.StatesContextKey, &states,
-	); err != nil {
-		return pctx, err
-	}
-
 	if err := launch.AttachHandlerOperation(pctx); err != nil {
 		return pctx, err
 	}
@@ -583,17 +616,5 @@ func PStatesNetworkHandlers(pctx context.Context) (context.Context, error) {
 		return pctx, err
 	}
 
-	var gerror error
-
-	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixSetAllowConsensusString,
-		isaacnetwork.QuicstreamHandlerSetAllowConsensus(
-			local.Publickey(),
-			params.ISAAC.NetworkID(),
-			states.SetAllowConsensus,
-		),
-		nil,
-	)
-
-	return pctx, gerror
+	return pctx, nil
 }

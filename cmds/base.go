@@ -56,26 +56,19 @@ func (cmd *BaseCommand) print(f string, a ...interface{}) {
 	_, _ = fmt.Fprintln(cmd.Out)
 }
 
-func PAddHinters(ctx context.Context) (context.Context, error) {
+func PAddHinters(pctx context.Context) (context.Context, error) {
 	e := util.StringError("add hinters")
 
-	var enc encoder.Encoder
-	if err := util.LoadFromContextOK(ctx, launch.EncoderContextKey, &enc); err != nil {
-		return ctx, e.Wrap(err)
-	}
-	var benc encoder.Encoder
-	if err := util.LoadFromContextOK(ctx, BEncoderContextKey, &benc); err != nil {
-		return ctx, e.Wrap(err)
+	var encs *encoder.Encoders
+	if err := util.LoadFromContextOK(pctx, launch.EncodersContextKey, &encs); err != nil {
+		return pctx, e.Wrap(err)
 	}
 
-	if err := LoadHinters(enc); err != nil {
-		return ctx, e.Wrap(err)
-	}
-	if err := LoadHinters(benc); err != nil {
-		return ctx, e.Wrap(err)
+	if err := LoadHinters(encs); err != nil {
+		return pctx, e.Wrap(err)
 	}
 
-	return ctx, nil
+	return pctx, nil
 }
 
 type OperationFlags struct {

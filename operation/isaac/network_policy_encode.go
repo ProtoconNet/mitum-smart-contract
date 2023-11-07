@@ -12,7 +12,8 @@ func (p *NetworkPolicy) unpack(
 	maxOperationsInProposal uint64,
 	suffrageCandidateLifespan base.Height,
 	maxSuffrageSize uint64,
-	suffrageWithdrawLifespan base.Height,
+	suffrageExpelLifespan base.Height,
+	emptyProposalNoBlock bool,
 ) error {
 	e := util.StringError("unmarshal NetworkPolicy")
 
@@ -23,7 +24,8 @@ func (p *NetworkPolicy) unpack(
 	p.maxOperationsInProposal = maxOperationsInProposal
 	p.suffrageCandidateLifespan = suffrageCandidateLifespan
 	p.maxSuffrageSize = maxSuffrageSize
-	p.suffrageWithdrawLifespan = suffrageWithdrawLifespan
+	p.suffrageExpelLifespan = suffrageExpelLifespan
+	p.emptyProposalNoBlock = emptyProposalNoBlock
 
 	return nil
 }

@@ -17,7 +17,8 @@ func (p NetworkPolicy) MarshalBSON() ([]byte, error) {
 			"max_operations_in_proposal":  p.maxOperationsInProposal,
 			"suffrage_candidate_lifespan": p.suffrageCandidateLifespan,
 			"max_suffrage_size":           p.maxSuffrageSize,
-			"suffrage_withdraw_lifespan":  p.suffrageWithdrawLifespan,
+			"suffrage_expel_lifespan":     p.suffrageExpelLifespan,
+			"empty_proposal_no_block":     p.emptyProposalNoBlock,
 		},
 	)
 }
@@ -28,7 +29,8 @@ type NetworkPolicyBSONUnMarshaler struct {
 	MaxOperationsInProposal      uint64      `bson:"max_operations_in_proposal"`
 	SuffrageCandidateLifespan    base.Height `bson:"suffrage_candidate_lifespan"`
 	MaxSuffrageSize              uint64      `bson:"max_suffrage_size"`
-	SuffrageWithdrawLifespan     base.Height `bson:"suffrage_withdraw_lifespan"`
+	SuffrageExpelLifespan        base.Height `bson:"suffrage_expel_lifespan"`
+	EmptyProposalNoBlock         bool        `bson:"empty_proposal_no_block"`
 }
 
 func (p *NetworkPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -45,7 +47,15 @@ func (p *NetworkPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	}
 	p.BaseHinter = hint.NewBaseHinter(ht)
 
-	return p.unpack(enc, u.SuffrageCandidateLimiterRule, u.MaxOperationsInProposal, u.SuffrageCandidateLifespan, u.MaxSuffrageSize, u.SuffrageWithdrawLifespan)
+	return p.unpack(
+		enc,
+		u.SuffrageCandidateLimiterRule,
+		u.MaxOperationsInProposal,
+		u.SuffrageCandidateLifespan,
+		u.MaxSuffrageSize,
+		u.SuffrageExpelLifespan,
+		u.EmptyProposalNoBlock,
+	)
 }
 
 func (s NetworkPolicyStateValue) MarshalBSON() ([]byte, error) {

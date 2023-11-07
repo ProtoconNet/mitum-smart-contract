@@ -16,7 +16,8 @@ type networkPolicyJSONMarshaler struct {
 	MaxOperationsInProposal   uint64      `json:"max_operations_in_proposal"`
 	SuffrageCandidateLifespan base.Height `json:"suffrage_candidate_lifespan"`
 	MaxSuffrageSize           uint64      `json:"max_suffrage_size"`
-	SuffrageWithdrawLifespan  base.Height `json:"suffrage_withdraw_lifespan"`
+	SuffrageExpelLifespan     base.Height `json:"suffrage_expel_lifespan"`
+	EmptyProposalNoBlock      bool        `json:"empty_proposal_no_block"`
 }
 
 func (p NetworkPolicy) MarshalJSON() ([]byte, error) {
@@ -26,7 +27,8 @@ func (p NetworkPolicy) MarshalJSON() ([]byte, error) {
 		SuffrageCandidateLifespan:    p.suffrageCandidateLifespan,
 		SuffrageCandidateLimiterRule: p.suffrageCandidateLimiterRule,
 		MaxSuffrageSize:              p.maxSuffrageSize,
-		SuffrageWithdrawLifespan:     p.suffrageWithdrawLifespan,
+		SuffrageExpelLifespan:        p.suffrageExpelLifespan,
+		EmptyProposalNoBlock:         p.emptyProposalNoBlock,
 	})
 }
 
@@ -35,7 +37,8 @@ type networkPolicyJSONUnmarshaler struct {
 	MaxOperationsInProposal      uint64          `json:"max_operations_in_proposal"`
 	SuffrageCandidateLifespan    base.Height     `json:"suffrage_candidate_lifespan"`
 	MaxSuffrageSize              uint64          `json:"max_suffrage_size"`
-	SuffrageWithdrawLifespan     base.Height     `json:"suffrage_withdraw_lifespan"`
+	SuffrageExpelLifespan        base.Height     `json:"suffrage_expel_lifespan"`
+	EmptyProposalNoBlock         bool            `json:"empty_proposal_no_block"`
 }
 
 func (p *NetworkPolicy) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
@@ -46,7 +49,15 @@ func (p *NetworkPolicy) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return p.unpack(enc, u.SuffrageCandidateLimiterRule, u.MaxOperationsInProposal, u.SuffrageCandidateLifespan, u.MaxSuffrageSize, u.SuffrageWithdrawLifespan)
+	return p.unpack(
+		enc,
+		u.SuffrageCandidateLimiterRule,
+		u.MaxOperationsInProposal,
+		u.SuffrageCandidateLifespan,
+		u.MaxSuffrageSize,
+		u.SuffrageExpelLifespan,
+		u.EmptyProposalNoBlock,
+	)
 }
 
 type NetworkPolicyStateValueJSONMarshaler struct {

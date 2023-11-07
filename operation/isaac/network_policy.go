@@ -17,7 +17,8 @@ var (
 	// NOTE suffrage candidate can be approved within lifespan height; almost 15
 	// days(based on 5 second for one block)
 	DefaultSuffrageCandidateLifespan base.Height = 1 << 18
-	DefaultSuffrageWithdrawLifespan              = base.Height(333) //nolint:gomnd //...
+	DefaultSuffrageExpelLifespan                 = base.Height(333) //nolint:gomnd //...
+	DefaultEmptyProposalNoBlock                  = false
 )
 
 type NetworkPolicy struct {
@@ -26,7 +27,8 @@ type NetworkPolicy struct {
 	maxOperationsInProposal   uint64
 	suffrageCandidateLifespan base.Height
 	maxSuffrageSize           uint64
-	suffrageWithdrawLifespan  base.Height
+	suffrageExpelLifespan     base.Height
+	emptyProposalNoBlock      bool
 }
 
 func DefaultNetworkPolicy() NetworkPolicy {
@@ -36,7 +38,8 @@ func DefaultNetworkPolicy() NetworkPolicy {
 		suffrageCandidateLifespan:    DefaultSuffrageCandidateLifespan,
 		suffrageCandidateLimiterRule: isaac.NewFixedSuffrageCandidateLimiterRule(1),
 		maxSuffrageSize:              DefaultMaxSuffrageSize,
-		suffrageWithdrawLifespan:     DefaultSuffrageWithdrawLifespan,
+		suffrageExpelLifespan:        DefaultSuffrageExpelLifespan,
+		emptyProposalNoBlock:         DefaultEmptyProposalNoBlock,
 	}
 }
 
@@ -85,7 +88,8 @@ func (p NetworkPolicy) HashBytes() []byte {
 		p.suffrageCandidateLifespan.Bytes(),
 		util.Uint64ToBytes(p.maxSuffrageSize),
 		rule,
-		p.suffrageWithdrawLifespan.Bytes(),
+		p.suffrageExpelLifespan.Bytes(),
+		util.BoolToBytes(p.emptyProposalNoBlock),
 	)
 }
 
@@ -93,20 +97,60 @@ func (p NetworkPolicy) MaxOperationsInProposal() uint64 {
 	return p.maxOperationsInProposal
 }
 
+func (p *NetworkPolicy) SetMaxOperationsInProposal(i uint64) NetworkPolicy {
+	p.maxOperationsInProposal = i
+
+	return *p
+}
+
 func (p NetworkPolicy) SuffrageCandidateLifespan() base.Height {
 	return p.suffrageCandidateLifespan
+}
+
+func (p *NetworkPolicy) SetSuffrageCandidateLifespan(i base.Height) NetworkPolicy {
+	p.suffrageCandidateLifespan = i
+
+	return *p
 }
 
 func (p NetworkPolicy) SuffrageCandidateLimiterRule() base.SuffrageCandidateLimiterRule {
 	return p.suffrageCandidateLimiterRule
 }
 
+func (p *NetworkPolicy) SetSuffrageCandidateLimiterRule(i base.SuffrageCandidateLimiterRule) NetworkPolicy {
+	p.suffrageCandidateLimiterRule = i
+
+	return *p
+}
+
 func (p NetworkPolicy) MaxSuffrageSize() uint64 {
 	return p.maxSuffrageSize
 }
 
+func (p *NetworkPolicy) SetMaxSuffrageSize(i uint64) NetworkPolicy {
+	p.maxSuffrageSize = i
+
+	return *p
+}
+
 func (p NetworkPolicy) SuffrageExpelLifespan() base.Height {
-	return p.suffrageWithdrawLifespan
+	return p.suffrageExpelLifespan
+}
+
+func (p *NetworkPolicy) SetSuffrageExpelLifespan(i base.Height) NetworkPolicy {
+	p.suffrageExpelLifespan = i
+
+	return *p
+}
+
+func (p NetworkPolicy) EmptyProposalNoBlock() bool {
+	return p.emptyProposalNoBlock
+}
+
+func (p *NetworkPolicy) SetEmptyProposalNoBlock(i bool) NetworkPolicy {
+	p.emptyProposalNoBlock = i
+
+	return *p
 }
 
 type NetworkPolicyStateValue struct {

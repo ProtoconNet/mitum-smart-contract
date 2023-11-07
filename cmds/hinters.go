@@ -118,18 +118,34 @@ func init() {
 	)
 }
 
-func LoadHinters(enc encoder.Encoder) error {
+func LoadHinters(encs *encoder.Encoders) error {
 	for i := range Hinters {
-		if err := enc.Add(Hinters[i]); err != nil {
-			return errors.Wrap(err, "add to encoder")
+		if err := encs.AddDetail(Hinters[i]); err != nil {
+			return errors.Wrap(err, "add hinter to encoder")
 		}
 	}
 
 	for i := range SupportedProposalOperationFactHinters {
-		if err := enc.Add(SupportedProposalOperationFactHinters[i]); err != nil {
-			return errors.Wrap(err, "add to encoder")
+		if err := encs.AddDetail(SupportedProposalOperationFactHinters[i]); err != nil {
+			return errors.Wrap(err, "add supported proposal operation fact hinter to encoder")
 		}
 	}
 
 	return nil
 }
+
+//func LoadHinters(enc encoder.Encoder) error {
+//	for i := range Hinters {
+//		if err := enc.Add(Hinters[i]); err != nil {
+//			return errors.Wrap(err, "add to encoder")
+//		}
+//	}
+//
+//	for i := range SupportedProposalOperationFactHinters {
+//		if err := enc.Add(SupportedProposalOperationFactHinters[i]); err != nil {
+//			return errors.Wrap(err, "add to encoder")
+//		}
+//	}
+//
+//	return nil
+//}

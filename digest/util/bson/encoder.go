@@ -199,7 +199,7 @@ func (enc *Encoder) DecodeMap(b []byte) (map[string]interface{}, error) {
 	if err := bson.Unmarshal(b, &r); err != nil {
 		return nil, errors.Wrap(err, "decode map")
 	}
-	fmt.Println(r)
+
 	s := map[string]interface{}{}
 	for k, v := range r {
 		var i interface{}

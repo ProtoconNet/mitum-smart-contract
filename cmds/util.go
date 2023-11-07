@@ -226,7 +226,7 @@ func SendOperationFilterFunc(ctx context.Context) (
 			height = m.Manifest().Height()
 		}
 
-		f, closeF, err := launch.OperationPreProcess(oprs, op, height)
+		f, closeF, err := launch.OperationPreProcess(db, oprs, op, height)
 		if err != nil {
 			return false, err
 		}

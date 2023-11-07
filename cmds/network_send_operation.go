@@ -1,21 +1,36 @@
 package cmds
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"io"
+
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	"github.com/ProtoconNet/mitum2/launch"
 	launchcmd "github.com/ProtoconNet/mitum2/launch/cmd"
 	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/hint"
-	"io"
-
-	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
 )
+
+type NetworkClientCommand struct { //nolint:govet //...
+	//revive:disable:line-length-limit
+	//revive:disable:nested-structs
+	NodeInfo      launchcmd.NetworkClientNodeInfoCommand     `cmd:"" name:"node-info" help:"remote node info"`
+	SendOperation NetworkClientSendOperationCommand          `cmd:"" name:"send-operation" help:"send operation"`
+	State         launchcmd.NetworkClientStateCommand        `cmd:"" name:"state" help:"get state"`
+	LastBlockMap  launchcmd.NetworkClientLastBlockMapCommand `cmd:"" name:"last-blockmap" help:"get last blockmap"`
+	Design        struct {
+		Read  launchcmd.NetworkClientReadNodeCommand  `cmd:"" name:"read" help:"read design value"`
+		Write launchcmd.NetworkClientWriteNodeCommand `cmd:"" name:"write" help:"write design value"`
+	} `cmd:"" name:"design" help:""`
+	Event launchcmd.NetworkClientEventLoggingCommand `cmd:"" name:"event" help:"event log"`
+	//revive:enable:nested-structs
+	//revive:enable:line-length-limit
+}
 
 type BaseNetworkClientCommand struct { //nolint:govet //...
 	BaseCommand
@@ -51,7 +66,6 @@ func (cmd *BaseNetworkClientCommand) Prepare(pctx context.Context) error {
 		connectionPool.Dial,
 		connectionPool.CloseAll,
 	)
-
 	cmd.Client.SetClientID(cmd.ClientID)
 
 	cmd.Log.Debug().
@@ -59,7 +73,6 @@ func (cmd *BaseNetworkClientCommand) Prepare(pctx context.Context) error {
 		Stringer("timeout", cmd.Timeout).
 		Str("network_id", cmd.NetworkID).
 		Str("client_id", cmd.ClientID).
-		Bool("has_body", cmd.Body != nil).
 		Msg("flags")
 
 	return nil
@@ -85,23 +98,10 @@ func (cmd *BaseNetworkClientCommand) Print(v interface{}, out io.Writer) error {
 	return errors.WithStack(err)
 }
 
-type NetworkClientCommand struct { //nolint:govet //...
-	//revive:disable:line-length-limit
-	//revive:disable:nested-structs
-	NodeInfo      launchcmd.NetworkClientNodeInfoCommand     `cmd:"" name:"node-info" help:"remote node info"`
-	SendOperation NetworkClientSendOperationCommand          `cmd:"" name:"send-operation" help:"send operation"`
-	State         launchcmd.NetworkClientStateCommand        `cmd:"" name:"state" help:"get state"`
-	LastBlockMap  launchcmd.NetworkClientLastBlockMapCommand `cmd:"" name:"last-blockmap" help:"get last blockmap"`
-	Design        struct {
-		Read  launchcmd.NetworkClientReadNodeCommand  `cmd:"" name:"read" help:"read design value"`
-		Write launchcmd.NetworkClientWriteNodeCommand `cmd:"" name:"write" help:"write design value"`
-	} `cmd:"" name:"design" help:""`
-	//revive:enable:nested-structs
-	//revive:enable:line-length-limit
-}
-
 type NetworkClientSendOperationCommand struct { //nolint:govet //...
 	BaseNetworkClientCommand
+	Input    string `arg:"" name:"input" help:"input; default is stdin" default:"-"`
+	IsString bool   `name:"input.is-string" help:"input is string, not file"`
 }
 
 func (cmd *NetworkClientSendOperationCommand) Run(pctx context.Context) error {
@@ -113,15 +113,21 @@ func (cmd *NetworkClientSendOperationCommand) Run(pctx context.Context) error {
 		_ = cmd.Client.Close()
 	}()
 
-	buf := bytes.NewBuffer(nil)
-
-	if _, err := io.Copy(buf, cmd.Body); err != nil {
-		return errors.WithStack(err)
-	}
-
 	var op base.Operation
-	if err := encoder.Decode(cmd.Encoder, buf.Bytes(), &op); err != nil {
+
+	switch i, err := launch.LoadInputFlag(cmd.Input, !cmd.IsString); {
+	case err != nil:
 		return err
+	case len(i) < 1:
+		return errors.Errorf("empty input")
+	default:
+		cmd.Log.Debug().
+			Str("input", string(i)).
+			Msg("input")
+
+		if err := encoder.Decode(cmd.Encoder, i, &op); err != nil {
+			return err
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(pctx, cmd.Timeout)

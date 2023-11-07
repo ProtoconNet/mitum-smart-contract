@@ -65,7 +65,7 @@ func (cmd *ImportCommand) Run(pctx context.Context) error {
 
 	log.Log().Debug().
 		Interface("design", cmd.DesignFlag).
-		Interface("privatekey", cmd.Privatekey).
+		Interface("privatekey", cmd.PrivatekeyFlags).
 		Interface("dev", cmd.DevFlags).
 		Str("source", cmd.Source).
 		Interface("from_height", cmd.fromHeight).
@@ -76,9 +76,9 @@ func (cmd *ImportCommand) Run(pctx context.Context) error {
 	cmd.log = log.Log()
 
 	nctx := util.ContextWithValues(pctx, map[util.ContextKey]interface{}{
-		launch.DesignFlagContextKey:     cmd.DesignFlag,
-		launch.DevFlagsContextKey:       cmd.DevFlags,
-		launch.PrivatekeyFromContextKey: cmd.Privatekey,
+		launch.DesignFlagContextKey:      cmd.DesignFlag,
+		launch.DevFlagsContextKey:        cmd.DevFlags,
+		launch.PrivatekeyFlagsContextKey: cmd.PrivatekeyFlags,
 	})
 
 	pps := launch.DefaultImportPS()
@@ -234,7 +234,7 @@ func (cmd *ImportCommand) validateSourceBlocks(
 
 	if err := util.BatchWork(
 		context.Background(),
-		uint64(d.Int64())+1,
+		d.Int64()+1,
 		333, //nolint:gomnd //...
 		func(context.Context, uint64) error {
 			return nil

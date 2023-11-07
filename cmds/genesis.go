@@ -3,6 +3,9 @@ package cmds
 import (
 	"context"
 	"fmt"
+	"math"
+	"os"
+
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	isaacoperation "github.com/ProtoconNet/mitum-currency/v3/operation/isaac"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
@@ -16,7 +19,6 @@ import (
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"os"
 )
 
 type GenesisBlockGenerator struct {
@@ -100,7 +102,7 @@ func (g *GenesisBlockGenerator) Generate() (base.BlockMap, error) {
 func (g *GenesisBlockGenerator) generateOperations() error {
 	g.ops = make([]base.Operation, len(g.facts))
 
-	factTypes := map[string]struct{}{}
+	types := map[string]struct{}{}
 
 	for i := range g.facts {
 		fact := g.facts[i]
@@ -114,19 +116,19 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 
 		switch ht := hinter.Hint(); {
 		case ht.IsCompatible(isaacoperation.SuffrageGenesisJoinFactHint):
-			if _, found := factTypes[ht.String()]; found {
+			if _, found := types[ht.String()]; found {
 				return errors.Errorf("multiple join operation found")
 			}
 
 			g.ops[i], err = g.joinOperation(fact)
 		case ht.IsCompatible(isaacoperation.GenesisNetworkPolicyFactHint):
-			if _, found := factTypes[ht.String()]; found {
+			if _, found := types[ht.String()]; found {
 				return errors.Errorf("multiple network policy operation found")
 			}
 
 			g.ops[i], err = g.networkPolicyOperation(fact)
 		case ht.IsCompatible(currency.RegisterGenesisCurrencyFactHint):
-			if _, found := factTypes[ht.String()]; found {
+			if _, found := types[ht.String()]; found {
 				return errors.Errorf("multiple RegisterGenesisCurrency operation found")
 			}
 
@@ -137,7 +139,7 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 			return err
 		}
 
-		factTypes[hinter.Hint().String()] = struct{}{}
+		types[hinter.Hint().String()] = struct{}{}
 	}
 
 	return nil
@@ -238,14 +240,15 @@ func (g *GenesisBlockGenerator) registerGenesisCurrencyOperation(i base.Fact, to
 	return op, nil
 }
 
-func (g *GenesisBlockGenerator) newProposal(ops []util.Hash) error {
+func (g *GenesisBlockGenerator) newProposal(ops [][2]util.Hash) error {
 	e := util.StringError("make genesis proposal")
 
-	nops := make([]util.Hash, len(ops)+len(g.ops))
+	nops := make([][2]util.Hash, len(ops)+len(g.ops))
 	copy(nops[:len(ops)], ops)
 
 	for i := range g.ops {
-		nops[i+len(ops)] = g.ops[i].Hash()
+		nops[i+len(ops)][0] = g.ops[i].Hash()
+		nops[i+len(ops)][1] = g.ops[i].Fact().Hash()
 	}
 
 	fact := isaac.NewProposalFact(base.GenesisPoint, g.local.Address(), nil, nops)
@@ -383,25 +386,21 @@ func (g *GenesisBlockGenerator) closeDatabase() error {
 }
 
 func (g *GenesisBlockGenerator) newProposalProcessor() (*isaac.DefaultProposalProcessor, error) {
-	return isaac.NewDefaultProposalProcessor(
-		g.proposal,
-		nil,
-		launch.NewBlockWriterFunc(g.local, g.networkID, g.dataroot, g.enc, g.db),
-		func(key string) (base.State, bool, error) {
-			return nil, false, nil
-		},
-		func(_ context.Context, operationHash util.Hash) (base.Operation, error) {
-			for i := range g.ops {
-				op := g.ops[i]
-				if operationHash.Equal(op.Hash()) {
-					return op, nil
-				}
+	args := isaac.NewDefaultProposalProcessorArgs()
+	args.NewWriterFunc = launch.NewBlockWriterFunc(g.local, g.networkID, g.dataroot, g.enc, g.db, math.MaxInt16)
+	args.GetStateFunc = func(key string) (base.State, bool, error) {
+		return nil, false, nil
+	}
+	args.GetOperationFunc = func(_ context.Context, operationhash, _ util.Hash) (base.Operation, error) {
+		for i := range g.ops {
+			op := g.ops[i]
+			if operationhash.Equal(op.Hash()) {
+				return op, nil
 			}
+		}
 
-			return nil, util.ErrNotFound.Errorf("operation not found")
-		},
-		func(base.Height, hint.Hint) (base.OperationProcessor, error) {
-			return nil, nil
-		},
-	)
+		return nil, util.ErrNotFound.Errorf("operation not found")
+	}
+
+	return isaac.NewDefaultProposalProcessor(g.proposal, nil, args)
 }

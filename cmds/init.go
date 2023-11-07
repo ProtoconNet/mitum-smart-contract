@@ -23,12 +23,13 @@ func init() {
 		},
 	}
 	pctx = context.WithValue(pctx, launch.FlagsContextKey, baseFlags)
-	log, err := launch.SetupLoggingFromFlags(baseFlags.LoggingFlags)
+	log, logout, err := launch.SetupLoggingFromFlags(baseFlags.LoggingFlags)
 	if err != nil {
 		panic(err)
 	}
 
-	pctx = context.WithValue(pctx, launch.LoggingContextKey, log) //revive:disable-line:modifies-parameter
+	pctx = context.WithValue(pctx, launch.LoggingContextKey, log)   //revive:disable-line:modifies-parameter
+	pctx = context.WithValue(pctx, launch.LogOutContextKey, logout) //revive:disable-line:modifies-parameter
 
 	cmd := BaseCommand{
 		Out: os.Stdout,

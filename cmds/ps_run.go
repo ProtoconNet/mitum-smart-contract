@@ -49,7 +49,8 @@ func DefaultRunPS() *ps.PS {
 		PostAddOK(launch.PNameINITObjectCache, launch.PINITObjectCache)
 
 	_ = pps.POK(launch.PNameLocal).
-		PostAddOK(launch.PNameDiscoveryFlag, launch.PDiscoveryFlag)
+		PostAddOK(launch.PNameDiscoveryFlag, launch.PDiscoveryFlag).
+		PostAddOK(launch.PNameLoadACL, launch.PLoadACL)
 
 	_ = pps.POK(launch.PNameStorage).
 		PreAddOK(launch.PNameCheckLocalFS, launch.PCheckAndCreateLocalFS).
@@ -69,7 +70,8 @@ func DefaultRunPS() *ps.PS {
 		PreAddOK(launch.PNameRateLimiterContextKey, launch.PNetworkRateLimiter).
 		PostAddOK(launch.PNameBallotbox, launch.PBallotbox).
 		PostAddOK(launch.PNameLongRunningMemberlistJoin, launch.PLongRunningMemberlistJoin).
-		PostAddOK(launch.PNameSuffrageVoting, launch.PSuffrageVoting)
+		PostAddOK(launch.PNameSuffrageVoting, launch.PSuffrageVoting).
+		PostAddOK(launch.PNameEventLoggingNetworkHandlers, launch.PEventLoggingNetworkHandlers)
 
 	_ = pps.POK(launch.PNameStates).
 		PreAddOK(launch.PNameProposerSelector, launch.PProposerSelector).

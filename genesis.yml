@@ -5,6 +5,9 @@ facts:
         address: no0sas
         publickey: 28diDScgSoStgj2Goket5wC7xTeo2E2w5q2shZiy98yFEmpu
 
+
+
+
   - _hint: currency-genesis-network-policy-fact-v0.0.1
     policy:
       _hint: currency-network-policy-v0.0.1
