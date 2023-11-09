@@ -74,7 +74,11 @@ func (ac Account) IsValid([]byte) error {
 		return err
 	}
 
-	if err := util.CheckIsValiders(nil, false, ac.address, ac.keys); err != nil {
+	if err := util.CheckIsValiders(nil, false, ac.address); err != nil {
+		return err
+	}
+
+	if err := util.CheckIsValiders(nil, true, ac.keys); err != nil {
 		return err
 	}
 
