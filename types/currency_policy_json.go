@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/json"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -27,7 +27,7 @@ type CurrencyPolicyJSONUnmarshaler struct {
 	Feeer         json.RawMessage `json:"feeer"`
 }
 
-func (po *CurrencyPolicy) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (po *CurrencyPolicy) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of CurrencyPolicy")
 
 	var upo CurrencyPolicyJSONUnmarshaler

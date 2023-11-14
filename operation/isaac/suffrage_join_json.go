@@ -2,11 +2,9 @@ package isaacoperation
 
 import (
 	"encoding/json"
-
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 )
 
 type suffrageJoinFactJSONMarshaler struct {
@@ -29,7 +27,7 @@ type suffrageJoinFactJSONUnmarshaler struct {
 	Start base.Height `json:"start_height"`
 }
 
-func (fact *SuffrageJoinFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fact *SuffrageJoinFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode SuffrageJoinFact")
 
 	var u suffrageJoinFactJSONUnmarshaler
@@ -59,7 +57,7 @@ type suffrageGenesisJoinFactJSONUnmarshaler struct {
 	base.BaseFactJSONUnmarshaler
 }
 
-func (fact *SuffrageGenesisJoinFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fact *SuffrageGenesisJoinFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode SuffrageGenesisJoinFact")
 
 	var u suffrageGenesisJoinFactJSONUnmarshaler

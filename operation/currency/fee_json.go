@@ -5,7 +5,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type FeeOperationFactJSONMarshaler struct {
@@ -25,7 +25,7 @@ type FeeOperationFactJSONUnMarshaler struct {
 	AM json.RawMessage `json:"amounts"`
 }
 
-func (fact *FeeOperationFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fact *FeeOperationFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of FeeOperationFact")
 
 	var uf FeeOperationFactJSONUnMarshaler

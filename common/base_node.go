@@ -4,7 +4,7 @@ import (
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -70,7 +70,7 @@ type BaseNodeJSONUnmarshaler struct {
 	Publickey string `json:"publickey"`
 }
 
-func (n *BaseNode) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (n *BaseNode) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode BaseNode")
 
 	var u BaseNodeJSONUnmarshaler

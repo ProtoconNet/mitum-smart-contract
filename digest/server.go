@@ -17,7 +17,7 @@ import (
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -44,10 +44,10 @@ type HTTP2Server struct {
 	keepAliveTimeout time.Duration
 	router           *mux.Router
 	client           func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error)
-	enc              *jsonenc.Encoder
+	encs             *encoder.Encoders
 }
 
-func NewHTTP2Server(bind, host string, certs []tls.Certificate, enc *jsonenc.Encoder, networkID base.NetworkID) (*HTTP2Server, error) {
+func NewHTTP2Server(bind, host string, certs []tls.Certificate, encs *encoder.Encoders, networkID base.NetworkID) (*HTTP2Server, error) {
 	if err := util.CheckBindIsOpen("tcp", bind, time.Second*1); err != nil {
 		return nil, errors.Wrap(err, "open digest server")
 	}
@@ -65,7 +65,7 @@ func NewHTTP2Server(bind, host string, certs []tls.Certificate, enc *jsonenc.Enc
 		activeTimeout:    time.Minute * 1, // TODO can be configurable
 		keepAliveTimeout: time.Minute * 1, // TODO can be configurable
 		router:           mux.NewRouter(),
-		enc:              enc,
+		encs:             encs,
 	}
 
 	srv, err := newHTTP2Server(sv, certs)
@@ -134,11 +134,11 @@ func (sv *HTTP2Server) Router() *mux.Router {
 	return sv.router
 }
 
-func (sv *HTTP2Server) SetEncoder(enc *jsonenc.Encoder) {
+func (sv *HTTP2Server) SetEncoder(encs *encoder.Encoders) {
 	sv.Lock()
 	defer sv.Unlock()
 
-	sv.enc = enc
+	sv.encs = encs
 }
 
 func (sv *HTTP2Server) SetRouter(router *mux.Router) {
@@ -176,7 +176,7 @@ func (sv *HTTP2Server) start(ctx context.Context) error {
 		for {
 			select {
 			case req := <-sv.queue:
-				sv.HandleRequest(req)
+				go sv.HandleRequest(req)
 			}
 		}
 	}()
@@ -242,7 +242,7 @@ func (sv *HTTP2Server) HandleRequest(wrapper RequestWrapper) {
 	var v json.RawMessage
 	if err := json.Unmarshal(wrapper.body.Bytes(), &v); err != nil {
 		return
-	} else if hinter, err := sv.enc.Decode(wrapper.body.Bytes()); err != nil {
+	} else if hinter, err := sv.encs.JSON().Decode(wrapper.body.Bytes()); err != nil {
 		return
 	} else if err := sv.sendItem(hinter); err != nil {
 		return
@@ -269,12 +269,12 @@ func (sv *HTTP2Server) sendOperation(v interface{}) error {
 	}
 
 	client, memberList, err := sv.client()
-
 	switch {
 	case err != nil:
 		return err
 
 	default:
+		var wg sync.WaitGroup
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*9)
 		defer cancel()
 
@@ -283,15 +283,30 @@ func (sv *HTTP2Server) sendOperation(v interface{}) error {
 			nodeList = append(nodeList, node.ConnInfo())
 			return true
 		})
+
+		errCh := make(chan error, len(nodeList))
 		for i := range nodeList {
-			_, err := client.SendOperation(ctx, nodeList[i], op)
+			wg.Add(1)
+			go func(node quicstream.ConnInfo) {
+				defer wg.Done()
+
+				_, err := client.SendOperation(ctx, node, op)
+				if err != nil {
+					errCh <- err
+				}
+			}(nodeList[i])
+		}
+
+		wg.Wait()
+		close(errCh)
+
+		for err := range errCh {
 			if err != nil {
 				return err
 			}
 		}
+		return nil
 	}
-
-	return nil
 }
 
 func (sv *HTTP2Server) buildHal(op base.Operation) (Hal, error) {

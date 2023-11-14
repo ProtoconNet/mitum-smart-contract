@@ -3,6 +3,7 @@ package isaacoperation
 import (
 	"context"
 	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
@@ -14,6 +15,8 @@ import (
 var (
 	GenesisNetworkPolicyFactHint = hint.MustNewHint("currency-genesis-network-policy-fact-v0.0.1")
 	GenesisNetworkPolicyHint     = hint.MustNewHint("currency-genesis-network-policy-v0.0.1")
+	NetworkPolicyFactHint        = hint.MustNewHint("currency-network-policy-fact-v0.0.1")
+	NetworkPolicyHint            = hint.MustNewHint("currency-network-policy-operation-v0.0.1")
 )
 
 type GenesisNetworkPolicyFact struct {
@@ -110,8 +113,90 @@ func (op GenesisNetworkPolicy) Process(context.Context, base.GetStateFunc) (
 	return []base.StateMergeValue{
 		common.NewBaseStateMergeValue(
 			isaac.NetworkPolicyStateKey,
-			NewNetworkPolicyStateValue(fact.Policy()),
+			types.NewNetworkPolicyStateValue(fact.Policy()),
 			nil,
 		),
 	}, nil, nil
+}
+
+type NetworkPolicyFact struct {
+	policy base.NetworkPolicy
+	base.BaseFact
+}
+
+func NewNetworkPolicyFact(token base.Token, policy base.NetworkPolicy) NetworkPolicyFact {
+	fact := NetworkPolicyFact{
+		BaseFact: base.NewBaseFact(
+			NetworkPolicyFactHint,
+			token,
+		),
+		policy: policy,
+	}
+
+	fact.SetHash(fact.hash())
+
+	return fact
+}
+
+func (fact NetworkPolicyFact) hash() util.Hash {
+	return valuehash.NewSHA256(util.ConcatByters(
+		util.BytesToByter(fact.Token()),
+		util.DummyByter(fact.policy.HashBytes),
+	))
+}
+
+func (fact NetworkPolicyFact) IsValid([]byte) error {
+	e := util.ErrInvalid.Errorf("invalid NetworkPolicyFact")
+
+	if err := util.CheckIsValiders(nil, false, fact.BaseFact, fact.policy); err != nil {
+		return e.Wrap(err)
+	}
+
+	if !fact.Hash().Equal(fact.hash()) {
+		return e.Errorf("hash does not match")
+	}
+
+	return nil
+}
+
+func (fact NetworkPolicyFact) Policy() base.NetworkPolicy {
+	return fact.policy
+}
+
+type NetworkPolicy struct {
+	common.BaseNodeOperation
+}
+
+func NewNetworkPolicy(fact NetworkPolicyFact) NetworkPolicy {
+	return NetworkPolicy{
+		BaseNodeOperation: common.NewBaseNodeOperation(NetworkPolicyHint, fact),
+	}
+}
+
+func (op NetworkPolicy) IsValid(networkID []byte) error {
+	e := util.ErrInvalid.Errorf("invalid NetworkPolicy")
+
+	if err := op.BaseNodeOperation.IsValid(networkID); err != nil {
+		return e.Wrap(err)
+	}
+
+	if _, ok := op.Fact().(NetworkPolicyFact); !ok {
+		return e.Errorf("not NetworkPolicyFact, %T", op.Fact())
+	}
+
+	return nil
+}
+
+func (op *NetworkPolicy) SetToken(t base.Token) error {
+	fact := op.Fact().(NetworkPolicyFact) //nolint:forcetypeassert //...
+
+	if err := fact.SetToken(t); err != nil {
+		return err
+	}
+
+	fact.SetHash(fact.hash())
+
+	op.BaseNodeOperation.SetFact(fact)
+
+	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"github.com/pkg/errors"
@@ -37,7 +36,7 @@ type BaseOperationJSONUnmarshaler struct {
 	Signs []json.RawMessage     `json:"signs"`
 }
 
-func (op *BaseOperation) decodeJSON(b []byte, enc *jsonenc.Encoder, u *BaseOperationJSONUnmarshaler) error {
+func (op *BaseOperation) decodeJSON(b []byte, enc encoder.Encoder, u *BaseOperationJSONUnmarshaler) error {
 	if err := enc.Unmarshal(b, u); err != nil {
 		return err
 	}
@@ -51,7 +50,7 @@ func (op *BaseOperation) decodeJSON(b []byte, enc *jsonenc.Encoder, u *BaseOpera
 	return nil
 }
 
-func (op *BaseOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (op *BaseOperation) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode BaseOperation")
 
 	var u BaseOperationJSONUnmarshaler
@@ -78,7 +77,7 @@ func (op BaseNodeOperation) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(op.JSONMarshaler())
 }
 
-func (op *BaseNodeOperation) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (op *BaseNodeOperation) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode BaseNodeOperation")
 
 	var u BaseOperationJSONUnmarshaler

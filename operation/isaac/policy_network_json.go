@@ -5,7 +5,6 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 )
 
 type GenesisNetworkPolicyFactJSONMarshaler struct {
@@ -25,7 +24,7 @@ type GenesisNetworkPolicyFactJSONUnmarshaler struct {
 	Policy json.RawMessage `json:"policy"`
 }
 
-func (fact *GenesisNetworkPolicyFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fact *GenesisNetworkPolicyFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode GenesisNetworkPolicyFact")
 
 	var u GenesisNetworkPolicyFactJSONUnmarshaler

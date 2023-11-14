@@ -11,7 +11,6 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 )
@@ -95,7 +94,7 @@ func (opp *CreateContractAccountItemProcessor) PreProcess(
 		case err != nil:
 			return err
 		case found:
-			return isaac.ErrStopProcessingRetry.Errorf("target balance already exists, %v", target)
+			return errors.Errorf("target balance already exists, %v", target)
 		default:
 			nb[am.Currency()] = state.NewStateMergeValue(currencystate.StateKeyBalance(target, am.Currency()), currencystate.NewBalanceStateValue(types.NewZeroAmount(am.Currency())))
 		}

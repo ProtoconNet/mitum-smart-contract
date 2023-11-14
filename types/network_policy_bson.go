@@ -1,4 +1,4 @@
-package isaacoperation
+package types
 
 import (
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"

@@ -5,7 +5,6 @@ import (
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/processor"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
-	isaacblock "github.com/ProtoconNet/mitum2/isaac/block"
 	isaacdatabase "github.com/ProtoconNet/mitum2/isaac/database"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	isaacoperation "github.com/ProtoconNet/mitum2/isaac/operation"
@@ -278,43 +276,66 @@ func PGenerateGenesis(pctx context.Context) (context.Context, error) {
 	var log *logging.Logging
 	var design launch.NodeDesign
 	var genesisDesign launch.GenesisDesign
-	var enc encoder.Encoder
+	var encs *encoder.Encoders
 	var local base.LocalNode
 	var isaacParams *isaac.Params
 	var db isaac.Database
 	var fsnodeinfo launch.NodeInfo
 	var eventLogging *launch.EventLogging
+	var newReaders func(context.Context, string, *isaac.BlockItemReadersArgs) (*isaac.BlockItemReaders, error)
 
 	if err := util.LoadFromContextOK(pctx,
 		launch.LoggingContextKey, &log,
 		launch.DesignContextKey, &design,
 		launch.GenesisDesignContextKey, &genesisDesign,
-		launch.EncoderContextKey, &enc,
+		launch.EncodersContextKey, &encs,
 		launch.LocalContextKey, &local,
 		launch.ISAACParamsContextKey, &isaacParams,
 		launch.CenterDatabaseContextKey, &db,
 		launch.FSNodeInfoContextKey, &fsnodeinfo,
 		launch.EventLoggingContextKey, &eventLogging,
+		launch.NewBlockItemReadersFuncContextKey, &newReaders,
 	); err != nil {
 		return pctx, e.Wrap(err)
 	}
 
 	var el zerolog.Logger
 
-	switch i, found := eventLogging.Logger(launch.NodeEventLoggerName); {
+	switch i, found := eventLogging.Logger(launch.NodeEventLogger); {
 	case !found:
 		return pctx, errors.Errorf("node event logger not found")
 	default:
 		el = i
 	}
 
+	root := launch.LocalFSDataDirectory(design.Storage.Base)
+
+	var readers *isaac.BlockItemReaders
+
+	switch i, err := newReaders(pctx, root, nil); {
+	case err != nil:
+		return pctx, err
+	default:
+		defer i.Close()
+
+		readers = i
+	}
+
 	g := NewGenesisBlockGenerator(
 		local,
 		isaacParams.NetworkID(),
-		enc,
+		encs,
 		db,
-		launch.LocalFSDataDirectory(design.Storage.Base),
+		root,
 		genesisDesign.Facts,
+		func() (base.BlockMap, bool, error) {
+			return isaac.BlockItemReadersDecode[base.BlockMap](
+				readers.Item,
+				base.GenesisHeight,
+				base.BlockItemMap,
+				nil,
+			)
+		},
 		pctx,
 	)
 	_ = g.SetLogging(log)
@@ -331,20 +352,16 @@ func PGenerateGenesis(pctx context.Context) (context.Context, error) {
 func PEncoder(pctx context.Context) (context.Context, error) {
 	e := util.StringError("prepare encoders")
 
-	encs := encoder.NewEncoders()
 	jenc := jsonenc.NewEncoder()
+	encs := encoder.NewEncoders(jenc, jenc)
 	benc := bsonenc.NewEncoder()
 
-	if err := encs.AddEncoder(jenc); err != nil {
-		return pctx, e.Wrap(err)
-	}
 	if err := encs.AddEncoder(benc); err != nil {
 		return pctx, e.Wrap(err)
 	}
 
 	return util.ContextWithValues(pctx, map[util.ContextKey]interface{}{
 		launch.EncodersContextKey: encs,
-		launch.EncoderContextKey:  jenc,
 		BEncoderContextKey:        benc,
 	}), nil
 }
@@ -354,12 +371,10 @@ func PLoadDigestDesign(pctx context.Context) (context.Context, error) {
 
 	var log *logging.Logging
 	var flag launch.DesignFlag
-	var enc *jsonenc.Encoder
 
 	if err := util.LoadFromContextOK(pctx,
 		launch.LoggingContextKey, &log,
 		launch.DesignFlagContextKey, &flag,
-		launch.EncoderContextKey, &enc,
 	); err != nil {
 		return pctx, e.Wrap(err)
 	}
@@ -400,7 +415,6 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 
 	var log *logging.Logging
 	var encs *encoder.Encoders
-	var enc encoder.Encoder
 	var design launch.NodeDesign
 	var local base.LocalNode
 	var params *launch.LocalParams
@@ -418,7 +432,6 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 	if err := util.LoadFromContextOK(pctx,
 		launch.LoggingContextKey, &log,
 		launch.EncodersContextKey, &encs,
-		launch.EncoderContextKey, &enc,
 		launch.DesignContextKey, &design,
 		launch.LocalContextKey, &local,
 		launch.LocalParamsContextKey, &params,
@@ -480,42 +493,6 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 	launch.EnsureHandlerAdd(pctx, &gerror,
 		isaacnetwork.HandlerPrefixBlockMapString,
 		isaacnetwork.QuicstreamHandlerBlockMap(db.BlockMapBytes), nil)
-
-	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixBlockMapItemString,
-		isaacnetwork.QuicstreamHandlerBlockMapItem(
-			func(height base.Height, item base.BlockMapItemType) (io.ReadCloser, bool, error) {
-				e := util.StringError("get BlockMapItem")
-
-				var menc encoder.Encoder
-
-				switch m, found, err := db.BlockMap(height); {
-				case err != nil:
-					return nil, false, e.Wrap(err)
-				case !found:
-					return nil, false, e.Wrap(storage.ErrNotFound.Errorf("BlockMap not found"))
-				default:
-					i, found := encs.Find(m.Encoder())
-					if !found {
-						return nil, false, e.Wrap(storage.ErrNotFound.Errorf("encoder of BlockMap not found"))
-					}
-
-					menc = i
-				}
-
-				reader, err := isaacblock.NewLocalFSReaderFromHeight(
-					launch.LocalFSDataDirectory(design.Storage.Base), height, menc,
-				)
-				if err != nil {
-					return nil, false, e.Wrap(err)
-				}
-				defer func() {
-					_ = reader.Close()
-				}()
-
-				return reader.Reader(item)
-			},
-		), nil)
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
 		isaacnetwork.HandlerPrefixNodeChallengeString,
@@ -590,6 +567,10 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 
 	if gerror != nil {
 		return pctx, gerror
+	}
+
+	if err := launch.AttachBlockItemsNetworkHandlers(pctx); err != nil {
+		return pctx, err
 	}
 
 	if err := launch.AttachMemberlistNetworkHandlers(pctx); err != nil {

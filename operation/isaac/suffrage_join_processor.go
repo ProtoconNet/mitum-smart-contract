@@ -6,6 +6,7 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
@@ -47,13 +48,13 @@ func NewSuffrageJoinProcessor(
 	case err != nil:
 		return nil, e.Wrap(err)
 	case !found, i == nil:
-		return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("empty state"))
+		return nil, e.Errorf("empty state")
 	default:
 		p.sufstv = i.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
 
 		suf, err := p.sufstv.Suffrage()
 		if err != nil {
-			return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("get suffrage from state"))
+			return nil, e.Errorf("get suffrage from state")
 		}
 
 		p.suffrage = suf
@@ -209,6 +210,7 @@ type SuffrageJoinStateValueMerger struct {
 	existing  base.SuffrageNodesStateValue
 	joined    []base.Node
 	disjoined []base.Address
+	sync.Mutex
 }
 
 func NewSuffrageJoinStateValueMerger(height base.Height, st base.State) *SuffrageJoinStateValueMerger {
@@ -221,7 +223,7 @@ func NewSuffrageJoinStateValueMerger(height base.Height, st base.State) *Suffrag
 	return s
 }
 
-func (s *SuffrageJoinStateValueMerger) Merge(value base.StateValue, ops []util.Hash) error {
+func (s *SuffrageJoinStateValueMerger) Merge(value base.StateValue, op util.Hash) error {
 	s.Lock()
 	defer s.Unlock()
 
@@ -234,12 +236,15 @@ func (s *SuffrageJoinStateValueMerger) Merge(value base.StateValue, ops []util.H
 		return errors.Errorf("unsupported suffrage state value, %T", value)
 	}
 
-	s.AddOperations(ops)
+	s.AddOperation(op)
 
 	return nil
 }
 
 func (s *SuffrageJoinStateValueMerger) Close() error {
+	s.Lock()
+	defer s.Unlock()
+
 	newvalue, err := s.close()
 	if err != nil {
 		return errors.WithMessage(err, "close SuffrageJoinStateValueMerger")
@@ -251,8 +256,9 @@ func (s *SuffrageJoinStateValueMerger) Close() error {
 }
 
 func (s *SuffrageJoinStateValueMerger) close() (base.StateValue, error) {
-	s.Lock()
-	defer s.Unlock()
+	if len(s.disjoined) < 1 && len(s.joined) < 1 {
+		return nil, base.ErrIgnoreStateValue.Errorf("no nodes changes")
+	}
 
 	existingnodes := s.existing.Nodes()
 

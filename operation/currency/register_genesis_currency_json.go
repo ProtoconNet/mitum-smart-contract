@@ -6,7 +6,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type RegisterGenesisCurrencyFactJSONMarshaler struct {
@@ -32,7 +32,7 @@ type RegisterGenesisCurrencyFactJSONUnMarshaler struct {
 	Currencies     json.RawMessage `json:"currencies"`
 }
 
-func (fact *RegisterGenesisCurrencyFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fact *RegisterGenesisCurrencyFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of RegisterGenesisCurrencyFact")
 
 	var uf RegisterGenesisCurrencyFactJSONUnMarshaler

@@ -6,7 +6,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type MintFactJSONMarshaler struct {
@@ -26,7 +26,7 @@ type MintFactJSONUnmarshaler struct {
 	Items []json.RawMessage `json:"items"`
 }
 
-func (fact *MintFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fact *MintFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of MintFact")
 
 	var uf MintFactJSONUnmarshaler
@@ -51,7 +51,7 @@ func (fact *MintFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	return nil
 }
 
-func (op *Mint) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (op *Mint) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	var ubo common.BaseNodeOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
 		return err

@@ -2,7 +2,7 @@ package types
 
 import (
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -26,7 +26,7 @@ type AmountJSONUnmarshaler struct {
 	Hint      hint.Hint `json:"_hint"`
 }
 
-func (am *Amount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (am *Amount) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of Amount")
 
 	var uam AmountJSONUnmarshaler

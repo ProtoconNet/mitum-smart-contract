@@ -22,7 +22,11 @@ func NewStateValueMerger(height base.Height, key string, st base.State) *StateVa
 
 func NewStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
 	StateValueMergerFunc := func(height base.Height, st base.State) base.StateValueMerger {
-		return NewStateValueMerger(height, key, st)
+		nst := st
+		if st == nil {
+			nst = common.NewBaseState(base.NilHeight, key, nil, nil, nil)
+		}
+		return NewStateValueMerger(height, nst.Key(), nst)
 	}
 
 	return common.NewBaseStateMergeValue(

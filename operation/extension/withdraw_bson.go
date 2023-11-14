@@ -32,12 +32,18 @@ func (fact *WithdrawFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	e := util.StringError("decode bson of WithdrawFact")
 
 	var ubf common.BaseFactBSONUnmarshaler
-	if err := enc.Unmarshal(b, &ubf); err != nil {
-		return err
+	err := enc.Unmarshal(b, &ubf)
+	if err != nil {
+		return e.Wrap(err)
 	}
 
-	fact.BaseFact.SetHash(valuehash.NewBytesFromString(ubf.Hash))
-	fact.BaseFact.SetToken(ubf.Token)
+	h := valuehash.NewBytesFromString(ubf.Hash)
+
+	fact.BaseFact.SetHash(h)
+	err = fact.BaseFact.SetToken(ubf.Token)
+	if err != nil {
+		return e.Wrap(err)
+	}
 
 	var uf WithdrawFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {

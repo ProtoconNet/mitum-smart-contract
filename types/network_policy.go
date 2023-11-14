@@ -1,4 +1,4 @@
-package isaacoperation
+package types
 
 import (
 	"github.com/ProtoconNet/mitum2/base"

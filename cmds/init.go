@@ -6,12 +6,11 @@ import (
 
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util/encoder"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 )
 
 var (
 	encs *encoder.Encoders
-	enc  *jsonenc.Encoder
+	enc  encoder.Encoder
 )
 
 func init() {

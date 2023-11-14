@@ -5,7 +5,7 @@ import (
 
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/localtime"
 )
@@ -43,7 +43,7 @@ type OperationValueJSONUnmarshaler struct {
 	Index       uint64          `json:"index"`
 }
 
-func (va *OperationValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (va *OperationValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	var uva OperationValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uva); err != nil {
 		return err

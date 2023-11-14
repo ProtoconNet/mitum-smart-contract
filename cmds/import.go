@@ -1,8 +1,14 @@
 package cmds
 
 import (
+	"bytes"
 	"context"
 	"github.com/ProtoconNet/mitum2/util/ps"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"io"
+	"net/url"
+	"os"
+	"path/filepath"
 
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
@@ -16,8 +22,8 @@ import (
 )
 
 var (
-	PNameImportBlocks = ps.Name("import-blocks")
-	PNameCheckStorage = ps.Name("check-blocks")
+	pNamePreImportBlocks = ps.Name("cmd-pre-import-blocks")
+	pNameImportBlocks    = ps.Name("cmd-import-blocks")
 )
 
 type ImportCommand struct { //nolint:govet //...
@@ -26,12 +32,17 @@ type ImportCommand struct { //nolint:govet //...
 	Source      string           `arg:"" name:"source directory" help:"block data directory to import" type:"existingdir"`
 	HeightRange launch.RangeFlag `name:"range" help:"<from>-<to>" default:""`
 	launch.PrivatekeyFlags
-	Do              bool `name:"do" help:"really do import"`
+	Do              bool   `name:"do" help:"really do import"`
+	CacheDirectory  string `name:"cache-directory" help:"directory for remote block item file"`
 	log             *zerolog.Logger
 	launch.DevFlags `embed:"" prefix:"dev."`
 	fromHeight      base.Height
 	toHeight        base.Height
+	lastHeight      base.Height
 	prevblockmap    base.BlockMap
+	sourceReaders   *isaac.BlockItemReaders
+	toReaders       *isaac.BlockItemReaders
+	importedReaders *isaac.BlockItemReaders
 	// revive:enable:line-length-limit
 }
 
@@ -41,6 +52,56 @@ func (cmd *ImportCommand) Run(pctx context.Context) error {
 		return err
 	}
 
+	cmd.log = log.Log()
+
+	if err := cmd.prepare(); err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = os.RemoveAll(cmd.CacheDirectory)
+	}()
+
+	log.Log().Debug().
+		Interface("design", cmd.DesignFlag).
+		Interface("privatekey", cmd.PrivatekeyFlags).
+		Interface("dev", cmd.DevFlags).
+		Str("source", cmd.Source).
+		Interface("from_height", cmd.fromHeight).
+		Interface("to_height", cmd.toHeight).
+		Bool("do", cmd.Do).
+		Str("cache_directory", cmd.CacheDirectory).
+		Msg("flags")
+
+	nctx := util.ContextWithValues(pctx, map[util.ContextKey]interface{}{
+		launch.DesignFlagContextKey:      cmd.DesignFlag,
+		launch.DevFlagsContextKey:        cmd.DevFlags,
+		launch.PrivatekeyFlagsContextKey: cmd.PrivatekeyFlags,
+	})
+
+	pps := launch.DefaultImportPS()
+	_ = pps.SetLogging(log)
+
+	_ = pps.AddOK(pNameImportBlocks, cmd.importBlocks, nil, launch.PNameStorage)
+
+	_ = pps.POK(pNameImportBlocks).
+		PreAddOK(pNamePreImportBlocks, cmd.preImportBlocks)
+
+	cmd.log.Debug().Interface("process", pps.Verbose()).Msg("process ready")
+
+	nctx, err := pps.Run(nctx)
+	defer func() {
+		cmd.log.Debug().Interface("process", pps.Verbose()).Msg("process will be closed")
+
+		if _, err = pps.Close(nctx); err != nil {
+			cmd.log.Error().Err(err).Msg("failed to close")
+		}
+	}()
+
+	return err
+}
+
+func (cmd *ImportCommand) prepare() error {
 	cmd.fromHeight, cmd.toHeight = base.NilHeight, base.NilHeight
 
 	if h := cmd.HeightRange.From(); h != nil {
@@ -63,71 +124,76 @@ func (cmd *ImportCommand) Run(pctx context.Context) error {
 		}
 	}
 
-	log.Log().Debug().
-		Interface("design", cmd.DesignFlag).
-		Interface("privatekey", cmd.PrivatekeyFlags).
-		Interface("dev", cmd.DevFlags).
-		Str("source", cmd.Source).
-		Interface("from_height", cmd.fromHeight).
-		Interface("to_height", cmd.toHeight).
-		Bool("do", cmd.Do).
-		Msg("flags")
+	var checkCacheDirectory func() error
 
-	cmd.log = log.Log()
+	switch {
+	case len(cmd.CacheDirectory) < 1:
+		checkCacheDirectory = func() error {
+			i, err := os.MkdirTemp("", "mitum-import-")
+			if err != nil {
+				return errors.WithStack(err)
+			}
 
-	nctx := util.ContextWithValues(pctx, map[util.ContextKey]interface{}{
-		launch.DesignFlagContextKey:      cmd.DesignFlag,
-		launch.DevFlagsContextKey:        cmd.DevFlags,
-		launch.PrivatekeyFlagsContextKey: cmd.PrivatekeyFlags,
-	})
+			cmd.CacheDirectory = i
 
-	pps := launch.DefaultImportPS()
-	_ = pps.SetLogging(log)
-
-	_ = pps.AddOK(PNameImportBlocks, cmd.importBlocks, nil, launch.PNameStorage)
-
-	cmd.log.Debug().Interface("process", pps.Verbose()).Msg("process ready")
-
-	nctx, err := pps.Run(nctx)
-	defer func() {
-		cmd.log.Debug().Interface("process", pps.Verbose()).Msg("process will be closed")
-
-		if _, err = pps.Close(nctx); err != nil {
-			cmd.log.Error().Err(err).Msg("failed to close")
+			return nil
 		}
-	}()
+	default:
+		checkCacheDirectory = func() error {
+			switch fi, err := os.Stat(cmd.CacheDirectory); {
+			case os.IsNotExist(err):
+				if err = os.MkdirAll(filepath.Clean(cmd.CacheDirectory), 0o700); err != nil {
+					return errors.WithStack(err)
+				}
+			case err != nil:
+				return errors.WithStack(err)
+			case !fi.IsDir():
+				return errors.Errorf("cache directory is not directory")
+			}
 
-	return err
-}
-
-func (cmd *ImportCommand) importBlocks(pctx context.Context) (context.Context, error) {
-	e := util.StringError("import blocks")
-
-	var encs *encoder.Encoders
-	var enc encoder.Encoder
-	var design launch.NodeDesign
-	var local base.LocalNode
-	var isaacparams *isaac.Params
-	var db isaac.Database
-
-	if err := util.LoadFromContextOK(pctx,
-		launch.EncodersContextKey, &encs,
-		launch.EncoderContextKey, &enc,
-		launch.DesignContextKey, &design,
-		launch.LocalContextKey, &local,
-		launch.ISAACParamsContextKey, &isaacparams,
-		launch.CenterDatabaseContextKey, &db,
-	); err != nil {
-		return pctx, e.Wrap(err)
+			return nil
+		}
 	}
 
-	var last base.Height
+	return checkCacheDirectory()
+}
 
-	switch i, err := cmd.checkHeights(pctx); {
+func (cmd *ImportCommand) preImportBlocks(pctx context.Context) (context.Context, error) {
+	var design launch.NodeDesign
+	var isaacparams *isaac.Params
+	var db isaac.Database
+	var newReaders func(context.Context, string, *isaac.BlockItemReadersArgs) (*isaac.BlockItemReaders, error)
+	var fromRemotes isaac.RemotesBlockItemReadFunc
+
+	if err := util.LoadFromContextOK(pctx,
+		launch.DesignContextKey, &design,
+		launch.ISAACParamsContextKey, &isaacparams,
+		launch.CenterDatabaseContextKey, &db,
+		launch.NewBlockItemReadersFuncContextKey, &newReaders,
+		launch.RemotesBlockItemReaderFuncContextKey, &fromRemotes,
+	); err != nil {
+		return pctx, err
+	}
+
+	switch i, err := newReaders(pctx, cmd.Source, nil); {
 	case err != nil:
-		return pctx, e.Wrap(err)
+		return pctx, err
 	default:
-		last = i
+		cmd.sourceReaders = i
+	}
+
+	switch i, err := newReaders(pctx, launch.LocalFSDataDirectory(design.Storage.Base), nil); {
+	case err != nil:
+		return pctx, err
+	default:
+		cmd.toReaders = i
+	}
+
+	switch i, err := newReaders(pctx, launch.LocalFSDataDirectory(design.Storage.Base), nil); {
+	case err != nil:
+		return pctx, err
+	default:
+		cmd.importedReaders = i
 	}
 
 	if cmd.fromHeight > base.GenesisHeight {
@@ -141,30 +207,74 @@ func (cmd *ImportCommand) importBlocks(pctx context.Context) (context.Context, e
 		}
 	}
 
-	if err := cmd.validateSourceBlocks(last, enc, isaacparams); err != nil {
-		return pctx, e.Wrap(err)
+	switch i, err := cmd.checkHeights(pctx); {
+	case err != nil:
+		return pctx, err
+	default:
+		cmd.lastHeight = i
 	}
 
+	if err := cmd.validateSourceBlocks(
+		cmd.loadItemFile(cmd.sourceReaders, fromRemotes, cmd.Do),
+		cmd.lastHeight,
+		isaacparams.NetworkID(),
+	); err != nil {
+		return pctx, err
+	}
+
+	return pctx, nil
+}
+
+func (cmd *ImportCommand) importBlocks(pctx context.Context) (context.Context, error) {
 	if !cmd.Do {
 		cmd.log.Debug().Msg("to import really blocks, `--do`")
 
 		return pctx, nil
 	}
 
+	e := util.StringError("import blocks")
+
+	var encs *encoder.Encoders
+	var isaacparams *isaac.Params
+	var db isaac.Database
+	var fromRemotes isaac.RemotesBlockItemReadFunc
+
+	if err := util.LoadFromContextOK(pctx,
+		launch.EncodersContextKey, &encs,
+		launch.ISAACParamsContextKey, &isaacparams,
+		launch.CenterDatabaseContextKey, &db,
+		launch.RemotesBlockItemReaderFuncContextKey, &fromRemotes,
+	); err != nil {
+		return pctx, e.Wrap(err)
+	}
+
 	if err := launch.ImportBlocks(
-		cmd.Source,
-		design.Storage.Base,
+		cmd.sourceReaders,
+		func(ctx context.Context,
+			uri url.URL,
+			compressFormat string,
+			callback func(_ io.Reader, compressFormat string) error,
+		) (known, found bool, _ error) {
+			switch found, err := cmd.readTempRemoteItemFile(uri, compressFormat, callback); {
+			case err != nil:
+				return false, false, err
+			case found:
+				return true, true, nil
+			default:
+				return fromRemotes(ctx, uri, compressFormat, callback)
+			}
+		},
+		cmd.toReaders,
 		cmd.fromHeight,
-		last,
+		cmd.lastHeight,
 		encs,
-		enc,
 		db,
 		isaacparams,
 	); err != nil {
 		return pctx, e.Wrap(err)
 	}
 
-	if err := cmd.validateImported(last, enc, design, isaacparams, db); err != nil {
+	if err := cmd.validateImported(cmd.importedReaders, cmd.lastHeight, isaacparams, db); err != nil {
 		return pctx, e.Wrap(err)
 	}
 
@@ -174,14 +284,10 @@ func (cmd *ImportCommand) importBlocks(pctx context.Context) (context.Context, e
 func (cmd *ImportCommand) checkHeights(pctx context.Context) (base.Height, error) {
 	var last base.Height
 
-	var encs *encoder.Encoders
-	var enc encoder.Encoder
 	var isaacparams *isaac.Params
 	var db isaac.Database
 
 	if err := util.LoadFromContextOK(pctx,
-		launch.EncodersContextKey, &encs,
-		launch.EncoderContextKey, &enc,
 		launch.ISAACParamsContextKey, &isaacparams,
 		launch.CenterDatabaseContextKey, &db,
 	); err != nil {
@@ -224,10 +330,11 @@ func (cmd *ImportCommand) checkHeights(pctx context.Context) (base.Height, error
 }
 
 func (cmd *ImportCommand) validateSourceBlocks(
+	itemf isaac.BlockItemReadersItemFunc,
 	last base.Height,
-	enc encoder.Encoder,
-	params *isaac.Params,
+	networkID base.NetworkID,
 ) error {
+	// NOTE if cmd.Do is true, save the remote item files in temp directory.
 	e := util.StringError("validate source blocks")
 
 	d := last - cmd.fromHeight
@@ -242,7 +349,12 @@ func (cmd *ImportCommand) validateSourceBlocks(
 		func(_ context.Context, i, _ uint64) error {
 			height := base.Height(int64(i) + cmd.fromHeight.Int64())
 
-			return isaacblock.ValidateBlockFromLocalFS(height, cmd.Source, enc, params.NetworkID(), nil, nil, nil)
+			return isaacblock.IsValidBlockFromLocalFS(
+				itemf,
+				height,
+				networkID,
+				nil, nil, nil,
+			)
 		},
 	); err != nil {
 		return e.Wrap(err)
@@ -253,19 +365,51 @@ func (cmd *ImportCommand) validateSourceBlocks(
 	return nil
 }
 
+func (cmd *ImportCommand) loadItemFile( //revive:disable-line:flag-parameter
+	sourceReaders *isaac.BlockItemReaders,
+	fromRemotes isaac.RemotesBlockItemReadFunc,
+	saveTemp bool,
+) isaac.BlockItemReadersItemFunc {
+	return isaac.BlockItemReadersItemFuncWithRemote(
+		sourceReaders,
+		fromRemotes,
+		func(itemfile base.BlockItemFile, ir isaac.BlockItemReader, f isaac.BlockItemReaderCallbackFunc) error {
+			if isaac.IsInLocalBlockItemFile(itemfile.URI()) {
+				return f(ir)
+			}
+
+			if !saveTemp {
+				return f(ir)
+			}
+
+			buf := bytes.NewBuffer(nil)
+			defer func() {
+				buf.Reset()
+			}()
+
+			if _, err := ir.Reader().Tee(buf, nil); err != nil {
+				return err
+			}
+
+			if err := f(ir); err != nil {
+				return err
+			}
+
+			return cmd.writeTempRemoteItemFile(itemfile.URI(), itemfile.CompressFormat(), buf)
+		},
+	)(context.Background())
+}
+
 func (cmd *ImportCommand) validateImported(
+	importedReaders *isaac.BlockItemReaders,
 	last base.Height,
-	enc encoder.Encoder,
-	design launch.NodeDesign,
 	params *isaac.Params,
 	db isaac.Database,
 ) error {
 	e := util.StringError("validate imported")
 
-	root := launch.LocalFSDataDirectory(design.Storage.Base)
-
-	if err := isaacblock.ValidateBlocksFromStorage(
-		root, cmd.fromHeight, last, enc, params.NetworkID(), db, nil); err != nil {
+	if err := isaacblock.IsValidBlocksFromStorage(
+		importedReaders.Item, cmd.fromHeight, last, params.NetworkID(), db, nil); err != nil {
 		return e.Wrap(err)
 	}
 
@@ -274,7 +418,74 @@ func (cmd *ImportCommand) validateImported(
 	return nil
 }
 
-func checkLastHeight(pctx context.Context, source string, fromHeight, toHeight base.Height) (
+func (cmd *ImportCommand) tempRemoteItemFileName(uri url.URL, compressFormat string) string {
+	h := valuehash.NewSHA256(util.ConcatBytesSlice(
+		[]byte((&uri).String()),
+		[]byte(compressFormat),
+	))
+
+	return filepath.Join(cmd.CacheDirectory, util.DelmSplitStrings(h.String(), "/", 32)) //nolint:gomnd //...
+}
+
+func (cmd *ImportCommand) writeTempRemoteItemFile(
+	uri url.URL,
+	compressFormat string,
+	r io.Reader,
+) error {
+	p := cmd.tempRemoteItemFileName(uri, compressFormat)
+
+	switch fi, err := os.Stat(p); {
+	case os.IsNotExist(err):
+	case err != nil:
+		return errors.WithStack(err)
+	case fi.IsDir():
+		return errors.Errorf("directory")
+	default:
+		return nil
+	}
+
+	switch err := os.MkdirAll(filepath.Dir(p), 0o700); {
+	case os.IsExist(err):
+	case err != nil:
+		return errors.WithStack(err)
+	}
+
+	switch f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600); {
+	case err != nil:
+		return errors.WithStack(err)
+	default:
+		defer func() {
+			_ = f.Close()
+		}()
+
+		if _, err := io.Copy(f, r); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	return nil
+}
+
+func (cmd *ImportCommand) readTempRemoteItemFile(
+	uri url.URL,
+	compressFormat string,
+	f func(io.Reader, string) error,
+) (bool, error) {
+	switch i, err := os.Open(cmd.tempRemoteItemFileName(uri, compressFormat)); {
+	case os.IsNotExist(err):
+		return false, nil
+	case err != nil:
+		return false, errors.WithStack(err)
+	default:
+		defer func() {
+			_ = i.Close()
+		}()
+
+		return true, f(i, compressFormat)
+	}
+}
+
+func checkLastHeight(pctx context.Context, root string, fromHeight, toHeight base.Height) (
 	base.Height,
 	base.Height,
 	base.Height,
@@ -283,13 +494,11 @@ func checkLastHeight(pctx context.Context, source string, fromHeight, toHeight b
 	var last base.Height
 
 	var encs *encoder.Encoders
-	var enc encoder.Encoder
 	var isaacparams *isaac.Params
 	var db isaac.Database
 
 	if err := util.LoadFromContextOK(pctx,
 		launch.EncodersContextKey, &encs,
-		launch.EncoderContextKey, &enc,
 		launch.ISAACParamsContextKey, &isaacparams,
 		launch.CenterDatabaseContextKey, &db,
 	); err != nil {
@@ -326,7 +535,7 @@ func checkLastHeight(pctx context.Context, source string, fromHeight, toHeight b
 		}
 	}
 
-	switch i, found, err := isaacblock.FindLastHeightFromLocalFS(source, enc, isaacparams.NetworkID()); {
+	switch i, _, found, err := isaacblock.FindHighestDirectory(root); {
 	case err != nil:
 		return nfromHeight, toHeight, last, err
 	case !found, i < base.GenesisHeight:

@@ -6,8 +6,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -31,7 +30,7 @@ type MintItemJSONUnmarshaler struct {
 	Amount   json.RawMessage `json:"amount"`
 }
 
-func (it *MintItem) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (it *MintItem) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of MintItem")
 
 	var uit MintItemJSONUnmarshaler

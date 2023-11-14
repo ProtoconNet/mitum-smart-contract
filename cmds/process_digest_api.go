@@ -90,7 +90,7 @@ func ProcessDigestAPI(ctx context.Context) (context.Context, error) {
 		design.Network().Bind().Host,
 		design.Network().ConnInfo().URL().Host,
 		certs,
-		enc,
+		encs,
 		params.ISAAC.NetworkID(),
 	); err != nil {
 		return ctx, err

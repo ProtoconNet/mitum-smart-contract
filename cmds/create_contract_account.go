@@ -26,8 +26,8 @@ func (cmd *CreateContractAccountCommand) Run(pctx context.Context) error { // no
 		return err
 	}
 
-	encs = cmd.Encoders
-	enc = cmd.Encoder
+	//encs = cmd.Encoders
+	//enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err
@@ -48,7 +48,7 @@ func (cmd *CreateContractAccountCommand) parseFlags() error {
 		return err
 	}
 
-	a, err := cmd.Sender.Encode(enc)
+	a, err := cmd.Sender.Encode(cmd.Encoder)
 	if err != nil {
 		return errors.Wrapf(err, "invalid sender format, %v", cmd.Sender.String())
 	}

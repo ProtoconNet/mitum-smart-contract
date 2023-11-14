@@ -7,7 +7,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type CreateContractAccountFactJSONMarshaler struct {
@@ -30,7 +30,7 @@ type CreateContractAccountFactJSONUnMarshaler struct {
 	Items json.RawMessage `json:"items"`
 }
 
-func (fact *CreateContractAccountFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fact *CreateContractAccountFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of CreateContractAccountFact")
 
 	var uf CreateContractAccountFactJSONUnMarshaler
@@ -49,7 +49,7 @@ func (op CreateContractAccount) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (op *CreateContractAccount) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (op *CreateContractAccount) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of CreateContractAccount")
 
 	var ubo common.BaseOperation

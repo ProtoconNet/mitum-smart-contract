@@ -37,7 +37,9 @@ func (fact *SuffrageCandidateFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 		return e.Wrap(err)
 	}
 
-	fact.BaseFact.SetHash(valuehash.NewBytesFromString(u.Hash))
+	h := valuehash.NewBytesFromString(u.Hash)
+
+	fact.BaseFact.SetHash(h)
 	fact.BaseFact.SetToken(u.Token)
 
 	var uf SuffrageCandidateFactBSONUnMarshaler

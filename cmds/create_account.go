@@ -27,8 +27,8 @@ func (cmd *CreateAccountCommand) Run(pctx context.Context) error { // nolint:dup
 		return err
 	}
 
-	encs = cmd.Encoders
-	enc = cmd.Encoder
+	//encs = cmd.Encoders
+	//enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err
@@ -49,7 +49,7 @@ func (cmd *CreateAccountCommand) parseFlags() error {
 		return err
 	}
 
-	a, err := cmd.Sender.Encode(enc)
+	a, err := cmd.Sender.Encode(cmd.Encoders.JSON())
 	if err != nil {
 		return errors.Wrapf(err, "invalid sender format, %v", cmd.Sender.String())
 	}

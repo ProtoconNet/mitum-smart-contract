@@ -7,7 +7,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type RegisterCurrencyFactJSONMarshaler struct {
@@ -27,7 +27,7 @@ type RegisterCurrencyFactJSONUnMarshaler struct {
 	Currency json.RawMessage `json:"currency"`
 }
 
-func (fact *RegisterCurrencyFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fact *RegisterCurrencyFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode RegisterCurrencyFact")
 
 	var uf RegisterCurrencyFactJSONUnMarshaler
@@ -46,7 +46,7 @@ func (op RegisterCurrency) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (op *RegisterCurrency) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (op *RegisterCurrency) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode RegisterCurrency")
 
 	var ubo common.BaseNodeOperation

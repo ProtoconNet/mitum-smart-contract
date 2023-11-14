@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -34,7 +34,7 @@ type CurrencyDesignJSONUnmarshaler struct {
 	Aggregate string          `json:"aggregate"`
 }
 
-func (de *CurrencyDesign) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (de *CurrencyDesign) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of CurrencyDesign")
 
 	var ude CurrencyDesignJSONUnmarshaler

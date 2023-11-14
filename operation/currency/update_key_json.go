@@ -7,7 +7,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type UpdateKeyFactJSONMarshaler struct {
@@ -33,7 +33,7 @@ type UpdateKeyFactJSONUnMarshaler struct {
 	Currency string          `json:"currency"`
 }
 
-func (fact *UpdateKeyFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fact *UpdateKeyFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of UpdateKeyFact")
 
 	var uf UpdateKeyFactJSONUnMarshaler
@@ -52,7 +52,7 @@ func (op UpdateKey) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (op *UpdateKey) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (op *UpdateKey) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode UpdateKey")
 
 	var ubo common.BaseOperation

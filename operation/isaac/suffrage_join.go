@@ -107,7 +107,7 @@ func (fact SuffrageGenesisJoinFact) IsValid(networkID []byte) error {
 		return e.Wrap(err)
 	}
 
-	if _, found := util.IsDuplicatedSlice(fact.nodes, func(i base.Node) (bool, string) {
+	if found := util.IsDuplicatedSlice(fact.nodes, func(i base.Node) (bool, string) {
 		return true, i.Address().String()
 	}); found {
 		return e.Errorf("duplicated node found")

@@ -1,11 +1,10 @@
-package isaacoperation
+package types
 
 import (
 	"encoding/json"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -41,7 +40,7 @@ type networkPolicyJSONUnmarshaler struct {
 	EmptyProposalNoBlock         bool            `json:"empty_proposal_no_block"`
 }
 
-func (p *NetworkPolicy) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (p *NetworkPolicy) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("unmarshal NetworkPolicy")
 
 	var u networkPolicyJSONUnmarshaler
@@ -76,7 +75,7 @@ type NetworkPolicyStateValueJSONUnmarshaler struct {
 	Policy json.RawMessage `json:"policy"`
 }
 
-func (s *NetworkPolicyStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (s *NetworkPolicyStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode NetworkPolicyStateValue")
 
 	var u NetworkPolicyStateValueJSONUnmarshaler

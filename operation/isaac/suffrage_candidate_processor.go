@@ -6,6 +6,7 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
@@ -50,7 +51,7 @@ func NewSuffrageCandidateProcessor(
 		return nil, e.Wrap(err)
 	case !found:
 	case i == nil:
-		return nil, e.Wrap(isaac.ErrStopProcessingRetry.Errorf("empty state returned"))
+		return nil, e.Errorf("empty state returned")
 	default:
 		sufstv := i.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
 
@@ -162,6 +163,7 @@ type SuffrageCandidatesStateValueMerger struct {
 	existings []base.SuffrageCandidateStateValue
 	added     []base.SuffrageCandidateStateValue
 	removes   []base.Address
+	sync.Mutex
 }
 
 func NewSuffrageCandidatesStateValueMerger(height base.Height, st base.State) *SuffrageCandidatesStateValueMerger {
@@ -178,7 +180,7 @@ func NewSuffrageCandidatesStateValueMerger(height base.Height, st base.State) *S
 	return s
 }
 
-func (s *SuffrageCandidatesStateValueMerger) Merge(value base.StateValue, ops []util.Hash) error {
+func (s *SuffrageCandidatesStateValueMerger) Merge(value base.StateValue, op util.Hash) error {
 	s.Lock()
 	defer s.Unlock()
 
@@ -191,12 +193,15 @@ func (s *SuffrageCandidatesStateValueMerger) Merge(value base.StateValue, ops []
 		return errors.Errorf("unknown SuffrageCandidatesStateValue, %T", value)
 	}
 
-	s.AddOperations(ops)
+	s.AddOperation(op)
 
 	return nil
 }
 
 func (s *SuffrageCandidatesStateValueMerger) Close() error {
+	s.Lock()
+	defer s.Unlock()
+
 	newvalue, err := s.close()
 	if err != nil {
 		return errors.WithMessage(err, "close SuffrageCandidatesStateValueMerger")
@@ -208,11 +213,8 @@ func (s *SuffrageCandidatesStateValueMerger) Close() error {
 }
 
 func (s *SuffrageCandidatesStateValueMerger) close() (base.StateValue, error) {
-	s.Lock()
-	defer s.Unlock()
-
 	if len(s.removes) < 1 && len(s.added) < 1 {
-		return nil, isaac.ErrIgnoreStateValue.Errorf("empty newly added or removes nodes")
+		return nil, base.ErrIgnoreStateValue.Errorf("empty newly added or removes nodes")
 	}
 
 	existings := s.existings

@@ -39,8 +39,13 @@ func (fact *RegisterGenesisCurrencyFact) DecodeBSON(b []byte, enc *bsonenc.Encod
 		return e.Wrap(err)
 	}
 
-	fact.BaseFact.SetHash(valuehash.NewBytesFromString(u.Hash))
-	fact.BaseFact.SetToken(u.Token)
+	h := valuehash.NewBytesFromString(u.Hash)
+
+	fact.BaseFact.SetHash(h)
+	err = fact.BaseFact.SetToken(u.Token)
+	if err != nil {
+		return e.Wrap(err)
+	}
 
 	var uf RegisterGenesisCurrencyFactBSONUnMarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {

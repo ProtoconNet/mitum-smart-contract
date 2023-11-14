@@ -70,7 +70,9 @@ func parseHashFromPath(s string) (util.Hash, error) {
 	}
 
 	h := valuehash.NewBytesFromString(s)
-	if err := h.IsValid(nil); err != nil {
+
+	err := h.IsValid(nil)
+	if err != nil {
 		return nil, err
 	}
 

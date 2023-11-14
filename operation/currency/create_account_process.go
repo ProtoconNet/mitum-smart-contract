@@ -2,16 +2,14 @@ package currency
 
 import (
 	"context"
-	"sync"
-
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
+	"sync"
 
-	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 )
@@ -71,6 +69,7 @@ func (opp *CreateAccountItemProcessor) PreProcess(
 		return err
 	}
 	opp.ns = state.NewStateMergeValue(st.Key(), st.Value())
+	opp.ns = state.NewStateMergeValue(currency.StateKeyAccount(target), nil)
 
 	nb := map[types.CurrencyID]base.StateMergeValue{}
 	for i := range opp.item.Amounts() {
@@ -79,7 +78,7 @@ func (opp *CreateAccountItemProcessor) PreProcess(
 		case err != nil:
 			return e.Wrap(err)
 		case found:
-			return e.Wrap(isaac.ErrStopProcessingRetry.Errorf("target account balance already exists"))
+			return e.Wrap(errors.Errorf("target account balance already exists"))
 		default:
 			nb[am.Currency()] = state.NewStateMergeValue(currency.StateKeyBalance(target, am.Currency()), currency.NewBalanceStateValue(types.NewZeroAmount(am.Currency())))
 		}

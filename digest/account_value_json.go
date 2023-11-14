@@ -5,7 +5,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -34,7 +34,7 @@ type AccountValueJSONUnmarshaler struct {
 	ContractAccountStatus json.RawMessage `json:"contract_account_status"`
 }
 
-func (va *AccountValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (va *AccountValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	var uva AccountValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uva); err != nil {
 		return err

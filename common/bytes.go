@@ -2,7 +2,6 @@ package common
 
 import (
 	"bytes"
-	"encoding/hex"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 )
@@ -24,12 +23,11 @@ func NewHashFromBytes(b []byte) util.Hash {
 }
 
 func NewBytesFromString(s string) Bytes {
-	b, _ := hex.DecodeString(s)
-	return NewBytes(b)
+	return NewBytes(util.DecodeHash(s))
 }
 
 func (h Bytes) String() string {
-	return hex.EncodeToString(h.Bytes())
+	return util.EncodeHash(h.Bytes())
 }
 
 func (h Bytes) IsValid([]byte) error {

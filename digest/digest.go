@@ -2,16 +2,14 @@ package digest
 
 import (
 	"context"
+	"github.com/ProtoconNet/mitum2/isaac"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/isaac"
 	isaacblock "github.com/ProtoconNet/mitum2/isaac/block"
 	"github.com/ProtoconNet/mitum2/util"
-	mitumutil "github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/ProtoconNet/mitum2/util/fixedtree"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/pkg/errors"
@@ -51,21 +49,34 @@ type Digester struct {
 	sync.RWMutex
 	*util.ContextDaemon
 	*logging.Logging
-	database    *Database
-	localfsRoot string
-	blockChan   chan base.BlockMap
-	errChan     chan error
+	database      *Database
+	localfsRoot   string
+	blockChan     chan base.BlockMap
+	errChan       chan error
+	sourceReaders *isaac.BlockItemReaders
+	fromRemotes   isaac.RemotesBlockItemReadFunc
+	networkID     base.NetworkID
 }
 
-func NewDigester(st *Database, root string, errChan chan error) *Digester {
+func NewDigester(
+	st *Database,
+	root string,
+	sourceReaders *isaac.BlockItemReaders,
+	fromRemotes isaac.RemotesBlockItemReadFunc,
+	networkID base.NetworkID,
+	errChan chan error,
+) *Digester {
 	di := &Digester{
 		Logging: logging.NewLogging(func(c zerolog.Context) zerolog.Context {
 			return c.Str("module", "digester")
 		}),
-		database:    st,
-		localfsRoot: root,
-		blockChan:   make(chan base.BlockMap, 200),
-		errChan:     errChan,
+		database:      st,
+		localfsRoot:   root,
+		blockChan:     make(chan base.BlockMap, 200),
+		errChan:       errChan,
+		sourceReaders: sourceReaders,
+		fromRemotes:   fromRemotes,
+		networkID:     networkID,
 	}
 
 	di.ContextDaemon = util.NewContextDaemon(di.start)
@@ -74,6 +85,8 @@ func NewDigester(st *Database, root string, errChan chan error) *Digester {
 }
 
 func (di *Digester) start(ctx context.Context) error {
+	e := util.StringError("start Digester")
+
 	errch := func(err DigestError) {
 		if di.errChan == nil {
 			return
@@ -94,10 +107,10 @@ end:
 				if err := di.digest(ctx, blk); err != nil {
 					go errch(NewDigestError(err, blk.Manifest().Height()))
 					if errors.Is(err, context.Canceled) {
-						return false, isaac.ErrStopProcessingRetry.Wrap(err)
+						return false, e.Wrap(err)
 					}
 
-					return true, err
+					return true, e.Wrap(err)
 				}
 
 				return false, nil
@@ -129,53 +142,75 @@ func (di *Digester) Digest(blocks []base.BlockMap) {
 }
 
 func (di *Digester) digest(ctx context.Context, blk base.BlockMap) error {
+	e := util.StringError("digest block")
+
 	di.Lock()
 	defer di.Unlock()
 
-	enc, found := di.database.database.Encoders().Find(jsonenc.JSONEncoderHint)
-	if !found { // NOTE get latest bson encoder
-		return mitumutil.ErrNotFound.Errorf("unknown encoder hint, %q", jsonenc.JSONEncoderHint)
+	//enc, found := di.database.database.Encoders().Find(jsonenc.JSONEncoderHint)
+	//if !found { // NOTE get latest bson encoder
+	//	return mitumutil.ErrNotFound.Errorf("unknown encoder hint, %q", jsonenc.JSONEncoderHint)
+	//}
+
+	var bm base.BlockMap
+
+	switch i, found, err := isaac.BlockItemReadersDecode[base.BlockMap](di.sourceReaders.Item, blk.Manifest().Height(), base.BlockItemMap, nil); {
+	case err != nil:
+		return e.Wrap(err)
+	case !found:
+		return e.Wrap(util.ErrNotFound.Errorf("blockmap"))
+	default:
+		if err := i.IsValid(di.networkID); err != nil {
+			return e.Wrap(err)
+		}
+
+		bm = i
 	}
 
-	reader, err := isaacblock.NewLocalFSReaderFromHeight(di.localfsRoot, blk.Manifest().Height(), enc)
+	pr, ops, sts, opsTree, _, _, err := isaacblock.LoadBlockItemsFromReader(bm, di.sourceReaders.Item, blk.Manifest().Height())
 	if err != nil {
-		return err
+		return e.Wrap(err)
 	}
 
-	var ops []base.Operation
-	switch v, found, err := reader.Item(base.BlockMapItemTypeOperations); {
-	case err != nil:
-		return err
-	case found:
-		ops = v.([]base.Operation) //nolint:forcetypeassert //...
-	}
+	//reader, err := isaacblock.NewLocalFSReaderFromHeight(di.localfsRoot, blk.Manifest().Height(), enc)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//var ops []base.Operation
+	//switch v, found, err := reader.Item(base.BlockItemOperations); {
+	//case err != nil:
+	//	return err
+	//case found:
+	//	ops = v.([]base.Operation) //nolint:forcetypeassert //...
+	//}
+	//
+	//var opstree fixedtree.Tree
+	//switch v, found, err := reader.Item(base.BlockItemOperationsTree); {
+	//case err != nil:
+	//	return err
+	//case found:
+	//	opstree = v.(fixedtree.Tree) //nolint:forcetypeassert //...
+	//}
+	//
+	//var sts []base.State
+	//switch v, found, err := reader.Item(base.BlockItemStates); {
+	//case err != nil:
+	//	return err
+	//case found:
+	//	sts = v.([]base.State) //nolint:forcetypeassert //...
+	//}
+	//
+	//var proposal base.ProposalSignFact
+	//switch v, found, err := reader.Item(base.BlockItemProposal); {
+	//case err != nil:
+	//	return err
+	//case found:
+	//	proposal = v.(base.ProposalSignFact) //nolint:forcetypeassert //...
+	//}
 
-	var opstree fixedtree.Tree
-	switch v, found, err := reader.Item(base.BlockMapItemTypeOperationsTree); {
-	case err != nil:
-		return err
-	case found:
-		opstree = v.(fixedtree.Tree) //nolint:forcetypeassert //...
-	}
-
-	var sts []base.State
-	switch v, found, err := reader.Item(base.BlockMapItemTypeStates); {
-	case err != nil:
-		return err
-	case found:
-		sts = v.([]base.State) //nolint:forcetypeassert //...
-	}
-
-	var proposal base.ProposalSignFact
-	switch v, found, err := reader.Item(base.BlockMapItemTypeProposal); {
-	case err != nil:
-		return err
-	case found:
-		proposal = v.(base.ProposalSignFact) //nolint:forcetypeassert //...
-	}
-
-	if err := DigestBlock(ctx, di.database, blk, ops, opstree, sts, proposal); err != nil {
-		return err
+	if err := DigestBlock(ctx, di.database, blk, ops, opsTree, sts, pr); err != nil {
+		return e.Wrap(err)
 	}
 
 	return di.database.SetLastBlock(blk.Manifest().Height())

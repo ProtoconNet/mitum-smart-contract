@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -24,7 +24,7 @@ type AccountStateValueJSONUnmarshaler struct {
 	AC json.RawMessage `json:"account"`
 }
 
-func (a *AccountStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (a *AccountStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode AccountStateValue")
 
 	var u AccountStateValueJSONUnmarshaler
@@ -59,7 +59,7 @@ type BalanceStateValueJSONUnmarshaler struct {
 	AM json.RawMessage `json:"amount"`
 }
 
-func (b *BalanceStateValue) DecodeJSON(v []byte, enc *jsonenc.Encoder) error {
+func (b *BalanceStateValue) DecodeJSON(v []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode BalanceStateValue")
 
 	var u BalanceStateValueJSONUnmarshaler
@@ -94,7 +94,7 @@ type CurrencyDesignStateValueJSONUnmarshaler struct {
 	CD json.RawMessage `json:"currencydesign"`
 }
 
-func (c *CurrencyDesignStateValue) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (c *CurrencyDesignStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode CurrencyDesignStateValue")
 
 	var u CurrencyDesignStateValueJSONUnmarshaler

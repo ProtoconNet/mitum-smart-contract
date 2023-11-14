@@ -6,7 +6,7 @@ import (
 
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
@@ -31,7 +31,7 @@ type KeyJSONUnmarshaler struct {
 	Key    string    `json:"key"`
 }
 
-func (ky *BaseAccountKey) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (ky *BaseAccountKey) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of BaseAccountKey")
 
 	var uk KeyJSONUnmarshaler
@@ -90,7 +90,7 @@ type EthKeysHashJSONUnMarshaler struct {
 	Hash common.HashDecoder `json:"hash"`
 }
 
-func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of BaseAccountKeys")
 
 	var uks KeysJSONUnMarshaler
@@ -108,7 +108,7 @@ func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	return ks.unpack(enc, uks.Hint, hash, uks.Keys, uks.Threshold)
 }
 
-func (ks *EthAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (ks *EthAccountKeys) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of EthAccountKeys")
 
 	var uks KeysJSONUnMarshaler
@@ -126,7 +126,7 @@ func (ks *EthAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
 	return ks.unpack(enc, uks.Hint, hash, uks.Keys, uks.Threshold)
 }
 
-func (ks *ContractAccountKeys) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (ks *ContractAccountKeys) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of BaseAccountKeys")
 
 	var uks KeysJSONUnMarshaler

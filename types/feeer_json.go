@@ -3,7 +3,7 @@ package types
 import (
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
@@ -46,7 +46,7 @@ type FixedFeeerJSONUnmarshaler struct {
 	Amount   string    `json:"amount"`
 }
 
-func (fa *FixedFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fa *FixedFeeer) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of FixedFeeer")
 
 	var ufa FixedFeeerJSONUnmarshaler
@@ -83,7 +83,7 @@ type RatioFeeerJSONUnmarshaler struct {
 	Max      string    `json:"max"`
 }
 
-func (fa *RatioFeeer) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fa *RatioFeeer) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of RatioFeeer")
 
 	var ufa RatioFeeerJSONUnmarshaler

@@ -36,8 +36,13 @@ func (fact *CreateContractAccountFact) DecodeBSON(b []byte, enc *bsonenc.Encoder
 		return e.Wrap(err)
 	}
 
-	fact.BaseFact.SetHash(valuehash.NewBytesFromString(ubf.Hash))
-	fact.BaseFact.SetToken(ubf.Token)
+	h := valuehash.NewBytesFromString(ubf.Hash)
+
+	fact.BaseFact.SetHash(h)
+	err := fact.BaseFact.SetToken(ubf.Token)
+	if err != nil {
+		return e.Wrap(err)
+	}
 
 	var uf CreateContractAccountFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {

@@ -8,10 +8,9 @@ import (
 
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	isaacoperation "github.com/ProtoconNet/mitum-currency/v3/operation/isaac"
-	"github.com/ProtoconNet/mitum-currency/v3/types"
+	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
-	isaacblock "github.com/ProtoconNet/mitum2/isaac/block"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -22,12 +21,13 @@ import (
 )
 
 type GenesisBlockGenerator struct {
-	local    base.LocalNode
-	enc      encoder.Encoder
-	db       isaac.Database
-	proposal base.ProposalSignFact
-	ivp      base.INITVoteproof
-	avp      base.ACCEPTVoteproof
+	local                base.LocalNode
+	encs                 *encoder.Encoders
+	db                   isaac.Database
+	proposal             base.ProposalSignFact
+	ivp                  base.INITVoteproof
+	avp                  base.ACCEPTVoteproof
+	loadImportedBlockMap func() (base.BlockMap, bool, error)
 	*logging.Logging
 	dataroot  string
 	networkID base.NetworkID
@@ -39,23 +39,25 @@ type GenesisBlockGenerator struct {
 func NewGenesisBlockGenerator(
 	local base.LocalNode,
 	networkID base.NetworkID,
-	enc encoder.Encoder,
+	encs *encoder.Encoders,
 	db isaac.Database,
 	dataroot string,
 	facts []base.Fact,
+	loadImportedBlockMap func() (base.BlockMap, bool, error),
 	ctx context.Context,
 ) *GenesisBlockGenerator {
 	return &GenesisBlockGenerator{
 		Logging: logging.NewLogging(func(zctx zerolog.Context) zerolog.Context {
 			return zctx.Str("module", "genesis-block-generator")
 		}),
-		local:     local,
-		networkID: networkID,
-		enc:       enc,
-		db:        db,
-		dataroot:  dataroot,
-		facts:     facts,
-		ctx:       ctx,
+		local:                local,
+		networkID:            networkID,
+		encs:                 encs,
+		db:                   db,
+		dataroot:             dataroot,
+		facts:                facts,
+		loadImportedBlockMap: loadImportedBlockMap,
+		ctx:                  ctx,
 	}
 }
 
@@ -74,16 +76,11 @@ func (g *GenesisBlockGenerator) Generate() (base.BlockMap, error) {
 		return nil, e.Wrap(err)
 	}
 
-	fsreader, err := isaacblock.NewLocalFSReaderFromHeight(g.dataroot, base.GenesisHeight, g.enc)
-	if err != nil {
-		return nil, e.Wrap(err)
-	}
-
-	switch blockmap, found, err := fsreader.BlockMap(); {
+	switch blockmap, found, err := g.loadImportedBlockMap(); {
 	case err != nil:
 		return nil, e.Wrap(err)
 	case !found:
-		return nil, errors.Errorf("blockmap not found")
+		return nil, util.ErrNotFound.Errorf("blockmap")
 	default:
 		if err := blockmap.IsValid(g.networkID); err != nil {
 			return nil, e.Wrap(err)
@@ -170,7 +167,7 @@ func (g *GenesisBlockGenerator) joinOperation(i base.Fact) (base.Operation, erro
 }
 
 func (g *GenesisBlockGenerator) networkPolicyOperation(i base.Fact) (base.Operation, error) {
-	e := util.StringError("make join operation")
+	e := util.StringError("make networkPolicy operation")
 
 	basefact, ok := i.(isaacoperation.GenesisNetworkPolicyFact)
 	if !ok {
@@ -206,7 +203,7 @@ func (g *GenesisBlockGenerator) registerGenesisCurrencyOperation(i base.Fact, to
 	if !ok {
 		return nil, e.WithMessage(nil, "expected RegisterGenesisCurrencyFact, not %T", i)
 	}
-	acks, err := types.NewBaseAccountKeys(basefact.Keys().Keys(), basefact.Keys().Threshold())
+	acks, err := currencytypes.NewBaseAccountKeys(basefact.Keys().Keys(), basefact.Keys().Threshold())
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
@@ -387,7 +384,8 @@ func (g *GenesisBlockGenerator) closeDatabase() error {
 
 func (g *GenesisBlockGenerator) newProposalProcessor() (*isaac.DefaultProposalProcessor, error) {
 	args := isaac.NewDefaultProposalProcessorArgs()
-	args.NewWriterFunc = launch.NewBlockWriterFunc(g.local, g.networkID, g.dataroot, g.enc, g.db, math.MaxInt16)
+	args.NewWriterFunc = launch.NewBlockWriterFunc(
+		g.local, g.networkID, g.dataroot, g.encs.JSON(), g.encs.Default(), g.db, math.MaxInt16)
 	args.GetStateFunc = func(key string) (base.State, bool, error) {
 		return nil, false, nil
 	}

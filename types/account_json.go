@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
@@ -41,7 +41,7 @@ type AccountJSONUnmarshaler struct {
 	Keys    json.RawMessage       `json:"keys"`
 }
 
-func (ac *Account) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (ac *Account) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of Account")
 
 	var uac AccountJSONUnmarshaler

@@ -7,7 +7,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type WithdrawFactJSONMarshaler struct {
@@ -30,7 +30,7 @@ type WithdrawFactJSONUnmarshaler struct {
 	Items  json.RawMessage `json:"items"`
 }
 
-func (fact *WithdrawFact) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (fact *WithdrawFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of WithdrawFact")
 
 	var uf WithdrawFactJSONUnmarshaler
@@ -50,7 +50,7 @@ func (op Withdraw) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (op *Withdraw) DecodeJSON(b []byte, enc *jsonenc.Encoder) error {
+func (op *Withdraw) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode json of Withdraw")
 
 	var ubo common.BaseOperation
