@@ -60,7 +60,7 @@ func NewHTTP2Server(bind, host string, certs []tls.Certificate, encs *encoder.En
 		bind:             bind,
 		host:             host,
 		networkID:        networkID,
-		queue:            make(chan RequestWrapper, 1000),
+		queue:            make(chan RequestWrapper, 100),
 		idleTimeout:      idleTimeout,     // TODO can be configurable
 		activeTimeout:    time.Minute * 1, // TODO can be configurable
 		keepAliveTimeout: time.Minute * 1, // TODO can be configurable

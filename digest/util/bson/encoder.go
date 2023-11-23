@@ -267,7 +267,18 @@ func (*Encoder) guessHint(b []byte) (hint.Hint, error) {
 func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.DecodeDetail {
 	e := util.StringError("analyze in bson encoder")
 
-	ptr, elem := encoder.Ptr(v)
+	orig := reflect.ValueOf(v)
+	ptr, elem := encoder.Ptr(orig)
+
+	tointerface := func(i interface{}) interface{} {
+		return reflect.ValueOf(i).Elem().Interface()
+	}
+
+	if orig.Type().Kind() == reflect.Ptr {
+		tointerface = func(i interface{}) interface{} {
+			return i
+		}
+	}
 
 	switch ptr.Interface().(type) {
 	case BSONDecodable:
@@ -279,7 +290,7 @@ func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.Decod
 				return nil, e.WithMessage(err, "DecodeBSON")
 			}
 
-			return reflect.ValueOf(i).Elem().Interface(), nil
+			return tointerface(i), nil
 		}
 	case bson.Unmarshaler:
 		d.Desc = "BSONUnmarshaler"
@@ -301,7 +312,7 @@ func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.Decod
 				return nil, e.WithMessage(err, "UnmarshalText")
 			}
 
-			return reflect.ValueOf(i).Elem().Interface(), nil
+			return tointerface(i), nil
 		}
 	default:
 		d.Desc = "native"
@@ -312,11 +323,14 @@ func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.Decod
 				return nil, e.WithMessage(err, "native UnmarshalBSON")
 			}
 
-			return reflect.ValueOf(i).Elem().Interface(), nil
+			return tointerface(i), nil
 		}
 	}
 
-	return encoder.AnalyzeSetHinter(d, elem.Interface())
+	return enc.analyzeExtensible(
+		encoder.AnalyzeSetHinter(d, orig.Interface()),
+		ptr,
+	)
 }
 
 func (enc *Encoder) poolGet(s string) (interface{}, bool) {
@@ -333,6 +347,25 @@ func (enc *Encoder) poolSet(s string, v interface{}) {
 	}
 
 	enc.pool.Set(s, v, nil)
+}
+
+func (*Encoder) analyzeExtensible(d encoder.DecodeDetail, ptr reflect.Value) encoder.DecodeDetail {
+	p := d.Decode
+
+	d.Decode = func(b []byte, ht hint.Hint) (interface{}, error) {
+		i, err := p(b, ht)
+		if err != nil {
+			return i, err
+		}
+
+		if i == nil {
+			return i, nil
+		}
+
+		return i, nil
+	}
+
+	return d
 }
 
 func isNil(b []byte) bool {

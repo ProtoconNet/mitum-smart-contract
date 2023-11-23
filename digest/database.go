@@ -1182,7 +1182,7 @@ type briefAccountDoc struct {
 	Height  base.Height        `bson:"height"`
 }
 
-func (doc briefAccountDoc) pubExists(k base.PKKey) bool {
+func (doc briefAccountDoc) pubExists(k base.Publickey) bool {
 	if len(doc.Pubs) < 1 {
 		return false
 	}
