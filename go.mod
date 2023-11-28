@@ -5,7 +5,7 @@ go 1.21
 replace github.com/ProtoconNet/mitum2 => /Users/soonkukkang/go/src/github.com/ProtoconNet/mitum2
 
 require (
-	github.com/ProtoconNet/mitum2 v0.0.0-20231103055947-6ed9d9b53c04
+	github.com/ProtoconNet/mitum2 v0.0.0-20231128070632-a93b2076a5bc
 	github.com/alecthomas/kong v0.8.1
 	github.com/arl/statsviz v0.6.0
 	github.com/bluele/gcache v0.0.2
