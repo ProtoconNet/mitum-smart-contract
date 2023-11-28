@@ -29,3 +29,5 @@ tests/*/*/coverage/
 /yml
 .envrc
 .golangci.excludes.txt
+/config.yml
+/genesis.yml
