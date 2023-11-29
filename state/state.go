@@ -6,6 +6,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 type StateValueMerger struct {
@@ -135,4 +136,16 @@ func CheckFactSignsByState(
 	}
 
 	return nil
+}
+
+func ParseStateKey(key string, Prefix string, expected int) ([]string, error) {
+	parsedKey := strings.Split(key, ":")
+	if parsedKey[0] != Prefix {
+		return nil, errors.Errorf("State Key not include Prefix, %s", parsedKey)
+	}
+	if len(parsedKey) < expected {
+		return nil, errors.Errorf("parsed State Key length under %v", expected)
+	} else {
+		return parsedKey, nil
+	}
 }
