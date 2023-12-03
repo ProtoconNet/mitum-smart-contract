@@ -10,6 +10,7 @@ var (
 	MinLengthCurrencyID = 3
 	MaxLengthCurrencyID = 10
 	ReValidCurrencyID   = regexp.MustCompile(`^[A-Z0-9][A-Z0-9_\.\!\$\*\@]*[A-Z0-9]$`)
+	ReSpcecialChar      = regexp.MustCompile(`^[^\s:/?#\[\]@]*$`)
 )
 
 type CurrencyID string
