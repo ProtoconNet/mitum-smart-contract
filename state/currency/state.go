@@ -112,6 +112,54 @@ func StateBalanceValue(st base.State) (types.Amount, error) {
 	return a.Amount, nil
 }
 
+type AddBalanceStateValue struct {
+	Amount types.Amount
+}
+
+func NewAddBalanceStateValue(amount types.Amount) AddBalanceStateValue {
+	return AddBalanceStateValue{
+		Amount: amount,
+	}
+}
+
+func (b AddBalanceStateValue) IsValid([]byte) error {
+	e := util.ErrInvalid.Errorf("invalid AddBalanceStateValue")
+
+	if err := util.CheckIsValiders(nil, false, b.Amount); err != nil {
+		return e.Wrap(err)
+	}
+
+	return nil
+}
+
+func (b AddBalanceStateValue) HashBytes() []byte {
+	return b.Amount.Bytes()
+}
+
+type DeductBalanceStateValue struct {
+	Amount types.Amount
+}
+
+func NewDeductBalanceStateValue(amount types.Amount) DeductBalanceStateValue {
+	return DeductBalanceStateValue{
+		Amount: amount,
+	}
+}
+
+func (b DeductBalanceStateValue) IsValid([]byte) error {
+	e := util.ErrInvalid.Errorf("invalid DeductBalanceStateValue")
+
+	if err := util.CheckIsValiders(nil, false, b.Amount); err != nil {
+		return e.Wrap(err)
+	}
+
+	return nil
+}
+
+func (b DeductBalanceStateValue) HashBytes() []byte {
+	return b.Amount.Bytes()
+}
+
 type CurrencyDesignStateValue struct {
 	hint.BaseHinter
 	CurrencyDesign types.CurrencyDesign

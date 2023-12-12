@@ -2,6 +2,7 @@ package currency
 
 import (
 	"context"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"sync"
 
 	"github.com/ProtoconNet/mitum-currency/v3/state"
@@ -148,10 +149,22 @@ func (opp *RegisterCurrencyProcessor) Process(
 
 	design := fact.currency
 
-	ba := currency.NewBalanceStateValue(design.Amount())
-	sts[0] = state.NewStateMergeValue(
+	//ba := currency.NewBalanceStateValue(design.Amount())
+	//sts[0] = state.NewStateMergeValue(
+	//	currency.StateKeyBalance(design.GenesisAccount(), design.Currency()),
+	//	ba,
+	//)
+	sts[0] = common.NewBaseStateMergeValue(
 		currency.StateKeyBalance(design.GenesisAccount(), design.Currency()),
-		ba,
+		currency.NewAddBalanceStateValue(design.Amount()),
+		func(height base.Height, st base.State) base.StateValueMerger {
+			return currency.NewBalanceStateValueMerger(
+				height,
+				currency.StateKeyBalance(design.GenesisAccount(), design.Currency()),
+				design.Currency(),
+				st,
+			)
+		},
 	)
 
 	de := currency.NewCurrencyDesignStateValue(design)
@@ -190,7 +203,18 @@ func createZeroAccount(
 		return nil, err
 	}
 
-	sts[1] = state.NewStateMergeValue(bst.Key(), currency.NewBalanceStateValue(types.NewZeroAmount(cid)))
+	sts[1] = common.NewBaseStateMergeValue(
+		bst.Key(),
+		currency.NewAddBalanceStateValue(types.NewZeroAmount(cid)),
+		func(height base.Height, st base.State) base.StateValueMerger {
+			return currency.NewBalanceStateValueMerger(
+				height,
+				bst.Key(),
+				cid,
+				st,
+			)
+		},
+	)
 
 	return sts, nil
 }

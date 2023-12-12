@@ -125,7 +125,7 @@ func (opp *UpdateKeyProcessor) Process( // nolint:dupl
 		return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", currency.BalanceStateValue{}, tgBalSt.Value()), nil
 	}
 
-	tgAmount := v.Amount.WithBig(v.Amount.Big().Sub(fee))
+	//tgAmount := v.Amount.WithBig(v.Amount.Big().Sub(fee))
 
 	// stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[i][0]).Sub(opp.required[i][1])))
 	if policy.Feeer().Receiver() != nil {
@@ -135,18 +135,28 @@ func (opp *UpdateKeyProcessor) Process( // nolint:dupl
 			return nil, nil, err
 		} else if !found {
 			return nil, nil, errors.Errorf("feeer receiver %s not found", policy.Feeer().Receiver())
-		} else if feeRcvrSt.Key() == tgBalSt.Key() {
-			tgAmount = tgAmount.WithBig(tgAmount.Big().Add(fee))
-		} else {
+		} else if feeRcvrSt.Key() != tgBalSt.Key() {
 			r, ok := feeRcvrSt.Value().(currency.BalanceStateValue)
 			if !ok {
 				return nil, nil, errors.Errorf("expected %T, not %T", currency.BalanceStateValue{}, feeRcvrSt.Value())
 			}
-			stmvs = append(stmvs, state.NewStateMergeValue(feeRcvrSt.Key(), currency.NewBalanceStateValue(r.Amount.WithBig(r.Amount.Big().Add(fee)))))
+			stmvs = append(stmvs, common.NewBaseStateMergeValue(
+				feeRcvrSt.Key(),
+				currency.NewAddBalanceStateValue(r.Amount.WithBig(fee)),
+				func(height base.Height, st base.State) base.StateValueMerger {
+					return currency.NewBalanceStateValueMerger(height, feeRcvrSt.Key(), fact.currency, st)
+				},
+			))
+
+			stmvs = append(stmvs, common.NewBaseStateMergeValue(
+				tgBalSt.Key(),
+				currency.NewDeductBalanceStateValue(v.Amount.WithBig(fee)),
+				func(height base.Height, st base.State) base.StateValueMerger {
+					return currency.NewBalanceStateValueMerger(height, tgBalSt.Key(), fact.currency, st)
+				},
+			))
 		}
 	}
-	stmv := currency.NewBalanceStateValue(tgAmount)
-	stmvs = append(stmvs, state.NewStateMergeValue(tgBalSt.Key(), stmv))
 
 	ac, err := currency.LoadStateAccountValue(tgAccSt)
 	if err != nil {

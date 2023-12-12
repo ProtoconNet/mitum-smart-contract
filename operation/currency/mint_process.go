@@ -137,27 +137,39 @@ func (opp *MintProcessor) Process(
 	for i := range fact.Items() {
 		item := fact.Items()[i]
 
-		var ab types.Amount
+		//var ab types.Amount
 
 		k := currency.StateKeyBalance(item.Receiver(), item.Amount().Currency())
-		switch st, found, err := getStateFunc(k); {
+		switch st, _, err := getStateFunc(k); {
 		case err != nil:
 			return nil, base.NewBaseOperationProcessReasonError(
 				"find receiver account balance state, %v; %w",
 				k,
 				err,
 			), nil
-		case !found:
-			ab = types.NewZeroAmount(item.Amount().Currency())
+		//case !found:
+		//	ab = types.NewZeroAmount(item.Amount().Currency())
 		default:
-			b, err := currency.StateBalanceValue(st)
+			_, err := currency.StateBalanceValue(st)
 			if err != nil {
 				return nil, base.NewBaseOperationProcessReasonError("get balance value, %v; %w", k, err), nil
 			}
-			ab = b
+			//ab = b
 		}
 
-		sts = append(sts, state.NewStateMergeValue(k, currency.NewBalanceStateValue(types.NewAmount(ab.Big().Add(item.Amount().Big()), item.Amount().Currency()))))
+		sts = append(sts, common.NewBaseStateMergeValue(
+			k,
+			currency.NewAddBalanceStateValue(types.NewAmount(item.Amount().Big(), item.Amount().Currency())),
+			func(height base.Height, st base.State) base.StateValueMerger {
+				return currency.NewBalanceStateValueMerger(
+					height,
+					k,
+					item.Amount().Currency(),
+					st,
+				)
+			},
+		))
+		//sts = append(sts, state.NewStateMergeValue(k, currency.NewBalanceStateValue(types.NewAmount(ab.Big().Add(item.Amount().Big()), item.Amount().Currency()))))
 
 		if _, found := aggs[item.Amount().Currency()]; found {
 			aggs[item.Amount().Currency()] = aggs[item.Amount().Currency()].Add(item.Amount().Big())

@@ -134,8 +134,6 @@ func (opp *UpdateOperatorProcessor) Process( // nolint:dupl
 		return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", sdBalSt.Value()), nil
 	}
 
-	sdAmount := v.Amount.WithBig(v.Amount.Big().Sub(fee))
-
 	if policy.Feeer().Receiver() != nil {
 		if err := state.CheckExistsState(currency.StateKeyAccount(policy.Feeer().Receiver()), getStateFunc); err != nil {
 			return nil, nil, err
@@ -143,18 +141,28 @@ func (opp *UpdateOperatorProcessor) Process( // nolint:dupl
 			return nil, nil, err
 		} else if !found {
 			return nil, nil, errors.Errorf("feeer receiver %s not found", policy.Feeer().Receiver())
-		} else if feeRcvrSt.Key() == sdBalSt.Key() {
-			sdAmount = sdAmount.WithBig(sdAmount.Big().Add(fee))
-		} else {
+		} else if feeRcvrSt.Key() != sdBalSt.Key() {
 			r, ok := feeRcvrSt.Value().(currency.BalanceStateValue)
 			if !ok {
 				return nil, nil, errors.Errorf("invalid BalanceState value found, %T", feeRcvrSt.Value())
 			}
-			stmvs = append(stmvs, state.NewStateMergeValue(feeRcvrSt.Key(), currency.NewBalanceStateValue(r.Amount.WithBig(r.Amount.Big().Add(fee)))))
+			stmvs = append(stmvs, common.NewBaseStateMergeValue(
+				feeRcvrSt.Key(),
+				currency.NewAddBalanceStateValue(r.Amount.WithBig(fee)),
+				func(height base.Height, st base.State) base.StateValueMerger {
+					return currency.NewBalanceStateValueMerger(height, feeRcvrSt.Key(), fact.currency, st)
+				},
+			))
+
+			stmvs = append(stmvs, common.NewBaseStateMergeValue(
+				sdBalSt.Key(),
+				currency.NewDeductBalanceStateValue(v.Amount.WithBig(fee)),
+				func(height base.Height, st base.State) base.StateValueMerger {
+					return currency.NewBalanceStateValueMerger(height, sdBalSt.Key(), fact.currency, st)
+				},
+			))
 		}
 	}
-	stmv := currency.NewBalanceStateValue(sdAmount)
-	stmvs = append(stmvs, state.NewStateMergeValue(sdBalSt.Key(), stmv))
 
 	ctsv := ctAccSt.Value()
 	if ctsv == nil {

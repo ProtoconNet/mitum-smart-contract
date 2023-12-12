@@ -2,6 +2,7 @@ package currency
 
 import (
 	"context"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
@@ -53,7 +54,20 @@ func (op RegisterGenesisCurrency) Process(
 		if err != nil {
 			return nil, nil, err
 		}
-		gas[c.Currency()] = state.NewStateMergeValue(st.Key(), currency.NewBalanceStateValue(types.NewZeroAmount(c.Currency())))
+		//gas[c.Currency()] = state.NewStateMergeValue(st.Key(), currency.NewBalanceStateValue(types.NewZeroAmount(c.Currency())))
+
+		gas[c.Currency()] = common.NewBaseStateMergeValue(
+			st.Key(),
+			currency.NewAddBalanceStateValue(types.NewZeroAmount(c.Currency())),
+			func(height base.Height, st base.State) base.StateValueMerger {
+				return currency.NewBalanceStateValueMerger(
+					height,
+					st.Key(),
+					c.Currency(),
+					st,
+				)
+			},
+		)
 	}
 
 	var smvs []base.StateMergeValue
@@ -65,12 +79,25 @@ func (op RegisterGenesisCurrency) Process(
 
 	for i := range cs {
 		c := cs[i]
-		v, ok := gas[c.Currency()].Value().(currency.BalanceStateValue)
+		v, ok := gas[c.Currency()].Value().(currency.AddBalanceStateValue)
 		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("invalid BalanceState value found, %T", gas[c.Currency()].Value()), nil
+			return nil, base.NewBaseOperationProcessReasonError("invalid State value found, %T", gas[c.Currency()].Value()), nil
 		}
 
-		gst := state.NewStateMergeValue(gas[c.Currency()].Key(), currency.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(c.Amount().Big()))))
+		gst := common.NewBaseStateMergeValue(
+			gas[c.Currency()].Key(),
+			currency.NewAddBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(c.Amount().Big()))),
+			func(height base.Height, st base.State) base.StateValueMerger {
+				return currency.NewBalanceStateValueMerger(
+					height,
+					gas[c.Currency()].Key(),
+					c.Currency(),
+					st,
+				)
+			},
+		)
+
+		//gst := state.NewStateMergeValue(gas[c.Currency()].Key(), currency.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(c.Amount().Big()))))
 		dst := state.NewStateMergeValue(sts[c.Currency()].Key(), currency.NewCurrencyDesignStateValue(c))
 		smvs = append(smvs, gst, dst)
 
