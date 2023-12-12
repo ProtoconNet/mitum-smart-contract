@@ -9,7 +9,7 @@ import (
 )
 
 type BalanceStateValueMerger struct {
-	*base.BaseStateValueMerger
+	*common.BaseStateValueMerger
 	existing BalanceStateValue
 	add      common.Big
 	remove   common.Big
@@ -23,7 +23,7 @@ func NewBalanceStateValueMerger(height base.Height, key string, currency types.C
 	}
 
 	s := &BalanceStateValueMerger{
-		BaseStateValueMerger: base.NewBaseStateValueMerger(height, nst.Key(), nst),
+		BaseStateValueMerger: common.NewBaseStateValueMerger(height, nst.Key(), nst),
 	}
 
 	s.existing = NewBalanceStateValue(types.NewZeroAmount(currency))
