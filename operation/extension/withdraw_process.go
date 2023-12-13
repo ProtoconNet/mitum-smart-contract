@@ -216,7 +216,7 @@ func (opp *WithdrawProcessor) Process( // nolint:dupl
 		return nil, base.NewBaseOperationProcessReasonError("expected WithdrawFact, not %T", op.Fact()), nil
 	}
 
-	feeReceiveBalSts, required, err := opp.calculateItemsFee(op, getStateFunc)
+	feeReceiverBalSts, required, err := opp.calculateItemsFee(op, getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("calculate fee: %v", err), nil
 	}
@@ -262,9 +262,10 @@ func (opp *WithdrawProcessor) Process( // nolint:dupl
 		if !ok {
 			return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", senderBalSts[cid].Value()), nil
 		}
+		_, feeReceiverFound := feeReceiverBalSts[cid]
 
 		var stateMergeValue base.StateMergeValue
-		if senderBalSts[cid].Key() == feeReceiveBalSts[cid].Key() {
+		if feeReceiverFound && (senderBalSts[cid].Key() == feeReceiverBalSts[cid].Key()) {
 			stateMergeValue = common.NewBaseStateMergeValue(
 				senderBalSts[cid].Key(),
 				statecurrency.NewAddBalanceStateValue(v.Amount.WithBig(opp.required[cid][0].Sub(opp.required[cid][1]))),
@@ -294,20 +295,22 @@ func (opp *WithdrawProcessor) Process( // nolint:dupl
 				)
 			}
 
-			r, ok := feeReceiveBalSts[cid].Value().(statecurrency.BalanceStateValue)
-			if !ok {
-				return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", feeReceiveBalSts[cid].Value()), nil
+			if feeReceiverFound {
+				r, ok := feeReceiverBalSts[cid].Value().(statecurrency.BalanceStateValue)
+				if !ok {
+					return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", feeReceiverBalSts[cid].Value()), nil
+				}
+				stateMergeValues = append(
+					stateMergeValues,
+					common.NewBaseStateMergeValue(
+						feeReceiverBalSts[cid].Key(),
+						statecurrency.NewAddBalanceStateValue(r.Amount.WithBig(opp.required[cid][1])),
+						func(height base.Height, st base.State) base.StateValueMerger {
+							return statecurrency.NewBalanceStateValueMerger(height, feeReceiverBalSts[cid].Key(), cid, st)
+						},
+					),
+				)
 			}
-			stateMergeValues = append(
-				stateMergeValues,
-				common.NewBaseStateMergeValue(
-					feeReceiveBalSts[cid].Key(),
-					statecurrency.NewAddBalanceStateValue(r.Amount.WithBig(opp.required[cid][1])),
-					func(height base.Height, st base.State) base.StateValueMerger {
-						return statecurrency.NewBalanceStateValueMerger(height, feeReceiveBalSts[cid].Key(), cid, st)
-					},
-				),
-			)
 		}
 		stateMergeValues = append(stateMergeValues, stateMergeValue)
 	}

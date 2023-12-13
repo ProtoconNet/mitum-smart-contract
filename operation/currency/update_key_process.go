@@ -125,9 +125,6 @@ func (opp *UpdateKeyProcessor) Process( // nolint:dupl
 		return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", currency.BalanceStateValue{}, tgBalSt.Value()), nil
 	}
 
-	//tgAmount := v.Amount.WithBig(v.Amount.Big().Sub(fee))
-
-	// stv := NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[i][0]).Sub(opp.required[i][1])))
 	if policy.Feeer().Receiver() != nil {
 		if err := state.CheckExistsState(currency.StateKeyAccount(policy.Feeer().Receiver()), getStateFunc); err != nil {
 			return nil, nil, err

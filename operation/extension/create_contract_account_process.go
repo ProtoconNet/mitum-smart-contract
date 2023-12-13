@@ -267,12 +267,12 @@ func (opp *CreateContractAccountProcessor) Process( // nolint:dupl
 	}
 
 	var (
-		senderBalSts, feeReceiveBalSts map[types.CurrencyID]base.State
-		required                       map[types.CurrencyID][2]common.Big
-		err                            error
+		senderBalSts, feeReceiverBalSts map[types.CurrencyID]base.State
+		required                        map[types.CurrencyID][2]common.Big
+		err                             error
 	)
 
-	if feeReceiveBalSts, required, err = opp.calculateItemsFee(op, getStateFunc); err != nil {
+	if feeReceiverBalSts, required, err = opp.calculateItemsFee(op, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("calculate fee; %w", err), nil
 	} else if senderBalSts, err = currency.CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("not enough balance of sender %s; %v", fact.sender, err), nil
@@ -314,9 +314,10 @@ func (opp *CreateContractAccountProcessor) Process( // nolint:dupl
 		if !ok {
 			return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", senderBalSts[cid].Value()), nil
 		}
+		_, feeReceiverFound := feeReceiverBalSts[cid]
 
 		var stateMergeValue base.StateMergeValue
-		if senderBalSts[cid].Key() == feeReceiveBalSts[cid].Key() {
+		if feeReceiverFound && (senderBalSts[cid].Key() == feeReceiverBalSts[cid].Key()) {
 			stateMergeValue = common.NewBaseStateMergeValue(
 				senderBalSts[cid].Key(),
 				currencystate.NewDeductBalanceStateValue(v.Amount.WithBig(opp.required[cid][0].Sub(opp.required[cid][1]))),
@@ -324,10 +325,6 @@ func (opp *CreateContractAccountProcessor) Process( // nolint:dupl
 					return currencystate.NewBalanceStateValueMerger(height, senderBalSts[cid].Key(), cid, st)
 				},
 			)
-			//stateMergeValue = state.NewStateMergeValue(
-			//	senderBalSts[cid].Key(),
-			//	currencystate.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[cid][0]).Add(opp.required[cid][1]))),
-			//)
 		} else {
 			stateMergeValue = common.NewBaseStateMergeValue(
 				senderBalSts[cid].Key(),
@@ -336,24 +333,22 @@ func (opp *CreateContractAccountProcessor) Process( // nolint:dupl
 					return currencystate.NewBalanceStateValueMerger(height, senderBalSts[cid].Key(), cid, st)
 				},
 			)
-			//stateMergeValue = state.NewStateMergeValue(
-			//	senderBalSts[cid].Key(),
-			//	currencystate.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Sub(opp.required[cid][0]))),
-			//)
-			r, ok := feeReceiveBalSts[cid].Value().(currencystate.BalanceStateValue)
-			if !ok {
-				return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", feeReceiveBalSts[cid].Value()), nil
+			if feeReceiverFound {
+				r, ok := feeReceiverBalSts[cid].Value().(currencystate.BalanceStateValue)
+				if !ok {
+					return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", feeReceiverBalSts[cid].Value()), nil
+				}
+				stateMergeValues = append(
+					stateMergeValues,
+					common.NewBaseStateMergeValue(
+						feeReceiverBalSts[cid].Key(),
+						currencystate.NewAddBalanceStateValue(r.Amount.WithBig(opp.required[cid][1])),
+						func(height base.Height, st base.State) base.StateValueMerger {
+							return currencystate.NewBalanceStateValueMerger(height, feeReceiverBalSts[cid].Key(), cid, st)
+						},
+					),
+				)
 			}
-			stateMergeValues = append(
-				stateMergeValues,
-				common.NewBaseStateMergeValue(
-					feeReceiveBalSts[cid].Key(),
-					currencystate.NewAddBalanceStateValue(r.Amount.WithBig(opp.required[cid][1])),
-					func(height base.Height, st base.State) base.StateValueMerger {
-						return currencystate.NewBalanceStateValueMerger(height, feeReceiveBalSts[cid].Key(), cid, st)
-					},
-				),
-			)
 		}
 		stateMergeValues = append(stateMergeValues, stateMergeValue)
 	}
