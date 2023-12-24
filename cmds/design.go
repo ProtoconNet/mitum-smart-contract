@@ -1,8 +1,10 @@
 package cmds
 
 import (
+	"bytes"
 	"context"
 	"net/url"
+	"sort"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
@@ -15,6 +17,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/launch"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 )
@@ -22,13 +25,13 @@ import (
 var (
 	DefaultDigestAPICache *url.URL
 	DefaultDigestAPIBind  string
-	DefaultDigestAPIURL   string
+	//DefaultDigestAPIURL   string
 )
 
 func init() {
 	DefaultDigestAPICache, _ = util.ParseURL("memory://", false)
 	DefaultDigestAPIBind = "https://0.0.0.0:54320"
-	DefaultDigestAPIURL = "https://127.0.0.1:54320"
+	//DefaultDigestAPIURL = "https://127.0.0.1:54320"
 }
 
 type KeyDesign struct {
@@ -224,9 +227,10 @@ func (no FeeerDesign) checkRatio(c map[string]interface{}) error {
 }
 
 type DigestDesign struct {
-	NetworkYAML  *LocalNetwork        `yaml:"network,omitempty"`
-	CacheYAML    *string              `yaml:"cache,omitempty"`
-	DatabaseYAML *config.DatabaseYAML `yaml:"database"`
+	NetworkYAML  *LocalNetwork         `yaml:"network,omitempty"`
+	CacheYAML    *string               `yaml:"cache,omitempty"`
+	DatabaseYAML *config.DatabaseYAML  `yaml:"database"`
+	ConnInfo     []quicstream.ConnInfo `yaml:"conn_info,omitempty"`
 	network      config.LocalNetwork
 	database     config.BaseDatabase
 	cache        *url.URL
@@ -339,6 +343,41 @@ func (d DigestDesign) MarshalZerologObject(e *zerolog.Event) {
 		Interface("network", d.network).
 		Interface("database", d.database).
 		Interface("cache", d.cache)
+}
+
+func (d DigestDesign) Equal(b DigestDesign) bool {
+	if d.NetworkYAML != b.NetworkYAML {
+		return false
+	}
+
+	if d.CacheYAML != b.CacheYAML {
+		return false
+	}
+
+	if d.DatabaseYAML != b.DatabaseYAML {
+		return false
+	}
+
+	if len(d.ConnInfo) != len(b.ConnInfo) {
+		return false
+	}
+
+	sort.Slice(d.ConnInfo, func(i, j int) bool {
+		return bytes.Compare([]byte(d.ConnInfo[i].String()), []byte(d.ConnInfo[j].String())) < 0
+	})
+
+	bConn := b.ConnInfo
+	sort.Slice(bConn, func(i, j int) bool {
+		return bytes.Compare([]byte(bConn[i].String()), []byte(bConn[j].String())) < 0
+	})
+
+	for i := range d.ConnInfo {
+		if !(d.ConnInfo[i].String() == bConn[i].String()) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func loadPrivatekeyFromVault(path string, enc *jsonenc.Encoder) (base.Privatekey, error) {

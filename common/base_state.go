@@ -292,7 +292,7 @@ func (s *BaseStateValueMerger) CloseValue() (base.State, error) {
 	return NewBaseState(s.height, s.key, s.value, previous, s.ops), nil
 }
 
-func (s *BaseStateValueMerger) AddOperations(op util.Hash) {
+func (s *BaseStateValueMerger) AddOperation(op util.Hash) {
 	s.Lock()
 	defer s.Unlock()
 

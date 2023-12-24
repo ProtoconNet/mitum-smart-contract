@@ -338,7 +338,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return nil, err
 	}
 
-	if (design == DigestDesign{}) {
+	if design.Equal(DigestDesign{}) {
 		return ctx, nil
 	}
 
@@ -407,6 +407,19 @@ func (cmd *RunCommand) setDigestNetworkClient(
 	params *launch.LocalParams,
 	handlers *digest.Handlers,
 ) (*digest.Handlers, error) {
+	var design DigestDesign
+	if err := util.LoadFromContext(ctx, ContextValueDigestDesign, &design); err != nil {
+		if errors.Is(err, util.ErrNotFound) {
+			return handlers, nil
+		}
+
+		return nil, err
+	}
+
+	if design.Equal(DigestDesign{}) {
+		return handlers, nil
+	}
+
 	var memberList *quicmemberlist.Memberlist
 	if err := util.LoadFromContextOK(ctx, launch.MemberlistContextKey, &memberList); err != nil {
 		return nil, err
@@ -427,9 +440,14 @@ func (cmd *RunCommand) setDigestNetworkClient(
 		connectionPool.CloseAll,
 	)
 
+	//handlers = handlers.SetNetworkClientFunc(
+	//	func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
+	//		return client, memberList, nil
+	//	},
+	//)
 	handlers = handlers.SetNetworkClientFunc(
-		func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
-			return client, memberList, nil
+		func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error) { // nolint:contextcheck
+			return client, memberList, design.ConnInfo, nil
 		},
 	)
 

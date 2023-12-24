@@ -10,11 +10,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
+
 	"github.com/ProtoconNet/mitum-currency/v3/digest/network"
 	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
 	"github.com/ProtoconNet/mitum2/base"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
-	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -43,8 +44,9 @@ type HTTP2Server struct {
 	activeTimeout    time.Duration
 	keepAliveTimeout time.Duration
 	router           *mux.Router
-	client           func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error)
-	encs             *encoder.Encoders
+	// client           func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error)
+	client func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error)
+	encs   *encoder.Encoders
 }
 
 func NewHTTP2Server(bind, host string, certs []tls.Certificate, encs *encoder.Encoders, networkID base.NetworkID) (*HTTP2Server, error) {
@@ -268,7 +270,8 @@ func (sv *HTTP2Server) sendOperation(v interface{}) error {
 		return errors.Errorf("expected Operation, not %T", v)
 	}
 
-	client, memberList, err := sv.client()
+	client, memberList, nodeList, err := sv.client()
+
 	switch {
 	case err != nil:
 		return err
@@ -278,14 +281,16 @@ func (sv *HTTP2Server) sendOperation(v interface{}) error {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*9)
 		defer cancel()
 
-		var nodeList []quicstream.ConnInfo
+		connInfo := make(map[string]quicstream.ConnInfo)
 		memberList.Members(func(node quicmemberlist.Member) bool {
-			nodeList = append(nodeList, node.ConnInfo())
+			connInfo[node.ConnInfo().String()] = node.ConnInfo()
 			return true
 		})
-
-		errCh := make(chan error, len(nodeList))
-		for i := range nodeList {
+		for _, c := range nodeList {
+			connInfo[c.String()] = c
+		}
+		errCh := make(chan error, len(connInfo))
+		for _, ci := range connInfo {
 			wg.Add(1)
 			go func(node quicstream.ConnInfo) {
 				defer wg.Done()
@@ -294,9 +299,8 @@ func (sv *HTTP2Server) sendOperation(v interface{}) error {
 				if err != nil {
 					errCh <- err
 				}
-			}(nodeList[i])
+			}(ci)
 		}
-
 		wg.Wait()
 		close(errCh)
 
@@ -307,6 +311,37 @@ func (sv *HTTP2Server) sendOperation(v interface{}) error {
 		}
 		return nil
 	}
+
+	//client, memberList, err := sv.client()
+	//
+	//switch {
+	//case err != nil:
+	//	return err
+	//
+	//default:
+	//	ctx, cancel := context.WithTimeout(context.Background(), time.Second*9)
+	//	defer cancel()
+
+	// var nodeList []quicstream.ConnInfo
+	// memberList.Members(func(node quicmemberlist.Member) bool {
+	// 	nodeList = append(nodeList, node.ConnInfo())
+	// 	return true
+	// })
+	// for i := range nodeList {
+	// 	_, err := client.SendOperation(ctx, nodeList[i], op)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+	//	for i := range memberList {
+	//		_, err := client.SendOperation(ctx, memberList[i], op)
+	//		if err != nil {
+	//			return err
+	//		}
+	//	}
+	//}
+
+	return nil
 }
 
 func (sv *HTTP2Server) buildHal(op base.Operation) (Hal, error) {
@@ -315,7 +350,12 @@ func (sv *HTTP2Server) buildHal(op base.Operation) (Hal, error) {
 	return hal, nil
 }
 
-func (sv *HTTP2Server) SetNetworkClientFunc(f func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error)) *HTTP2Server {
+// func (sv *HTTP2Server) SetNetworkClientFunc(f func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error)) *HTTP2Server {
+// 	sv.client = f
+// 	return sv
+// }
+
+func (sv *HTTP2Server) SetNetworkClientFunc(f func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error)) *HTTP2Server {
 	sv.client = f
 	return sv
 }

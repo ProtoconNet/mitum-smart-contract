@@ -1,6 +1,7 @@
 package digest
 
 import (
+	"fmt"
 	mongodbstorage "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
@@ -104,6 +105,7 @@ type ContractAccountStatusDoc struct {
 
 func NewContractAccountStatusDoc(st base.State, enc encoder.Encoder) (ContractAccountStatusDoc, error) {
 	cd, err := extension.StateContractAccountValue(st)
+	fmt.Println(">>>>>>>>>>", cd)
 	if err != nil {
 		return ContractAccountStatusDoc{}, errors.Wrap(err, "ContractAccountStatusDoc needs ContractAccountStatus state")
 	}

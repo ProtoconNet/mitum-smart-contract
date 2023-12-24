@@ -68,7 +68,7 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 		return nil, errors.Errorf("expected Operation, not %T", v)
 	}
 
-	client, memberList, err := hd.client()
+	client, memberList, nodeList, err := hd.client()
 
 	switch {
 	case err != nil:
@@ -78,12 +78,15 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*9)
 		defer cancel()
 
-		var nodeList []quicstream.ConnInfo
+		connInfo := make(map[string]quicstream.ConnInfo)
 		memberList.Members(func(node quicmemberlist.Member) bool {
-			nodeList = append(nodeList, node.ConnInfo())
+			connInfo[node.ConnInfo().String()] = node.ConnInfo()
 			return true
 		})
-		for i := range nodeList {
+		for _, c := range nodeList {
+			connInfo[c.String()] = c
+		}
+		for _, ci := range connInfo {
 			//buf := bytes.NewBuffer(nil)
 			//if err := json.NewEncoder(buf).Encode(op); err != nil {
 			//	return nil, err
@@ -91,7 +94,7 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 			//	return nil, errors.Errorf("buffer from json encoding operation is nil")
 			//}
 
-			_, err := client.SendOperation(ctx, nodeList[i], op)
+			_, err := client.SendOperation(ctx, ci, op)
 			if err != nil {
 				return nil, err
 			}

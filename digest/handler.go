@@ -5,6 +5,7 @@ import (
 	"fmt"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"net/http"
 	"strings"
 	"time"
@@ -78,7 +79,8 @@ type Handlers struct {
 	queue           chan RequestWrapper
 	nodeInfoHandler NodeInfoHandler
 	send            func(interface{}) (base.Operation, error)
-	client          func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error)
+	//client          func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error)
+	client          func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error)
 	router          *mux.Router
 	routes          map[ /* path */ string]*mux.Route
 	itemsLimiter    func(string /* request type */) int64

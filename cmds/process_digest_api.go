@@ -3,10 +3,12 @@ package cmds
 import (
 	"context"
 	"crypto/tls"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
+
 	"github.com/ProtoconNet/mitum-currency/v3/digest"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	"github.com/ProtoconNet/mitum2/launch"
-	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/logging"
 )
@@ -58,6 +60,7 @@ func ProcessDigestAPI(ctx context.Context) (context.Context, error) {
 
 	var params *launch.LocalParams
 	var memberList *quicmemberlist.Memberlist
+	var nodeList = design.ConnInfo
 	if err := mitumutil.LoadFromContextOK(ctx,
 		launch.LocalParamsContextKey, &params,
 		launch.MemberlistContextKey, &memberList,
@@ -100,9 +103,15 @@ func ProcessDigestAPI(ctx context.Context) (context.Context, error) {
 		nt = sv
 	}
 
+	// nt = nt.SetNetworkClientFunc(
+	// 	func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
+	// 		return client, memberList, nil
+	// 	},
+	// )
+
 	nt = nt.SetNetworkClientFunc(
-		func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
-			return client, memberList, nil
+		func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error) { // nolint:contextcheck
+			return client, memberList, nodeList, nil
 		},
 	)
 

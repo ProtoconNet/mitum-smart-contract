@@ -6,6 +6,7 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
+	"sync"
 )
 
 type BalanceStateValueMerger struct {
@@ -14,6 +15,7 @@ type BalanceStateValueMerger struct {
 	add      common.Big
 	remove   common.Big
 	currency types.CurrencyID
+	sync.Mutex
 }
 
 func NewBalanceStateValueMerger(height base.Height, key string, currency types.CurrencyID, st base.State) *BalanceStateValueMerger {
@@ -37,7 +39,7 @@ func NewBalanceStateValueMerger(height base.Height, key string, currency types.C
 	return s
 }
 
-func (s *BalanceStateValueMerger) Merge(value base.StateValue, ops []util.Hash) error {
+func (s *BalanceStateValueMerger) Merge(value base.StateValue, ops util.Hash) error {
 	s.Lock()
 	defer s.Unlock()
 
@@ -50,26 +52,26 @@ func (s *BalanceStateValueMerger) Merge(value base.StateValue, ops []util.Hash) 
 		return errors.Errorf("unsupported balance state value, %T", value)
 	}
 
-	s.AddOperations(ops)
+	s.AddOperation(ops)
 
 	return nil
 }
 
-func (s *BalanceStateValueMerger) Close() error {
-	newValue, err := s.close()
+func (s *BalanceStateValueMerger) CloseValue() (base.State, error) {
+	s.Lock()
+	defer s.Unlock()
+
+	newValue, err := s.closeValue()
 	if err != nil {
-		return errors.WithMessage(err, "close BalanceStateValueMerger")
+		return nil, errors.WithMessage(err, "close BalanceStateValueMerger")
 	}
 
 	s.BaseStateValueMerger.SetValue(newValue)
 
-	return s.BaseStateValueMerger.Close()
+	return s.BaseStateValueMerger.CloseValue()
 }
 
-func (s *BalanceStateValueMerger) close() (base.StateValue, error) {
-	s.Lock()
-	defer s.Unlock()
-
+func (s *BalanceStateValueMerger) closeValue() (base.StateValue, error) {
 	existingAmount := s.existing.Amount
 
 	if s.add.OverZero() {

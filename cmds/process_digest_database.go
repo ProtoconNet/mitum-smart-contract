@@ -19,7 +19,7 @@ func ProcessDatabase(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 
-	if (l == DigestDesign{}) {
+	if l.Equal(DigestDesign{}) {
 		return ctx, nil
 	}
 	conf := l.Database()

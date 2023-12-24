@@ -47,7 +47,7 @@ func (hd *Handlers) handleNodeInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hd *Handlers) handleNodeInfoInGroup() (interface{}, error) {
-	client, memberList, err := hd.client()
+	client, memberList, _, err := hd.client()
 
 	var nodeInfoList []map[string]interface{}
 	switch {
