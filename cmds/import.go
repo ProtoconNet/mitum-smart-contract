@@ -3,12 +3,13 @@ package cmds
 import (
 	"bytes"
 	"context"
-	"github.com/ProtoconNet/mitum2/util/ps"
-	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"io"
 	"net/url"
 	"os"
 	"path/filepath"
+
+	"github.com/ProtoconNet/mitum2/util/ps"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
@@ -79,13 +80,10 @@ func (cmd *ImportCommand) Run(pctx context.Context) error {
 		launch.PrivatekeyFlagsContextKey: cmd.PrivatekeyFlags,
 	})
 
-	pps := launch.DefaultImportPS()
+	pps := DefaultImportPS()
 	_ = pps.SetLogging(log)
 
 	_ = pps.AddOK(pNameImportBlocks, cmd.importBlocks, nil, launch.PNameStorage)
-
-	_ = pps.POK(pNameImportBlocks).
-		PreAddOK(pNamePreImportBlocks, cmd.preImportBlocks)
 
 	cmd.log.Debug().Interface("process", pps.Verbose()).Msg("process ready")
 
