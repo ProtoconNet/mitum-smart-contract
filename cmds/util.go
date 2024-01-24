@@ -164,7 +164,7 @@ func AttachHandlerSendOperation(pctx context.Context) error {
 	var gerror error
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixSendOperationString,
+		isaacnetwork.HandlerNameSendOperation,
 		isaacnetwork.QuicstreamHandlerSendOperation(
 			params.ISAAC.NetworkID(),
 			pool,

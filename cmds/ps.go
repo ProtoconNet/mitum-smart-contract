@@ -457,7 +457,7 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 	var gerror error
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixLastSuffrageProofString,
+		isaacnetwork.HandlerNameLastSuffrageProof,
 		isaacnetwork.QuicstreamHandlerLastSuffrageProof(
 			func(last util.Hash) (string, []byte, []byte, bool, error) {
 				enchint, metab, body, found, lastheight, err := db.LastSuffrageProofBytes()
@@ -483,27 +483,27 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 		), nil)
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixSuffrageProofString,
+		isaacnetwork.HandlerNameSuffrageProof,
 		isaacnetwork.QuicstreamHandlerSuffrageProof(db.SuffrageProofBytes), nil)
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixLastBlockMapString,
+		isaacnetwork.HandlerNameLastBlockMap,
 		isaacnetwork.QuicstreamHandlerLastBlockMap(lastBlockMapF), nil)
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixBlockMapString,
+		isaacnetwork.HandlerNameBlockMap,
 		isaacnetwork.QuicstreamHandlerBlockMap(db.BlockMapBytes), nil)
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixNodeChallengeString,
+		isaacnetwork.HandlerNameNodeChallenge,
 		isaacnetwork.QuicstreamHandlerNodeChallenge(isaacParams.NetworkID(), local), nil)
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixSuffrageNodeConnInfoString,
+		isaacnetwork.HandlerNameSuffrageNodeConnInfo,
 		isaacnetwork.QuicstreamHandlerSuffrageNodeConnInfo(suffrageNodeConnInfoF), nil)
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixSyncSourceConnInfoString,
+		isaacnetwork.HandlerNameSyncSourceConnInfo,
 		isaacnetwork.QuicstreamHandlerSyncSourceConnInfo(
 			func() ([]isaac.NodeConnInfo, error) {
 				members := make([]isaac.NodeConnInfo, syncSourcePool.Len()*2)
@@ -521,11 +521,11 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 		), nil)
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixStateString,
+		isaacnetwork.HandlerNameState,
 		isaacnetwork.QuicstreamHandlerState(db.StateBytes), nil)
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixExistsInStateOperationString,
+		isaacnetwork.HandlerNameExistsInStateOperation,
 		isaacnetwork.QuicstreamHandlerExistsInStateOperation(db.ExistsInStateOperation), nil)
 
 	if vp := lvps.Last().Cap(); vp != nil {
@@ -533,11 +533,11 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 	}
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixNodeInfoString,
+		isaacnetwork.HandlerNameNodeInfo,
 		isaacnetwork.QuicstreamHandlerNodeInfo(launch.QuicstreamHandlerGetNodeInfoFunc(enc, nodeinfo)), nil)
 
 	launch.EnsureHandlerAdd(pctx, &gerror,
-		isaacnetwork.HandlerPrefixSendBallotsString,
+		isaacnetwork.HandlerNameSendBallots,
 		isaacnetwork.QuicstreamHandlerSendBallots(isaacParams.NetworkID(),
 			func(bl base.BallotSignFact) error {
 				switch passed, err := filterNotifyMsg(bl); {

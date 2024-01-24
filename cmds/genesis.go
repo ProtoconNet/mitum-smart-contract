@@ -331,7 +331,7 @@ func (g *GenesisBlockGenerator) acceptVoteproof(proposal, newblock util.Hash) er
 
 	g.avp = vp
 
-	g.Log().Debug().Interface("init_voteproof", vp).Msg("init voteproof created for genesis")
+	g.Log().Debug().Interface("init_voteproof", vp).Msg("accept voteproof created for genesis")
 
 	return nil
 }
@@ -385,7 +385,7 @@ func (g *GenesisBlockGenerator) closeDatabase() error {
 func (g *GenesisBlockGenerator) newProposalProcessor() (*isaac.DefaultProposalProcessor, error) {
 	args := isaac.NewDefaultProposalProcessorArgs()
 	args.NewWriterFunc = launch.NewBlockWriterFunc(
-		g.local, g.networkID, g.dataroot, g.encs.JSON(), g.encs.Default(), g.db, math.MaxInt16)
+		g.local, g.networkID, g.dataroot, g.encs.JSON(), g.encs.Default(), g.db, math.MaxInt16, 0)
 	args.GetStateFunc = func(key string) (base.State, bool, error) {
 		return nil, false, nil
 	}

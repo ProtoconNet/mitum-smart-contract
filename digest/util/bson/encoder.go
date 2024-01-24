@@ -16,7 +16,7 @@ var BSONEncoderHint = hint.MustNewHint("bson-encoder-v2.0.0")
 
 type Encoder struct {
 	decoders *hint.CompatibleSet[encoder.DecodeDetail]
-	pool     util.ObjectPool
+	pool     util.GCache[string, any]
 }
 
 func NewEncoder() *Encoder {
@@ -29,7 +29,7 @@ func (*Encoder) Hint() hint.Hint {
 	return BSONEncoderHint
 }
 
-func (enc *Encoder) SetPool(pool util.ObjectPool) *Encoder {
+func (enc *Encoder) SetPool(pool util.GCache[string, any]) *Encoder {
 	enc.pool = pool
 
 	return nil
@@ -346,7 +346,7 @@ func (enc *Encoder) poolSet(s string, v interface{}) {
 		return
 	}
 
-	enc.pool.Set(s, v, nil)
+	enc.pool.Set(s, v, 0)
 }
 
 func (*Encoder) analyzeExtensible(d encoder.DecodeDetail, ptr reflect.Value) encoder.DecodeDetail {
