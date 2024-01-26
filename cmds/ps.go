@@ -261,11 +261,11 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	var f ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
+	//var f ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
 
 	pctx = context.WithValue(pctx, OperationProcessorContextKey, opr)
 	pctx = context.WithValue(pctx, launch.OperationProcessorsMapContextKey, set) //revive:disable-line:modifies-parameter
-	pctx = context.WithValue(pctx, ProposalOperationFactHintContextKey, f)
+	//pctx = context.WithValue(pctx, ProposalOperationFactHintContextKey, f)
 
 	return pctx, nil
 }

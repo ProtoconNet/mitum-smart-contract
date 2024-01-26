@@ -36,7 +36,7 @@ var (
 	PNameDigestAPIHandlers              = ps.Name("mitum-currency-digest-api-handlers")
 	PNameDigesterFollowUp               = ps.Name("mitum-currency-followup_digester")
 	BEncoderContextKey                  = util.ContextKey("bson-encoder")
-	ProposalOperationFactHintContextKey = util.ContextKey("proposal-operation-fact--hint")
+	ProposalOperationFactHintContextKey = util.ContextKey("proposal-operation-fact-hint")
 	OperationProcessorContextKey        = util.ContextKey("mitum-currency-operation-processor")
 )
 

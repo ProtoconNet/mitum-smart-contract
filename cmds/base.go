@@ -62,9 +62,12 @@ func PAddHinters(pctx context.Context) (context.Context, error) {
 	e := util.StringError("add hinters")
 
 	var encs *encoder.Encoders
+	var f ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
+
 	if err := util.LoadFromContextOK(pctx, launch.EncodersContextKey, &encs); err != nil {
 		return pctx, e.Wrap(err)
 	}
+	pctx = context.WithValue(pctx, ProposalOperationFactHintContextKey, f)
 
 	if err := LoadHinters(encs); err != nil {
 		return pctx, e.Wrap(err)

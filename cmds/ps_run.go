@@ -21,7 +21,7 @@ func DefaultRunPS() *ps.PS {
 		AddOK(launch.PNameTimeSyncer, launch.PStartTimeSyncer, launch.PCloseTimeSyncer, launch.PNameDesign).
 		AddOK(launch.PNameLocal, launch.PLocal, nil, launch.PNameDesign).
 		AddOK(launch.PNameStorage, launch.PStorage, nil, launch.PNameLocal).
-		AddOK(launch.PNameProposalMaker, launch.PProposalMaker, nil, launch.PNameStorage).
+		AddOK(launch.PNameProposalMaker, PProposalMaker, nil, launch.PNameStorage).
 		AddOK(launch.PNameNetwork, launch.PNetwork, nil, launch.PNameStorage).
 		AddOK(launch.PNameMemberlist, launch.PMemberlist, nil, launch.PNameNetwork).
 		AddOK(launch.PNameBlockItemReaders, launch.PBlockItemReaders, nil, launch.PNameDesign).
