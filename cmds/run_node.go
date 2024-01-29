@@ -73,6 +73,8 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 
 	pps := DefaultRunPS()
 
+	_ = pps.AddOK(PNameDigester, ProcessDigester, nil, PNameMongoDBsDataBase).
+		AddOK(PNameStartDigester, ProcessStartDigester, nil, PNameDigestStart)
 	_ = pps.POK(launch.PNameStorage).PostAddOK(ps.Name("check-hold"), cmd.pCheckHold)
 	_ = pps.POK(launch.PNameStates).
 		PreAddOK(ps.Name("when-new-block-saved-in-consensus-state-func"), cmd.pWhenNewBlockSavedInConsensusStateFunc).
