@@ -103,6 +103,10 @@ end:
 
 			break end
 		case blk := <-di.blockChan:
+			if m, _, _, _, _, _ := di.database.ManifestByHeight(blk.Manifest().Height()); m != nil {
+				continue
+			}
+
 			err := util.Retry(ctx, func() (bool, error) {
 				if err := di.digest(ctx, blk); err != nil {
 					go errch(NewDigestError(err, blk.Manifest().Height()))
