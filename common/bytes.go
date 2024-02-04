@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"encoding/hex"
+
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 )

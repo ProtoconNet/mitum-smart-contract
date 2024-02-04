@@ -200,7 +200,7 @@ func HTTP2HandleError(w http.ResponseWriter, err error) {
 	status := http.StatusInternalServerError
 	switch {
 	case errors.Is(err, util.ErrNotFound):
-		status = http.StatusNotFound
+		status = http.StatusBadRequest
 	case errors.Is(err, ErrBadRequest):
 		status = http.StatusBadRequest
 	case errors.Is(err, util.NewIDError("not supported")):

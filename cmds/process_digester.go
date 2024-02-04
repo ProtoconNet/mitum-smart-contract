@@ -162,13 +162,7 @@ func digestFollowup(ctx context.Context, height base.Height) error {
 		lastBlock = base.GenesisHeight
 	}
 
-	// var cp *currency.CurrencyPool
-	// if err := LoadCurrencyPoolContextValue(ctx, &cp); err != nil {
-	// 	return err
-	// }
-
 	for h := lastBlock; h <= height; h++ {
-
 		var bm base.BlockMap
 
 		switch i, found, err := isaac.BlockItemReadersDecode[base.BlockMap](sourceReaders.Item, h, base.BlockItemMap, nil); {
@@ -188,52 +182,6 @@ func digestFollowup(ctx context.Context, height base.Height) error {
 		if err != nil {
 			return err
 		}
-
-		//reader, err := isaacblock.NewLocalFSReaderFromHeight(root, i, enc)
-		//if err != nil {
-		//	return err
-		//}
-		//m, found, err := reader.BlockMap()
-		//if err != nil {
-		//	return err
-		//} else if !found {
-		//	return errors.Errorf("blockmap not found")
-		//}
-		//if err := m.IsValid(design.NetworkID); err != nil {
-		//	return err
-		//}
-		//
-		//var ops []base.Operation
-		//switch v, found, err := reader.Item(base.BlockMapItemTypeOperations); {
-		//case err != nil:
-		//	return err
-		//case found:
-		//	ops = v.([]base.Operation) //nolint:forcetypeassert //...
-		//}
-		//
-		//var opstree fixedtree.Tree
-		//switch v, found, err := reader.Item(base.BlockMapItemTypeOperationsTree); {
-		//case err != nil:
-		//	return err
-		//case found:
-		//	opstree = v.(fixedtree.Tree) //nolint:forcetypeassert //...
-		//}
-		//
-		//var sts []base.State
-		//switch v, found, err := reader.Item(base.BlockMapItemTypeStates); {
-		//case err != nil:
-		//	return err
-		//case found:
-		//	sts = v.([]base.State) //nolint:forcetypeassert //...
-		//}
-		//
-		//var proposal base.ProposalSignFact
-		//switch v, found, err := reader.Item(base.BlockMapItemTypeProposal); {
-		//case err != nil:
-		//	return err
-		//case found:
-		//	proposal = v.(base.ProposalSignFact) //nolint:forcetypeassert //...
-		//}
 
 		if err := digest.DigestBlock(ctx, st, bm, ops, opsTree, sts, pr); err != nil {
 			return err

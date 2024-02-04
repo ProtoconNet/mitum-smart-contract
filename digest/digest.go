@@ -103,10 +103,6 @@ end:
 
 			break end
 		case blk := <-di.blockChan:
-			if m, _, _, _, _, _ := di.database.ManifestByHeight(blk.Manifest().Height()); m != nil {
-				continue
-			}
-
 			err := util.Retry(ctx, func() (bool, error) {
 				if err := di.digest(ctx, blk); err != nil {
 					go errch(NewDigestError(err, blk.Manifest().Height()))
@@ -151,11 +147,6 @@ func (di *Digester) digest(ctx context.Context, blk base.BlockMap) error {
 	di.Lock()
 	defer di.Unlock()
 
-	//enc, found := di.database.database.Encoders().Find(jsonenc.JSONEncoderHint)
-	//if !found { // NOTE get latest bson encoder
-	//	return mitumutil.ErrNotFound.Errorf("unknown encoder hint, %q", jsonenc.JSONEncoderHint)
-	//}
-
 	var bm base.BlockMap
 
 	switch i, found, err := isaac.BlockItemReadersDecode[base.BlockMap](di.sourceReaders.Item, blk.Manifest().Height(), base.BlockItemMap, nil); {
@@ -176,43 +167,6 @@ func (di *Digester) digest(ctx context.Context, blk base.BlockMap) error {
 		return e.Wrap(err)
 	}
 
-	//reader, err := isaacblock.NewLocalFSReaderFromHeight(di.localfsRoot, blk.Manifest().Height(), enc)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//var ops []base.Operation
-	//switch v, found, err := reader.Item(base.BlockItemOperations); {
-	//case err != nil:
-	//	return err
-	//case found:
-	//	ops = v.([]base.Operation) //nolint:forcetypeassert //...
-	//}
-	//
-	//var opstree fixedtree.Tree
-	//switch v, found, err := reader.Item(base.BlockItemOperationsTree); {
-	//case err != nil:
-	//	return err
-	//case found:
-	//	opstree = v.(fixedtree.Tree) //nolint:forcetypeassert //...
-	//}
-	//
-	//var sts []base.State
-	//switch v, found, err := reader.Item(base.BlockItemStates); {
-	//case err != nil:
-	//	return err
-	//case found:
-	//	sts = v.([]base.State) //nolint:forcetypeassert //...
-	//}
-	//
-	//var proposal base.ProposalSignFact
-	//switch v, found, err := reader.Item(base.BlockItemProposal); {
-	//case err != nil:
-	//	return err
-	//case found:
-	//	proposal = v.(base.ProposalSignFact) //nolint:forcetypeassert //...
-	//}
-
 	if err := DigestBlock(ctx, di.database, blk, ops, opsTree, sts, pr); err != nil {
 		return e.Wrap(err)
 	}
@@ -229,6 +183,10 @@ func DigestBlock(
 	sts []base.State,
 	proposal base.ProposalSignFact,
 ) error {
+	if m, _, _, _, _, _ := st.ManifestByHeight(blk.Manifest().Height()); m != nil {
+		return nil
+	}
+
 	bs, err := NewBlockSession(st, blk, ops, opsTree, sts, proposal)
 	if err != nil {
 		return err

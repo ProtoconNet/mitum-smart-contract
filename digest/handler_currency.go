@@ -59,7 +59,7 @@ func (hd *Handlers) handleCurrency(w http.ResponseWriter, r *http.Request) {
 	var cid string
 	s, found := mux.Vars(r)["currencyid"]
 	if !found {
-		HTTP2ProblemWithError(w, errors.Errorf("empty currency id"), http.StatusNotFound)
+		HTTP2ProblemWithError(w, errors.Errorf("empty currency id"), http.StatusBadRequest)
 
 		return
 	}
