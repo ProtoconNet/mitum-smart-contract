@@ -240,14 +240,7 @@ func (opp *CreateAccountProcessor) Process( // nolint:dupl
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	fact, ok := op.Fact().(CreateAccountFact)
-	if !ok {
-		return nil, base.NewBaseOperationProcessReasonError(
-			"expected %T, not %T",
-			CreateAccountFact{},
-			op.Fact(),
-		), nil
-	}
+	fact, _ := op.Fact().(CreateAccountFact)
 
 	var (
 		senderBalSts, feeReceiverBalSts map[types.CurrencyID]base.State
