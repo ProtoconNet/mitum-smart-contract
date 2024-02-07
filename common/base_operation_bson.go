@@ -8,6 +8,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"go.mongodb.org/mongo-driver/bson"
+	"time"
 )
 
 type BaseFactBSONUnmarshaler struct {
@@ -15,20 +16,36 @@ type BaseFactBSONUnmarshaler struct {
 	Token []byte `bson:"token"`
 }
 
+type BaseSignBSONUnmarshaler struct {
+	Signer    string         `bson:"signer"`
+	Signature base.Signature `bson:"signature"`
+	SignedAt  time.Time      `bson:"signed_at"`
+}
+
 type BaseOperationBSONUnmarshaler struct {
-	Hint string   `bson:"_hint"`
-	Hash string   `bson:"hash"`
-	Fact bson.Raw `bson:"fact"`
-	// Signs []bson.Raw      `bson:"signs"`
+	Hint  string     `bson:"_hint"`
+	Hash  string     `bson:"hash"`
+	Fact  bson.Raw   `bson:"fact"`
+	Signs []bson.Raw `bson:"signs"`
 }
 
 func (op BaseOperation) MarshalBSON() ([]byte, error) {
+	var signs bson.A
+
+	for i := range op.signs {
+		signs = append(signs, bson.M{
+			"signer":    op.signs[i].Signer().String(),
+			"signature": op.signs[i].Signature().String(),
+			"signed_at": op.signs[i].SignedAt(),
+		})
+	}
+
 	return bsonenc.Marshal(
 		bson.M{
 			"_hint": op.Hint().String(),
 			"hash":  op.Hash().String(),
 			"fact":  op.Fact(),
-			"signs": op.Signs(),
+			"signs": signs,
 		},
 	)
 }
@@ -56,6 +73,25 @@ func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	}
 
 	op.SetFact(fact)
+
+	var signs []base.Sign
+
+	for i := range u.Signs {
+		var us BaseSignBSONUnmarshaler
+		var pubKey base.Publickey
+		var err error
+		if err = enc.Unmarshal(u.Signs[i], &us); err != nil {
+			return e.Wrap(err)
+		}
+
+		if pubKey, err = base.DecodePublickeyFromString(us.Signer, enc); err != nil {
+			return e.Wrap(err)
+		}
+
+		sign := base.NewBaseSign(pubKey, us.Signature, us.SignedAt)
+		signs = append(signs, sign)
+	}
+	op.signs = signs
 
 	return nil
 }

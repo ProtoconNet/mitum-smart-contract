@@ -20,6 +20,8 @@ import (
 
 var bulkWriteLimit = 500
 
+type WriteModelPrepareFunc func(BlockSession, base.State) ([]mongo.WriteModel, error)
+
 type BlockSessioner interface {
 	Prepare() error
 	Commit(context.Context) error
@@ -35,6 +37,8 @@ type BlockSession struct {
 	st                    *Database
 	proposal              base.ProposalSignFact
 	opsTreeNodes          map[string]base.OperationFixedtreeNode
+	WriteModels           map[string][]mongo.WriteModel
+	WriteModelsFunc       map[string][]mongo.WriteModel
 	blockModels           []mongo.WriteModel
 	operationModels       []mongo.WriteModel
 	accountModels         []mongo.WriteModel

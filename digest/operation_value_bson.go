@@ -3,20 +3,30 @@ package digest
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"time"
 
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/hint"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func (va OperationValue) MarshalBSON() ([]byte, error) {
+	var signs bson.A
+
+	for i := range va.op.Signs() {
+		signs = append(signs, bson.M{
+			"signer":    va.op.Signs()[i].Signer().String(),
+			"signature": va.op.Signs()[i].Signature(),
+			"signed_at": va.op.Signs()[i].SignedAt(),
+		})
+	}
+
 	op := map[string]interface{}{
 		"_hint": va.op.Hint().String(),
 		"hash":  va.op.Hash().String(),
 		"fact":  va.op.Fact(),
-		"signs": va.op.Signs(),
+		"signs": signs,
 	}
 	return bsonenc.Marshal(
 		bson.M{
