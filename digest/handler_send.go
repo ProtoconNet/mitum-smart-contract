@@ -8,6 +8,7 @@ import (
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/ProtoconNet/mitum2/base"
@@ -75,7 +76,8 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 		return nil, err
 
 	default:
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*9)
+		var wg sync.WaitGroup
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
 		connInfo := make(map[string]quicstream.ConnInfo)
@@ -86,17 +88,46 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 		for _, c := range nodeList {
 			connInfo[c.String()] = c
 		}
-		for _, ci := range connInfo {
-			//buf := bytes.NewBuffer(nil)
-			//if err := json.NewEncoder(buf).Encode(op); err != nil {
-			//	return nil, err
-			//} else if buf == nil {
-			//	return nil, errors.Errorf("buffer from json encoding operation is nil")
-			//}
 
-			_, err := client.SendOperation(ctx, ci, op)
+		errCh := make(chan error, len(connInfo))
+		sentCh := make(chan bool, len(connInfo))
+		for _, ci := range connInfo {
+			wg.Add(1)
+			go func(node quicstream.ConnInfo) {
+				defer wg.Done()
+
+				sent, err := client.SendOperation(ctx, node, op)
+				if err != nil {
+					errCh <- err
+				}
+				if sent {
+					sentCh <- sent
+				}
+			}(ci)
+		}
+		wg.Wait()
+		close(errCh)
+		close(sentCh)
+
+		var errList []error
+		var sentList []bool
+		for err := range errCh {
 			if err != nil {
-				return nil, err
+				errList = append(errList, err)
+			}
+		}
+
+		for sent := range sentCh {
+			if sent {
+				sentList = append(sentList, sent)
+			}
+		}
+
+		if len(sentList) < 1 {
+			if len(errList) > 0 {
+				return nil, errList[0]
+			} else {
+				return nil, errors.Errorf("failed to send operation to node")
 			}
 		}
 	}
@@ -106,18 +137,6 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 
 func (hd *Handlers) buildSealHal(op base.Operation) (Hal, error) {
 	var hal Hal = NewBaseHal(op, HalLink{})
-	/*
-		if t, ok := sl.(operation.Seal); ok {
-			for i := range t.Operations() {
-				op := t.Operations()[i]
-				h, err := hd.combineURL(HandlerPathOperation, "hash", op.Fact().Hash().String())
-				if err != nil {
-					return nil, err
-				}
-				hal.AddLink(fmt.Sprintf("operation:%d", i), NewHalLink(h, nil))
-			}
-		}
-	*/
 
 	return hal, nil
 }
