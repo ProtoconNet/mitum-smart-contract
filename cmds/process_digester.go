@@ -169,7 +169,7 @@ func digestFollowup(ctx context.Context, height base.Height) error {
 		case err != nil:
 			return err
 		case !found:
-			return util.ErrNotFound.Errorf("blockmap")
+			continue
 		default:
 			if err := i.IsValid(design.NetworkID); err != nil {
 				return err
