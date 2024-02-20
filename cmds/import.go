@@ -85,6 +85,9 @@ func (cmd *ImportCommand) Run(pctx context.Context) error {
 
 	_ = pps.AddOK(pNameImportBlocks, cmd.importBlocks, nil, launch.PNameStorage)
 
+	_ = pps.POK(pNameImportBlocks).
+		PreAddOK(pNamePreImportBlocks, cmd.preImportBlocks)
+
 	cmd.log.Debug().Interface("process", pps.Verbose()).Msg("process ready")
 
 	nctx, err := pps.Run(nctx)
