@@ -42,11 +42,15 @@ func (hd *Handlers) handleOperation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hd *Handlers) handleOperationInGroup(h mitumutil.Hash) ([]byte, error) {
-	switch va, found, err := hd.database.Operation(h, true); {
+	var (
+		va  OperationValue
+		err error
+	)
+	switch va, _, err = hd.database.Operation(h, true); {
 	case err != nil:
 		return nil, err
-	case !found:
-		return nil, mitumutil.ErrNotFound.Errorf("operation %v in handleOperation", h)
+	//case !found:
+	//return nil, mitumutil.ErrNotFound.Errorf("operation %v in handleOperation", h)
 	default:
 		hal, err := hd.buildOperationHal(va)
 		if err != nil {
@@ -218,18 +222,25 @@ func (hd *Handlers) handleOperationsByHeightInGroup(
 
 func (hd *Handlers) buildOperationHal(va OperationValue) (Hal, error) {
 	var hal Hal
+	var h string
+	var err error
 
-	h, err := hd.combineURL(HandlerPathOperation, "hash", va.Operation().Fact().Hash().String())
-	if err != nil {
-		return nil, err
-	}
-	hal = NewBaseHal(va, NewHalLink(h, nil))
+	if va.IsZeroValue() {
+		hal = NewEmptyHal()
+	} else {
+		h, err = hd.combineURL(HandlerPathOperation, "hash", va.Operation().Fact().Hash().String())
+		if err != nil {
+			return nil, err
+		}
 
-	h, err = hd.combineURL(HandlerPathBlockByHeight, "height", va.Height().String())
-	if err != nil {
-		return nil, err
+		hal = NewBaseHal(va, NewHalLink(h, nil))
+
+		h, err = hd.combineURL(HandlerPathBlockByHeight, "height", va.Height().String())
+		if err != nil {
+			return nil, err
+		}
+		hal = hal.AddLink("block", NewHalLink(h, nil))
 	}
-	hal = hal.AddLink("block", NewHalLink(h, nil))
 
 	// h, err = hd.combineURL(HandlerPathManifestByHeight, "height", va.Height().String())
 	// if err != nil {

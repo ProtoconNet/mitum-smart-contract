@@ -5,6 +5,7 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
+	"reflect"
 )
 
 var (
@@ -70,4 +71,12 @@ func (va AccountValue) SetContractAccountStatus(status types.ContractAccountStat
 	va.contractAccountStatus = status
 
 	return va
+}
+
+func (va AccountValue) IsZeroValue() bool {
+	if reflect.DeepEqual(va, reflect.Zero(reflect.TypeOf(va)).Interface()) {
+		return true
+	}
+
+	return false
 }

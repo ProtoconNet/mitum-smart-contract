@@ -42,6 +42,15 @@ func NewBaseHal(i interface{}, self HalLink) BaseHal {
 	}
 }
 
+func NewEmptyHal() BaseHal {
+	self := NewHalLink("", map[string]interface{}{})
+	return BaseHal{
+		BaseHinter: hint.NewBaseHinter(BaseHalHint),
+		self:       self,
+		links:      map[string]HalLink{},
+	}
+}
+
 func (hal BaseHal) Interface() interface{} {
 	return hal.i
 }

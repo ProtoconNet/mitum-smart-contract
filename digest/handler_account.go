@@ -35,11 +35,13 @@ func (hd *Handlers) handleAccount(w http.ResponseWriter, r *http.Request) {
 	if v, err, shared := hd.rg.Do(cachekey, func() (interface{}, error) {
 		return hd.handleAccountInGroup(address)
 	}); err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			err = mitumutil.ErrNotFound.Errorf("account, %v in handleAccount", address.String())
-		} else {
-			hd.Log().Err(err).Str("address", address.String()).Msg("get account")
-		}
+		//if errors.Is(err, mongo.ErrNoDocuments) {
+		//	err = mitumutil.ErrNotFound.Errorf("account, %v in handleAccount", address.String())
+		//} else {
+		//	hd.Log().Err(err).Str("address", address.String()).Msg("get account")
+		//}
+
+		hd.Log().Err(err).Str("address", address.String()).Msg("get account")
 
 		HTTP2HandleError(w, err)
 	} else {
@@ -54,9 +56,16 @@ func (hd *Handlers) handleAccount(w http.ResponseWriter, r *http.Request) {
 func (hd *Handlers) handleAccountInGroup(address base.Address) (interface{}, error) {
 	switch va, _, err := hd.database.Account(address); {
 	case err != nil:
-		return nil, err
+		if !errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, err
+		}
+		hal, err := hd.buildAccountHal(va)
+		if err != nil {
+			return nil, err
+		}
+		return hd.enc.Marshal(hal)
 	//case !found:
-	//	return nil, mitumutil.ErrNotFound
+	//return nil, mitumutil.ErrNotFound
 	default:
 		hal, err := hd.buildAccountHal(va)
 		if err != nil {
@@ -67,13 +76,22 @@ func (hd *Handlers) handleAccountInGroup(address base.Address) (interface{}, err
 }
 
 func (hd *Handlers) buildAccountHal(va AccountValue) (Hal, error) {
+	var hal Hal
+
+	if va.IsZeroValue() {
+		hal = NewEmptyHal()
+		hal = hal.
+			AddLink("operationsByAccount:{address,offset}", NewHalLink("/account/{address}/operations"+"?offset={offset}", nil).SetTemplated()).
+			AddLink("operationsByAccount:{address,offset,reverse}", NewHalLink("/account/{address}/operations"+"?offset={offset}&reverse=1", nil).SetTemplated())
+		return hal, nil
+	}
+
 	hinted := va.Account().Address().String()
 	h, err := hd.combineURL(HandlerPathAccount, "address", hinted)
 	if err != nil {
 		return nil, err
 	}
 
-	var hal Hal
 	hal = NewBaseHal(va, NewHalLink(h, nil))
 
 	h, err = hd.combineURL(HandlerPathAccountOperations, "address", hinted)
@@ -171,9 +189,10 @@ func (hd *Handlers) handleAccountOperationsInGroup(
 		},
 	); err != nil {
 		return nil, false, err
-	} else if len(vas) < 1 {
-		return nil, false, mitumutil.ErrNotFound.Errorf("operations in handleAccountsOperations")
 	}
+	//} else if len(vas) < 1 {
+	//	return nil, false, mitumutil.ErrNotFound.Errorf("operations in handleAccountsOperations")
+	//}
 
 	i, err := hd.buildAccountOperationsHal(address, vas, offset, reverse)
 	if err != nil {
@@ -190,6 +209,13 @@ func (hd *Handlers) buildAccountOperationsHal(
 	offset string,
 	reverse bool,
 ) (Hal, error) {
+	var hal Hal
+
+	if len(vas) < 1 {
+		hal = NewEmptyHal()
+		return hal, nil
+	}
+
 	baseSelf, err := hd.combineURL(HandlerPathAccountOperations, "address", address.String())
 	if err != nil {
 		return nil, err
@@ -203,7 +229,6 @@ func (hd *Handlers) buildAccountOperationsHal(
 		self = AddQueryValue(baseSelf, StringBoolQuery("reverse", reverse))
 	}
 
-	var hal Hal
 	hal = NewBaseHal(vas, NewHalLink(self, nil))
 
 	h, err := hd.combineURL(HandlerPathAccount, "address", address.String())

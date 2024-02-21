@@ -1,6 +1,7 @@
 package digest
 
 import (
+	"reflect"
 	"time"
 
 	"github.com/ProtoconNet/mitum2/base"
@@ -67,4 +68,12 @@ func (va OperationValue) Reason() string {
 // Index indicates the index number of Operation in OperationTree of block.
 func (va OperationValue) Index() uint64 {
 	return va.index
+}
+
+func (va OperationValue) IsZeroValue() bool {
+	if reflect.DeepEqual(va, reflect.Zero(reflect.TypeOf(va)).Interface()) {
+		return true
+	}
+
+	return false
 }
