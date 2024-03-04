@@ -2,6 +2,8 @@ module github.com/ProtoconNet/mitum-currency/v3
 
 go 1.21
 
+replace github.com/ProtoconNet/mitum2 => /Users/soonkukkang/go/src/github.com/ProtoconNet/mitum2
+
 require (
 	github.com/ProtoconNet/mitum2 v0.0.0-20240220093622-e9221ce8ab9d
 	github.com/alecthomas/kong v0.8.1
@@ -78,7 +80,8 @@ require (
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.15.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/quic-go/quic-go v0.41.0 // indirect
+	github.com/quic-go/qtls-go1-20 v0.3.4 // indirect
+	github.com/quic-go/quic-go v0.39.1 // indirect
 	github.com/redis/go-redis/v9 v9.4.0 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
