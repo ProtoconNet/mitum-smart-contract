@@ -38,6 +38,7 @@ type TransferItemProcessor struct {
 	h    util.Hash
 	item TransferItem
 	rb   map[types.CurrencyID]base.StateMergeValue
+	ns   map[string]base.StateMergeValue
 }
 
 func (opp *TransferItemProcessor) PreProcess(
@@ -45,9 +46,30 @@ func (opp *TransferItemProcessor) PreProcess(
 ) error {
 	e := util.StringError("preprocess for TransferItemProcessor")
 
-	if _, err := state.ExistsState(currency.StateKeyAccount(opp.item.Receiver()), "receiver", getStateFunc); err != nil {
+	var stv base.StateMergeValue
+	ns := map[string]base.StateMergeValue{}
+	k := currency.StateKeyAccount(opp.item.Receiver())
+	switch _, found, err := getStateFunc(k); {
+	case err != nil:
 		return e.Wrap(err)
+	case !found:
+		nilKys, err := types.NewNilAccountKeysFromAddress(opp.item.Receiver())
+		if err != nil {
+			return e.Wrap(err)
+		}
+		acc, err := types.NewAccount(opp.item.Receiver(), nilKys)
+		if err != nil {
+			return e.Wrap(err)
+		}
+		stv = state.NewStateMergeValue(k, currency.NewAccountStateValue(acc))
+
+		_, found := ns[opp.item.Receiver().String()]
+		if !found {
+			ns[opp.item.Receiver().String()] = stv
+		}
+	default:
 	}
+	opp.ns = ns
 
 	rb := map[types.CurrencyID]base.StateMergeValue{}
 	for i := range opp.item.Amounts() {
@@ -99,7 +121,7 @@ func (opp *TransferItemProcessor) Process(
 ) ([]base.StateMergeValue, error) {
 	e := util.StringError("preprocess for TransferItemProcessor")
 
-	sts := make([]base.StateMergeValue, len(opp.item.Amounts()))
+	var sts []base.StateMergeValue
 	for i := range opp.item.Amounts() {
 		am := opp.item.Amounts()[i]
 		v, ok := opp.rb[am.Currency()].Value().(currency.AddBalanceStateValue)
@@ -108,13 +130,16 @@ func (opp *TransferItemProcessor) Process(
 		}
 		//stv := currency.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(am.Big())))
 		//sts[i] = state.NewStateMergeValue(opp.rb[am.Currency()].Key(), stv)
-		sts[i] = common.NewBaseStateMergeValue(
+		sts = append(sts, common.NewBaseStateMergeValue(
 			opp.rb[am.Currency()].Key(),
 			currency.NewAddBalanceStateValue(v.Amount.WithBig(am.Big())),
 			func(height base.Height, st base.State) base.StateValueMerger {
 				return currency.NewBalanceStateValueMerger(height, opp.rb[am.Currency()].Key(), am.Currency(), st)
 			},
-		)
+		))
+	}
+	for _, stv := range opp.ns {
+		sts = append(sts, stv)
 	}
 
 	return sts, nil
@@ -124,6 +149,7 @@ func (opp *TransferItemProcessor) Close() {
 	opp.h = nil
 	opp.item = nil
 	opp.rb = nil
+	opp.ns = nil
 
 	transferItemProcessorPool.Put(opp)
 }
@@ -186,19 +212,19 @@ func (opp *TransferProcessor) PreProcess(
 	}
 
 	for i := range fact.items {
-		cip := transferItemProcessorPool.Get()
-		c, ok := cip.(*TransferItemProcessor)
+		tip := transferItemProcessorPool.Get()
+		t, ok := tip.(*TransferItemProcessor)
 		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", &TransferItemProcessor{}, cip), nil
+			return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", &TransferItemProcessor{}, tip), nil
 		}
 
-		c.h = op.Hash()
-		c.item = fact.items[i]
+		t.h = op.Hash()
+		t.item = fact.items[i]
 
-		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
+		if err := t.PreProcess(ctx, op, getStateFunc); err != nil {
 			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess transfer item; %w", err), nil
 		}
-		c.Close()
+		t.Close()
 	}
 
 	return ctx, nil, nil

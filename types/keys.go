@@ -17,6 +17,7 @@ var (
 	AccountKeyHint     = hint.MustNewHint("mitum-currency-key-v0.0.1")
 	AccountKeysHint    = hint.MustNewHint("mitum-currency-keys-v0.0.1")
 	EthAccountKeysHint = hint.MustNewHint("mitum-currency-eth-keys-v0.0.1")
+	NilAccountKeysHint = hint.MustNewHint("mitum-currency-nil-keys-v0.0.1")
 )
 
 var MaxAccountKeyInKeys = 10
@@ -467,6 +468,101 @@ func (ks ContractAccountKeys) Equal(b AccountKeys) bool {
 		if !ks.keys[i].Equal(bKeys[i]) {
 			return false
 		}
+	}
+
+	return true
+}
+
+type NilAccountKeys struct {
+	hint.BaseHinter
+	h         util.Hash
+	threshold uint
+}
+
+func NewNilAccountKeys(pub base.Publickey) (AccountKeys, error) {
+	ks := NilAccountKeys{BaseHinter: hint.NewBaseHinter(NilAccountKeysHint)}
+	ks.h = ks.GenerateHash(pub)
+	ks.threshold = uint(100)
+
+	return ks, ks.IsValid(nil)
+}
+
+func NewNilAccountKeysFromAddress(addr base.Address) (AccountKeys, error) {
+	h, t, err := hint.ParseFixedTypedString(addr.String(), base.AddressTypeSize)
+	if err != nil {
+		return nil, err
+	}
+	if t != AddressHint.Type() && t != EthAddressHint.Type() {
+		return nil, errors.Errorf("address type is neither mca nor eca")
+	}
+	ks := NilAccountKeys{
+		BaseHinter: hint.NewBaseHinter(NilAccountKeysHint),
+		h:          valuehash.NewBytesFromString(h),
+		threshold:  uint(100),
+	}
+
+	return ks, ks.IsValid(nil)
+}
+
+func (ks NilAccountKeys) Bytes() []byte {
+	return []byte{}
+}
+
+func (ks NilAccountKeys) Hash() util.Hash {
+	return ks.h
+}
+
+func (ks NilAccountKeys) IsValid([]byte) error {
+	if err := util.CheckIsValiders(nil, false, ks.h); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ks NilAccountKeys) GenerateHash(pub base.Publickey) util.Hash {
+	return valuehash.NewSHA256(
+		util.ConcatBytesSlice(
+			util.ConcatBytesSlice(
+				pub.Bytes(),
+				util.UintToBytes(uint(100)),
+			),
+			util.UintToBytes(ks.threshold),
+		),
+	)
+}
+
+func (ks NilAccountKeys) Threshold() uint {
+	return ks.threshold
+}
+
+func (ks NilAccountKeys) Keys() []AccountKey {
+	return nil
+}
+
+func (ks NilAccountKeys) Key(pub base.Publickey) (AccountKey, bool) {
+	if h := ks.GenerateHash(pub); !h.Equal(ks.h) {
+		return nil, false
+	}
+
+	k, err := NewBaseAccountKey(pub, 100)
+	if err != nil {
+		return nil, false
+	}
+	return k, true
+}
+
+func (ks NilAccountKeys) Equal(b AccountKeys) bool {
+	if _, ok := b.(NilAccountKeys); !ok {
+		return false
+	}
+
+	if ks.Threshold() != b.Threshold() {
+		return false
+	}
+
+	if ks.Hash().Equal(b.Hash()) {
+		return false
 	}
 
 	return true

@@ -67,6 +67,14 @@ func (ks EthAccountKeys) MarshalJSON() ([]byte, error) {
 	})
 }
 
+func (ks NilAccountKeys) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(KeysJSONMarshaler{
+		BaseHinter: ks.BaseHinter,
+		Hash:       ks.h,
+		Threshold:  ks.threshold,
+	})
+}
+
 func (ks ContractAccountKeys) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(KeysJSONMarshaler{
 		BaseHinter: ks.BaseHinter,
@@ -124,6 +132,24 @@ func (ks *EthAccountKeys) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	hash = uhs.Hash.Hash()
 
 	return ks.unpack(enc, uks.Hint, hash, uks.Keys, uks.Threshold)
+}
+
+func (ks *NilAccountKeys) DecodeJSON(b []byte, enc encoder.Encoder) error {
+	e := util.StringError("decode json of NilAccountKeys")
+
+	var uks KeysJSONUnMarshaler
+	if err := enc.Unmarshal(b, &uks); err != nil {
+		return e.Wrap(err)
+	}
+
+	var hash util.Hash
+	var uhs KeysHashJSONUnMarshaler
+	if err := enc.Unmarshal(b, &uhs); err != nil {
+		return e.Wrap(err)
+	}
+	hash = uhs.Hash.Hash()
+
+	return ks.unpack(enc, uks.Hint, hash, uks.Threshold)
 }
 
 func (ks *ContractAccountKeys) DecodeJSON(b []byte, enc encoder.Encoder) error {

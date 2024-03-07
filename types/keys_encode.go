@@ -92,6 +92,19 @@ func (ks *EthAccountKeys) unpack(
 	return nil
 }
 
+func (ks *NilAccountKeys) unpack(
+	_ encoder.Encoder,
+	ht hint.Hint,
+	h util.Hash,
+	th uint,
+) error {
+	ks.BaseHinter = hint.NewBaseHinter(ht)
+	ks.h = h
+	ks.threshold = th
+
+	return nil
+}
+
 func (ks *ContractAccountKeys) unpack(enc encoder.Encoder, ht hint.Hint, h valuehash.HashDecoder, bks []byte, th uint) error {
 	e := util.StringError("unmarshal BaseAccountKeys")
 

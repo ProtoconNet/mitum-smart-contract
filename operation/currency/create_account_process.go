@@ -69,7 +69,6 @@ func (opp *CreateAccountItemProcessor) PreProcess(
 		return err
 	}
 	opp.ns = state.NewStateMergeValue(st.Key(), st.Value())
-	opp.ns = state.NewStateMergeValue(currency.StateKeyAccount(target), nil)
 
 	nb := map[types.CurrencyID]base.StateMergeValue{}
 	for i := range opp.item.Amounts() {
