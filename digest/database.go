@@ -1014,25 +1014,28 @@ func (st *Database) CleanByHeightColName(
 	ctx context.Context,
 	height base.Height,
 	colName string,
-	args ...string,
+	filters ...bson.D,
 ) error {
 	if height <= base.GenesisHeight {
 		return st.clean(ctx)
-	} else if len(args)%2 != 0 {
-		return errors.Errorf("invalid")
 	}
 
 	opts := options.BulkWrite().SetOrdered(true)
-	var filter = bson.M{}
+	filterA := bson.A{}
+	filterA = append(
+		filterA,
+		bson.D{
+			{"height", bson.D{{"$lte", height}}},
+		})
 
-	for i := 0; i < len(args); i += 2 {
-		filter[args[i]] = args[i+1]
+	for _, f := range filters {
+		filterA = append(filterA, f)
 	}
-	filter["height"] = bson.M{"$lte": height}
 
-	//removeByHeight := mongo.NewDeleteManyModel().SetFilter(
-	//	bson.M{key: value, "height": bson.M{"$lte": height}},
-	//)
+	filter := bson.D{
+		{"$and", filterA},
+	}
+
 	removeByHeight := mongo.NewDeleteManyModel().SetFilter(filter)
 
 	res, err := st.database.Client().Collection(colName).BulkWrite(
