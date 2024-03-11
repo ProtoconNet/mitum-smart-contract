@@ -39,3 +39,36 @@ func (fact *GenesisNetworkPolicyFact) DecodeJSON(b []byte, enc encoder.Encoder) 
 
 	return nil
 }
+
+type NetworkPolicyFactJSONMarshaler struct {
+	Policy base.NetworkPolicy `json:"policy"`
+	base.BaseFactJSONMarshaler
+}
+
+func (fact NetworkPolicyFact) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(NetworkPolicyFactJSONMarshaler{
+		BaseFactJSONMarshaler: fact.BaseFact.JSONMarshaler(),
+		Policy:                fact.policy,
+	})
+}
+
+type NetworkPolicyFactJSONUnmarshaler struct {
+	base.BaseFactJSONUnmarshaler
+	Policy json.RawMessage `json:"policy"`
+}
+
+func (fact *NetworkPolicyFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
+	e := util.StringError("decode NetworkPolicyFact")
+
+	var u NetworkPolicyFactJSONUnmarshaler
+	if err := enc.Unmarshal(b, &u); err != nil {
+		return e.Wrap(err)
+	}
+	fact.BaseFact.SetJSONUnmarshaler(u.BaseFactJSONUnmarshaler)
+
+	if err := encoder.Decode(enc, u.Policy, &fact.policy); err != nil {
+		return e.Wrap(err)
+	}
+
+	return nil
+}

@@ -31,6 +31,25 @@ type NetworkPolicy struct {
 	emptyProposalNoBlock      bool
 }
 
+func NewNetworkPolicy(
+	suffrageCandidateLimit uint64,
+	maxOperationsInProposal uint64,
+	suffrageCandidateLifespan base.Height,
+	maxSuffrageSize uint64,
+	suffrageExpelLifespan base.Height,
+	emptyProposalNoBlock bool,
+) NetworkPolicy {
+	return NetworkPolicy{
+		BaseHinter:                   hint.NewBaseHinter(NetworkPolicyHint),
+		maxOperationsInProposal:      maxOperationsInProposal,
+		suffrageCandidateLifespan:    suffrageCandidateLifespan,
+		suffrageCandidateLimiterRule: isaac.NewFixedSuffrageCandidateLimiterRule(suffrageCandidateLimit),
+		maxSuffrageSize:              maxSuffrageSize,
+		suffrageExpelLifespan:        suffrageExpelLifespan,
+		emptyProposalNoBlock:         emptyProposalNoBlock,
+	}
+}
+
 func DefaultNetworkPolicy() NetworkPolicy {
 	return NetworkPolicy{
 		BaseHinter:                   hint.NewBaseHinter(NetworkPolicyHint),
