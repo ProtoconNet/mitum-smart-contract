@@ -47,7 +47,7 @@ func (hd *Handlers) handleNodeInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hd *Handlers) handleNodeInfoInGroup() (interface{}, error) {
-	client, memberList, _, err := hd.client()
+	client, memberList, nodeList, err := hd.client()
 
 	var nodeInfoList []map[string]interface{}
 	switch {
@@ -55,13 +55,17 @@ func (hd *Handlers) handleNodeInfoInGroup() (interface{}, error) {
 		return nil, err
 
 	default:
-		var nodeList []quicstream.ConnInfo
+		connInfo := make(map[string]quicstream.ConnInfo)
 		memberList.Members(func(node quicmemberlist.Member) bool {
-			nodeList = append(nodeList, node.ConnInfo())
+			connInfo[node.ConnInfo().String()] = node.ConnInfo()
 			return true
 		})
-		for i := range nodeList {
-			nodeInfo, err := NodeInfo(client, nodeList[i])
+		for _, c := range nodeList {
+			connInfo[c.String()] = c
+		}
+
+		for i := range connInfo {
+			nodeInfo, err := NodeInfo(client, connInfo[i])
 			if err != nil {
 				return nil, util.ErrFound.Wrap(err)
 			}
