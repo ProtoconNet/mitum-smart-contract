@@ -2,6 +2,7 @@ package digest
 
 import (
 	"context"
+	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	quicstreamheader "github.com/ProtoconNet/mitum2/network/quicstream/header"
@@ -10,8 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"net/http"
 	"time"
-
-	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 )
 
 func (hd *Handlers) SetNodeInfoHandler(handler NodeInfoHandler) *Handlers {
@@ -49,7 +48,7 @@ func (hd *Handlers) handleNodeInfo(w http.ResponseWriter, r *http.Request) {
 func (hd *Handlers) handleNodeInfoInGroup() (interface{}, error) {
 	client, memberList, nodeList, err := hd.client()
 
-	var nodeInfoList []map[string]interface{}
+	var nodeInfoList []isaacnetwork.NodeInfo
 	switch {
 	case err != nil:
 		return nil, err
@@ -66,9 +65,11 @@ func (hd *Handlers) handleNodeInfoInGroup() (interface{}, error) {
 
 		for i := range connInfo {
 			nodeInfo, err := NodeInfo(client, connInfo[i])
+
 			if err != nil {
 				return nil, util.ErrFound.Wrap(err)
 			}
+
 			nodeInfoList = append(nodeInfoList, *nodeInfo)
 		}
 	}
@@ -80,13 +81,13 @@ func (hd *Handlers) handleNodeInfoInGroup() (interface{}, error) {
 	}
 }
 
-func (hd *Handlers) buildNodeInfoHal(ni []map[string]interface{}) (Hal, error) {
+func (hd *Handlers) buildNodeInfoHal(ni []isaacnetwork.NodeInfo) (Hal, error) {
 	var hal Hal = NewBaseHal(ni, NewHalLink(HandlerPathNodeInfo, nil))
 
 	return hal, nil
 }
 
-func NodeInfo(client *isaacnetwork.BaseClient, connInfo quicstream.ConnInfo) (*map[string]interface{}, error) {
+func NodeInfo(client *isaacnetwork.BaseClient, connInfo quicstream.ConnInfo) (*isaacnetwork.NodeInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*9)
 	defer cancel()
 
@@ -101,7 +102,7 @@ func NodeInfo(client *isaacnetwork.BaseClient, connInfo quicstream.ConnInfo) (*m
 
 	header := isaacnetwork.NewNodeInfoRequestHeader()
 
-	var nodeInfo *map[string]interface{}
+	var nodeInfo *isaacnetwork.NodeInfo
 	err = stream(ctx, func(ctx context.Context, broker *quicstreamheader.ClientBroker) error {
 		if err := broker.WriteRequestHead(ctx, header); err != nil {
 			return err
@@ -132,9 +133,18 @@ func NodeInfo(client *isaacnetwork.BaseClient, connInfo quicstream.ConnInfo) (*m
 				return err
 			}
 
-			ni, ok := v.(map[string]interface{})
+			b, err := enc.Marshal(v)
+			if err != nil {
+				return err
+			}
+
+			h, err := enc.Decode(b)
+			if err != nil {
+			}
+
+			ni, ok := h.(isaacnetwork.NodeInfo)
 			if !ok {
-				return errors.Errorf("expected map[string]interface{}, not %T", v)
+				return errors.Errorf("expected isaacnetwork.NodeInfo, not %T", v)
 			}
 
 			nodeInfo = &ni
