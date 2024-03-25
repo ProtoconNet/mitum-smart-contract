@@ -516,6 +516,7 @@ func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, er
 	switch am, lastHeight, err := st.balance(a); {
 	case err != nil:
 		return rs, false, err
+	case len(am) < 1:
 	default:
 		rs = rs.SetBalance(am).
 			SetHeight(lastHeight)

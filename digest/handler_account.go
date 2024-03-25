@@ -91,12 +91,6 @@ func (hd *Handlers) buildAccountHal(va AccountValue) (Hal, error) {
 	}
 	hal = hal.AddLink("block", NewHalLink(h, nil))
 
-	h, err = hd.combineURL(HandlerPathBlockByHeight, "height", va.Height().String())
-	if err != nil {
-		return nil, err
-	}
-	hal = hal.AddLink("block", NewHalLink(h, nil))
-
 	return hal, nil
 }
 
