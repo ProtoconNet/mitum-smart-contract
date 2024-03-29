@@ -5,6 +5,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 )
@@ -26,9 +27,9 @@ func ParseStringAddress(s string) (StringAddress, error) {
 
 	switch {
 	case err != nil:
-		return StringAddress{}, errors.Wrap(err, "parse StringAddress")
+		return StringAddress{}, errors.Wrap(err, "Parse StringAddress")
 	case t != StringAddressHint.Type():
-		return StringAddress{}, util.ErrInvalid.Errorf("wrong hint type in StringAddress")
+		return StringAddress{}, util.ErrInvalid.Errorf("Wrong hint type in StringAddress")
 	}
 
 	return NewStringAddress(b), nil
@@ -40,7 +41,7 @@ func (ad StringAddress) IsValid([]byte) error {
 	}
 
 	if err := ad.BaseStringAddress.IsValid(nil); err != nil {
-		return errors.Wrap(err, "invalid StringAddress")
+		return errors.Wrap(err, "Invalid StringAddress")
 	}
 
 	return nil
@@ -53,5 +54,5 @@ func (ad *StringAddress) UnmarshalText(b []byte) error {
 }
 
 func (ad StringAddress) MarshalBSONValue() (bsontype.Type, []byte, error) {
-	return bsontype.String, bsoncore.AppendString(nil, ad.s), nil
+	return bson.TypeString, bsoncore.AppendString(nil, ad.s), nil
 }

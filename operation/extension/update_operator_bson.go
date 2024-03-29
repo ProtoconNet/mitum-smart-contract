@@ -5,7 +5,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
@@ -33,13 +32,11 @@ type UpdateOperatorFactBSONUnmarshaler struct {
 }
 
 func (fact *UpdateOperatorFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of UpdateOperatorFact")
-
 	var u common.BaseFactBSONUnmarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
 	h := valuehash.NewBytesFromString(u.Hash)
@@ -47,21 +44,25 @@ func (fact *UpdateOperatorFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error
 	fact.BaseFact.SetHash(h)
 	err = fact.BaseFact.SetToken(u.Token)
 	if err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
 	var uf UpdateOperatorFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
 	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
-	return fact.unpack(enc, uf.Sender, uf.Contract, uf.Operators, uf.Currency)
+	if err := fact.unpack(enc, uf.Sender, uf.Contract, uf.Operators, uf.Currency); err != nil {
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
+	}
+
+	return nil
 }
 
 func (op UpdateOperator) MarshalBSON() ([]byte, error) {
@@ -75,11 +76,9 @@ func (op UpdateOperator) MarshalBSON() ([]byte, error) {
 }
 
 func (op *UpdateOperator) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of UpdateOperator")
-
 	var ubo common.BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *op)
 	}
 
 	op.BaseOperation = ubo

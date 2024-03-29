@@ -63,29 +63,29 @@ func DefaultNetworkPolicy() NetworkPolicy {
 }
 
 func (p NetworkPolicy) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid NetworkPolicy")
+	e := util.ErrInvalid.Errorf("Invalid NetworkPolicy")
 
 	if err := p.BaseHinter.IsValid(NetworkPolicyHint.Type().Bytes()); err != nil {
 		return e.Wrap(err)
 	}
 
 	if p.maxOperationsInProposal < 1 {
-		return e.Errorf("under zero maxOperationsInProposal")
+		return e.Errorf("Under zero maxOperationsInProposal")
 	}
 
 	if p.maxSuffrageSize < 1 {
-		return e.Errorf("under zero maxSuffrageSize")
+		return e.Errorf("Under zero maxSuffrageSize")
 	}
 
 	switch err := p.suffrageCandidateLifespan.IsValid(nil); {
 	case err != nil:
 		return e.WithMessage(err, "invalid SuffrageCandidateLifespan")
 	case p.suffrageCandidateLifespan <= base.GenesisHeight:
-		return e.Errorf("zero SuffrageCandidateLifespan")
+		return e.Errorf("Zero SuffrageCandidateLifespan")
 	}
 
 	if p.suffrageCandidateLimiterRule == nil {
-		return e.Errorf("empty SuffrageCandidateLimiterRule")
+		return e.Errorf("Empty SuffrageCandidateLimiterRule")
 	}
 
 	if err := p.suffrageCandidateLimiterRule.IsValid(nil); err != nil {
@@ -189,7 +189,7 @@ func (s NetworkPolicyStateValue) HashBytes() []byte {
 }
 
 func (s NetworkPolicyStateValue) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid NetworkPolicyStateValue")
+	e := util.ErrInvalid.Errorf("Invalid NetworkPolicyStateValue")
 
 	if err := s.BaseHinter.IsValid(NetworkPolicyStateValueHint.Type().Bytes()); err != nil {
 		return e.Wrap(err)

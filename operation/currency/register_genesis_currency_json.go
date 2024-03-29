@@ -2,6 +2,7 @@ package currency
 
 import (
 	"encoding/json"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
@@ -33,16 +34,18 @@ type RegisterGenesisCurrencyFactJSONUnMarshaler struct {
 }
 
 func (fact *RegisterGenesisCurrencyFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of RegisterGenesisCurrencyFact")
-
 	var uf RegisterGenesisCurrencyFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	return fact.unpack(enc, uf.GenesisNodeKey, uf.Keys, uf.Currencies)
+	if err := fact.unpack(enc, uf.GenesisNodeKey, uf.Keys, uf.Currencies); err != nil {
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
+	}
+
+	return nil
 }
 
 func (op RegisterGenesisCurrency) MarshalJSON() ([]byte, error) {

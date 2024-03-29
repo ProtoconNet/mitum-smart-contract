@@ -48,7 +48,7 @@ type FixedFeeerBSONUnmarshaler struct {
 }
 
 func (fa *FixedFeeer) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of FixedFeeer")
+	e := util.StringError("Decode bson of FixedFeeer")
 
 	var ufa FixedFeeerBSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {
@@ -84,7 +84,7 @@ type RatioFeeerBSONUnmarshaler struct {
 }
 
 func (fa *RatioFeeer) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of RatioFeeer")
+	e := util.StringError("Decode bson of RatioFeeer")
 
 	var ufa RatioFeeerBSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {

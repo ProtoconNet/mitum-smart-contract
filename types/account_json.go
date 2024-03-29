@@ -42,7 +42,7 @@ type AccountJSONUnmarshaler struct {
 }
 
 func (ac *Account) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of Account")
+	e := util.StringError("Decode json of Account")
 
 	var uac AccountJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uac); err != nil {

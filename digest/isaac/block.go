@@ -50,7 +50,7 @@ func NewManifest(
 }
 
 func (m Manifest) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid manifest")
+	e := util.ErrInvalid.Errorf("Invalid manifest")
 
 	if err := m.BaseHinter.IsValid(ManifestHint.Type().Bytes()); err != nil {
 		return e.Wrap(err)
@@ -61,7 +61,7 @@ func (m Manifest) IsValid([]byte) error {
 		m.proposal,
 		util.DummyIsValider(func([]byte) error {
 			if m.proposedAt.IsZero() {
-				return util.ErrInvalid.Errorf("empty proposedAt")
+				return util.ErrInvalid.Errorf("Empty proposedAt")
 			}
 
 			return nil

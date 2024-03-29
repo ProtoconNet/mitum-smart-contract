@@ -6,6 +6,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -69,39 +70,39 @@ func (fact TransferFact) Bytes() []byte {
 
 func (fact TransferFact) IsValid(b []byte) error {
 	if err := fact.BaseHinter.IsValid(nil); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if n := len(fact.items); n < 1 {
-		return util.ErrInvalid.Errorf("empty items")
+		return common.ErrFactInvalid.Wrap(common.ErrArrayLen.Wrap(errors.Errorf("empty items")))
 	} else if n > int(MaxTransferItems) {
-		return util.ErrInvalid.Errorf("items, %d over max, %d", n, MaxTransferItems)
+		return common.ErrFactInvalid.Wrap(common.ErrArrayLen.Wrap(errors.Errorf("items, %d over max, %d", n, MaxTransferItems)))
 	}
 
 	if err := util.CheckIsValiders(nil, false, fact.sender); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	foundReceivers := map[string]struct{}{}
 	for i := range fact.items {
 		it := fact.items[i]
 		if err := util.CheckIsValiders(nil, false, it); err != nil {
-			return err
+			return common.ErrFactInvalid.Wrap(err)
 		}
 
 		k := it.Receiver().String()
 		switch _, found := foundReceivers[k]; {
 		case found:
-			return util.ErrInvalid.Errorf("duplicated receiver found, %v", it.Receiver())
+			return common.ErrFactInvalid.Wrap(common.ErrDupVal.Wrap(errors.Errorf("receiver found, %v", it.Receiver())))
 		case fact.sender.Equal(it.Receiver()):
-			return util.ErrInvalid.Errorf("receiver is same with sender, %v", fact.sender)
+			return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("receiver account is same with sender account, %v", fact.sender)))
 		default:
 			foundReceivers[k] = struct{}{}
 		}
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	return nil

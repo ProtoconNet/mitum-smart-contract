@@ -38,16 +38,14 @@ type BaseStateBSONUnmarshaler struct {
 }
 
 func (s *BaseState) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("unmarshal BaseState")
-
 	var u BaseStateBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e.Wrap(err)
+		return DecorateError(err, ErrDecodeBson, *s)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e.Wrap(err)
+		return DecorateError(err, ErrDecodeBson, *s)
 	}
 	s.BaseHinter = hint.NewBaseHinter(ht)
 
@@ -64,7 +62,7 @@ func (s *BaseState) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	switch i, err := DecodeStateValue(u.Value, enc); {
 	case err != nil:
-		return e.Wrap(err)
+		return DecorateError(err, ErrDecodeBson, *s)
 	default:
 		s.v = i
 	}

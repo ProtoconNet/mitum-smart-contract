@@ -3,7 +3,6 @@ package currency
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"go.mongodb.org/mongo-driver/bson"
@@ -30,13 +29,11 @@ type RegisterGenesisCurrencyFactBSONUnMarshaler struct {
 }
 
 func (fact *RegisterGenesisCurrencyFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of RegisterGenesisCurrencyFact")
-
 	var u common.BaseFactBSONUnmarshaler
 
 	err := enc.Unmarshal(b, &u)
 	if err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
 	h := valuehash.NewBytesFromString(u.Hash)
@@ -44,21 +41,25 @@ func (fact *RegisterGenesisCurrencyFact) DecodeBSON(b []byte, enc *bsonenc.Encod
 	fact.BaseFact.SetHash(h)
 	err = fact.BaseFact.SetToken(u.Token)
 	if err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
 	var uf RegisterGenesisCurrencyFactBSONUnMarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
 	ht, err := hint.ParseHint(uf.Hint)
 	if err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
-	return fact.unpack(enc, uf.GenesisNodeKey, uf.Keys, uf.Currencies)
+	if err := fact.unpack(enc, uf.GenesisNodeKey, uf.Keys, uf.Currencies); err != nil {
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
+	}
+
+	return nil
 }
 
 func (op RegisterGenesisCurrency) MarshalBSON() ([]byte, error) {
@@ -66,12 +67,11 @@ func (op RegisterGenesisCurrency) MarshalBSON() ([]byte, error) {
 }
 
 func (op *RegisterGenesisCurrency) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of RegisterGenesisCurrency")
 	var ubo common.BaseOperation
 
 	err := ubo.DecodeBSON(b, enc)
 	if err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *op)
 	}
 
 	op.BaseOperation = ubo

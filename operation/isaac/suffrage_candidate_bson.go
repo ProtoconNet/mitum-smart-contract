@@ -28,7 +28,7 @@ type SuffrageCandidateFactBSONUnMarshaler struct {
 }
 
 func (fact *SuffrageCandidateFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of SuffrageCandidateFact")
+	e := util.StringError("Decode bson of SuffrageCandidateFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
@@ -61,7 +61,7 @@ func (op SuffrageCandidate) MarshalBSON() ([]byte, error) {
 }
 
 func (op *SuffrageCandidate) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of SuffrageCandidate")
+	e := util.StringError("Decode bson of SuffrageCandidate")
 	var ubo common.BaseNodeOperation
 
 	err := ubo.DecodeBSON(b, enc)

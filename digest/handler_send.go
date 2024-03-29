@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"io"
@@ -36,10 +37,14 @@ func (hd *Handlers) handleSend(w http.ResponseWriter, r *http.Request) {
 	var hal Hal
 	var v json.RawMessage
 	if err := json.Unmarshal(body.Bytes(), &v); err != nil {
-		HTTP2ProblemWithError(w, err, http.StatusBadRequest)
+		HTTP2ProblemWithError(w, common.ErrDecodeJson.Wrap(err), http.StatusBadRequest)
 		return
 	} else if hinter, err := hd.enc.Decode(body.Bytes()); err != nil {
-		HTTP2ProblemWithError(w, err, http.StatusBadRequest)
+		nerr := err
+		if !errors.Is(err, common.ErrDecodeJson) {
+			nerr = common.ErrDecodeJson.Wrap(err)
+		}
+		HTTP2ProblemWithError(w, nerr, http.StatusBadRequest)
 		return
 	} else if h, err := hd.sendItem(hinter); err != nil {
 		HTTP2ProblemWithError(w, err, http.StatusBadRequest)
@@ -57,7 +62,7 @@ func (hd *Handlers) sendItem(v interface{}) (Hal, error) {
 			return nil, err
 		}
 	default:
-		return nil, errors.Errorf("unsupported message type, %T", v)
+		return nil, errors.Errorf("Unsupported message type, %T", v)
 	}
 
 	return hd.sendOperation(v)
@@ -127,7 +132,7 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 			if len(errList) > 0 {
 				return nil, errList[0]
 			} else {
-				return nil, errors.Errorf("failed to send operation to node")
+				return nil, errors.Errorf("Failed to send operation to node")
 			}
 		}
 	}

@@ -39,7 +39,7 @@ func (a AccountStateValue) Hint() hint.Hint {
 }
 
 func (a AccountStateValue) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid AccountStateValue")
+	e := util.ErrInvalid.Errorf("Invalid AccountStateValue")
 
 	if err := a.BaseHinter.IsValid(AccountStateValueHint.Type().Bytes()); err != nil {
 		return e.Wrap(err)
@@ -81,7 +81,7 @@ func (b BalanceStateValue) Hint() hint.Hint {
 }
 
 func (b BalanceStateValue) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid BalanceStateValue")
+	e := util.ErrInvalid.Errorf("Invalid BalanceStateValue")
 
 	if err := b.BaseHinter.IsValid(BalanceStateValueHint.Type().Bytes()); err != nil {
 		return e.Wrap(err)
@@ -101,12 +101,12 @@ func (b BalanceStateValue) HashBytes() []byte {
 func StateBalanceValue(st base.State) (types.Amount, error) {
 	v := st.Value()
 	if v == nil {
-		return types.Amount{}, util.ErrNotFound.Errorf("balance not found in State")
+		return types.Amount{}, util.ErrNotFound.Errorf("Balance not found in State")
 	}
 
 	a, ok := v.(BalanceStateValue)
 	if !ok {
-		return types.Amount{}, errors.Errorf("invalid balance value found, %T", v)
+		return types.Amount{}, errors.Errorf("Invalid balance value found, %T", v)
 	}
 
 	return a.Amount, nil
@@ -123,7 +123,7 @@ func NewAddBalanceStateValue(amount types.Amount) AddBalanceStateValue {
 }
 
 func (b AddBalanceStateValue) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid AddBalanceStateValue")
+	e := util.ErrInvalid.Errorf("Invalid AddBalanceStateValue")
 
 	if err := util.CheckIsValiders(nil, false, b.Amount); err != nil {
 		return e.Wrap(err)
@@ -147,7 +147,7 @@ func NewDeductBalanceStateValue(amount types.Amount) DeductBalanceStateValue {
 }
 
 func (b DeductBalanceStateValue) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid DeductBalanceStateValue")
+	e := util.ErrInvalid.Errorf("Invalid DeductBalanceStateValue")
 
 	if err := util.CheckIsValiders(nil, false, b.Amount); err != nil {
 		return e.Wrap(err)
@@ -177,7 +177,7 @@ func (c CurrencyDesignStateValue) Hint() hint.Hint {
 }
 
 func (c CurrencyDesignStateValue) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid CurrencyDesignStateValue")
+	e := util.ErrInvalid.Errorf("Invalid CurrencyDesignStateValue")
 
 	if err := c.BaseHinter.IsValid(CurrencyDesignStateValueHint.Type().Bytes()); err != nil {
 		return e.Wrap(err)
@@ -197,12 +197,12 @@ func (c CurrencyDesignStateValue) HashBytes() []byte {
 func StateCurrencyDesignValue(st base.State) (types.CurrencyDesign, error) {
 	v := st.Value()
 	if v == nil {
-		return types.CurrencyDesign{}, util.ErrNotFound.Errorf("currency design not found in State")
+		return types.CurrencyDesign{}, util.ErrNotFound.Errorf("Currency design not found in State")
 	}
 
 	de, ok := v.(CurrencyDesignStateValue)
 	if !ok {
-		return types.CurrencyDesign{}, errors.Errorf("invalid currency design value found, %T", v)
+		return types.CurrencyDesign{}, errors.Errorf("Invalid currency design value found, %T", v)
 	}
 
 	return de.CurrencyDesign, nil
@@ -220,17 +220,17 @@ func IsStateAccountKey(key string) bool {
 	return strings.HasSuffix(key, StateKeyAccountSuffix)
 }
 
-func LoadStateAccountValue(st base.State) (types.Account, error) {
+func LoadStateAccountValue(st base.State) (*types.Account, error) {
 	v := st.Value()
 	if v == nil {
-		return types.Account{}, util.ErrNotFound.Errorf("account not found in State")
+		return nil, util.ErrNotFound.Errorf("Account not found in State")
 	}
 
 	s, ok := v.(AccountStateValue)
 	if !ok {
-		return types.Account{}, errors.Errorf("invalid account value found, %T", v)
+		return nil, errors.Errorf("Invalid account value found, %T", v)
 	}
-	return s.Account, nil
+	return &(s.Account), nil
 
 }
 

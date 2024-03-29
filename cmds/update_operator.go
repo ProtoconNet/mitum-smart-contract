@@ -47,7 +47,7 @@ func (cmd *UpdateOperatorCommand) parseFlags() error {
 	}
 
 	if len(cmd.Operators) < 1 {
-		return errors.Errorf("empty operators, must be given at least one")
+		return errors.Errorf("Empty operators, must be given at least one")
 	}
 
 	if sender, err := cmd.Sender.Encode(enc); err != nil {

@@ -95,7 +95,7 @@ type GenesisCurrencyDesign struct {
 
 func (de *GenesisCurrencyDesign) IsValid([]byte) error {
 	if de.AccountKeys == nil {
-		return errors.Errorf("empty account-keys")
+		return errors.Errorf("Empty account-keys")
 	}
 
 	if err := de.AccountKeys.IsValid(nil); err != nil {
@@ -123,7 +123,7 @@ type CurrencyDesign struct {
 func (de *CurrencyDesign) IsValid([]byte) error {
 	var cid types.CurrencyID
 	if de.CurrencyString == nil {
-		return errors.Errorf("empty currency")
+		return errors.Errorf("Empty currency")
 	}
 	cid = types.CurrencyID(*de.CurrencyString)
 	if err := cid.IsValid(nil); err != nil {
@@ -178,7 +178,7 @@ func (no *FeeerDesign) IsValid([]byte) error {
 			return err
 		}
 	default:
-		return errors.Errorf("unknown type of feeer, %v", t)
+		return errors.Errorf("Unknown type of feeer, %v", t)
 	}
 
 	return nil
@@ -187,7 +187,7 @@ func (no *FeeerDesign) IsValid([]byte) error {
 func (no FeeerDesign) checkFixed(c map[string]interface{}) error {
 	a, found := c["amount"]
 	if !found {
-		return errors.Errorf("fixed needs `amount`")
+		return errors.Errorf("Fixed needs `amount`")
 	}
 	n, err := common.NewBigFromInterface(a)
 	if err != nil {
@@ -200,15 +200,15 @@ func (no FeeerDesign) checkFixed(c map[string]interface{}) error {
 
 func (no FeeerDesign) checkRatio(c map[string]interface{}) error {
 	if a, found := c["ratio"]; !found {
-		return errors.Errorf("ratio needs `ratio`")
+		return errors.Errorf("Ratio needs `ratio`")
 	} else if f, ok := a.(float64); !ok {
-		return errors.Errorf("invalid ratio value type, %T of ratio; should be float64", a)
+		return errors.Errorf("Invalid ratio value type, %T of ratio; should be float64", a)
 	} else {
 		no.Extras["ratio_ratio"] = f
 	}
 
 	if a, found := c["min"]; !found {
-		return errors.Errorf("ratio needs `min`")
+		return errors.Errorf("Ratio needs `min`")
 	} else if n, err := common.NewBigFromInterface(a); err != nil {
 		return errors.Wrapf(err, "invalid min value, %v of ratio", a)
 	} else {

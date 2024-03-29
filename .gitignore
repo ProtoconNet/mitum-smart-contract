@@ -3,6 +3,8 @@
 *.test
 *.out
 *.sh
+*.py
+*.csv
 *.json
 *.csv
 *.toml

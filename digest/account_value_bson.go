@@ -40,7 +40,7 @@ type AccountValueBSONUnmarshaler struct {
 }
 
 func (va *AccountValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of AccountValue")
+	e := util.StringError("Decode bson of AccountValue")
 
 	var uva AccountValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &uva); err != nil {

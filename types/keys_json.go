@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 
 	"github.com/ProtoconNet/mitum2/base"
@@ -31,7 +32,7 @@ type KeyJSONUnmarshaler struct {
 }
 
 func (ky *BaseAccountKey) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of BaseAccountKey")
+	e := util.StringError("Decode json of BaseAccountKey")
 
 	var uk KeyJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uk); err != nil {
@@ -85,7 +86,7 @@ type KeysHashJSONUnMarshaler struct {
 }
 
 func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of BaseAccountKeys")
+	e := util.StringError("Decode json of BaseAccountKeys")
 
 	var uks KeysJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uks); err != nil {
@@ -103,7 +104,7 @@ func (ks *BaseAccountKeys) DecodeJSON(b []byte, enc encoder.Encoder) error {
 }
 
 func (ks *NilAccountKeys) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of NilAccountKeys")
+	e := util.StringError("Decode json of NilAccountKeys")
 
 	var uks KeysJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uks); err != nil {
@@ -121,7 +122,7 @@ func (ks *NilAccountKeys) DecodeJSON(b []byte, enc encoder.Encoder) error {
 }
 
 func (ks *ContractAccountKeys) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of BaseAccountKeys")
+	e := util.StringError("Decode json of BaseAccountKeys")
 
 	var uks KeysJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uks); err != nil {

@@ -19,11 +19,11 @@ func (hd *Handlers) handleManifestByHeight(w http.ResponseWriter, r *http.Reques
 	var height base.Height
 	switch h, err := parseHeightFromPath(mux.Vars(r)["height"]); {
 	case err != nil:
-		HTTP2ProblemWithError(w, errors.Errorf("invalid height found for manifest by height"), http.StatusBadRequest)
+		HTTP2ProblemWithError(w, errors.Errorf("Invalid height found for manifest by height"), http.StatusBadRequest)
 
 		return
 	case h <= base.NilHeight:
-		HTTP2ProblemWithError(w, errors.Errorf("invalid height, %v", h), http.StatusBadRequest)
+		HTTP2ProblemWithError(w, errors.Errorf("Invalid height, %v", h), http.StatusBadRequest)
 		return
 	default:
 		height = h

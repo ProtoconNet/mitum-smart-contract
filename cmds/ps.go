@@ -303,7 +303,7 @@ func PGenerateGenesis(pctx context.Context) (context.Context, error) {
 
 	switch i, found := eventLogging.Logger(launch.NodeEventLogger); {
 	case !found:
-		return pctx, errors.Errorf("node event logger not found")
+		return pctx, errors.Errorf("Node event logger not found")
 	default:
 		el = i
 	}
@@ -409,7 +409,7 @@ func PLoadDigestDesign(pctx context.Context) (context.Context, error) {
 
 		log.Log().Debug().Object("design", *m.Digest).Msg("digest design loaded")
 	default:
-		return pctx, e.Errorf("unknown digest design uri, %q", flag.URL())
+		return pctx, e.Errorf("Unknown digest design uri, %q", flag.URL())
 	}
 
 	return pctx, nil
@@ -471,7 +471,7 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 				case err != nil:
 					return enchint, nil, nil, false, err
 				case !found:
-					return enchint, nil, nil, false, storage.ErrNotFound.Errorf("last SuffrageProof not found")
+					return enchint, nil, nil, false, storage.ErrNotFound.Errorf("Last SuffrageProof not found")
 				}
 
 				switch {

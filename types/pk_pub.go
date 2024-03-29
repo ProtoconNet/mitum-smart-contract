@@ -39,9 +39,9 @@ func ParseMEPublickey(s string) (MEPublickey, error) {
 
 	switch {
 	case !strings.HasSuffix(s, t):
-		return MEPublickey{}, util.ErrInvalid.Errorf("unknown public key string")
+		return MEPublickey{}, util.ErrInvalid.Errorf("Unknown public key string")
 	case len(s) <= len(t):
-		return MEPublickey{}, util.ErrInvalid.Errorf("invalid public key string; too short")
+		return MEPublickey{}, util.ErrInvalid.Errorf("Invalid public key string; too short")
 	}
 
 	return LoadMEPublicKey(s[:len(s)-len(t)])
@@ -75,11 +75,11 @@ func (k MEPublickey) IsValid([]byte) error {
 
 	switch {
 	case k.k == nil:
-		return util.ErrInvalid.Errorf("empty btc public key in MEPublickey")
+		return util.ErrInvalid.Errorf("Empty btc public key in MEPublickey")
 	case len(k.s) < 1:
-		return util.ErrInvalid.Errorf("empty public key string")
+		return util.ErrInvalid.Errorf("Empty public key string")
 	case len(k.b) < 1:
-		return util.ErrInvalid.Errorf("empty public key []byte")
+		return util.ErrInvalid.Errorf("Empty public key []byte")
 	}
 
 	return nil

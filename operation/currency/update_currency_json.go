@@ -31,16 +31,18 @@ type UpdateCurrencyFactJSONUnMarshaler struct {
 }
 
 func (fact *UpdateCurrencyFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of UpdateCurrencyFact")
-
 	var uf UpdateCurrencyFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	return fact.unpack(enc, uf.Currency, uf.Policy)
+	if err := fact.unpack(enc, uf.Currency, uf.Policy); err != nil {
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
+	}
+
+	return nil
 }
 
 func (op UpdateCurrency) MarshalJSON() ([]byte, error) {
@@ -50,11 +52,9 @@ func (op UpdateCurrency) MarshalJSON() ([]byte, error) {
 }
 
 func (op *UpdateCurrency) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode UpdateCurrency")
-
 	var ubo common.BaseNodeOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *op)
 	}
 
 	op.BaseNodeOperation = ubo

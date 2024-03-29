@@ -3,6 +3,8 @@ package currency
 import (
 	"encoding/json"
 
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -30,12 +32,14 @@ type CreateAccountItemJSONUnMarshaler struct {
 }
 
 func (it *BaseCreateAccountItem) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of BaseCreateAccountItem")
-
 	var uit CreateAccountItemJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uit); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *it)
 	}
 
-	return it.unpack(enc, uit.Hint, uit.Keys, uit.Amounts)
+	if err := it.unpack(enc, uit.Hint, uit.Keys, uit.Amounts); err != nil {
+		return common.DecorateError(err, common.ErrDecodeJson, *it)
+	}
+
+	return nil
 }

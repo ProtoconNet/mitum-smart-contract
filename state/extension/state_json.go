@@ -26,7 +26,7 @@ type ContractAccountStateValueJSONUnmarshaler struct {
 }
 
 func (c *ContractAccountStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of ContractAccountStateValue")
+	e := util.StringError("Decode json of ContractAccountStateValue")
 
 	var u ContractAccountStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {

@@ -7,7 +7,6 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 
@@ -32,9 +31,7 @@ type UpdateKeyProcessor struct {
 	*base.BaseOperationProcessor
 }
 
-func NewUpdateKeyProcessor(
-// collectFee func(*OperationProcessor, AddFee) error,
-) types.GetNewProcessor {
+func NewUpdateKeyProcessor() types.GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,
@@ -65,23 +62,38 @@ func (opp *UpdateKeyProcessor) PreProcess(
 ) (context.Context, base.OperationProcessReasonError, error) {
 	fact, ok := op.Fact().(UpdateKeyFact)
 	if !ok {
-		return ctx, base.NewBaseOperationProcessReasonError("expected %T, not %T", UpdateKeyFact{}, op.Fact()), nil
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMTypeMismatch).Errorf("expected %T, not %T", UpdateKeyFact{}, op.Fact())), nil
 	}
 
-	if err := state.CheckFactSignsByState(fact.target, op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("invalid signing; %w", err), nil
+	_, err := state.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
+	if err != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", err),
+		), nil
 	}
 
-	if st, err := state.ExistsState(currency.StateKeyAccount(fact.target), "target keys", getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("target account not found, %v; %w", fact.target, err), nil
-	} else if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Target()), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account not allowed for key updater, %v; %w", fact.Target(), err), nil
-	} else if ks, err := currency.StateKeysValue(st); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("get state value of keys %q; %w", fact.keys.Hash(), err), nil
-	} else if _, ok := ks.(types.NilAccountKeys); ok {
-		return ctx, base.NewBaseOperationProcessReasonError("single-sig account cannot be updated, %v", fact.target), nil
-	} else if ks.Equal(fact.Keys()) {
-		return ctx, base.NewBaseOperationProcessReasonError("same Keys as existing %q; %w", fact.keys.Hash(), err), nil
+	if aState, _, aErr, cErr := state.ExistsCAccount(fact.Target(), "target", true, false, getStateFunc); aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).Errorf("%v", cErr)), nil
+	} else if ac, err := currency.LoadStateAccountValue(aState); err != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMStateValInvalid).Errorf("%v: contract account, %v", fact.Target(), err)), nil
+	} else if _, ok := ac.Keys().(types.NilAccountKeys); ok {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).Errorf("single-sig account cannot be updated, %v", fact.Target())), nil
+	} else if ac.Keys().Equal(fact.Keys()) {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).Errorf("already registered key, %q", fact.keys.Hash())), nil
+	}
+
+	if err := state.CheckFactSignsByState(fact.Target(), op.Signs(), getStateFunc); err != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMSignInvalid).Errorf("%v", err)), nil
 	}
 
 	return ctx, nil, nil
@@ -100,25 +112,25 @@ func (opp *UpdateKeyProcessor) Process( // nolint:dupl
 
 	var tgAccSt base.State
 	var err error
-	if tgAccSt, err = state.ExistsState(currency.StateKeyAccount(fact.target), "target keys", getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("target account not found, %v; %w", fact.target, err), nil
+	if tgAccSt, err = state.ExistsState(currency.StateKeyAccount(fact.Target()), "target keys", getStateFunc); err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("target account not found, %v; %w", fact.Target(), err), nil
 	}
 
 	var fee common.Big
-	var policy types.CurrencyPolicy
-	if policy, err = state.ExistsCurrencyPolicy(fact.currency, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check existence of currency %v; %w", fact.currency, err), nil
+	policy, err := state.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
+	if err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("check existence of currency %v; %w", fact.Currency(), err), nil
 	} else if fee, err = policy.Feeer().Fee(common.ZeroBig); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check fee of currency %v; %w", fact.currency, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check fee of currency %v; %w", fact.Currency(), err), nil
 	}
 
 	var tgBalSt base.State
-	if tgBalSt, err = state.ExistsState(currency.StateKeyBalance(fact.target, fact.currency), "balance of target", getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("target account balance not found, %v; %w", fact.target, err), nil
+	if tgBalSt, err = state.ExistsState(currency.StateKeyBalance(fact.Target(), fact.Currency()), "balance of target", getStateFunc); err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("target account balance not found, %v; %w", fact.Target(), err), nil
 	} else if b, err := currency.StateBalanceValue(tgBalSt); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to get target balance value, %v, %v; %w", fact.currency, fact.target, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to get target balance value, %v, %v; %w", fact.Currency(), fact.Target(), err), nil
 	} else if b.Big().Compare(fee) < 0 {
-		return nil, base.NewBaseOperationProcessReasonError("insufficient balance with fee %v ,%v", fact.currency, fact.target), nil
+		return nil, base.NewBaseOperationProcessReasonError("insufficient balance with fee %v ,%v", fact.Currency(), fact.Target()), nil
 	}
 
 	var stmvs []base.StateMergeValue // nolint:prealloc
@@ -129,11 +141,11 @@ func (opp *UpdateKeyProcessor) Process( // nolint:dupl
 
 	if policy.Feeer().Receiver() != nil {
 		if err := state.CheckExistsState(currency.StateKeyAccount(policy.Feeer().Receiver()), getStateFunc); err != nil {
-			return nil, nil, err
-		} else if feeRcvrSt, found, err := getStateFunc(currency.StateKeyBalance(policy.Feeer().Receiver(), fact.currency)); err != nil {
-			return nil, nil, err
-		} else if !found {
 			return nil, nil, errors.Errorf("feeer receiver %s not found", policy.Feeer().Receiver())
+		} else if feeRcvrSt, found, err := getStateFunc(currency.StateKeyBalance(policy.Feeer().Receiver(), fact.Currency())); err != nil {
+			return nil, nil, errors.Errorf("feeer receiver %s balance of %s not found", policy.Feeer().Receiver(), fact.Currency())
+		} else if !found {
+			return nil, nil, errors.Errorf("feeer receiver %s balance of %s not found", policy.Feeer().Receiver(), fact.Currency())
 		} else if feeRcvrSt.Key() != tgBalSt.Key() {
 			r, ok := feeRcvrSt.Value().(currency.BalanceStateValue)
 			if !ok {
@@ -143,7 +155,7 @@ func (opp *UpdateKeyProcessor) Process( // nolint:dupl
 				feeRcvrSt.Key(),
 				currency.NewAddBalanceStateValue(r.Amount.WithBig(fee)),
 				func(height base.Height, st base.State) base.StateValueMerger {
-					return currency.NewBalanceStateValueMerger(height, feeRcvrSt.Key(), fact.currency, st)
+					return currency.NewBalanceStateValueMerger(height, feeRcvrSt.Key(), fact.Currency(), st)
 				},
 			))
 
@@ -151,7 +163,7 @@ func (opp *UpdateKeyProcessor) Process( // nolint:dupl
 				tgBalSt.Key(),
 				currency.NewDeductBalanceStateValue(v.Amount.WithBig(fee)),
 				func(height base.Height, st base.State) base.StateValueMerger {
-					return currency.NewBalanceStateValueMerger(height, tgBalSt.Key(), fact.currency, st)
+					return currency.NewBalanceStateValueMerger(height, tgBalSt.Key(), fact.Currency(), st)
 				},
 			))
 		}

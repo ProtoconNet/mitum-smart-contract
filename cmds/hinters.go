@@ -134,19 +134,3 @@ func LoadHinters(encs *encoder.Encoders) error {
 
 	return nil
 }
-
-//func LoadHinters(enc encoder.Encoder) error {
-//	for i := range Hinters {
-//		if err := enc.Add(Hinters[i]); err != nil {
-//			return errors.Wrap(err, "add to encoder")
-//		}
-//	}
-//
-//	for i := range SupportedProposalOperationFactHinters {
-//		if err := enc.Add(SupportedProposalOperationFactHinters[i]); err != nil {
-//			return errors.Wrap(err, "add to encoder")
-//		}
-//	}
-//
-//	return nil
-//}

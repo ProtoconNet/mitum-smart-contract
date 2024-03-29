@@ -46,15 +46,15 @@ func (fact UpdateCurrencyFact) Bytes() []byte {
 
 func (fact UpdateCurrencyFact) IsValid(b []byte) error {
 	if err := fact.BaseHinter.IsValid(nil); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if err := util.CheckIsValiders(nil, false, fact.currency, fact.policy); err != nil {
-		return util.ErrInvalid.Errorf("invalid fact: %v", err)
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	return nil
@@ -80,7 +80,7 @@ type UpdateCurrency struct {
 	common.BaseNodeOperation
 }
 
-func NewUpdateCurrency(fact UpdateCurrencyFact, memo string) (UpdateCurrency, error) {
+func NewUpdateCurrency(fact UpdateCurrencyFact) (UpdateCurrency, error) {
 	return UpdateCurrency{
 		BaseNodeOperation: common.NewBaseNodeOperation(UpdateCurrencyHint, fact),
 	}, nil

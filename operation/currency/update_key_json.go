@@ -34,16 +34,18 @@ type UpdateKeyFactJSONUnMarshaler struct {
 }
 
 func (fact *UpdateKeyFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of UpdateKeyFact")
-
 	var uf UpdateKeyFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	return fact.unpack(enc, uf.Target, uf.Keys, uf.Currency)
+	if err := fact.unpack(enc, uf.Target, uf.Keys, uf.Currency); err != nil {
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
+	}
+
+	return nil
 }
 
 func (op UpdateKey) MarshalJSON() ([]byte, error) {
@@ -53,11 +55,9 @@ func (op UpdateKey) MarshalJSON() ([]byte, error) {
 }
 
 func (op *UpdateKey) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode UpdateKey")
-
 	var ubo common.BaseOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *op)
 	}
 
 	op.BaseOperation = ubo

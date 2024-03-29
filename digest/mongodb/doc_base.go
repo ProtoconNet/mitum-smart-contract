@@ -69,7 +69,7 @@ func LoadDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id */, inter
 
 	enc, found := encs.Find(ht)
 	if !found {
-		return nil, nil, util.ErrNotFound.Errorf("encoder not found for %q", ht)
+		return nil, nil, util.ErrNotFound.Errorf("Encoder not found for %q", ht)
 	}
 
 	if !bd.H {
@@ -78,7 +78,7 @@ func LoadDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id */, inter
 
 	doc, ok := bd.D.DocumentOK()
 	if !ok {
-		return nil, nil, errors.Errorf("hinted should be mongodb Document")
+		return nil, nil, errors.Errorf("Hinted should be mongodb Document")
 	}
 
 	var data interface{}
@@ -116,7 +116,7 @@ func LoadManifestDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id *
 
 	enc, found := encs.Find(ht)
 	if !found {
-		return nil, nil, 0, "", "", 0, util.ErrNotFound.Errorf("encoder not found for %q", ht)
+		return nil, nil, 0, "", "", 0, util.ErrNotFound.Errorf("Encoder not found for %q", ht)
 	}
 
 	if !bd.H {
@@ -125,7 +125,7 @@ func LoadManifestDataFromDoc(b []byte, encs *encoder.Encoders) (bson.Raw /* id *
 
 	doc, ok := bd.D.DocumentOK()
 	if !ok {
-		return nil, nil, 0, "", "", 0, errors.Errorf("hinted should be mongodb Document")
+		return nil, nil, 0, "", "", 0, errors.Errorf("Hinted should be mongodb Document")
 	}
 
 	var data interface{}

@@ -51,7 +51,7 @@ type BlockSession struct {
 
 func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opsTree fixedtree.Tree, sts []base.State, proposal base.ProposalSignFact, vs string) (*BlockSession, error) {
 	if st.Readonly() {
-		return nil, errors.Errorf("readonly mode")
+		return nil, errors.Errorf("Readonly mode")
 	}
 
 	nst, err := st.New()
@@ -221,7 +221,7 @@ func (bs *BlockSession) prepareOperations() error {
 		var doc OperationDoc
 		switch found, inState, reason := node(op.Fact().Hash()); {
 		case !found:
-			return mitumutil.ErrNotFound.Errorf("operation, %v in operations tree", op.Fact().Hash().String())
+			return mitumutil.ErrNotFound.Errorf("Operation, %v in operations tree", op.Fact().Hash().String())
 		default:
 			var reasonMsg string
 			switch {
@@ -390,7 +390,7 @@ func (bs *BlockSession) writeModelsChunk(ctx context.Context, col string, models
 	if res, err := bs.st.database.Client().Collection(col).BulkWrite(ctx, models, opts); err != nil {
 		return err
 	} else if res != nil && res.InsertedCount < 1 {
-		return errors.Errorf("not inserted to %s", col)
+		return errors.Errorf("Not inserted to %s", col)
 	}
 
 	return nil

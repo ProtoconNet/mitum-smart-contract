@@ -2,6 +2,7 @@ package extension
 
 import (
 	"fmt"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -31,7 +32,7 @@ func (c ContractAccountStateValue) Hint() hint.Hint {
 }
 
 func (c ContractAccountStateValue) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid ContractAccountStateValue")
+	e := util.ErrInvalid.Errorf("Invalid ContractAccountStateValue")
 
 	if err := c.BaseHinter.IsValid(ContractAccountStateValueHint.Type().Bytes()); err != nil {
 		return e.Wrap(err)
@@ -63,12 +64,42 @@ func IsStateContractAccountKey(key string) bool {
 func StateContractAccountValue(st base.State) (types.ContractAccountStatus, error) {
 	v := st.Value()
 	if v == nil {
-		return types.ContractAccountStatus{}, util.ErrNotFound.Errorf("contract account status not found in State")
+		return types.ContractAccountStatus{}, util.ErrNotFound.Errorf("Contract account status not found in State")
 	}
 
 	cs, ok := v.(ContractAccountStateValue)
 	if !ok {
-		return types.ContractAccountStatus{}, errors.Errorf("invalid contract account status value found, %T", v)
+		return types.ContractAccountStatus{}, errors.Errorf("Invalid contract account status value found, %T", v)
 	}
 	return cs.status, nil
+}
+
+func LoadCAStateValue(st base.State) (*types.ContractAccountStatus, error) {
+	var ok bool
+	var s ContractAccountStateValue
+	switch {
+	case st == nil:
+		return nil, common.ErrStateValInvalid.Wrap(errors.Errorf("contract account"))
+	case st.Value() == nil:
+		return nil, common.ErrStateValInvalid.Wrap(errors.Errorf("contract account"))
+	default:
+		s, ok = st.Value().(ContractAccountStateValue)
+		if !ok {
+			return nil, common.ErrStateValInvalid.Wrap(errors.Errorf("contract account"))
+		}
+	}
+
+	return &(s.status), nil
+}
+
+func CheckCAAuthFromState(st base.State, addr base.Address) (*types.ContractAccountStatus, error) {
+	ca, err := LoadCAStateValue(st)
+	if err != nil {
+		return nil, err
+	}
+	if !ca.Owner().Equal(addr) && !ca.IsOperator(addr) {
+		return nil, common.ErrAccountNAth.Wrap(errors.Errorf("neither the owner nor the operator of the contract account, %v",
+			addr))
+	}
+	return ca, nil
 }

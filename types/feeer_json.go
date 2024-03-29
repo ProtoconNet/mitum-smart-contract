@@ -47,7 +47,7 @@ type FixedFeeerJSONUnmarshaler struct {
 }
 
 func (fa *FixedFeeer) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of FixedFeeer")
+	e := util.StringError("Decode json of FixedFeeer")
 
 	var ufa FixedFeeerJSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {
@@ -84,7 +84,7 @@ type RatioFeeerJSONUnmarshaler struct {
 }
 
 func (fa *RatioFeeer) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of RatioFeeer")
+	e := util.StringError("Decode json of RatioFeeer")
 
 	var ufa RatioFeeerJSONUnmarshaler
 	if err := enc.Unmarshal(b, &ufa); err != nil {

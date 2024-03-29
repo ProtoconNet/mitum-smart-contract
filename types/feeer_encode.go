@@ -3,23 +3,20 @@ package types
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 func (fa *FixedFeeer) unpack(enc encoder.Encoder, ht hint.Hint, rc string, am string) error {
-	e := util.StringError("unmarshal FixedFeeer")
-
 	switch ad, err := base.DecodeAddress(rc, enc); {
 	case err != nil:
-		return e.Wrap(err)
+		return err
 	default:
 		fa.receiver = ad
 	}
 
 	if big, err := common.NewBigFromString(am); err != nil {
-		return e.Wrap(err)
+		return err
 	} else {
 		fa.amount = big
 	}
@@ -35,11 +32,9 @@ func (fa *RatioFeeer) unpack(
 	ratio float64,
 	min, max string,
 ) error {
-	e := util.StringError("unmarshal RatioFeeer")
-
 	switch ad, err := base.DecodeAddress(rc, enc); {
 	case err != nil:
-		return e.Wrap(err)
+		return err
 	default:
 		fa.receiver = ad
 	}
@@ -47,13 +42,13 @@ func (fa *RatioFeeer) unpack(
 	fa.ratio = ratio
 
 	if min, err := common.NewBigFromString(min); err != nil {
-		return e.Wrap(err)
+		return err
 	} else {
 		fa.min = min
 	}
 
 	if max, err := common.NewBigFromString(max); err != nil {
-		return e.Wrap(err)
+		return err
 	} else {
 		fa.max = max
 	}

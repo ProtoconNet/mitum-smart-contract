@@ -2,16 +2,14 @@ package types
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 func (po *CurrencyPolicy) unpack(enc encoder.Encoder, ht hint.Hint, mn string, bfe []byte) error {
-	e := util.StringError("unmarshal CurrencyPolicy")
-
 	if big, err := common.NewBigFromString(mn); err != nil {
-		return e.Wrap(err)
+		return err
 	} else {
 		po.newAccountMinBalance = big
 	}
@@ -20,7 +18,7 @@ func (po *CurrencyPolicy) unpack(enc encoder.Encoder, ht hint.Hint, mn string, b
 	var feeer Feeer
 	err := encoder.Decode(enc, bfe, &feeer)
 	if err != nil {
-		return e.WithMessage(err, "decode feeer")
+		return errors.Errorf("Decode feeer, %v", err)
 	}
 	po.feeer = feeer
 

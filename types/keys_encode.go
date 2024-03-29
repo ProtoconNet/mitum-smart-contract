@@ -10,12 +10,10 @@ import (
 )
 
 func (ky *BaseAccountKey) unpack(enc encoder.Encoder, ht hint.Hint, w uint, sk string) error {
-	e := util.StringError("unmarshal BaseAccountKey")
-
 	ky.BaseHinter = hint.NewBaseHinter(ht)
 	switch pk, err := base.DecodePublickeyFromString(sk, enc); {
 	case err != nil:
-		return e.Wrap(err)
+		return err
 	default:
 		ky.k = pk
 	}
@@ -31,13 +29,11 @@ func (ks *BaseAccountKeys) unpack(
 	bks []byte,
 	th uint,
 ) error {
-	e := util.StringError("unmarshal BaseAccountKeys")
-
 	ks.BaseHinter = hint.NewBaseHinter(ht)
 
 	hks, err := enc.DecodeSlice(bks)
 	if err != nil {
-		return e.Wrap(err)
+		return err
 	}
 
 	keys := make([]AccountKey, len(hks))
@@ -72,13 +68,11 @@ func (ks *NilAccountKeys) unpack(
 }
 
 func (ks *ContractAccountKeys) unpack(enc encoder.Encoder, ht hint.Hint, h common.HashDecoder, bks []byte, th uint) error {
-	e := util.StringError("unmarshal BaseAccountKeys")
-
 	ks.BaseHinter = hint.NewBaseHinter(ht)
 
 	hks, err := enc.DecodeSlice(bks)
 	if err != nil {
-		return e.Wrap(err)
+		return err
 	}
 
 	keys := make([]AccountKey, len(hks))

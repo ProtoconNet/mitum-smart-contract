@@ -7,6 +7,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -40,19 +41,19 @@ func (fact RegisterCurrencyFact) Bytes() []byte {
 
 func (fact RegisterCurrencyFact) IsValid(b []byte) error {
 	if err := fact.BaseHinter.IsValid(nil); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if err := util.CheckIsValiders(nil, false, fact.currency); err != nil {
-		return util.ErrInvalid.Errorf("invalid fact: %v", err)
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if fact.currency.GenesisAccount() == nil {
-		return util.ErrInvalid.Errorf("empty genesis account")
+		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("Value out of range: Empty genesis account")))
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	return nil
@@ -74,7 +75,7 @@ type RegisterCurrency struct {
 	common.BaseNodeOperation
 }
 
-func NewRegisterCurrency(fact RegisterCurrencyFact, memo string) (RegisterCurrency, error) {
+func NewRegisterCurrency(fact RegisterCurrencyFact) (RegisterCurrency, error) {
 	return RegisterCurrency{
 		BaseNodeOperation: common.NewBaseNodeOperation(RegisterCurrencyHint, fact),
 	}, nil

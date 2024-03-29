@@ -49,7 +49,7 @@ func NewGCacheWithQuery(config url.Values) (*GCache, error) {
 			case "lru", "lfu", "arc":
 				tp = s
 			default:
-				return nil, errors.Errorf("not supported type, %v of GCache", s)
+				return nil, errors.Errorf("Unsupported type, %v of GCache", s)
 			}
 		}
 	}
@@ -67,7 +67,7 @@ func NewGCache(tp string, size int, expire time.Duration) (*GCache, error) {
 	case "arc":
 		builder = builder.ARC()
 	default:
-		return nil, errors.Errorf("not supported type, %v of GCache", tp)
+		return nil, errors.Errorf("Unsupported type, %v of GCache", tp)
 	}
 
 	gc := builder.Expiration(expire).Build()

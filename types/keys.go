@@ -2,10 +2,11 @@ package types
 
 import (
 	"bytes"
-	"github.com/ProtoconNet/mitum-currency/v3/common"
-	"github.com/ProtoconNet/mitum2/base"
 	"sort"
 	"strings"
+
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum2/base"
 
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -55,7 +56,7 @@ func NewBaseAccountKey(k base.Publickey, w uint) (BaseAccountKey, error) {
 
 func (ky BaseAccountKey) IsValid([]byte) error {
 	if ky.w < 1 || ky.w > 100 {
-		return util.ErrInvalid.Errorf("invalid key weight, 1 <= weight <= 100")
+		return util.ErrInvalid.Errorf("Invalid key weight, 1 <= weight <= 100")
 	}
 
 	return util.CheckIsValiders(nil, false, ky.k)
@@ -135,7 +136,7 @@ func (ks BaseAccountKeys) Bytes() []byte {
 
 func (ks BaseAccountKeys) IsValid([]byte) error {
 	if ks.threshold < 1 || ks.threshold > 100 {
-		return util.ErrInvalid.Errorf("invalid threshold, %d, should be 1 <= threshold <= 100", ks.threshold)
+		return util.ErrInvalid.Errorf("Invalid threshold, %d, should be 1 <= threshold <= 100", ks.threshold)
 	}
 
 	if err := util.CheckIsValiders(nil, false, ks.h); err != nil {
@@ -143,9 +144,9 @@ func (ks BaseAccountKeys) IsValid([]byte) error {
 	}
 
 	if n := len(ks.keys); n < 1 {
-		return util.ErrInvalid.Errorf("empty keys")
+		return util.ErrInvalid.Errorf("Empty keys")
 	} else if n > MaxAccountKeyInKeys {
-		return util.ErrInvalid.Errorf("keys over %d, %d", MaxAccountKeyInKeys, n)
+		return util.ErrInvalid.Errorf("Keys over %d, %d", MaxAccountKeyInKeys, n)
 	}
 
 	m := map[string]struct{}{}
@@ -156,7 +157,7 @@ func (ks BaseAccountKeys) IsValid([]byte) error {
 		}
 
 		if _, found := m[k.Key().String()]; found {
-			return util.ErrInvalid.Errorf("duplicated keys found")
+			return util.ErrInvalid.Errorf("Duplicated keys found")
 		}
 
 		m[k.Key().String()] = struct{}{}
@@ -168,13 +169,13 @@ func (ks BaseAccountKeys) IsValid([]byte) error {
 	}
 
 	if totalWeight < ks.threshold {
-		return util.ErrInvalid.Errorf("sum of weight under threshold, %d < %d", totalWeight, ks.threshold)
+		return util.ErrInvalid.Errorf("Sum of weight under threshold, %d < %d", totalWeight, ks.threshold)
 	}
 
 	if h, err := ks.GenerateHash(); err != nil {
 		return err
 	} else if !ks.h.Equal(h) {
-		return util.ErrInvalid.Errorf("hash not matched")
+		return util.ErrInvalid.Errorf("Hash not matched")
 	}
 
 	return nil
@@ -231,13 +232,13 @@ func CheckThreshold(fs []base.Sign, keys AccountKeys) error {
 	for i := range fs {
 		ky, found := keys.Key(fs[i].Signer())
 		if !found {
-			return errors.Errorf("unknown key found, %s", fs[i].Signer())
+			return errors.Errorf("Unknown key found, %s", fs[i].Signer())
 		}
 		sum += ky.Weight()
 	}
 
 	if sum < keys.Threshold() {
-		return errors.Errorf("not passed threshold, sum=%d < threshold=%d", sum, keys.Threshold())
+		return errors.Errorf("Not passed threshold, sum=%d < threshold=%d", sum, keys.Threshold())
 	}
 
 	return nil
@@ -288,13 +289,13 @@ func (ks ContractAccountKeys) IsValid([]byte) error {
 	}
 
 	if len(ks.keys) > 0 {
-		return util.ErrInvalid.Errorf("keys of contract account exist")
+		return util.ErrInvalid.Errorf("Keys of contract account exist")
 	}
 
 	if h, err := ks.GenerateHash(); err != nil {
 		return err
 	} else if !ks.h.Equal(h) {
-		return util.ErrInvalid.Errorf("hash not matched")
+		return util.ErrInvalid.Errorf("Hash not matched")
 	}
 
 	return nil

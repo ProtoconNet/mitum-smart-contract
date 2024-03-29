@@ -80,7 +80,7 @@ func (g *GenesisBlockGenerator) Generate() (base.BlockMap, error) {
 	case err != nil:
 		return nil, e.Wrap(err)
 	case !found:
-		return nil, util.ErrNotFound.Errorf("blockmap")
+		return nil, util.ErrNotFound.Errorf("Blockmap")
 	default:
 		if err := blockmap.IsValid(g.networkID); err != nil {
 			return nil, e.Wrap(err)
@@ -108,25 +108,25 @@ func (g *GenesisBlockGenerator) generateOperations() error {
 
 		hinter, ok := fact.(hint.Hinter)
 		if !ok {
-			return errors.Errorf("fact does not support Hinter")
+			return errors.Errorf("Fact does not support Hinter")
 		}
 
 		switch ht := hinter.Hint(); {
 		case ht.IsCompatible(isaacoperation.SuffrageGenesisJoinFactHint):
 			if _, found := types[ht.String()]; found {
-				return errors.Errorf("multiple join operation found")
+				return errors.Errorf("Multiple join operation found")
 			}
 
 			g.ops[i], err = g.joinOperation(fact)
 		case ht.IsCompatible(isaacoperation.GenesisNetworkPolicyFactHint):
 			if _, found := types[ht.String()]; found {
-				return errors.Errorf("multiple network policy operation found")
+				return errors.Errorf("Multiple network policy operation found")
 			}
 
 			g.ops[i], err = g.networkPolicyOperation(fact)
 		case ht.IsCompatible(currency.RegisterGenesisCurrencyFactHint):
 			if _, found := types[ht.String()]; found {
-				return errors.Errorf("multiple RegisterGenesisCurrency operation found")
+				return errors.Errorf("Multiple RegisterGenesisCurrency operation found")
 			}
 
 			g.ops[i], err = g.registerGenesisCurrencyOperation(fact, g.networkID)
@@ -218,7 +218,7 @@ func (g *GenesisBlockGenerator) registerGenesisCurrencyOperation(i base.Fact, to
 
 	if !basefact.GenesisNodeKey().Equal(design.Privatekey.Publickey()) {
 		panic(errors.Errorf(
-			"genesisNodeKey, %v is not match with local node key, %v",
+			"GenesisNodeKey, %v is not match with local node key, %v",
 			basefact.GenesisNodeKey().String(),
 			design.Privatekey.Publickey().String(),
 		))
@@ -397,7 +397,7 @@ func (g *GenesisBlockGenerator) newProposalProcessor() (*isaac.DefaultProposalPr
 			}
 		}
 
-		return nil, util.ErrNotFound.Errorf("operation not found")
+		return nil, util.ErrNotFound.Errorf("Operation not found")
 	}
 
 	return isaac.NewDefaultProposalProcessor(g.proposal, nil, args)

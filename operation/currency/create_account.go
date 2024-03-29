@@ -7,6 +7,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -75,43 +76,43 @@ func (fact CreateAccountFact) Bytes() []byte {
 
 func (fact CreateAccountFact) IsValid(b []byte) error {
 	if err := fact.BaseHinter.IsValid(nil); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if n := len(fact.items); n < 1 {
-		return util.ErrInvalid.Errorf("empty items")
+		return common.ErrFactInvalid.Wrap(common.ErrArrayLen.Wrap(errors.Errorf("Empty items")))
 	} else if n > int(MaxCreateAccountItems) {
-		return util.ErrInvalid.Errorf("items, %d over max, %d", n, MaxCreateAccountItems)
+		return common.ErrFactInvalid.Wrap(common.ErrArrayLen.Wrap(errors.Errorf("Items, %d over max, %d", n, MaxCreateAccountItems)))
 	}
 
 	if err := util.CheckIsValiders(nil, false, fact.sender); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	foundKeys := map[string]struct{}{}
 	for i := range fact.items {
 		it := fact.items[i]
 		if err := util.CheckIsValiders(nil, false, it); err != nil {
-			return err
+			return common.ErrFactInvalid.Wrap(err)
 		}
 
 		k := it.Keys().Hash().String()
 		if _, found := foundKeys[k]; found {
-			return util.ErrInvalid.Errorf("duplicated acocunt Keys found, %s", k)
+			return common.ErrFactInvalid.Wrap(common.ErrDupVal.Wrap(errors.Errorf("account Keys, %s", k)))
 		}
 
 		switch a, err := it.Address(); {
 		case err != nil:
-			return err
+			return common.ErrFactInvalid.Wrap(err)
 		case fact.sender.Equal(a):
-			return util.ErrInvalid.Errorf("target address is same with sender, %v", fact.sender)
+			return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("Target account is same with sender account, %v", fact.sender)))
 		default:
 			foundKeys[k] = struct{}{}
 		}
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	return nil
@@ -184,3 +185,18 @@ func (op *CreateAccount) HashSign(priv base.Privatekey, networkID base.NetworkID
 	}
 	return nil
 }
+
+//func (op *CreateAccount) Error(v error, err error) error {
+//	var nerr error
+//
+//	switch {
+//	case errors.Is(v, common.ErrDecodeBson):
+//		nerr = common.ErrDecodeBson.WithMessage(err, "%T", *op)
+//	case errors.Is(v, common.ErrDecodeJson):
+//		nerr = common.ErrDecodeJson.WithMessage(err, "%T", *op)
+//	default:
+//		nerr = err
+//	}
+//
+//	return nerr
+//}

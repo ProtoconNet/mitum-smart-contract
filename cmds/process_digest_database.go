@@ -28,7 +28,7 @@ func ProcessDatabase(ctx context.Context) (context.Context, error) {
 	case conf.URI().Scheme == "mongodb", conf.URI().Scheme == "mongodb+srv":
 		return processMongodbDatabase(ctx, l)
 	default:
-		return ctx, errors.Errorf("unsupported database type, %v", conf.URI().Scheme)
+		return ctx, errors.Errorf("Unsupported database type, %v", conf.URI().Scheme)
 	}
 }
 

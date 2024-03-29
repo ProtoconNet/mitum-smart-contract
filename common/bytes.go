@@ -35,11 +35,11 @@ func (h Bytes) String() string {
 
 func (h Bytes) IsValid([]byte) error {
 	if h == nil || len(h) < 1 {
-		return util.ErrInvalid.Errorf("empty hash")
+		return util.ErrInvalid.Errorf("Empty hash")
 	}
 
 	if len(h) > maxBytesHashSize {
-		return util.ErrInvalid.Errorf("over max: %d > %d", len(h), maxBytesHashSize)
+		return util.ErrInvalid.Errorf("Over max, %d > %d", len(h), maxBytesHashSize)
 	}
 
 	return nil
@@ -78,7 +78,7 @@ func (d *HashDecoder) UnmarshalText(b []byte) error {
 
 	var u Bytes
 	if err := u.UnmarshalText(b); err != nil {
-		return errors.WithMessage(err, "decode hash by Bytes")
+		return errors.WithMessage(err, "Decode hash by Bytes")
 	}
 
 	d.h = u

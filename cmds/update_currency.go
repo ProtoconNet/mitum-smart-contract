@@ -78,11 +78,11 @@ func (cmd *UpdateCurrencyCommand) parseFlags() error {
 	case types.FeeerRatio:
 		feeer = cmd.CurrencyRatioFeeerFlags.feeer
 	default:
-		return errors.Errorf("unknown feeer type, %q", t)
+		return errors.Errorf("Unknown feeer type, %q", t)
 	}
 
 	if feeer == nil {
-		return errors.Errorf("empty feeer flags")
+		return errors.Errorf("Empty feeer flags")
 	} else if err := feeer.IsValid(nil); err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (cmd *UpdateCurrencyCommand) parseFlags() error {
 func (cmd *UpdateCurrencyCommand) createOperation() (currency.UpdateCurrency, error) {
 	fact := currency.NewUpdateCurrencyFact([]byte(cmd.Token), cmd.Currency.CID, cmd.po)
 
-	op, err := currency.NewUpdateCurrency(fact, "")
+	op, err := currency.NewUpdateCurrency(fact)
 	if err != nil {
 		return currency.UpdateCurrency{}, err
 	}

@@ -25,7 +25,7 @@ type CurrencyPolicyBSONUnmarshaler struct {
 }
 
 func (po *CurrencyPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of CurrencyPolicy")
+	e := util.StringError("Decode bson of CurrencyPolicy")
 
 	var upo CurrencyPolicyBSONUnmarshaler
 	if err := enc.Unmarshal(b, &upo); err != nil {

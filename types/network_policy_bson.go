@@ -34,7 +34,7 @@ type NetworkPolicyBSONUnMarshaler struct {
 }
 
 func (p *NetworkPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of NetworkPolicy")
+	e := util.StringError("Decode bson of NetworkPolicy")
 
 	var u NetworkPolicyBSONUnMarshaler
 	if err := bson.Unmarshal(b, &u); err != nil {
@@ -73,7 +73,7 @@ type NetworkPolicyStateValueBSONUnmarshaler struct {
 }
 
 func (s *NetworkPolicyStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode NetworkPolicyStateValue")
+	e := util.StringError("Decode bson NetworkPolicyStateValue")
 
 	var u NetworkPolicyStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {

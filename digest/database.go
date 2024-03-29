@@ -82,7 +82,7 @@ func NewReadonlyDatabase(mitum *isaacdatabase.Center, st *mongodbstorage.Databas
 
 func (st *Database) New() (*Database, error) {
 	if st.readonly {
-		return nil, errors.Errorf("readonly mode")
+		return nil, errors.Errorf("Readonly mode")
 	}
 
 	nst, err := st.database.New()
@@ -151,7 +151,7 @@ func (st *Database) Initialize() error {
 
 func (st *Database) createIndex() error {
 	if st.readonly {
-		return errors.Errorf("readonly mode")
+		return errors.Errorf("Readonly mode")
 	}
 
 	for col, models := range defaultIndexes {
@@ -172,7 +172,7 @@ func (st *Database) LastBlock() base.Height {
 
 func (st *Database) SetLastBlock(height base.Height) error {
 	if st.readonly {
-		return errors.Errorf("readonly mode")
+		return errors.Errorf("Readonly mode")
 	}
 
 	st.Lock()
@@ -199,7 +199,7 @@ func (st *Database) setLastBlock(height base.Height) error {
 
 func (st *Database) Clean() error {
 	if st.readonly {
-		return errors.Errorf("readonly mode")
+		return errors.Errorf("Readonly mode")
 	}
 
 	st.Lock()
@@ -234,7 +234,7 @@ func (st *Database) clean(ctx context.Context) error {
 
 func (st *Database) CleanByHeight(ctx context.Context, height base.Height) error {
 	if st.readonly {
-		return errors.Errorf("readonly mode")
+		return errors.Errorf("Readonly mode")
 	}
 
 	st.Lock()
@@ -545,7 +545,7 @@ func (st *Database) AccountsByPublickey(
 	callback func(AccountValue) (bool, error),
 ) error {
 	if offsetHeight <= base.NilHeight {
-		return errors.Errorf("offset height should be over nil height")
+		return errors.Errorf("Offset height should be over nil height")
 	}
 
 	filter := buildAccountsFilterByPublickey(pub)
@@ -703,7 +703,7 @@ func (st *Database) contractAccountStatus(a base.Address) (types.ContractAccount
 		}
 		return cas, lastHeight, nil
 	} else {
-		return types.ContractAccountStatus{}, lastHeight, errors.Errorf("state is nil")
+		return types.ContractAccountStatus{}, lastHeight, errors.Errorf("State is nil")
 	}
 }
 
@@ -751,7 +751,7 @@ func (st *Database) currencies() ([]string, error) {
 			}
 			cids = append(cids, i.Currency().String())
 		} else {
-			return nil, errors.Errorf("state is nil")
+			return nil, errors.Errorf("State is nil")
 		}
 
 	}
@@ -787,7 +787,7 @@ func (st *Database) ManifestByHeight(height base.Height) (base.Manifest, uint64,
 	if m != nil {
 		return m, operations, confirmed, proposer, round, nil
 	} else {
-		return nil, 0, "", "", 0, mitumutil.ErrNotFound.Wrap(errors.Errorf("block manifest"))
+		return nil, 0, "", "", 0, mitumutil.ErrNotFound.Wrap(errors.Errorf("Block manifest"))
 	}
 }
 
@@ -819,7 +819,7 @@ func (st *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, uint64, 
 	if m != nil {
 		return m, operations, confirmed, proposer, round, nil
 	} else {
-		return nil, 0, "", "", 0, mitumutil.ErrNotFound.Errorf("block manifest")
+		return nil, 0, "", "", 0, mitumutil.ErrNotFound.Errorf("Block manifest")
 	}
 }
 
@@ -853,7 +853,7 @@ func (st *Database) currency(cid string) (types.CurrencyDesign, base.State, erro
 		}
 		return de, sta, nil
 	} else {
-		return types.CurrencyDesign{}, nil, errors.Errorf("state is nil")
+		return types.CurrencyDesign{}, nil, errors.Errorf("State is nil")
 	}
 }
 
@@ -1092,9 +1092,9 @@ func loadLastBlock(st *Database) (base.Height, bool, error) {
 
 func parseOffset(s string) (base.Height, uint64, error) {
 	if n := strings.SplitN(s, ",", 2); n == nil {
-		return base.NilHeight, 0, errors.Errorf("invalid offset string: %q", s)
+		return base.NilHeight, 0, errors.Errorf("Invalid offset string, %q", s)
 	} else if len(n) < 2 {
-		return base.NilHeight, 0, errors.Errorf("invalid offset, %q", s)
+		return base.NilHeight, 0, errors.Errorf("Invalid offset, %q", s)
 	} else if h, err := base.ParseHeightString(n[0]); err != nil {
 		return base.NilHeight, 0, errors.Wrap(err, "invalid height of offset")
 	} else if u, err := strconv.ParseUint(n[1], 10, 64); err != nil {
@@ -1142,9 +1142,9 @@ func parseOffsetByString(s string) (base.Height, string, error) {
 	var a, b string
 	switch n := strings.SplitN(s, ",", 2); {
 	case n == nil:
-		return base.NilHeight, "", errors.Errorf("invalid offset string: %q", s)
+		return base.NilHeight, "", errors.Errorf("Invalid offset string, %q", s)
 	case len(n) < 2:
-		return base.NilHeight, "", errors.Errorf("invalid offset, %q", s)
+		return base.NilHeight, "", errors.Errorf("Invalid offset, %q", s)
 	default:
 		a = n[0]
 		b = n[1]

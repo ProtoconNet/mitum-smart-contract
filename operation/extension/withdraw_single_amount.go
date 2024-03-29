@@ -1,10 +1,11 @@
 package extension
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -27,7 +28,7 @@ func (it WithdrawItemSingleAmount) IsValid([]byte) error {
 	}
 
 	if n := len(it.amounts); n != 1 {
-		return util.ErrInvalid.Errorf("only one amount allowed; %d", n)
+		return common.ErrArrayLen.Wrap(errors.Errorf("only one amount allowed, %d", n))
 	}
 
 	return nil

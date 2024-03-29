@@ -25,7 +25,7 @@ type GenesisNetworkPolicyFactJSONUnmarshaler struct {
 }
 
 func (fact *GenesisNetworkPolicyFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode GenesisNetworkPolicyFact")
+	e := util.StringError("Decode GenesisNetworkPolicyFact")
 
 	var u GenesisNetworkPolicyFactJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
@@ -58,7 +58,7 @@ type NetworkPolicyFactJSONUnmarshaler struct {
 }
 
 func (fact *NetworkPolicyFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode NetworkPolicyFact")
+	e := util.StringError("Decode NetworkPolicyFact")
 
 	var u NetworkPolicyFactJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {

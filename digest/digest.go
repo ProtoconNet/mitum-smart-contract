@@ -156,7 +156,7 @@ func (di *Digester) digest(ctx context.Context, blk base.BlockMap) error {
 	case err != nil:
 		return e.Wrap(err)
 	case !found:
-		return e.Wrap(util.ErrNotFound.Errorf("blockmap"))
+		return e.Wrap(util.ErrNotFound.Errorf("Blockmap"))
 	default:
 		if err := i.IsValid(di.networkID); err != nil {
 			return e.Wrap(err)

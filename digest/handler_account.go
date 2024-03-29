@@ -269,7 +269,7 @@ func (hd *Handlers) handleAccounts(w http.ResponseWriter, r *http.Request) {
 	var offsetAddress string
 	switch i, h, a, err := hd.parseAccountsQueries(r.URL.Query().Get("publickey"), offset); {
 	case err != nil:
-		HTTP2ProblemWithError(w, fmt.Errorf("invalue accounts query: %v", err), http.StatusBadRequest)
+		HTTP2ProblemWithError(w, fmt.Errorf("Invalue accounts query: %v", err), http.StatusBadRequest)
 
 		return
 	default:
@@ -383,7 +383,7 @@ func (hd *Handlers) parseAccountsQueries(s, offset string) (base.Publickey, base
 	var pub base.Publickey
 	switch ps := strings.TrimSpace(s); {
 	case len(ps) < 1:
-		return nil, base.NilHeight, "", errors.Errorf("empty query")
+		return nil, base.NilHeight, "", errors.Errorf("Empty query")
 	default:
 		i, err := base.DecodePublickeyFromString(ps, hd.enc)
 		if err == nil {
@@ -406,7 +406,7 @@ func (hd *Handlers) parseAccountsQueries(s, offset string) (base.Publickey, base
 	case err != nil:
 		return nil, base.NilHeight, "", err
 	case len(a) < 1:
-		return nil, base.NilHeight, "", errors.Errorf("empty address in offset of accounts")
+		return nil, base.NilHeight, "", errors.Errorf("Empty address in offset of accounts")
 	default:
 		return pub, h, a, nil
 	}

@@ -109,11 +109,11 @@ func (fa FixedFeeer) IsValid([]byte) error {
 	}
 
 	if err := util.CheckIsValiders(nil, false, fa.receiver); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver for fixed feeer: %v", err)
+		return util.ErrInvalid.Errorf("Invalid receiver for fixed feeer: %v", err)
 	}
 
 	if !fa.amount.OverNil() {
-		return util.ErrInvalid.Errorf("fixed feeer amount under zero")
+		return util.ErrInvalid.Errorf("Fixed feeer amount under zero")
 	}
 
 	return nil
@@ -185,18 +185,18 @@ func (fa RatioFeeer) IsValid([]byte) error {
 	}
 
 	if err := util.CheckIsValiders(nil, false, fa.receiver); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver for ratio feeer: %v", err)
+		return util.ErrInvalid.Errorf("Invalid receiver for ratio feeer: %v", err)
 	}
 
 	if fa.ratio < 0 || fa.ratio > 1 {
-		return util.ErrInvalid.Errorf("invalid ratio, %v; it should be 0 >=, <= 1", fa.ratio)
+		return util.ErrInvalid.Errorf("Invalid ratio, %v; it should be 0 >=, <= 1", fa.ratio)
 	}
 
 	if !fa.min.OverNil() {
-		return util.ErrInvalid.Errorf("ratio feeer min amount under zero")
+		return util.ErrInvalid.Errorf("Ratio feeer min amount under zero")
 	} else if !fa.max.Equal(UnlimitedMaxFeeAmount) {
 		if !fa.max.OverNil() {
-			return util.ErrInvalid.Errorf("ratio feeer max amount under zero")
+			return util.ErrInvalid.Errorf("Ratio feeer max amount under zero")
 		} else if fa.min.Compare(fa.max) > 0 {
 			return util.ErrInvalid.Errorf("ratio feeer min should over max")
 		}

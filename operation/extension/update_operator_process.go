@@ -2,13 +2,14 @@ package extension
 
 import (
 	"context"
+	"sync"
+
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"sync"
 
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -65,42 +66,69 @@ func (opp *UpdateOperatorProcessor) PreProcess(
 ) (context.Context, base.OperationProcessReasonError, error) {
 	fact, ok := op.Fact().(UpdateOperatorFact)
 	if !ok {
-		return ctx, base.NewBaseOperationProcessReasonError("expected UpdateOperatorFact, not %T", op.Fact()), nil
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMTypeMismatch).
+				Errorf("expected UpdateOperatorFact, not %T", op.Fact())), nil
 	}
 
-	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("invalid signing; %w", err), nil
-	}
-
-	if err := state.CheckExistsState(currency.StateKeyAccount(fact.Sender()), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("check existence of sender %v; %w", fact.Sender(), err), nil
-	} else if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot update operator, %v; %w", fact.Sender(), err), nil
-	}
-	if err := state.CheckExistsState(currency.StateKeyAccount(fact.Contract()), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("check existence of contract %v; %w", fact.Contract(), err), nil
-	} else if err := state.CheckExistsState(extension.StateKeyContractAccount(fact.Contract()), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("check existence of target contract account %v; %w", fact.Contract(), err), nil
-	}
-
-	st, err := state.ExistsState(extension.StateKeyContractAccount(fact.Contract()), "target contract", getStateFunc)
+	_, err := state.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
 	if err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("check existence of contract %v; %w", fact.Contract(), err), nil
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", err),
+		), nil
 	}
-	v, err := extension.StateContractAccountValue(st)
-	if err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("check existence of target contract account %v; %w", fact.Contract(), err), nil
+
+	if _, _, aErr, cErr := state.ExistsCAccount(fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMCAccountNA).
+				Errorf("%v", cErr)), nil
 	}
-	if !v.Owner().Equal(fact.Sender()) {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account owner is not matched with %v", fact.Sender()), nil
+
+	if _, cSt, aErr, cErr := state.ExistsCAccount(fact.Contract(), "contract", true, true, getStateFunc); aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", cErr)), nil
+	} else if status, err := extension.StateContractAccountValue(cSt); err != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMStateValInvalid).
+				Errorf("%v", cErr)), nil
+	} else if !status.Owner().Equal(fact.Sender()) {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMAccountNAth).
+				Errorf("sender account is not contract account owner, %v", fact.Sender())), nil
 	}
 
 	for i := range fact.Operators() {
-		if err := state.CheckExistsState(currency.StateKeyAccount(fact.Operators()[i]), getStateFunc); err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("check existence of sender %v; %w", fact.Operators()[i], err), nil
-		} else if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Operators()[i]), getStateFunc); err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be an operator, %v; %w", fact.Sender(), err), nil
+		if _, _, aErr, cErr := state.ExistsCAccount(fact.Operators()[i], "operator", true, false, getStateFunc); aErr != nil {
+			return ctx, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.
+					Errorf("%v", aErr)), nil
+		} else if cErr != nil {
+			return ctx, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.
+					Wrap(common.ErrMCAccountNA).
+					Errorf("%v", cErr)), nil
 		}
+	}
+
+	if err := state.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMSignInvalid).
+				Errorf("%v", err)), nil
 	}
 
 	return ctx, nil, nil
@@ -125,20 +153,20 @@ func (opp *UpdateOperatorProcessor) Process( // nolint:dupl
 	}
 
 	var fee common.Big
-	var policy types.CurrencyPolicy
-	if policy, err = state.ExistsCurrencyPolicy(fact.Currency(), getStateFunc); err != nil {
+	policy, err := state.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
+	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("check existence of currency %v; %w", fact.Currency(), err), nil
 	} else if fee, err = policy.Feeer().Fee(common.ZeroBig); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("check fee of currency %v; %w", fact.Currency(), err), nil
 	}
 
 	var sdBalSt base.State
-	if sdBalSt, err = state.ExistsState(currency.StateKeyBalance(fact.Sender(), fact.currency), "balance of sender", getStateFunc); err != nil {
+	if sdBalSt, err = state.ExistsState(currency.StateKeyBalance(fact.Sender(), fact.Currency()), "balance of sender", getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("check existence of sender balance %v ; %w", fact.Sender(), err), nil
 	} else if b, err := currency.StateBalanceValue(sdBalSt); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check existence of sender balance %v, %v ; %w", fact.currency, fact.Sender(), err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check existence of sender balance %v, %v ; %w", fact.Currency(), fact.Sender(), err), nil
 	} else if b.Big().Compare(fee) < 0 {
-		return nil, base.NewBaseOperationProcessReasonError("insufficient balance with fee %v ,%v", fact.currency, fact.Sender()), nil
+		return nil, base.NewBaseOperationProcessReasonError("insufficient balance with fee %v ,%v", fact.Currency(), fact.Sender()), nil
 	}
 
 	var stmvs []base.StateMergeValue // nolint:prealloc
@@ -149,11 +177,11 @@ func (opp *UpdateOperatorProcessor) Process( // nolint:dupl
 
 	if policy.Feeer().Receiver() != nil {
 		if err := state.CheckExistsState(currency.StateKeyAccount(policy.Feeer().Receiver()), getStateFunc); err != nil {
-			return nil, nil, err
-		} else if feeRcvrSt, found, err := getStateFunc(currency.StateKeyBalance(policy.Feeer().Receiver(), fact.currency)); err != nil {
-			return nil, nil, err
-		} else if !found {
 			return nil, nil, errors.Errorf("feeer receiver %s not found", policy.Feeer().Receiver())
+		} else if feeRcvrSt, found, err := getStateFunc(currency.StateKeyBalance(policy.Feeer().Receiver(), fact.Currency())); err != nil {
+			return nil, nil, errors.Errorf("feeer receiver %s balance of %s not found", policy.Feeer().Receiver(), fact.Currency())
+		} else if !found {
+			return nil, nil, errors.Errorf("feeer receiver %s balance of %s not found", policy.Feeer().Receiver(), fact.Currency())
 		} else if feeRcvrSt.Key() != sdBalSt.Key() {
 			r, ok := feeRcvrSt.Value().(currency.BalanceStateValue)
 			if !ok {
@@ -163,7 +191,7 @@ func (opp *UpdateOperatorProcessor) Process( // nolint:dupl
 				feeRcvrSt.Key(),
 				currency.NewAddBalanceStateValue(r.Amount.WithBig(fee)),
 				func(height base.Height, st base.State) base.StateValueMerger {
-					return currency.NewBalanceStateValueMerger(height, feeRcvrSt.Key(), fact.currency, st)
+					return currency.NewBalanceStateValueMerger(height, feeRcvrSt.Key(), fact.Currency(), st)
 				},
 			))
 
@@ -171,7 +199,7 @@ func (opp *UpdateOperatorProcessor) Process( // nolint:dupl
 				sdBalSt.Key(),
 				currency.NewDeductBalanceStateValue(v.Amount.WithBig(fee)),
 				func(height base.Height, st base.State) base.StateValueMerger {
-					return currency.NewBalanceStateValueMerger(height, sdBalSt.Key(), fact.currency, st)
+					return currency.NewBalanceStateValueMerger(height, sdBalSt.Key(), fact.Currency(), st)
 				},
 			))
 		}

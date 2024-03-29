@@ -2,7 +2,6 @@ package isaacoperation
 
 import (
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
@@ -11,11 +10,9 @@ func (fact *SuffrageJoinFact) unpack(
 	candidate string,
 	height base.Height,
 ) error {
-	e := util.StringError("unmarshal SuffrageJoinFact")
-
 	switch i, err := base.DecodeAddress(candidate, enc); {
 	case err != nil:
-		return e.Wrap(err)
+		return err
 	default:
 		fact.candidate = i
 	}

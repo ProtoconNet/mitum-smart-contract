@@ -45,20 +45,23 @@ type WithdrawItemProcessor struct {
 func (opp *WithdrawItemProcessor) PreProcess(
 	_ context.Context, _ base.Operation, getStateFunc base.GetStateFunc,
 ) error {
-	if err := state.CheckExistsState(statecurrency.StateKeyAccount(opp.item.Target()), getStateFunc); err != nil {
-		return err
+	e := util.StringError("preprocess WithdrawItemProcessor")
+
+	_, cState, aErr, cErr := state.ExistsCAccount(opp.item.Target(), "target", true, true, getStateFunc)
+	if aErr != nil {
+		return e.Wrap(aErr)
+	} else if cErr != nil {
+		return e.Wrap(common.ErrAccTypeInvalid.Wrap(errors.Errorf("%v", cErr)))
 	}
 
-	st, err := state.ExistsState(extension.StateKeyContractAccount(opp.item.Target()), "key of target contract account", getStateFunc)
+	status, err := extension.StateContractAccountValue(cState)
 	if err != nil {
-		return err
+		return e.Wrap(common.ErrStateValInvalid.Wrap(err))
 	}
-	v, err := extension.StateContractAccountValue(st)
-	if err != nil {
-		return err
-	}
-	if !v.Owner().Equal(opp.sender) {
-		return errors.Errorf("contract account owner is not matched with %v", opp.sender)
+
+	if !status.Owner().Equal(opp.sender) {
+		return e.Wrap(common.ErrAccountNAth.Wrap(errors.Errorf("sender account is not contract account owner, %v", opp.sender)))
+
 	}
 
 	tb := map[types.CurrencyID]base.StateMergeValue{}
@@ -67,17 +70,17 @@ func (opp *WithdrawItemProcessor) PreProcess(
 
 		_, err := state.ExistsCurrencyPolicy(am.Currency(), getStateFunc)
 		if err != nil {
-			return err
+			return e.Wrap(err)
 		}
 
 		st, _, err := getStateFunc(statecurrency.StateKeyBalance(opp.item.Target(), am.Currency()))
 		if err != nil {
-			return err
+			return e.Wrap(err)
 		}
 
 		balance, err := statecurrency.StateBalanceValue(st)
 		if err != nil {
-			return err
+			return e.Wrap(err)
 		}
 
 		if balance.Big().Compare(am.Big()) < 0 {
@@ -171,38 +174,53 @@ func NewWithdrawProcessor() types.GetNewProcessor {
 func (opp *WithdrawProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringError("preprocess Withdraw")
-
 	fact, ok := op.Fact().(WithdrawFact)
 	if !ok {
-		return ctx, nil, e.Errorf("expected WithdrawFact, not %T", op.Fact())
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMTypeMismatch).
+				Errorf("expected WithdrawFact, not %T", op.Fact())), nil
 	}
 
-	if err := state.CheckExistsState(statecurrency.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("sender not found, %v; %w", fact.sender, err), nil
+	if err := state.CheckExistsState(statecurrency.StateKeyAccount(fact.Sender()), getStateFunc); err != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMAccountNF).
+				Errorf("sender account, %v", fact.Sender())), nil
 	}
 
-	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot be sender, %v; %w", fact.sender, err), nil
+	if found, _ := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Sender()), getStateFunc); found {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMCAccountNA).
+				Errorf("%v cannot be sender", fact.Sender())), nil
 	}
 
-	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("invalid signing; %w", err), nil
+	if err := state.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMSignInvalid).
+				Errorf("%v", err)), nil
 	}
 
 	for i := range fact.items {
 		cip := withdrawItemProcessorPool.Get()
 		c, ok := cip.(*WithdrawItemProcessor)
 		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("expected WithdrawItemProcessor, not %T", cip), nil
+			return nil, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.
+					Wrap(common.ErrMTypeMismatch).
+					Errorf("expected WithdrawItemProcessor, not %T", cip)), nil
 		}
 
 		c.h = op.Hash()
-		c.sender = fact.sender
+		c.sender = fact.Sender()
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess WithdrawItem; %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.
+					Errorf("%v", err)), nil
 		}
 
 		c.Close()
@@ -224,7 +242,7 @@ func (opp *WithdrawProcessor) Process( // nolint:dupl
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("calculate fee: %v", err), nil
 	}
-	senderBalSts, err := currency.CheckEnoughBalance(fact.sender, required, getStateFunc)
+	senderBalSts, err := currency.CheckEnoughBalance(fact.Sender(), required, getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("check enough balance: %v", err), nil
 	} else {
@@ -240,7 +258,7 @@ func (opp *WithdrawProcessor) Process( // nolint:dupl
 		}
 
 		c.h = op.Hash()
-		c.sender = fact.sender
+		c.sender = fact.Sender()
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {

@@ -50,7 +50,7 @@ func NewDatabase(client *Client, encs *encoder.Encoders, enc encoder.Encoder) (*
 	if enc == nil {
 		e, found := encs.Find(bsonenc.BSONEncoderHint)
 		if !found {
-			return nil, mitumutil.ErrNotFound.Errorf("unknown encoder hint, %q", bsonenc.BSONEncoderHint)
+			return nil, mitumutil.ErrNotFound.Errorf("Unknown encoder hint, %q", bsonenc.BSONEncoderHint)
 		} else {
 			enc = e
 		}
@@ -91,7 +91,7 @@ func NewDatabaseFromURI(uri string, encs *encoder.Encoders) (*Database, error) {
 
 	var be encoder.Encoder
 	if e, found := encs.Find(bsonenc.BSONEncoderHint); !found { // NOTE get latest bson encoder
-		return nil, mitumutil.ErrNotFound.Errorf("unknown encoder hint, %q", bsonenc.BSONEncoderHint)
+		return nil, mitumutil.ErrNotFound.Errorf("Unknown encoder hint, %q", bsonenc.BSONEncoderHint)
 	} else {
 		be = e
 	}
@@ -143,7 +143,7 @@ func (st *Database) Encoders() *encoder.Encoders {
 
 func (st *Database) initialize() error {
 	if st.readonly {
-		return errors.Errorf("readonly mode")
+		return errors.Errorf("Readonly mode")
 	}
 
 	for col, models := range defaultIndexes {
@@ -159,7 +159,7 @@ func (st *Database) initialize() error {
 // collections by user, drop collections instead of drop database.
 func (st *Database) Clean() error {
 	if st.readonly {
-		return errors.Errorf("readonly mode")
+		return errors.Errorf("Readonly mode")
 	}
 
 	drop := func(c string) error {
@@ -189,7 +189,7 @@ func (st *Database) Clean() error {
 
 func (st *Database) cleanByHeight(height base.Height) error {
 	if st.readonly {
-		return errors.Errorf("readonly mode")
+		return errors.Errorf("Readonly mode")
 	}
 
 	if height <= base.GenesisHeight {

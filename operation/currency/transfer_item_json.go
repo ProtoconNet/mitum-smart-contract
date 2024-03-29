@@ -2,6 +2,7 @@ package currency
 
 import (
 	"encoding/json"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
@@ -31,12 +32,14 @@ type BaseTransferItemJSONUnpacker struct {
 }
 
 func (it *BaseTransferItem) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of BaseTransferItem")
-
 	var uit BaseTransferItemJSONUnpacker
 	if err := enc.Unmarshal(b, &uit); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *it)
 	}
 
-	return it.unpack(enc, uit.Hint, uit.Receiver, uit.Amounts)
+	if err := it.unpack(enc, uit.Hint, uit.Receiver, uit.Amounts); err != nil {
+		return common.DecorateError(err, common.ErrDecodeJson, *it)
+	}
+
+	return nil
 }

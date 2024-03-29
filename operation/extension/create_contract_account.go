@@ -8,6 +8,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -68,43 +69,43 @@ func (fact CreateContractAccountFact) Bytes() []byte {
 
 func (fact CreateContractAccountFact) IsValid(b []byte) error {
 	if err := fact.BaseHinter.IsValid(nil); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if n := len(fact.items); n < 1 {
-		return util.ErrInvalid.Errorf("empty items")
+		return util.ErrInvalid.Wrap(common.ErrArrayLen.Wrap(errors.Errorf("empty items")))
 	} else if n > int(MaxCreateContractAccountItems) {
-		return util.ErrInvalid.Errorf("items, %d over max, %d", n, MaxCreateContractAccountItems)
+		return common.ErrFactInvalid.Wrap(common.ErrArrayLen.Wrap(errors.Errorf("items, %d over max, %d", n, MaxCreateContractAccountItems)))
 	}
 
 	if err := util.CheckIsValiders(nil, false, fact.sender); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	foundKeys := map[string]struct{}{}
 	for i := range fact.items {
 		if err := util.CheckIsValiders(nil, false, fact.items[i]); err != nil {
-			return err
+			return common.ErrFactInvalid.Wrap(err)
 		}
 
 		it := fact.items[i]
 		k := it.Keys().Hash().String()
 		if _, found := foundKeys[k]; found {
-			return util.ErrInvalid.Errorf("duplicate acocunt Keys found, %s", k)
+			return common.ErrFactInvalid.Wrap(common.ErrDupVal.Wrap(errors.Errorf("account Keys, %s", k)))
 		}
 
 		switch a, err := it.Address(); {
 		case err != nil:
-			return err
+			return common.ErrFactInvalid.Wrap(err)
 		case fact.sender.Equal(a):
-			return util.ErrInvalid.Errorf("target address is same with sender, %v", fact.sender)
+			return common.ErrFactInvalid.Wrap(common.ErrSelfTarget.Wrap(errors.Errorf("target account is same with sender account, %v", fact.sender)))
 		default:
 			foundKeys[k] = struct{}{}
 		}
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	return nil

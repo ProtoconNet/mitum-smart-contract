@@ -3,7 +3,6 @@ package common
 import (
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
@@ -51,17 +50,15 @@ func (op BaseOperation) MarshalBSON() ([]byte, error) {
 }
 
 func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of BaseOperation")
-
 	var u BaseOperationBSONUnmarshaler
 
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e.Wrap(err)
+		return DecorateError(err, ErrDecodeBson, *op)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e.Wrap(err)
+		return DecorateError(err, ErrDecodeBson, *op)
 	}
 
 	op.BaseHinter = hint.NewBaseHinter(ht)
@@ -69,7 +66,7 @@ func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	var fact base.Fact
 	if err := encoder.Decode(enc, u.Fact, &fact); err != nil {
-		return e.WithMessage(err, "decode fact")
+		return DecorateError(err, ErrDecodeBson, *op)
 	}
 
 	op.SetFact(fact)
@@ -81,11 +78,11 @@ func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		var pubKey base.Publickey
 		var err error
 		if err = enc.Unmarshal(u.Signs[i], &us); err != nil {
-			return e.Wrap(err)
+			return DecorateError(err, ErrDecodeBson, *op)
 		}
 
 		if pubKey, err = base.DecodePublickeyFromString(us.Signer, enc); err != nil {
-			return e.Wrap(err)
+			return DecorateError(err, ErrDecodeBson, *op)
 		}
 
 		sign := base.NewBaseSign(pubKey, us.Signature, us.SignedAt)
@@ -97,17 +94,15 @@ func (op *BaseOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 }
 
 func (op *BaseNodeOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of BaseNodeOperation")
-
 	var u BaseOperationBSONUnmarshaler
 
 	if err := enc.Unmarshal(b, &u); err != nil {
-		return e.Wrap(err)
+		return DecorateError(err, ErrDecodeBson, *op)
 	}
 
 	ht, err := hint.ParseHint(u.Hint)
 	if err != nil {
-		return e.Wrap(err)
+		return DecorateError(err, ErrDecodeBson, *op)
 	}
 
 	op.BaseOperation.BaseHinter = hint.NewBaseHinter(ht)
@@ -115,7 +110,7 @@ func (op *BaseNodeOperation) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 
 	var fact base.Fact
 	if err := encoder.Decode(enc, u.Fact, &fact); err != nil {
-		return e.WithMessage(err, "decode fact")
+		return DecorateError(err, ErrDecodeBson, *op)
 	}
 
 	op.BaseOperation.SetFact(fact)

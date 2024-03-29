@@ -100,12 +100,12 @@ func (enc *Encoder) DecodeWithHintType(b []byte, t hint.Type) (interface{}, erro
 
 	ht, v, found := enc.decoders.FindBytType(t)
 	if !found {
-		return nil, errors.Errorf("find decoder by type in bson decoders, %q", t)
+		return nil, errors.Errorf("Find decoder by type in bson decoders, %q", t)
 	}
 
 	i, err := v.Decode(b, ht)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "decode, %q in bson decoders", ht)
+		return nil, errors.WithMessagef(err, "Decode, %q in bson decoders", ht)
 	}
 
 	return i, nil
@@ -116,10 +116,10 @@ func (enc *Encoder) DecodeWithFixedHintType(s string, size int) (interface{}, er
 		return nil, nil
 	}
 
-	e := util.StringError("decode with fixed hint type")
+	e := util.StringError("Decode with fixed hint type")
 
 	if size < 1 {
-		return nil, e.Errorf("size < 1")
+		return nil, e.Errorf("Size < 1")
 	}
 
 	i, found := enc.poolGet(s)
@@ -147,18 +147,18 @@ func (enc *Encoder) DecodeWithFixedHintType(s string, size int) (interface{}, er
 }
 
 func (enc *Encoder) decodeWithFixedHintType(s string, size int) (interface{}, error) {
-	e := util.StringError("decode with fixed hint type")
+	e := util.StringError("Decode with fixed hint type")
 
 	body, t, err := hint.ParseFixedTypedString(s, size)
 	if err != nil {
-		return nil, e.WithMessage(err, "parse fixed typed string")
+		return nil, e.WithMessage(err, "Parse fixed typed string")
 	} else if _, _, found := enc.decoders.FindBytType(t); !found {
-		return nil, e.Errorf("find decoder by fixed typed hint type, %q in bson decoders", t)
+		return nil, e.Errorf("Find decoder by fixed typed hint type, %q in bson decoders", t)
 	}
 
 	i, err := enc.DecodeWithHintType([]byte(body), t)
 	if err != nil {
-		return nil, e.WithMessage(err, "decode with hint type")
+		return nil, e.WithMessage(err, "Decode with hint type")
 	}
 
 	return i, nil
@@ -180,7 +180,7 @@ func (enc *Encoder) DecodeSlice(b []byte) ([]interface{}, error) {
 	for i := range r {
 		j, err := enc.Decode(r[i].Value)
 		if err != nil {
-			return nil, errors.Wrap(err, "decode slice")
+			return nil, errors.Wrap(err, "Decode slice")
 		}
 
 		s[i] = j
@@ -196,7 +196,7 @@ func (enc *Encoder) DecodeMap(b []byte) (map[string]interface{}, error) {
 
 	var r map[string]bson.Raw
 	if err := bson.Unmarshal(b, &r); err != nil {
-		return nil, errors.Wrap(err, "decode map")
+		return nil, errors.Wrap(err, "Decode map")
 	}
 
 	s := map[string]interface{}{}
@@ -238,7 +238,7 @@ func (enc *Encoder) decodeWithHint(b []byte, ht hint.Hint) (interface{}, error) 
 
 	i, err := v.Decode(b, ht)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "decode, %q in bson decoders", ht)
+		return nil, errors.WithMessagef(err, "Decode, %q in bson decoders", ht)
 	}
 
 	return i, nil
@@ -265,8 +265,6 @@ func (*Encoder) guessHint(b []byte) (hint.Hint, error) {
 }
 
 func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.DecodeDetail {
-	e := util.StringError("analyze in bson encoder")
-
 	orig := reflect.ValueOf(v)
 	ptr, elem := encoder.Ptr(orig)
 
@@ -284,10 +282,11 @@ func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.Decod
 	case BSONDecodable:
 		d.Desc = "BSONDecodable"
 		d.Decode = func(b []byte, _ hint.Hint) (interface{}, error) {
+			e := util.StringError("DecodeBSON")
 			i := reflect.New(elem.Type()).Interface()
 
 			if err := i.(BSONDecodable).DecodeBSON(b, enc); err != nil { //nolint:forcetypeassert //...
-				return nil, e.WithMessage(err, "DecodeBSON")
+				return nil, e.Wrap(err)
 			}
 
 			return tointerface(i), nil
@@ -295,10 +294,11 @@ func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.Decod
 	case bson.Unmarshaler:
 		d.Desc = "BSONUnmarshaler"
 		d.Decode = func(b []byte, _ hint.Hint) (interface{}, error) {
+			e := util.StringError("UnmarshalBSON")
 			i := reflect.New(elem.Type()).Interface()
 
 			if err := i.(bson.Unmarshaler).UnmarshalBSON(b); err != nil { //nolint:forcetypeassert //...
-				return nil, e.WithMessage(err, "UnmarshalBSON")
+				return nil, e.Wrap(err)
 			}
 
 			return reflect.ValueOf(i).Elem().Interface(), nil
@@ -306,10 +306,11 @@ func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.Decod
 	case encoding.TextUnmarshaler:
 		d.Desc = "TextUnmarshaler"
 		d.Decode = func(b []byte, _ hint.Hint) (interface{}, error) {
+			e := util.StringError("UnmarshalText")
 			i := reflect.New(elem.Type()).Interface()
 
 			if err := i.(encoding.TextUnmarshaler).UnmarshalText(b); err != nil { //nolint:forcetypeassert //...
-				return nil, e.WithMessage(err, "UnmarshalText")
+				return nil, e.Wrap(err)
 			}
 
 			return tointerface(i), nil
@@ -317,10 +318,11 @@ func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.Decod
 	default:
 		d.Desc = "native"
 		d.Decode = func(b []byte, _ hint.Hint) (interface{}, error) {
+			e := util.StringError("native UnmarshalBSON")
 			i := reflect.New(elem.Type()).Interface()
 
 			if err := bson.Unmarshal(b, i); err != nil {
-				return nil, e.WithMessage(err, "native UnmarshalBSON")
+				return nil, e.Wrap(err)
 			}
 
 			return tointerface(i), nil

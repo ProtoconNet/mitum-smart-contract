@@ -24,7 +24,7 @@ type ContractAccountStateValueBSONUnmarshaler struct {
 }
 
 func (c *ContractAccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of ContractAccountStateValue")
+	e := util.StringError("Decode bson of ContractAccountStateValue")
 
 	var u ContractAccountStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {

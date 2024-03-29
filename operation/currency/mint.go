@@ -6,6 +6,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -48,32 +49,32 @@ func (fact MintFact) Bytes() []byte {
 
 func (fact MintFact) IsValid(b []byte) error {
 	if err := fact.BaseHinter.IsValid(nil); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	switch n := len(fact.items); {
 	case n < 1:
-		return util.ErrInvalid.Errorf("empty items for MintFact")
+		return common.ErrFactInvalid.Wrap(common.ErrArrayLen.Wrap(errors.Errorf("Empty items for MintFact")))
 	case n > maxMintItem:
-		return util.ErrInvalid.Errorf("too many items; %d > %d", n, maxMintItem)
+		return common.ErrFactInvalid.Wrap(common.ErrArrayLen.Wrap(errors.Errorf("Array length: Too many items; %d > %d", n, maxMintItem)))
 	}
 
 	founds := map[string]struct{}{}
 	for i := range fact.items {
 		item := fact.items[i]
 		if err := item.IsValid(nil); err != nil {
-			return util.ErrInvalid.Errorf("invalid MintItem: %v", err)
+			return common.ErrFactInvalid.Wrap(err)
 		}
 
 		k := item.receiver.String() + "-" + item.amount.Currency().String()
 		if _, found := founds[k]; found {
-			return util.ErrInvalid.Errorf("duplicated item found in MintFact")
+			return common.ErrFactInvalid.Wrap(common.ErrDupVal.Wrap(errors.Errorf("Duplicated value: Item in MintFact")))
 		}
 		founds[k] = struct{}{}
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	return nil

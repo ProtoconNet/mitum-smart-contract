@@ -2,11 +2,12 @@ package types
 
 import (
 	"encoding/hex"
+	"strings"
+
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"golang.org/x/crypto/sha3"
-	"strings"
 )
 
 var (

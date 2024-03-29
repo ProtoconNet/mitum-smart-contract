@@ -2,9 +2,9 @@ package types // nolint: dupl, revive
 
 import (
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 func (cs *ContractAccountStatus) unpack(
@@ -14,13 +14,11 @@ func (cs *ContractAccountStatus) unpack(
 	ia bool,
 	oprs []string,
 ) error {
-	e := util.StringError("unmarshal ContractAccountStatus")
-
 	cs.BaseHinter = hint.NewBaseHinter(ht)
 
 	switch a, err := base.DecodeAddress(ow, enc); {
 	case err != nil:
-		return e.WithMessage(err, "decode address")
+		return errors.Errorf("Decode address, %v", err)
 	default:
 		cs.owner = a
 	}
@@ -30,7 +28,7 @@ func (cs *ContractAccountStatus) unpack(
 	for i, opr := range oprs {
 		switch operator, err := base.DecodeAddress(opr, enc); {
 		case err != nil:
-			return e.Wrap(err)
+			return err
 		default:
 			operators[i] = operator
 		}

@@ -1,12 +1,14 @@
 package state
 
 import (
+	"strings"
+
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 type StateValueMerger struct {
@@ -37,31 +39,29 @@ func NewStateMergeValue(key string, stv base.StateValue) base.StateMergeValue {
 	)
 }
 
+// CheckNotExistsState returns found, error. Using CheckNotExistsState, check found first and check err for reason.
 func CheckNotExistsState(
 	key string,
 	getState base.GetStateFunc,
-) error {
-	switch _, found, err := getState(key); {
-	case err != nil:
-		return err
+) (found bool, err error) {
+	switch _, found, err = getState(key); {
 	case found:
-		return base.NewBaseOperationProcessReasonError("state, %v already exists", key)
+		return found, base.NewBaseOperationProcessReasonError("State, %v already exists", key)
 	default:
-		return nil
+		return found, err
 	}
 }
 
+// CheckExistsState returns found, error. Using CheckExistsState, check found first and check err for reason.
 func CheckExistsState(
 	key string,
 	getState base.GetStateFunc,
 ) error {
 	switch _, found, err := getState(key); {
-	case err != nil:
-		return err
 	case !found:
-		return base.NewBaseOperationProcessReasonError("state, %v does not exist", key)
+		return base.NewBaseOperationProcessReasonError("State, %v does not exist", key)
 	default:
-		return nil
+		return err
 	}
 }
 
@@ -74,7 +74,7 @@ func ExistsState(
 	case err != nil:
 		return nil, err
 	case !found:
-		return nil, base.NewBaseOperationProcessReasonError("%v does not exist", name)
+		return nil, errors.Errorf("%v does not exist", name)
 	default:
 		return st, nil
 	}
@@ -90,28 +90,101 @@ func NotExistsState(
 	case err != nil:
 		return nil, err
 	case found:
-		return nil, base.NewBaseOperationProcessReasonError("%v already exists", name)
+		return nil, errors.Errorf("%v already exists", name)
 	case !found:
 		st = common.NewBaseState(base.NilHeight, k, nil, nil, nil)
 	}
 	return st, nil
 }
 
-func ExistsCurrencyPolicy(cid types.CurrencyID, getStateFunc base.GetStateFunc) (types.CurrencyPolicy, error) {
+func ExistsCurrencyPolicy(cid types.CurrencyID, getStateFunc base.GetStateFunc) (*types.CurrencyPolicy, error) {
 	var policy types.CurrencyPolicy
-	switch i, found, err := getStateFunc(currency.StateKeyCurrencyDesign(cid)); {
+	switch st, found, err := getStateFunc(currency.StateKeyCurrencyDesign(cid)); {
 	case err != nil:
-		return types.CurrencyPolicy{}, err
+		return nil, err
 	case !found:
-		return types.CurrencyPolicy{}, base.NewBaseOperationProcessReasonError("currency not found, %v", cid)
+		return nil, common.ErrCurrencyNF.Wrap(errors.Errorf("currency id, %v", cid))
 	default:
-		currencydesign, ok := i.Value().(currency.CurrencyDesignStateValue) //nolint:forcetypeassert //...
+		cd, ok := st.Value().(currency.CurrencyDesignStateValue)
 		if !ok {
-			return types.CurrencyPolicy{}, errors.Errorf("expected CurrencyDesignStateValue, not %T", i.Value())
+			return nil, common.ErrTypeMismatch.Wrap(errors.Errorf("expected CurrencyDesignStateValue, not %T", st.Value()))
+
 		}
-		policy = currencydesign.CurrencyDesign.Policy()
+		policy = cd.CurrencyDesign.Policy()
 	}
-	return policy, nil
+	return &policy, nil
+}
+
+func ExistsAccount(addr base.Address, name string, isExist bool, getStateFunc base.GetStateFunc) (base.State, error) {
+	var st base.State
+	var found bool
+	var err error
+	k := currency.StateKeyAccount(addr)
+	switch st, found, err = getStateFunc(k); {
+	case err != nil:
+		return st, common.ErrStateValInvalid.Wrap(errors.Errorf("%s account, %v: %v", name, addr, err))
+	case !found:
+		if isExist {
+			return st, common.ErrAccountNF.Wrap(errors.Errorf("%s account, %v", name, addr))
+		} else {
+			return common.NewBaseState(base.NilHeight, k, nil, nil, nil), nil
+		}
+	default:
+		if !isExist {
+			return st, common.ErrAccountE.Wrap(errors.Errorf("%s account, %v", name, addr))
+		}
+		//account, err = currency.LoadStateAccountValue(st)
+		//if err != nil {
+		//	return st, common.ErrStateValInvalid.Wrap(errors.Errorf("%s account, %v: %v", name, addr, err))
+		//}
+	}
+	return st, nil
+}
+
+func ExistsCAccount(addr base.Address, name string, isExist, isContract bool, getStateFunc base.GetStateFunc) (
+	accountState, caccountState base.State, accountErr, caccountErr error) {
+	var accountFound, caccountFound bool
+	ak := currency.StateKeyAccount(addr)
+	cak := extension.StateKeyContractAccount(addr)
+	accountState, accountFound, accountErr = getStateFunc(ak)
+	caccountState, caccountFound, caccountErr = getStateFunc(cak)
+
+	switch {
+	case accountErr != nil:
+		accountErr = common.ErrStateValInvalid.Wrap(errors.Errorf("%s account, %v: %v", name, addr, accountErr))
+		return accountState, caccountState, accountErr, caccountErr
+	case !accountFound:
+		if isExist {
+			accountErr = common.ErrAccountNF.Wrap(errors.Errorf("%s account, %v", name, addr))
+			return accountState, caccountState, accountErr, caccountErr
+		} else {
+			accountState = common.NewBaseState(base.NilHeight, ak, nil, nil, nil)
+		}
+	case accountFound:
+		if !isExist {
+			accountErr = common.ErrAccountE.Wrap(errors.Errorf("%s account, %v", name, addr))
+			return accountState, caccountState, accountErr, caccountErr
+		}
+	}
+	switch {
+	case caccountErr != nil:
+		caccountErr = common.ErrStateValInvalid.Wrap(errors.Errorf("%s account, %v: %v", name, addr, caccountErr))
+		return accountState, caccountState, accountErr, caccountErr
+	case !caccountFound:
+		if isContract {
+			caccountErr = common.ErrCAccountNF.Wrap(errors.Errorf("%s account, %v", name, addr))
+			return accountState, caccountState, accountErr, caccountErr
+		} else {
+			caccountState = common.NewBaseState(base.NilHeight, cak, nil, nil, nil)
+		}
+	default:
+		if !isContract {
+			caccountErr = common.ErrCAccountE.Wrap(errors.Errorf("%s account, %v", name, addr))
+			return accountState, caccountState, accountErr, caccountErr
+		}
+	}
+
+	return accountState, caccountState, accountErr, caccountErr
 }
 
 func CheckFactSignsByState(
@@ -119,20 +192,20 @@ func CheckFactSignsByState(
 	fs []base.Sign,
 	getState base.GetStateFunc,
 ) error {
-	st, err := ExistsState(currency.StateKeyAccount(address), "keys of account", getState)
+	st, err := ExistsState(currency.StateKeyAccount(address), "signer account", getState)
 	if err != nil {
-		return err
+		return common.ErrAccountNF.Wrap(err)
 	}
 	keys, err := currency.StateKeysValue(st)
 	switch {
 	case err != nil:
-		return base.NewBaseOperationProcessReasonError("get Keys; %w", err)
+		return common.ErrStateValInvalid.Wrap(errors.Errorf("signer account; %v", err))
 	case keys == nil:
-		return base.NewBaseOperationProcessReasonError("empty keys found")
+		return common.ErrStateValInvalid.Wrap(errors.Errorf("empty keys found"))
 	}
 
 	if err := types.CheckThreshold(fs, keys); err != nil {
-		return base.NewBaseOperationProcessReasonError("check threshold; %w", err)
+		return common.ErrSignInvalid.Wrap(errors.Errorf("threshold; %v", err))
 	}
 
 	return nil
@@ -144,7 +217,7 @@ func ParseStateKey(key string, Prefix string, expected int) ([]string, error) {
 		return nil, errors.Errorf("State Key not include Prefix, %s", parsedKey)
 	}
 	if len(parsedKey) < expected {
-		return nil, errors.Errorf("parsed State Key length under %v", expected)
+		return nil, errors.Errorf("Parsed State Key length under %v", expected)
 	} else {
 		return parsedKey, nil
 	}

@@ -27,12 +27,10 @@ type MintFactJSONUnmarshaler struct {
 }
 
 func (fact *MintFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of MintFact")
-
 	var uf MintFactJSONUnmarshaler
 
 	if err := enc.Unmarshal(b, &uf); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeJson, *fact)
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
@@ -41,7 +39,7 @@ func (fact *MintFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	for i := range uf.Items {
 		item := MintItem{}
 		if err := item.DecodeJSON(uf.Items[i], enc); err != nil {
-			return e.Wrap(err)
+			return common.DecorateError(err, common.ErrDecodeJson, *fact)
 		}
 		items[i] = item
 	}
@@ -54,7 +52,7 @@ func (fact *MintFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 func (op *Mint) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	var ubo common.BaseNodeOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
-		return err
+		return common.DecorateError(err, common.ErrDecodeJson, *op)
 	}
 
 	op.BaseNodeOperation = ubo

@@ -29,7 +29,7 @@ type SuffrageJoinFactBSONUnMarshaler struct {
 }
 
 func (fact *SuffrageJoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of SuffrageJoinFact")
+	e := util.StringError("Decode bson of SuffrageJoinFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
@@ -58,7 +58,7 @@ func (fact *SuffrageJoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 }
 
 func (op *SuffrageJoin) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of SuffrageJoin")
+	e := util.StringError("Decode bson of SuffrageJoin")
 	var ubo common.BaseNodeOperation
 
 	err := ubo.DecodeBSON(b, enc)
@@ -88,7 +88,7 @@ type SuffrageGenesisJoinFactBSONUnMarshaler struct {
 }
 
 func (fact *SuffrageGenesisJoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of SuffrageGenesisJoinFact")
+	e := util.StringError("Decode bson of SuffrageGenesisJoinFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
@@ -131,7 +131,7 @@ func (fact *SuffrageGenesisJoinFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) 
 }
 
 func (op *SuffrageGenesisJoin) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of SuffrageGenesisJoin")
+	e := util.StringError("Decode bson of SuffrageGenesisJoin")
 	var ubo common.BaseOperation
 
 	err := ubo.DecodeBSON(b, enc)

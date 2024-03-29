@@ -29,7 +29,7 @@ type CurrencyDesignBSONUnmarshaler struct {
 }
 
 func (de *CurrencyDesign) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of CurrencyDesign")
+	e := util.StringError("Decode bson of CurrencyDesign")
 
 	var ude CurrencyDesignBSONUnmarshaler
 	if err := enc.Unmarshal(b, &ude); err != nil {

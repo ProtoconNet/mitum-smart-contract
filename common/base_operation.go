@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+
 	"golang.org/x/exp/slices"
 
 	"github.com/ProtoconNet/mitum2/base"
@@ -57,14 +58,12 @@ func (op BaseOperation) HashBytes() []byte {
 }
 
 func (op BaseOperation) IsValid(networkID []byte) error {
-	e := util.ErrInvalid.Errorf("invalid BaseOperation")
-
 	if len(op.signs) < 1 {
-		return e.Errorf("empty signs")
+		return ErrOperationInvalid.Wrap(errors.Errorf("Empty signs"))
 	}
 
 	if err := util.CheckIsValiders(networkID, false, op.h); err != nil {
-		return e.Wrap(err)
+		return ErrOperationInvalid.Wrap(err)
 	}
 
 	sfs := op.Signs()
@@ -77,23 +76,23 @@ func (op BaseOperation) IsValid(networkID []byte) error {
 
 		s, ok := i.(base.Sign)
 		if !ok {
-			duplicatederr = errors.Errorf("expected Sign got %T", i)
+			duplicatederr = ErrTypeMismatch.Wrap(errors.Errorf("expected Sign got %T", i))
 		}
 
 		return duplicatederr == nil, s.Signer().String()
 	}); {
 	case duplicatederr != nil:
-		return e.Wrap(duplicatederr)
+		return ErrOperationInvalid.Wrap(ErrSignInvalid.Wrap(duplicatederr))
 	case duplicated:
-		return e.Errorf("duplicated signs found")
+		return ErrOperationInvalid.Wrap(ErrSignInvalid.Wrap(errors.Errorf("duplicated signs found")))
 	}
 
-	if err := base.IsValidSignFact(op, networkID); err != nil {
-		return e.Wrap(err)
+	if err := IsValidSignFact(op, networkID); err != nil {
+		return ErrOperationInvalid.Wrap(err)
 	}
 
 	if !op.h.Equal(op.hash()) {
-		return e.Errorf("hash does not match")
+		return ErrOperationInvalid.Wrap(errors.Errorf("hash does not match"))
 	}
 
 	return nil
@@ -163,9 +162,9 @@ func IsValidOperationFact(fact base.Fact, networkID []byte) error {
 
 	switch l := len(fact.Token()); {
 	case l < 1:
-		return util.ErrInvalid.Errorf("Operation has empty token")
+		return errors.Errorf("Operation has empty token")
 	case l > base.MaxTokenSize:
-		return util.ErrInvalid.Errorf("Operation token size too large: %d > %d", l, base.MaxTokenSize)
+		return errors.Errorf("Operation token size too large: %d > %d", l, base.MaxTokenSize)
 	}
 
 	hg, ok := fact.(HashGenerator)
@@ -174,7 +173,7 @@ func IsValidOperationFact(fact base.Fact, networkID []byte) error {
 	}
 
 	if !fact.Hash().Equal(hg.GenerateHash()) {
-		return util.ErrInvalid.Errorf("wrong Fact hash")
+		return errors.Errorf("Wrong Fact hash")
 	}
 
 	return nil
@@ -191,10 +190,8 @@ func NewBaseNodeOperation(ht hint.Hint, fact base.Fact) BaseNodeOperation {
 }
 
 func (op BaseNodeOperation) IsValid(networkID []byte) error {
-	e := util.ErrInvalid.Errorf("invalid BaseNodeOperation")
-
 	if err := op.BaseOperation.IsValid(networkID); err != nil {
-		return e.Wrap(err)
+		return ErrNodeOperationInvalid.Wrap(err)
 	}
 
 	sfs := op.Signs()
@@ -208,20 +205,20 @@ func (op BaseNodeOperation) IsValid(networkID []byte) error {
 
 		ns, ok := i.(base.NodeSign)
 		if !ok {
-			duplicatederr = errors.Errorf("not NodeSign, %T", i)
+			duplicatederr = errors.Errorf("expected NodeSign got %T", i)
 		}
 
 		return duplicatederr == nil, ns.Node().String()
 	}); {
 	case duplicatederr != nil:
-		return e.Wrap(duplicatederr)
+		return ErrNodeOperationInvalid.Wrap(duplicatederr)
 	case duplicated:
-		return e.Errorf("duplicated signs found")
+		return ErrNodeOperationInvalid.Wrap(errors.Errorf("Duplicated signs found"))
 	}
 
 	for i := range sfs {
 		if _, ok := sfs[i].(base.NodeSign); !ok {
-			return e.Errorf("not NodeSign, %T", sfs[i])
+			return ErrNodeOperationInvalid.Wrap(errors.Errorf("expected NodeSign got %T", sfs[i]))
 		}
 	}
 
@@ -269,7 +266,7 @@ func (op *BaseNodeOperation) SetNodeSigns(signs []base.NodeSign) error {
 
 		return true, i.Node().String()
 	}); duplicated {
-		return errors.Errorf("duplicated signs found")
+		return errors.Errorf("Duplicated signs found")
 	}
 
 	op.signs = make([]base.Sign, len(signs))

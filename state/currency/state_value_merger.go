@@ -49,7 +49,7 @@ func (s *BalanceStateValueMerger) Merge(value base.StateValue, ops util.Hash) er
 	case DeductBalanceStateValue:
 		s.remove = s.remove.Add(t.Amount.Big())
 	default:
-		return errors.Errorf("unsupported balance state value, %T", value)
+		return errors.Errorf("Unsupported balance state value, %T", value)
 	}
 
 	s.AddOperation(ops)

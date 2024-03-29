@@ -36,24 +36,24 @@ func (de CurrencyDesign) IsValid([]byte) error {
 		de.amount,
 		de.aggregate,
 	); err != nil {
-		return util.ErrInvalid.Errorf("invalid currency balance: %v", err)
+		return util.ErrInvalid.Errorf("Invalid currency balance, %v", err)
 	}
 
 	switch {
 	case !de.amount.Big().OverZero():
-		return util.ErrInvalid.Errorf("currency balance should be over zero")
+		return util.ErrInvalid.Errorf("Currency balance should be over zero")
 	case !de.aggregate.OverZero():
-		return util.ErrInvalid.Errorf("aggregate should be over zero")
+		return util.ErrInvalid.Errorf("Aggregate should be over zero")
 	}
 
 	if de.genesisAccount != nil {
 		if err := de.genesisAccount.IsValid(nil); err != nil {
-			return util.ErrInvalid.Errorf("invalid CurrencyDesign: %v", err)
+			return util.ErrInvalid.Errorf("Invalid CurrencyDesign: %v", err)
 		}
 	}
 
 	if err := de.policy.IsValid(nil); err != nil {
-		return util.ErrInvalid.Errorf("invalid CurrencyPolicy: %v", err)
+		return util.ErrInvalid.Errorf("Invalid CurrencyPolicy: %v", err)
 	}
 
 	return nil
@@ -103,7 +103,7 @@ func (de CurrencyDesign) Aggregate() common.Big {
 
 func (de CurrencyDesign) AddAggregate(b common.Big) (CurrencyDesign, error) {
 	if !b.OverZero() {
-		return de, errors.Errorf("new aggregate not over zero")
+		return de, errors.Errorf("New aggregate not over zero")
 	}
 
 	de.aggregate = de.aggregate.Add(b)

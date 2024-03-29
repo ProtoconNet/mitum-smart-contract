@@ -1,10 +1,12 @@
 package types
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -19,9 +21,13 @@ type Account struct {
 }
 
 func NewAccount(address base.Address, keys AccountKeys) (Account, error) {
-	if err := address.IsValid(nil); err != nil {
+	if address == nil {
+		return Account{}, common.ErrValueInvalid.Wrap(errors.Errorf("address is nil"))
+	} else if err := address.IsValid(nil); err != nil {
 		return Account{}, err
 	}
+
+	// keys can be nil (zero account)
 	if keys != nil {
 		if err := keys.IsValid(nil); err != nil {
 			return Account{}, err

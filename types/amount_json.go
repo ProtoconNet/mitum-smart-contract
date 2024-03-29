@@ -27,7 +27,7 @@ type AmountJSONUnmarshaler struct {
 }
 
 func (am *Amount) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of Amount")
+	e := util.StringError("Decode json of Amount")
 
 	var uam AmountJSONUnmarshaler
 	if err := enc.Unmarshal(b, &uam); err != nil {

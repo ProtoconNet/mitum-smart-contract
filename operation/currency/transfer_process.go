@@ -7,7 +7,6 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 
@@ -89,7 +88,7 @@ func (opp *TransferItemProcessor) PreProcess(
 func (opp *TransferItemProcessor) Process(
 	_ context.Context, _ base.Operation, getStateFunc base.GetStateFunc,
 ) ([]base.StateMergeValue, error) {
-	e := util.StringError("process TransferItemProcessor")
+	e := util.StringError("preprocess TransferItemProcessor")
 
 	var sts []base.StateMergeValue
 	k := currency.StateKeyAccount(opp.item.Receiver())
@@ -114,7 +113,7 @@ func (opp *TransferItemProcessor) Process(
 		am := opp.item.Amounts()[i]
 		v, ok := opp.rb[am.Currency()].Value().(currency.AddBalanceStateValue)
 		if !ok {
-			return nil, e.Wrap(errors.Errorf("not AddBalanceStateValue, %T", opp.rb[am.Currency()].Value()))
+			return nil, errors.Errorf("not AddBalanceStateValue, %T", opp.rb[am.Currency()].Value())
 		}
 		//stv := currency.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(am.Big())))
 		//sts[i] = state.NewStateMergeValue(opp.rb[am.Currency()].Key(), stv)
@@ -179,34 +178,37 @@ func (opp *TransferProcessor) PreProcess(
 	fact, ok := op.Fact().(TransferFact)
 	if !ok {
 		return ctx, base.NewBaseOperationProcessReasonError(
-			"expected %T, not %T", TransferFact{}, op.Fact(),
+			common.ErrMPreProcess.Wrap(common.ErrMTypeMismatch).Errorf("expected %T, not %T", TransferFact{}, op.Fact()),
 		), nil
 	}
 
-	if err := state.CheckExistsState(currency.StateKeyAccount(fact.sender), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("sender account not found, %v; %w", fact.sender, err), nil
+	if _, _, aErr, cErr := state.ExistsCAccount(fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).Errorf("%v", cErr)), nil
 	}
 
-	if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot transfer currency, %v; %w", fact.Sender(), err), nil
-	}
-
-	if err := state.CheckFactSignsByState(fact.sender, op.Signs(), getStateFunc); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("invalid signing :  %w", err), nil
+	if err := state.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMSignInvalid).Errorf("%v", err)), nil
 	}
 
 	for i := range fact.items {
 		tip := transferItemProcessorPool.Get()
 		t, ok := tip.(*TransferItemProcessor)
 		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", &TransferItemProcessor{}, tip), nil
+			return nil, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.Wrap(common.ErrMTypeMismatch).Errorf("expected %T, not %T", &TransferItemProcessor{}, tip)), nil
 		}
 
 		t.h = op.Hash()
 		t.item = fact.items[i]
 
 		if err := t.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess transfer item; %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.Errorf("%v", err)), nil
 		}
 		t.Close()
 	}
@@ -230,9 +232,9 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 	)
 
 	if feeReceiverBalSts, required, err = opp.calculateItemsFee(op, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("calculate fee; %w", err), nil
-	} else if senderBalSts, err = CheckEnoughBalance(fact.sender, required, getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check enough balance; %w", err), nil
+		return nil, base.NewBaseOperationProcessReasonError("calculate fee: %w", err), nil
+	} else if senderBalSts, err = CheckEnoughBalance(fact.Sender(), required, getStateFunc); err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("check enough balance: %w", err), nil
 	} else {
 		opp.required = required
 	}
@@ -249,7 +251,7 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 		c.item = fact.items[i]
 
 		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess transfer item; %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess transfer item: %w", err), nil
 		}
 
 		ns[i] = c
@@ -260,7 +262,7 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 	for i := range opp.ns {
 		s, err := opp.ns[i].Process(ctx, op, getStateFunc)
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("process transfer item; %w", err), nil
+			return nil, base.NewBaseOperationProcessReasonError("process transfer item: %w", err), nil
 		}
 		stmvs = append(stmvs, s...)
 	}

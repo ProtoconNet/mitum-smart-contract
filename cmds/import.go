@@ -121,7 +121,7 @@ func (cmd *ImportCommand) prepare() error {
 		}
 
 		if cmd.fromHeight > cmd.toHeight {
-			return errors.Errorf("from height is higher than to; from=%d to=%d", cmd.fromHeight, cmd.toHeight)
+			return errors.Errorf("From height is higher than to; from=%d to=%d", cmd.fromHeight, cmd.toHeight)
 		}
 	}
 
@@ -149,7 +149,7 @@ func (cmd *ImportCommand) prepare() error {
 			case err != nil:
 				return errors.WithStack(err)
 			case !fi.IsDir():
-				return errors.Errorf("cache directory is not directory")
+				return errors.Errorf("Cache directory is not directory")
 			}
 
 			return nil
@@ -202,7 +202,7 @@ func (cmd *ImportCommand) preImportBlocks(pctx context.Context) (context.Context
 		case err != nil:
 			return pctx, err
 		case !found:
-			return pctx, errors.Errorf("previous blockmap not found for from height, %d", cmd.fromHeight-1)
+			return pctx, errors.Errorf("Previous blockmap not found for from height, %d", cmd.fromHeight-1)
 		default:
 			cmd.prevblockmap = i
 		}
@@ -318,7 +318,7 @@ func (cmd *ImportCommand) checkHeights(pctx context.Context) (base.Height, error
 		cmd.fromHeight = i.Manifest().Height() + 1
 	case i.Manifest().Height() != cmd.fromHeight-1:
 		return last, errors.Errorf(
-			"from height should be same with last height + 1; from=%d last=%d", cmd.fromHeight, i.Manifest().Height())
+			"From height should be same with last height + 1; from=%d last=%d", cmd.fromHeight, i.Manifest().Height())
 	}
 
 	cmd.log.Debug().
@@ -440,7 +440,7 @@ func (cmd *ImportCommand) writeTempRemoteItemFile(
 	case err != nil:
 		return errors.WithStack(err)
 	case fi.IsDir():
-		return errors.Errorf("directory")
+		return errors.Errorf("Directory")
 	default:
 		return nil
 	}
@@ -540,9 +540,9 @@ func checkLastHeight(pctx context.Context, root string, fromHeight, toHeight bas
 	case err != nil:
 		return nfromHeight, toHeight, last, err
 	case !found, i < base.GenesisHeight:
-		return nfromHeight, toHeight, last, errors.Errorf("last height not found in source")
+		return nfromHeight, toHeight, last, errors.Errorf("Last height not found in source")
 	case i < toHeight:
-		return nfromHeight, toHeight, last, errors.Errorf("last is lower than to height; last=%d to=%d", i, toHeight)
+		return nfromHeight, toHeight, last, errors.Errorf("Last is lower than to height; last=%d to=%d", i, toHeight)
 	case toHeight > base.NilHeight:
 		last = toHeight
 	default:

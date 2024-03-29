@@ -2,7 +2,6 @@ package types
 
 import (
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
@@ -15,10 +14,8 @@ func (p *NetworkPolicy) unpack(
 	suffrageExpelLifespan base.Height,
 	emptyProposalNoBlock bool,
 ) error {
-	e := util.StringError("unmarshal NetworkPolicy")
-
 	if err := encoder.Decode(enc, suffrageCandidateLimiterRule, &p.suffrageCandidateLimiterRule); err != nil {
-		return e.Wrap(err)
+		return err
 	}
 
 	p.maxOperationsInProposal = maxOperationsInProposal

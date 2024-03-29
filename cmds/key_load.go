@@ -25,7 +25,7 @@ func (cmd *KeyLoadCommand) Run(pctx context.Context) error {
 		Msg("flags")
 
 	if len(cmd.KeyString) < 1 {
-		return errors.Errorf("empty key string")
+		return errors.Errorf("Empty key string")
 	}
 
 	var gerr error
@@ -45,7 +45,7 @@ func (cmd *KeyLoadCommand) Run(pctx context.Context) error {
 		return gerr
 	}
 
-	return errors.Errorf("unknown key string")
+	return errors.Errorf("Unknown key string")
 }
 
 func (cmd *KeyLoadCommand) loadPrivatekey() (bool, error) {

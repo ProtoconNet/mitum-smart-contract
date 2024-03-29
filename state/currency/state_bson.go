@@ -23,7 +23,7 @@ type AccountStateValueBSONUnmarshaler struct {
 }
 
 func (a *AccountStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode AccountStateValue")
+	e := util.StringError("Decode AccountStateValue")
 
 	var u AccountStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
@@ -62,7 +62,7 @@ type BalanceStateValueBSONUnmarshaler struct {
 }
 
 func (b *BalanceStateValue) DecodeBSON(v []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode BalanceStateValue")
+	e := util.StringError("Decode BalanceStateValue")
 
 	var u BalanceStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(v, &u); err != nil {
@@ -100,7 +100,7 @@ type CurrencyDesignStateValueBSONUnmarshaler struct {
 }
 
 func (c *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode CurrencyDesignStateValue")
+	e := util.StringError("Decode CurrencyDesignStateValue")
 
 	var u CurrencyDesignStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {

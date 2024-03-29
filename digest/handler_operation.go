@@ -113,7 +113,7 @@ func (hd *Handlers) handleOperationsInGroup(offset string, reverse bool, l int64
 	case e != nil:
 		return nil, false, e
 	case len(l) < 1:
-		return nil, false, mitumutil.ErrNotFound.Errorf("operations in handleOperations")
+		return nil, false, mitumutil.ErrNotFound.Errorf("Operations in handleOperations")
 	default:
 		vas = l
 		opsCount = count
@@ -146,11 +146,11 @@ func (hd *Handlers) handleOperationsByHeight(w http.ResponseWriter, r *http.Requ
 	var height base.Height
 	switch h, err := parseHeightFromPath(mux.Vars(r)["height"]); {
 	case err != nil:
-		HTTP2ProblemWithError(w, errors.Errorf("invalid height found for manifest by height"), http.StatusBadRequest)
+		HTTP2ProblemWithError(w, errors.Errorf("Invalid height found for manifest by height"), http.StatusBadRequest)
 
 		return
 	case h <= base.NilHeight:
-		HTTP2ProblemWithError(w, errors.Errorf("invalid height, %v", h), http.StatusBadRequest)
+		HTTP2ProblemWithError(w, errors.Errorf("Invalid height, %v", h), http.StatusBadRequest)
 		return
 	default:
 		height = h
@@ -200,7 +200,7 @@ func (hd *Handlers) handleOperationsByHeightInGroup(
 	case e != nil:
 		return nil, false, e
 	case len(l) < 1:
-		return nil, false, mitumutil.ErrNotFound.Errorf("operations in handleOperationsByHeight")
+		return nil, false, mitumutil.ErrNotFound.Errorf("Operations in handleOperationsByHeight")
 	default:
 		vas = l
 		opsCount = count

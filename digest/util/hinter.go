@@ -29,7 +29,7 @@ func (ht BaseHinter) IsValid(expectedType []byte) error {
 
 	if len(expectedType) > 0 {
 		if t := hint.Type(string(expectedType)); t != ht.HT.Type() {
-			return util.ErrInvalid.Errorf("type does not match in BaseHinter, %q != %q", ht.HT.Type(), t)
+			return util.ErrInvalid.Errorf("Type does not match in BaseHinter, %q != %q", ht.HT.Type(), t)
 		}
 	}
 

@@ -76,7 +76,7 @@ func makeProblemNamespace(t string) string {
 
 func parseProblemNamespace(s string) (string, error) {
 	if !strings.HasPrefix(s, ProblemNamespace) {
-		return "", errors.Errorf("invalid problem namespace: %v", s)
+		return "", errors.Errorf("Invalid problem namespace, %v", s)
 	}
 	return s[len(ProblemNamespace)+1:], nil
 }

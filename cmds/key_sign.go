@@ -124,7 +124,7 @@ func (cmd *KeySignCommand) loadBody() (interface{}, error) {
 	}
 
 	if elem == nil {
-		return nil, errors.Errorf("load body")
+		return nil, errors.Errorf("Load body")
 	}
 
 	ptr := reflect.New(reflect.ValueOf(elem).Type()).Interface()
@@ -152,13 +152,13 @@ func (cmd *KeySignCommand) updateToken(ptr interface{}) error {
 	switch {
 	case len(token) < 1:
 		if len(cmd.Token) < 1 {
-			return errors.Errorf("empty token")
+			return errors.Errorf("Empty token")
 		}
 
 		token = base.Token([]byte(cmd.Token))
 	case len(cmd.Token) > 0:
 		if !bytes.Equal([]byte(cmd.Token), token) {
-			return errors.Errorf("different token found")
+			return errors.Errorf("Different token found")
 		}
 
 		cmd.Log.Debug().Msg("same token given")
@@ -188,7 +188,7 @@ func (cmd *KeySignCommand) sign(ptr interface{}) error {
 			return t.Sign(cmd.priv, cmd.networkID)
 		}
 	default:
-		return errors.Errorf("it's not Signer, %T", ptr)
+		return errors.Errorf("It's not Signer, %T", ptr)
 	}
 
 	if err := sign(); err != nil {

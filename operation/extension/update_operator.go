@@ -7,6 +7,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -63,35 +64,34 @@ func (fact UpdateOperatorFact) Bytes() []byte {
 
 func (fact UpdateOperatorFact) IsValid(b []byte) error {
 	if err := fact.BaseHinter.IsValid(nil); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if err := util.CheckIsValiders(nil, false, fact.sender, fact.contract, fact.currency); err != nil {
-		return util.ErrInvalid.Errorf("invalid fact: %v", err)
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
-	//if n := len(fact.operators); n < 1 {
-	//	return util.ErrInvalid.Errorf("empty operators")
-	//}
-	if len(fact.operators) > MaxOperators {
-		return util.ErrInvalid.Errorf("operators, %d over max, %d", len(fact.operators), MaxOperators)
+	if n := len(fact.operators); n < 1 {
+		return common.ErrFactInvalid.Wrap(common.ErrArrayLen.Wrap(errors.Errorf("empty operators")))
+	} else if n > MaxOperators {
+		return common.ErrFactInvalid.Wrap(common.ErrArrayLen.Wrap(errors.Errorf("operators, %d over max, %d", n, MaxOperators)))
 	}
 
 	operatorsMap := make(map[string]struct{})
 	for i := range fact.operators {
 		_, found := operatorsMap[fact.operators[i].String()]
 		if found {
-			return util.ErrInvalid.Errorf("duplicated operator, %v", fact.operators[i])
+			return common.ErrFactInvalid.Wrap(common.ErrDupVal.Wrap(errors.Errorf("operator, %v", fact.operators[i])))
 		} else {
 			operatorsMap[fact.operators[i].String()] = struct{}{}
 		}
 		if err := fact.operators[i].IsValid(nil); err != nil {
-			return util.ErrInvalid.Errorf("invalid operator address: %v", err)
+			return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("invalid operator address, %v", err)))
 		}
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	return nil

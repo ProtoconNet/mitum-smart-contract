@@ -33,7 +33,7 @@ func (po CurrencyPolicy) IsValid([]byte) error {
 	}
 
 	if err := util.CheckIsValiders(nil, false, po.BaseHinter, po.feeer); err != nil {
-		return util.ErrInvalid.Errorf("invalid currency policy: %v", err)
+		return util.ErrInvalid.Errorf("Invalid currency policy, %v", err)
 	}
 
 	return nil

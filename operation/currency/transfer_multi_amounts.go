@@ -1,10 +1,11 @@
 package currency
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -29,7 +30,7 @@ func (it TransferItemMultiAmounts) IsValid([]byte) error {
 	}
 
 	if n := len(it.amounts); n > maxCurenciesTransferItemMultiAmounts {
-		return util.ErrInvalid.Errorf("amounts over allowed; %d > %d", n, maxCurenciesTransferItemMultiAmounts)
+		return common.ErrValOOR.Wrap(errors.Errorf("amounts over allowed; %d > %d", n, maxCurenciesTransferItemMultiAmounts))
 	}
 
 	return nil

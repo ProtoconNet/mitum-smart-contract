@@ -27,7 +27,7 @@ type GenesisNetworkPolicyFactBSONUnMarshaler struct {
 }
 
 func (fact *GenesisNetworkPolicyFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of GenesisNetworkPolicyFact")
+	e := util.StringError("Decode bson of GenesisNetworkPolicyFact")
 
 	var u common.BaseFactBSONUnmarshaler
 
@@ -79,7 +79,7 @@ type NetworkPolicyFactBSONUnMarshaler struct {
 }
 
 func (fact *NetworkPolicyFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of NetworkPolicyFact")
+	e := util.StringError("Decode bson of NetworkPolicyFact")
 
 	var u common.BaseFactBSONUnmarshaler
 

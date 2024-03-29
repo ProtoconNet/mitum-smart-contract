@@ -1,8 +1,8 @@
 package currency // nolint:dupl
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -24,16 +24,17 @@ type MintItemBSONUnmarshaler struct {
 }
 
 func (it *MintItem) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of MintItem")
-
 	var uit MintItemBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uit); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *it)
 	}
 	ht, err := hint.ParseHint(uit.Hint)
 	if err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *it)
 	}
 
-	return it.unpack(enc, ht, uit.Receiver, uit.Amount)
+	if err := it.unpack(enc, ht, uit.Receiver, uit.Amount); err != nil {
+		return common.DecorateError(err, common.ErrDecodeBson, *it)
+	}
+	return nil
 }

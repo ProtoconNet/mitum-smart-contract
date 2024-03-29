@@ -24,7 +24,7 @@ type AmountBSONUnmarshaler struct {
 }
 
 func (am *Amount) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of Amount")
+	e := util.StringError("Decode bson of Amount")
 
 	var uam AmountBSONUnmarshaler
 	if err := enc.Unmarshal(b, &uam); err != nil {

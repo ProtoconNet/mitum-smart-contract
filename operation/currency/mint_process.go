@@ -7,10 +7,8 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util"
 )
@@ -54,7 +52,7 @@ func NewMintProcessor(threshold base.Threshold) types.GetNewProcessor {
 		case err != nil:
 			return nil, e.Wrap(err)
 		case !found, i == nil:
-			return nil, e.Errorf("empty state")
+			return nil, e.Errorf("Empty state")
 		default:
 			sufstv := i.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
 
@@ -73,46 +71,54 @@ func NewMintProcessor(threshold base.Threshold) types.GetNewProcessor {
 func (opp *MintProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringError("preprocess Mint")
-
 	nop, ok := op.(Mint)
 	if !ok {
-		return ctx, nil, e.Errorf("expected %T, not %T", Mint{}, op)
+		return ctx,
+			base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.
+					Wrap(common.ErrMTypeMismatch).
+					Errorf("expected %T, not %T", Mint{}, op),
+			),
+			nil
 	}
 
 	fact, ok := op.Fact().(MintFact)
 	if !ok {
-		return ctx, nil, e.Errorf("expected %T, not %T", MintFact{}, op.Fact())
+		return ctx,
+			base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.
+					Wrap(common.ErrMTypeMismatch).
+					Errorf("expected %T, not %T", MintFact{}, op.Fact()),
+			),
+			nil
 	}
 
 	if err := base.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, nop.NodeSigns()); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("not enough signs; %w", err), nil
+		return ctx,
+			base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.
+					Wrap(common.ErrMSignInvalid).
+					Errorf("%v", common.ErrSignNE),
+			), nil
 	}
 
 	for i := range fact.Items() {
 		item := fact.Items()[i]
 
-		err := state.CheckExistsState(currency.StateKeyCurrencyDesign(item.Amount().Currency()), getStateFunc)
-		if err != nil {
-			return ctx, base.NewBaseOperationProcessReasonError("currency not found, %v; %w", item.Amount().Currency(), err), nil
-		}
-
-		err = state.CheckExistsState(currency.StateKeyAccount(item.Receiver()), getStateFunc)
+		_, err := state.ExistsCurrencyPolicy(item.Amount().Currency(), getStateFunc)
 		if err != nil {
 			return ctx, base.NewBaseOperationProcessReasonError(
-				"receiver account not found, %v; %v",
-				item.Receiver(),
-				err.Error(),
+				common.ErrMPreProcess.
+					Errorf("%v", err),
 			), nil
 		}
 
-		err = state.CheckNotExistsState(extension.StateKeyContractAccount(item.Receiver()), getStateFunc)
-		if err != nil {
+		if _, _, aErr, cErr := state.ExistsCAccount(item.Receiver(), "receiver", true, false, getStateFunc); aErr != nil {
 			return ctx, base.NewBaseOperationProcessReasonError(
-				"contract account cannot be mint receiver, %v; %w",
-				item.Receiver(),
-				err,
-			), nil
+				common.ErrMPreProcess.Errorf("%v", aErr)), nil
+		} else if cErr != nil {
+			return ctx, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).Errorf("%v", cErr)), nil
 		}
 	}
 
@@ -149,9 +155,8 @@ func (opp *MintProcessor) Process(
 		case found:
 			_, err := currency.StateBalanceValue(st)
 			if err != nil {
-				return nil, base.NewBaseOperationProcessReasonError("get balance value, %v; %w", k, err), nil
+				return nil, base.NewBaseOperationProcessReasonError("get balance value, %v: %w", k, err), nil
 			}
-			//ab = b
 		}
 
 		sts = append(sts, common.NewBaseStateMergeValue(
@@ -166,7 +171,6 @@ func (opp *MintProcessor) Process(
 				)
 			},
 		))
-		//sts = append(sts, state.NewStateMergeValue(k, currency.NewBalanceStateValue(types.NewAmount(ab.Big().Add(item.Amount().Big()), item.Amount().Currency()))))
 
 		if _, found := aggs[item.Amount().Currency()]; found {
 			aggs[item.Amount().Currency()] = aggs[item.Amount().Currency()].Add(item.Amount().Big())
@@ -181,20 +185,20 @@ func (opp *MintProcessor) Process(
 		k := currency.StateKeyCurrencyDesign(cid)
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
-			return nil, base.NewBaseOperationProcessReasonError("find currency design state, %v; %w", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("find currency design state, %v: %w", cid, err), nil
 		case !found:
-			return nil, base.NewBaseOperationProcessReasonError("currency not found, %v; %w", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("Currency not found, %v: %w", cid, err), nil
 		default:
 			d, err := currency.StateCurrencyDesignValue(st)
 			if err != nil {
-				return nil, base.NewBaseOperationProcessReasonError("get currency design value, %v; %w", cid, err), nil
+				return nil, base.NewBaseOperationProcessReasonError("get currency design value, %v: %w", cid, err), nil
 			}
 			de = d
 		}
 
 		ade, err := de.AddAggregate(big)
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("add aggregate, %v; %w", cid, err), nil
+			return nil, base.NewBaseOperationProcessReasonError("add aggregate, %v: %w", cid, err), nil
 		}
 
 		sts = append(sts, state.NewStateMergeValue(k, currency.NewCurrencyDesignStateValue(ade)))

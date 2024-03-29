@@ -108,7 +108,7 @@ func ParseURL(s string, allowEmpty bool) (*url.URL, error) { // nolint:unparam
 	s = strings.TrimSpace(s)
 	if len(s) < 1 {
 		if !allowEmpty {
-			return nil, errors.Errorf("empty url string")
+			return nil, errors.Errorf("Empty url string")
 		}
 
 		return nil, nil
@@ -172,17 +172,17 @@ func NormalizeURL(u *url.URL) *url.URL {
 
 func IsValidURL(u *url.URL) error {
 	if u == nil {
-		return util.ErrInvalid.Errorf("empty url")
+		return util.ErrInvalid.Errorf("Empty url")
 	}
 	if u.Scheme == "" {
-		return util.ErrInvalid.Errorf("empty scheme, %v", u.String())
+		return util.ErrInvalid.Errorf("Empty scheme, %v", u.String())
 	}
 
 	switch {
 	case u.Host == "":
-		return util.ErrInvalid.Errorf("empty host, %v", u.String())
+		return util.ErrInvalid.Errorf("Empty host, %v", u.String())
 	case strings.HasPrefix(u.Host, ":") && u.Host == fmt.Sprintf(":%s", u.Port()):
-		return util.ErrInvalid.Errorf("empty host, %v", u.String())
+		return util.ErrInvalid.Errorf("Empty host, %v", u.String())
 	}
 
 	return nil

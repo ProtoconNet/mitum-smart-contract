@@ -39,7 +39,7 @@ func NewCacheFromURI(uri string) (Cache, error) {
 	case u.Scheme == "memcached":
 		return NewMemcached(u.Host)
 	default:
-		return nil, errors.Errorf("unsupported uri of cache, %v", uri)
+		return nil, errors.Errorf("Unsupported uri of cache, %v", uri)
 	}
 }
 

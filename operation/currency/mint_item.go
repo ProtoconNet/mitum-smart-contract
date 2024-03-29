@@ -1,10 +1,12 @@
 package currency
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -52,7 +54,7 @@ func (it MintItem) IsValid([]byte) error {
 	}
 
 	if !it.amount.Big().OverZero() {
-		return util.ErrInvalid.Errorf("under zero amount of MintItem")
+		return common.ErrValOOR.Wrap(errors.Errorf("Under zero amount of MintItem"))
 	}
 
 	return nil

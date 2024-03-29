@@ -36,7 +36,7 @@ func IsAccountState(st base.State) (types.Account, bool, error) {
 	if err != nil {
 		return types.Account{}, false, err
 	}
-	return ac, true, nil
+	return *ac, true, nil
 }
 
 func IsBalanceState(st base.State) (types.Amount, bool, error) {
@@ -55,9 +55,9 @@ func parseHeightFromPath(s string) (base.Height, error) {
 	s = strings.TrimSpace(s)
 
 	if len(s) < 1 {
-		return base.NilHeight, errors.Errorf("empty height")
+		return base.NilHeight, errors.Errorf("Empty height")
 	} else if len(s) > 1 && strings.HasPrefix(s, "0") {
-		return base.NilHeight, errors.Errorf("invalid height, %v", s)
+		return base.NilHeight, errors.Errorf("Invalid height, %v", s)
 	}
 
 	return base.ParseHeightString(s)
@@ -66,7 +66,7 @@ func parseHeightFromPath(s string) (base.Height, error) {
 func parseHashFromPath(s string) (util.Hash, error) {
 	s = strings.TrimSpace(s)
 	if len(s) < 1 {
-		return nil, errors.Errorf("empty hash")
+		return nil, errors.Errorf("Empty hash")
 	}
 
 	h := valuehash.NewBytesFromString(s)

@@ -23,9 +23,9 @@ func (fl *CurrencyFixedFeeerFlags) IsValid([]byte) error {
 
 	var receiver base.Address
 	if a, err := fl.Receiver.Encode(enc); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver format, %v: %v", fl.Receiver.String(), err)
+		return util.ErrInvalid.Errorf("Invalid receiver format, %v: %v", fl.Receiver.String(), err)
 	} else if err := a.IsValid(nil); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver address, %v: %v", fl.Receiver.String(), err)
+		return util.ErrInvalid.Errorf("Invalid receiver address, %v: %v", fl.Receiver.String(), err)
 	} else {
 		receiver = a
 	}
@@ -49,9 +49,9 @@ func (fl *CurrencyRatioFeeerFlags) IsValid([]byte) error {
 
 	var receiver base.Address
 	if a, err := fl.Receiver.Encode(enc); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver format, %v: %v", fl.Receiver.String(), err)
+		return util.ErrInvalid.Errorf("Invalid receiver format, %v: %v", fl.Receiver.String(), err)
 	} else if err := a.IsValid(nil); err != nil {
-		return util.ErrInvalid.Errorf("invalid receiver address, %v: %v", fl.Receiver.String(), err)
+		return util.ErrInvalid.Errorf("Invalid receiver address, %v: %v", fl.Receiver.String(), err)
 	} else {
 		receiver = a
 	}
@@ -97,11 +97,11 @@ func (fl *CurrencyDesignFlags) IsValid([]byte) error {
 	case types.FeeerRatio:
 		feeer = fl.CurrencyRatioFeeerFlags.feeer
 	default:
-		return util.ErrInvalid.Errorf("unknown feeer type, %v", t)
+		return util.ErrInvalid.Errorf("Unknown feeer type, %v", t)
 	}
 
 	if feeer == nil {
-		return util.ErrInvalid.Errorf("empty feeer flags")
+		return util.ErrInvalid.Errorf("Empty feeer flags")
 	} else if err := feeer.IsValid(nil); err != nil {
 		return err
 	}
@@ -113,9 +113,9 @@ func (fl *CurrencyDesignFlags) IsValid([]byte) error {
 
 	var genesisAccount base.Address
 	if a, err := fl.GenesisAccount.Encode(enc); err != nil {
-		return util.ErrInvalid.Errorf("invalid genesis-account format, %q: %v", fl.GenesisAccount.String(), err)
+		return util.ErrInvalid.Errorf("Invalid genesis-account format, %q: %v", fl.GenesisAccount.String(), err)
 	} else if err := a.IsValid(nil); err != nil {
-		return util.ErrInvalid.Errorf("invalid genesis-account address, %q: %v", fl.GenesisAccount.String(), err)
+		return util.ErrInvalid.Errorf("Invalid genesis-account address, %q: %v", fl.GenesisAccount.String(), err)
 	} else {
 		genesisAccount = a
 	}
@@ -186,7 +186,7 @@ func (cmd *RegisterCurrencyCommand) parseFlags() error {
 func (cmd *RegisterCurrencyCommand) createOperation() (currency.RegisterCurrency, error) {
 	fact := currency.NewRegisterCurrencyFact([]byte(cmd.Token), cmd.currencyDesign)
 
-	op, err := currency.NewRegisterCurrency(fact, "")
+	op, err := currency.NewRegisterCurrency(fact)
 	if err != nil {
 		return currency.RegisterCurrency{}, err
 	}

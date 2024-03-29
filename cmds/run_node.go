@@ -318,7 +318,7 @@ func (cmd *RunCommand) whenBlockSaved(
 		case err != nil:
 			return ctx, err
 		case !found:
-			return ctx, errors.Errorf("last BlockMap not found")
+			return ctx, errors.Errorf("Last BlockMap not found")
 		default:
 			if di != nil {
 				go func() {

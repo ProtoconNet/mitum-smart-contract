@@ -25,7 +25,7 @@ type AccountStateValueJSONUnmarshaler struct {
 }
 
 func (a *AccountStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode AccountStateValue")
+	e := util.StringError("Decode AccountStateValue")
 
 	var u AccountStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
@@ -60,7 +60,7 @@ type BalanceStateValueJSONUnmarshaler struct {
 }
 
 func (b *BalanceStateValue) DecodeJSON(v []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode BalanceStateValue")
+	e := util.StringError("Decode BalanceStateValue")
 
 	var u BalanceStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(v, &u); err != nil {
@@ -95,7 +95,7 @@ type CurrencyDesignStateValueJSONUnmarshaler struct {
 }
 
 func (c *CurrencyDesignStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode CurrencyDesignStateValue")
+	e := util.StringError("Decode CurrencyDesignStateValue")
 
 	var u CurrencyDesignStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {

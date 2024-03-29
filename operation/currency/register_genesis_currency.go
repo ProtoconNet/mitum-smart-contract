@@ -58,31 +58,31 @@ func (fact RegisterGenesisCurrencyFact) Bytes() []byte {
 
 func (fact RegisterGenesisCurrencyFact) IsValid(b []byte) error {
 	if err := fact.BaseHinter.IsValid(nil); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	if len(fact.cs) < 1 {
-		return util.ErrInvalid.Errorf("empty GenesisCurrency for RegisterGenesisCurrencyFact")
+		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("empty GenesisCurrency for RegisterGenesisCurrencyFact")))
 	}
 
 	if err := util.CheckIsValiders(nil, false, fact.genesisNodeKey, fact.keys); err != nil {
-		return util.ErrInvalid.Errorf("invalid fact: %v", err)
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	founds := map[types.CurrencyID]struct{}{}
 	for i := range fact.cs {
 		c := fact.cs[i]
 		if err := c.IsValid(nil); err != nil {
-			return err
+			return common.ErrFactInvalid.Wrap(err)
 		} else if _, found := founds[c.Currency()]; found {
-			return util.ErrInvalid.Errorf("duplicated currency id found, %v", c.Currency())
+			return common.ErrFactInvalid.Wrap(common.ErrDupVal.Wrap(errors.Errorf("currency id, %v", c.Currency())))
 		} else {
 			founds[c.Currency()] = struct{}{}
 		}
 	}
 
 	if err := common.IsValidOperationFact(fact, b); err != nil {
-		return err
+		return common.ErrFactInvalid.Wrap(err)
 	}
 
 	return nil
@@ -128,7 +128,7 @@ func (op RegisterGenesisCurrency) IsValid(networkID []byte) error {
 	}
 
 	if len(op.Signs()) != 1 {
-		return util.ErrInvalid.Errorf("genesis currencies should be signed only by genesis node key")
+		return util.ErrInvalid.Errorf("Genesis currencies should be signed only by genesis node key")
 	}
 
 	fact, ok := op.Fact().(RegisterGenesisCurrencyFact)
@@ -137,7 +137,7 @@ func (op RegisterGenesisCurrency) IsValid(networkID []byte) error {
 	}
 
 	if !fact.genesisNodeKey.Equal(op.Signs()[0].Signer()) {
-		return util.ErrInvalid.Errorf("not signed by genesis node key")
+		return util.ErrInvalid.Errorf("Not signed by genesis node key")
 	}
 
 	return nil

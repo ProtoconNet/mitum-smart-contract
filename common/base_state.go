@@ -12,6 +12,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/pkg/errors"
 )
 
 var stateValueMergerPool = sync.Pool{
@@ -54,15 +55,13 @@ func NewBaseState(
 }
 
 func (s BaseState) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid base state")
-
 	vs := make([]util.IsValider, len(s.ops)+5)
 	vs[0] = s.BaseHinter
 	vs[1] = s.h
 	vs[2] = s.height
 	vs[3] = util.DummyIsValider(func([]byte) error {
 		if len(s.k) < 1 {
-			return e.Errorf("empty state key")
+			return ErrStateInvalid.Wrap(errors.Errorf("Empty state key"))
 		}
 
 		return nil
@@ -74,17 +73,17 @@ func (s BaseState) IsValid([]byte) error {
 	}
 
 	if err := util.CheckIsValiders(nil, false, vs...); err != nil {
-		return e.Wrap(err)
+		return ErrStateInvalid.Wrap(err)
 	}
 
 	if s.previous != nil {
 		if err := s.previous.IsValid(nil); err != nil {
-			return e.WithMessage(err, "invalid previous state hash")
+			return ErrStateInvalid.Wrap(errors.Errorf("invalid previous state hash, %v", err))
 		}
 	}
 
 	if !s.h.Equal(s.generateHash()) {
-		return e.Errorf("wrong hash")
+		return ErrStateInvalid.Wrap(errors.Errorf("Wrong hash"))
 	}
 
 	return nil
@@ -183,7 +182,7 @@ type baseStateJSONUnmarshaler struct {
 }
 
 func (s *BaseState) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("unmarshal BaseState")
+	e := util.StringError("Decode json BaseState")
 
 	var u baseStateJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
@@ -277,7 +276,7 @@ func (s *BaseStateValueMerger) CloseValue() (base.State, error) {
 	defer s.Unlock()
 
 	if s.value == nil || len(s.ops) < 1 {
-		return nil, base.ErrIgnoreStateValue.Errorf("empty state value")
+		return nil, base.ErrIgnoreStateValue.Errorf("Empty state value")
 	}
 
 	sort.Slice(s.ops, func(i, j int) bool {
@@ -370,7 +369,7 @@ func (v BaseStateMergeValue) defaultMerger(height base.Height, st base.State) ba
 }
 
 func DecodeStateValue(b []byte, enc encoder.Encoder) (base.StateValue, error) {
-	e := util.StringError("decode StateValue")
+	e := util.StringError("Decode StateValue")
 
 	var s base.StateValue
 	if err := encoder.Decode(enc, b, &s); err != nil {

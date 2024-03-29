@@ -113,7 +113,7 @@ func NodeInfo(client *isaacnetwork.BaseClient, connInfo quicstream.ConnInfo) (*i
 		case err != nil:
 			return err
 		case !rh.OK():
-			return errors.Errorf("not ok")
+			return errors.Errorf("Not ok")
 		case rh.Err() != nil:
 			return rh.Err()
 		default:
@@ -125,7 +125,7 @@ func NodeInfo(client *isaacnetwork.BaseClient, connInfo quicstream.ConnInfo) (*i
 			return err
 		case bodyType == quicstreamheader.EmptyBodyType,
 			bodyType == quicstreamheader.FixedLengthBodyType && bodyLength < 1:
-			return errors.Errorf("empty body")
+			return errors.Errorf("Empty body")
 		default:
 			var v interface{}
 			if err := enc.StreamDecoder(r).Decode(&v); err != nil {

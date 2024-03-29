@@ -26,7 +26,7 @@ func NewAccountValue(st base.State) (AccountValue, error) {
 	case err != nil:
 		return AccountValue{}, err
 	case !ok:
-		return AccountValue{}, errors.Errorf("not state for currency.Account, %T", st.Value())
+		return AccountValue{}, errors.Errorf("Not state for currency.Account, %T", st.Value())
 	default:
 		ac = a
 	}

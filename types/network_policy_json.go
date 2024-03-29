@@ -41,7 +41,7 @@ type networkPolicyJSONUnmarshaler struct {
 }
 
 func (p *NetworkPolicy) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("unmarshal NetworkPolicy")
+	e := util.StringError("Decode json NetworkPolicy")
 
 	var u networkPolicyJSONUnmarshaler
 	if err := util.UnmarshalJSON(b, &u); err != nil {
@@ -76,7 +76,7 @@ type NetworkPolicyStateValueJSONUnmarshaler struct {
 }
 
 func (s *NetworkPolicyStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode NetworkPolicyStateValue")
+	e := util.StringError("Decode json NetworkPolicyStateValue")
 
 	var u NetworkPolicyStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {

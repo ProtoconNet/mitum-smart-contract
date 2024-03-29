@@ -58,7 +58,7 @@ type ManifestBSONUnmarshaler struct {
 }
 
 func (m *Manifest) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of Manifest")
+	e := util.StringError("Decode bson of Manifest")
 
 	var u ManifestBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {

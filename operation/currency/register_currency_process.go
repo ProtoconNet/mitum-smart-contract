@@ -61,7 +61,7 @@ func NewRegisterCurrencyProcessor(threshold base.Threshold) types.GetNewProcesso
 		case err != nil:
 			return nil, e.Wrap(err)
 		case !found, i == nil:
-			return nil, e.Errorf("empty state")
+			return nil, e.Errorf("Empty state")
 		default:
 			sufstv := i.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
 
@@ -80,20 +80,21 @@ func NewRegisterCurrencyProcessor(threshold base.Threshold) types.GetNewProcesso
 func (opp *RegisterCurrencyProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringError("preprocess for RegisterCurrency")
-
 	nop, ok := op.(RegisterCurrency)
 	if !ok {
-		return ctx, nil, e.Errorf("not RegisterCurrency, %T", op)
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMTypeMismatch).Errorf("expected RegisterCurrency, not %T", op)), nil
 	}
 
 	if err := base.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, nop.NodeSigns()); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("not enough signs"), nil
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMSignInvalid).Errorf("%v", common.ErrSignNE)), nil
 	}
 
 	fact, ok := op.Fact().(RegisterCurrencyFact)
 	if !ok {
-		return ctx, nil, e.Errorf("not RegisterCurrencyFact, %T", op.Fact())
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMTypeMismatch).Errorf("expected RegisterCurrencyFact, not %T", op.Fact())), nil
 	}
 
 	design := fact.currency
@@ -104,16 +105,19 @@ func (opp *RegisterCurrencyProcessor) PreProcess(
 		getStateFunc,
 	)
 	if err != nil {
-		return ctx, nil, err
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("Currency id, %v", design.Currency())), nil
 	}
 
-	if err := state.CheckExistsState(currency.StateKeyAccount(design.GenesisAccount()), getStateFunc); err != nil {
-		return ctx, nil, e.WithMessage(err, "genesis account not found")
+	if _, err := state.ExistsAccount(design.GenesisAccount(), "genesis account", true, getStateFunc); err != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Errorf("%v", err)), nil
 	}
 
 	if receiver := design.Policy().Feeer().Receiver(); receiver != nil {
-		if err := state.CheckExistsState(currency.StateKeyAccount(receiver), getStateFunc); err != nil {
-			return ctx, nil, e.WithMessage(err, "feeer receiver account not found")
+		if _, err := state.ExistsAccount(receiver, "feeer receiver", true, getStateFunc); err != nil {
+			return ctx, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.Errorf("%v", err)), nil
 		}
 	}
 
@@ -121,15 +125,18 @@ func (opp *RegisterCurrencyProcessor) PreProcess(
 	case err != nil:
 		return ctx, nil, err
 	case found:
-		return ctx, nil, base.NewBaseOperationProcessReasonError("currency already registered, %v", design.Currency())
+		return ctx, nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("Currency already registered, %v", design.Currency()))
 	default:
 	}
 
 	switch _, found, err := getStateFunc(currency.StateKeyBalance(design.GenesisAccount(), design.Currency())); {
 	case err != nil:
-		return ctx, nil, err
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMAccountNF).Errorf("Genesis account, %v", design.GenesisAccount())), nil
 	case found:
-		return ctx, nil, base.NewBaseOperationProcessReasonError("genesis account has already the currency, %v", design.Currency())
+		return ctx, nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("Currency already registered, %v", design.Currency()))
 	default:
 	}
 
@@ -147,7 +154,7 @@ func (opp *RegisterCurrencyProcessor) Process(
 
 	sts := make([]base.StateMergeValue, 4)
 
-	design := fact.currency
+	design := fact.Currency()
 
 	//ba := currency.NewBalanceStateValue(design.Amount())
 	//sts[0] = state.NewStateMergeValue(

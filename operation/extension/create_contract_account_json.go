@@ -31,16 +31,18 @@ type CreateContractAccountFactJSONUnMarshaler struct {
 }
 
 func (fact *CreateContractAccountFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of CreateContractAccountFact")
-
 	var uf CreateContractAccountFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	return fact.unpack(enc, uf.Owner, uf.Items)
+	if err := fact.unpack(enc, uf.Owner, uf.Items); err != nil {
+		return common.DecorateError(err, common.ErrDecodeBson, *fact)
+	}
+
+	return nil
 }
 
 func (op CreateContractAccount) MarshalJSON() ([]byte, error) {
@@ -50,11 +52,9 @@ func (op CreateContractAccount) MarshalJSON() ([]byte, error) {
 }
 
 func (op *CreateContractAccount) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of CreateContractAccount")
-
 	var ubo common.BaseOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
-		return e.Wrap(err)
+		return common.DecorateError(err, common.ErrDecodeBson, *op)
 	}
 
 	op.BaseOperation = ubo

@@ -2,6 +2,8 @@ package currency
 
 import (
 	"context"
+	"fmt"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"sync"
 
 	"github.com/ProtoconNet/mitum-currency/v3/state"
@@ -60,7 +62,7 @@ func NewUpdateCurrencyProcessor(threshold base.Threshold) types.GetNewProcessor 
 		case err != nil:
 			return nil, e.Wrap(err)
 		case !found, i == nil:
-			return nil, e.Errorf("empty state")
+			return nil, e.Errorf("Empty state")
 		default:
 			sufstv := i.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
 
@@ -79,35 +81,39 @@ func NewUpdateCurrencyProcessor(threshold base.Threshold) types.GetNewProcessor 
 func (opp *UpdateCurrencyProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	e := util.StringError("preprocess for UpdateCurrency")
-
 	nop, ok := op.(UpdateCurrency)
 	if !ok {
-		return ctx, nil, e.Errorf("expected %T, not %T", UpdateCurrency{}, op)
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMTypeMismatch).Errorf("expected %T, not %T", UpdateCurrency{}, op)), nil
 	}
 
 	if err := base.CheckFactSignsBySuffrage(opp.suffrage, opp.threshold, nop.NodeSigns()); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError("not enough signs"), nil
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMSignInvalid).Errorf("%v", common.ErrSignNE)), nil
 	}
 
 	fact, ok := op.Fact().(UpdateCurrencyFact)
 	if !ok {
-		return ctx, nil, e.Errorf("not UpdateCurrencyFact, %T", op.Fact())
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMTypeMismatch).Errorf("expected UpdateCurrencyFact, not %T", op.Fact())), nil
 	}
 
-	err := state.CheckExistsState(statecurrency.StateKeyCurrencyDesign(fact.currency), getStateFunc)
+	err := state.CheckExistsState(statecurrency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc)
 	if err != nil {
-		return ctx, nil, err
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id, %v", fact.Currency())), nil
 	}
 
-	if receiver := fact.policy.Feeer().Receiver(); receiver != nil {
-		if err := state.CheckExistsState(statecurrency.StateKeyAccount(receiver), getStateFunc); err != nil {
-			return ctx, nil, e.WithMessage(err, "feeer receiver account not found")
+	if receiver := fact.Policy().Feeer().Receiver(); receiver != nil {
+		if _, err := state.ExistsAccount(receiver, "feeer receiver", true, getStateFunc); err != nil {
+			return ctx, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.Errorf("%v", err)), nil
 		}
 	}
 
-	if err := state.CheckExistsState(statecurrency.StateKeyCurrencyDesign(fact.currency), getStateFunc); err != nil {
-		return ctx, nil, base.NewBaseOperationProcessReasonError("currency not found, %v", fact.currency)
+	if err := state.CheckExistsState(statecurrency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
+		return ctx, nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id, %v", fact.Currency()))
 	}
 
 	return ctx, nil, nil
@@ -124,17 +130,17 @@ func (opp *UpdateCurrencyProcessor) Process(
 
 	sts := make([]base.StateMergeValue, 1)
 
-	st, err := state.ExistsState(statecurrency.StateKeyCurrencyDesign(fact.currency), "currency design", getStateFunc)
+	st, err := state.ExistsState(statecurrency.StateKeyCurrencyDesign(fact.Currency()), fmt.Sprintf("currency design, %v", fact.Currency()), getStateFunc)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check existence of currency %v; %w", fact.currency, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check existence of currency %v; %w", fact.Currency(), err), nil
 	}
 
 	de, err := statecurrency.StateCurrencyDesignValue(st)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("get currency design of %v; %w", fact.currency, err), nil
+		return nil, base.NewBaseOperationProcessReasonError("get currency design of %v; %w", fact.Currency(), err), nil
 	}
 
-	de.SetPolicy(fact.policy)
+	de.SetPolicy(fact.Policy())
 
 	c := state.NewStateMergeValue(
 		st.Key(),

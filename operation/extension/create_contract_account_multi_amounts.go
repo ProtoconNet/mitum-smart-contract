@@ -1,9 +1,10 @@
 package extension
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 var maxCurrenciesCreateContractAccountItemMultiAmounts = 10
@@ -28,7 +29,7 @@ func (it CreateContractAccountItemMultiAmounts) IsValid([]byte) error {
 	}
 
 	if n := len(it.amounts); n > maxCurrenciesCreateContractAccountItemMultiAmounts {
-		return util.ErrInvalid.Errorf("amounts over allowed; %d > %d", n, maxCurrenciesCreateContractAccountItemMultiAmounts)
+		return common.ErrArrayLen.Wrap(errors.Errorf("amounts over allowed; %d > %d", n, maxCurrenciesCreateContractAccountItemMultiAmounts))
 	}
 
 	return nil

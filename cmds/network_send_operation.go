@@ -121,7 +121,7 @@ func (cmd *NetworkClientSendOperationCommand) Run(pctx context.Context) error {
 	case err != nil:
 		return err
 	case len(i) < 1:
-		return errors.Errorf("empty input")
+		return errors.Errorf("Empty input")
 	default:
 		cmd.Log.Debug().
 			Str("input", string(i)).

@@ -45,7 +45,7 @@ func loadLastManifest(decoder func(interface{}) error, encs *encoder.Encoders) (
 	if err != nil {
 		return base.NilHeight, err
 	} else if r, ok := d.(bson.RawValue); !ok {
-		return base.NilHeight, errors.Errorf("invalid height: %T", d)
+		return base.NilHeight, errors.Errorf("Invalid height, %T", d)
 	} else if err := r.Unmarshal(&height); err != nil {
 		return base.NilHeight, err
 	}

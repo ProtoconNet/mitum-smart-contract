@@ -29,7 +29,7 @@ func NewBaseNode(ht hint.Hint, pub base.Publickey, addr base.Address) BaseNode {
 
 func (n BaseNode) IsValid([]byte) error {
 	if err := util.CheckIsValiders(nil, false, n.addr, n.pub); err != nil {
-		return errors.Wrap(err, "invalid RemoteNode")
+		return errors.Wrap(err, "Invalid RemoteNode")
 	}
 
 	return nil
@@ -71,7 +71,7 @@ type BaseNodeJSONUnmarshaler struct {
 }
 
 func (n *BaseNode) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode BaseNode")
+	e := util.StringError("Decode BaseNode")
 
 	var u BaseNodeJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
@@ -80,7 +80,7 @@ func (n *BaseNode) DecodeJSON(b []byte, enc encoder.Encoder) error {
 
 	switch i, err := base.DecodeAddress(u.Address, enc); {
 	case err != nil:
-		return e.WithMessage(err, "decode node address")
+		return e.WithMessage(err, "Decode node address")
 	default:
 		n.addr = i
 	}
@@ -112,7 +112,7 @@ type BaseNodeBSONUnMarshaler struct {
 }
 
 func (n *BaseNode) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of BaseNode")
+	e := util.StringError("Decode bson of BaseNode")
 
 	var u BaseNodeBSONUnMarshaler
 

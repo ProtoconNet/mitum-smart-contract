@@ -46,7 +46,7 @@ func (fact GenesisNetworkPolicyFact) IsValid([]byte) error {
 	}
 
 	if !fact.Hash().Equal(fact.hash()) {
-		return e.Errorf("hash does not match")
+		return e.Errorf("Hash does not match")
 	}
 
 	return nil
@@ -146,14 +146,14 @@ func (fact NetworkPolicyFact) hash() util.Hash {
 }
 
 func (fact NetworkPolicyFact) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid NetworkPolicyFact")
+	e := util.ErrInvalid.Errorf("Invalid NetworkPolicyFact")
 
 	if err := util.CheckIsValiders(nil, false, fact.BaseFact, fact.policy); err != nil {
 		return e.Wrap(err)
 	}
 
 	if !fact.Hash().Equal(fact.hash()) {
-		return e.Errorf("hash does not match")
+		return e.Errorf("Hash does not match")
 	}
 
 	return nil
@@ -174,7 +174,7 @@ func NewNetworkPolicy(fact NetworkPolicyFact) NetworkPolicy {
 }
 
 func (op NetworkPolicy) IsValid(networkID []byte) error {
-	e := util.ErrInvalid.Errorf("invalid NetworkPolicy")
+	e := util.ErrInvalid.Errorf("Invalid NetworkPolicy")
 
 	if err := op.BaseNodeOperation.IsValid(networkID); err != nil {
 		return e.Wrap(err)

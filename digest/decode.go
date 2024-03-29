@@ -30,7 +30,7 @@ func LoadOperation(decoder func(interface{}) error, encs *encoder.Encoders) (Ope
 	if _, hinter, err := mongodbstorage.LoadDataFromDoc(b, encs); err != nil {
 		return OperationValue{}, err
 	} else if va, ok := hinter.(OperationValue); !ok {
-		return OperationValue{}, errors.Errorf("not OperationValue: %T", hinter)
+		return OperationValue{}, errors.Errorf("Not OperationValue: %T", hinter)
 	} else {
 		return va, nil
 	}
@@ -49,7 +49,7 @@ func LoadAccountValue(decoder func(interface{}) error, encs *encoder.Encoders) (
 
 	rs, ok := hinter.(AccountValue)
 	if !ok {
-		return AccountValue{}, errors.Errorf("not AccountValue: %T", hinter)
+		return AccountValue{}, errors.Errorf("Not AccountValue: %T", hinter)
 	}
 
 	return rs, nil
@@ -64,7 +64,7 @@ func LoadBalance(decoder func(interface{}) error, encs *encoder.Encoders) (base.
 	if _, hinter, err := mongodbstorage.LoadDataFromDoc(b, encs); err != nil {
 		return nil, err
 	} else if st, ok := hinter.(base.State); !ok {
-		return nil, errors.Errorf("not base.State: %T", hinter)
+		return nil, errors.Errorf("Not base.State: %T", hinter)
 	} else {
 		return st, nil
 	}
@@ -80,7 +80,7 @@ func LoadCurrency(decoder func(interface{}) error, encs *encoder.Encoders) (base
 	if _, hinter, err := mongodbstorage.LoadDataFromDoc(b, encs); err != nil {
 		return nil, err
 	} else if st, ok := hinter.(base.State); !ok {
-		return nil, errors.Errorf("not base.State: %T", hinter)
+		return nil, errors.Errorf("Not base.State: %T", hinter)
 	} else {
 		return st, nil
 	}
@@ -96,7 +96,7 @@ func LoadContractAccountStatus(decoder func(interface{}) error, encs *encoder.En
 	if _, hinter, err := mongodbstorage.LoadDataFromDoc(b, encs); err != nil {
 		return nil, err
 	} else if st, ok := hinter.(base.State); !ok {
-		return nil, errors.Errorf("not base.State: %T", hinter)
+		return nil, errors.Errorf("Not base.State: %T", hinter)
 	} else {
 		return st, nil
 	}
@@ -112,7 +112,7 @@ func LoadManifest(decoder func(interface{}) error, encs *encoder.Encoders) (base
 	if _, hinter, operations, confirmedAt, proposer, round, err := mongodbstorage.LoadManifestDataFromDoc(b, encs); err != nil {
 		return nil, 0, "", "", 0, err
 	} else if m, ok := hinter.(base.Manifest); !ok {
-		return nil, 0, "", "", 0, errors.Errorf("not base.Manifest: %T", hinter)
+		return nil, 0, "", "", 0, errors.Errorf("Not base.Manifest: %T", hinter)
 	} else {
 		return m, operations, confirmedAt, proposer, round, nil
 	}
@@ -128,7 +128,7 @@ func LoadState(decoder func(interface{}) error, encs *encoder.Encoders) (base.St
 	if _, hinter, err := mongodbstorage.LoadDataFromDoc(b, encs); err != nil {
 		return nil, err
 	} else if st, ok := hinter.(base.State); !ok {
-		return nil, errors.Errorf("not base.State: %T", hinter)
+		return nil, errors.Errorf("Not base.State: %T", hinter)
 	} else {
 		return st, nil
 	}

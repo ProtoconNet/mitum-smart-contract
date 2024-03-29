@@ -3,10 +3,11 @@ package cmds
 import (
 	"bytes"
 	"fmt"
-	"github.com/ProtoconNet/mitum-currency/v3/common"
-	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"strconv"
 	"strings"
+
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 
 	"github.com/pkg/errors"
 
@@ -177,7 +178,7 @@ type CurrencyIDFlag struct {
 func (v *CurrencyIDFlag) UnmarshalText(b []byte) error {
 	cid := types.CurrencyID(string(b))
 	if err := cid.IsValid(nil); err != nil {
-		return fmt.Errorf("invalid currency id, %q, %w", string(b), err)
+		return fmt.Errorf("Invalid currency id, %q, %w", string(b), err)
 	}
 	v.CID = cid
 
@@ -196,7 +197,7 @@ type CurrencyAmountFlag struct {
 func (v *CurrencyAmountFlag) UnmarshalText(b []byte) error {
 	l := strings.SplitN(string(b), ",", 2)
 	if len(l) != 2 {
-		return fmt.Errorf("invalid currency-amount, %q", string(b))
+		return fmt.Errorf("Invalid currency-amount, %q", string(b))
 	}
 
 	a, c := l[0], l[1]

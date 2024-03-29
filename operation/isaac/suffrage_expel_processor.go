@@ -40,7 +40,7 @@ func NewSuffrageExpelProcessor(
 	case err != nil:
 		return nil, e.Wrap(err)
 	case !found, i == nil:
-		return nil, e.Errorf("empty state")
+		return nil, e.Errorf("Empty state")
 	default:
 		p.sufstv = i.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
 

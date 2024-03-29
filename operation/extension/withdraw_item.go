@@ -1,10 +1,12 @@
 package extension
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 type BaseWithdrawItem struct {
@@ -42,21 +44,21 @@ func (it BaseWithdrawItem) IsValid([]byte) error {
 	}
 
 	if len(it.amounts) < 1 {
-		return util.ErrInvalid.Errorf("empty amounts")
+		return common.ErrArrayLen.Wrap(errors.Errorf("empty amounts"))
 	}
 
 	founds := map[types.CurrencyID]struct{}{}
 	for i := range it.amounts {
 		am := it.amounts[i]
 		if _, found := founds[am.Currency()]; found {
-			return util.ErrInvalid.Errorf("duplicate currency found, %v", am.Currency())
+			return common.ErrDupVal.Wrap(errors.Errorf("currency id, %v", am.Currency()))
 		}
 		founds[am.Currency()] = struct{}{}
 
 		if err := am.IsValid(nil); err != nil {
 			return err
 		} else if !am.Big().OverZero() {
-			return util.ErrInvalid.Errorf("amount should be over zero")
+			return common.ErrValOOR.Wrap(errors.Errorf("amount should be over zero"))
 		}
 	}
 

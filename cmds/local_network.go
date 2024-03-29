@@ -75,7 +75,7 @@ func (no LocalNetwork) setConnInfo(conf config.LocalNetwork) error {
 func (no LocalNetwork) setCerts(conf config.LocalNetwork) error {
 	switch {
 	case (no.CertKeyFile != nil || no.CertFile != nil) && (no.CertKeyFile == nil || no.CertFile == nil):
-		return errors.Errorf("cert-key and cert should be given both")
+		return errors.Errorf("Cert-key and cert should be given both")
 	case no.CertKeyFile == nil || len(strings.TrimSpace(*no.CertKeyFile)) < 1:
 		return nil
 	case no.CertFile == nil || len(strings.TrimSpace(*no.CertFile)) < 1:
