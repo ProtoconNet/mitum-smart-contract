@@ -4,6 +4,9 @@
 *.out
 *.sh
 *.json
+*.csv
+*.toml
+*.py
 .*.sw?
 .sw?
 .DS_Store

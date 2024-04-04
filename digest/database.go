@@ -1050,7 +1050,7 @@ func (st *Database) CleanByHeightColName(
 
 	st.Log().Debug().Str("collection", colName).Interface("result", res).Msg("clean collection by height")
 
-	return st.setLastBlock(height - 1)
+	return nil
 }
 
 func (st *Database) cleanBalanceByHeightAndAccount(ctx context.Context, height base.Height, address string) error {
@@ -1072,7 +1072,7 @@ func (st *Database) cleanBalanceByHeightAndAccount(ctx context.Context, height b
 
 	st.Log().Debug().Str("collection", defaultColNameBalance).Interface("result", res).Msg("clean Balancecollection by address")
 
-	return st.setLastBlock(height - 1)
+	return nil
 }
 
 func loadLastBlock(st *Database) (base.Height, bool, error) {
