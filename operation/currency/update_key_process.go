@@ -79,7 +79,7 @@ func (opp *UpdateKeyProcessor) PreProcess(
 	} else if ks, err := currency.StateKeysValue(st); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError("get state value of keys %q; %w", fact.keys.Hash(), err), nil
 	} else if _, ok := ks.(types.NilAccountKeys); ok {
-		return ctx, base.NewBaseOperationProcessReasonError("single-sig account cannot be updated, %v; %w", fact.target), nil
+		return ctx, base.NewBaseOperationProcessReasonError("single-sig account cannot be updated, %v", fact.target), nil
 	} else if ks.Equal(fact.Keys()) {
 		return ctx, base.NewBaseOperationProcessReasonError("same Keys as existing %q; %w", fact.keys.Hash(), err), nil
 	}
