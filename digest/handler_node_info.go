@@ -6,7 +6,6 @@ import (
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	quicstreamheader "github.com/ProtoconNet/mitum2/network/quicstream/header"
-	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
 	"net/http"
@@ -67,7 +66,7 @@ func (hd *Handlers) handleNodeInfoInGroup() (interface{}, error) {
 			nodeInfo, err := NodeInfo(client, connInfo[i])
 
 			if err != nil {
-				return nil, util.ErrFound.Wrap(err)
+				continue
 			}
 
 			nodeInfoList = append(nodeInfoList, *nodeInfo)
