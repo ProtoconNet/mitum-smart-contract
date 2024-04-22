@@ -69,7 +69,7 @@ func DefaultRunPS() *ps.PS {
 	_ = pps.POK(launch.PNameNetwork).
 		PreAddOK(launch.PNameQuicstreamClient, launch.PQuicstreamClient).
 		PostAddOK(launch.PNameSyncSourceChecker, launch.PSyncSourceChecker).
-		PostAddOK(launch.PNameSuffrageCandidateLimiterSet, launch.PSuffrageCandidateLimiterSet)
+		PostAddOK(launch.PNameSuffrageCandidateLimiterSet, PSuffrageCandidateLimiterSet)
 
 	_ = pps.POK(launch.PNameMemberlist).
 		PreAddOK(launch.PNameLastConsensusNodesWatcher, launch.PLastConsensusNodesWatcher).

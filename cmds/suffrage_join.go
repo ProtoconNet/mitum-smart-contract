@@ -11,7 +11,7 @@ import (
 type SuffrageJoinCommand struct {
 	BaseCommand
 	OperationFlags
-	Node  AddressFlag `arg:"" name:"node" help:"node address" required:"true"`
+	Node  AddressFlag `arg:"" name:"node" help:"candidate address" required:"true"`
 	Start base.Height `arg:"" name:"height" help:"block height" required:"true"`
 	node  base.Address
 }

@@ -83,9 +83,9 @@ func (p *SuffrageCandidateProcessor) Close() error {
 		return err
 	}
 
-	p.suffrages = nil
-	p.existings = nil
-	p.preprocessed = nil
+	clear(p.suffrages)
+	clear(p.existings)
+	clear(p.preprocessed)
 	p.startheight = base.NilHeight
 	p.deadlineheight = base.NilHeight
 
@@ -198,21 +198,21 @@ func (s *SuffrageCandidatesStateValueMerger) Merge(value base.StateValue, op uti
 	return nil
 }
 
-func (s *SuffrageCandidatesStateValueMerger) Close() error {
+func (s *SuffrageCandidatesStateValueMerger) CloseValue() (base.State, error) {
 	s.Lock()
 	defer s.Unlock()
 
-	newvalue, err := s.close()
+	newvalue, err := s.closeValue()
 	if err != nil {
-		return errors.WithMessage(err, "close SuffrageCandidatesStateValueMerger")
+		return nil, errors.WithMessage(err, "close SuffrageCandidatesStateValueMerger")
 	}
 
 	s.BaseStateValueMerger.SetValue(newvalue)
 
-	return s.BaseStateValueMerger.Close()
+	return s.BaseStateValueMerger.CloseValue()
 }
 
-func (s *SuffrageCandidatesStateValueMerger) close() (base.StateValue, error) {
+func (s *SuffrageCandidatesStateValueMerger) closeValue() (base.StateValue, error) {
 	if len(s.removes) < 1 && len(s.added) < 1 {
 		return nil, base.ErrIgnoreStateValue.Errorf("empty newly added or removes nodes")
 	}
