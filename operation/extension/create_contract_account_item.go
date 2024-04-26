@@ -57,7 +57,7 @@ func (it BaseCreateContractAccountItem) IsValid([]byte) error {
 			)
 		}
 	} else {
-		if it.keys.Hint().Equal(types.EthAccountKeysHint) {
+		if it.keys.Hint().Equal(types.AccountKeysHint) {
 			return util.ErrInvalid.Errorf(
 				"keys type not matched with address type, %v, %v",
 				it.keys.Hint().Type(),
