@@ -38,39 +38,11 @@ type TransferItemProcessor struct {
 	h    util.Hash
 	item TransferItem
 	rb   map[types.CurrencyID]base.StateMergeValue
-	ns   map[string]base.StateMergeValue
 }
 
 func (opp *TransferItemProcessor) PreProcess(
 	_ context.Context, _ base.Operation, getStateFunc base.GetStateFunc,
 ) error {
-	e := util.StringError("preprocess for TransferItemProcessor")
-
-	var stv base.StateMergeValue
-	ns := map[string]base.StateMergeValue{}
-	k := currency.StateKeyAccount(opp.item.Receiver())
-	switch _, found, err := getStateFunc(k); {
-	case err != nil:
-		return e.Wrap(err)
-	case !found:
-		nilKys, err := types.NewNilAccountKeysFromAddress(opp.item.Receiver())
-		if err != nil {
-			return e.Wrap(err)
-		}
-		acc, err := types.NewAccount(opp.item.Receiver(), nilKys)
-		if err != nil {
-			return e.Wrap(err)
-		}
-		stv = state.NewStateMergeValue(k, currency.NewAccountStateValue(acc))
-
-		_, found := ns[opp.item.Receiver().String()]
-		if !found {
-			ns[opp.item.Receiver().String()] = stv
-		}
-	default:
-	}
-	opp.ns = ns
-
 	rb := map[types.CurrencyID]base.StateMergeValue{}
 	for i := range opp.item.Amounts() {
 		am := opp.item.Amounts()[i]
@@ -107,8 +79,6 @@ func (opp *TransferItemProcessor) PreProcess(
 				)
 			},
 		)
-
-		//rb[am.Currency()] = state.NewStateMergeValue(currency.StateKeyBalance(opp.item.Receiver(), am.Currency()), currency.NewBalanceStateValue(balance))
 	}
 
 	opp.rb = rb
@@ -117,11 +87,29 @@ func (opp *TransferItemProcessor) PreProcess(
 }
 
 func (opp *TransferItemProcessor) Process(
-	_ context.Context, _ base.Operation, _ base.GetStateFunc,
+	_ context.Context, _ base.Operation, getStateFunc base.GetStateFunc,
 ) ([]base.StateMergeValue, error) {
-	e := util.StringError("preprocess for TransferItemProcessor")
+	e := util.StringError("process TransferItemProcessor")
 
 	var sts []base.StateMergeValue
+	k := currency.StateKeyAccount(opp.item.Receiver())
+	switch _, found, err := getStateFunc(k); {
+	case err != nil:
+		return nil, e.Wrap(err)
+	case !found:
+		nilKys, err := types.NewNilAccountKeysFromAddress(opp.item.Receiver())
+		if err != nil {
+			return nil, e.Wrap(err)
+		}
+		acc, err := types.NewAccount(opp.item.Receiver(), nilKys)
+		if err != nil {
+			return nil, e.Wrap(err)
+		}
+
+		sts = append(sts, state.NewStateMergeValue(k, currency.NewAccountStateValue(acc)))
+	default:
+	}
+
 	for i := range opp.item.Amounts() {
 		am := opp.item.Amounts()[i]
 		v, ok := opp.rb[am.Currency()].Value().(currency.AddBalanceStateValue)
@@ -138,9 +126,6 @@ func (opp *TransferItemProcessor) Process(
 			},
 		))
 	}
-	for _, stv := range opp.ns {
-		sts = append(sts, stv)
-	}
 
 	return sts, nil
 }
@@ -149,7 +134,6 @@ func (opp *TransferItemProcessor) Close() {
 	opp.h = nil
 	opp.item = nil
 	opp.rb = nil
-	opp.ns = nil
 
 	transferItemProcessorPool.Put(opp)
 }
