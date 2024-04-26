@@ -13,11 +13,11 @@ import (
 type CreateAccountCommand struct {
 	BaseCommand
 	OperationFlags
-	Sender      AddressFlag          `arg:"" name:"sender" help:"sender address" required:"true"`
-	Threshold   uint                 `help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
-	Keys        []KeyFlag            `name:"key" help:"key for new account (ex: \"<public key>,<weight>\")" sep:"@"`
-	Amounts     []CurrencyAmountFlag `arg:"" name:"currency-amount" help:"amount (ex: \"<currency>,<amount>\")"`
-	AddressType string               `help:"address type for new account select mitum or ether" default:"mitum"`
+	Sender      AddressFlag        `arg:"" name:"sender" help:"sender address" required:"true"`
+	Threshold   uint               `help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
+	Key         KeyFlag            `name:"key" help:"key for new account (ex: \"<public key>,<weight>\") separator @"`
+	Amount      CurrencyAmountFlag `arg:"" name:"currency-amount" help:"amount (ex: \"<currency>,<amount>\")"`
+	AddressType string             `help:"address type for new account select mitum or ether" default:"mitum"`
 	sender      base.Address
 	keys        types.AccountKeys
 }
@@ -26,9 +26,6 @@ func (cmd *CreateAccountCommand) Run(pctx context.Context) error { // nolint:dup
 	if _, err := cmd.prepare(pctx); err != nil {
 		return err
 	}
-
-	//encs = cmd.Encoders
-	//enc = cmd.Encoder
 
 	if err := cmd.parseFlags(); err != nil {
 		return err
@@ -55,18 +52,10 @@ func (cmd *CreateAccountCommand) parseFlags() error {
 	}
 	cmd.sender = a
 
-	if len(cmd.Keys) < 1 {
-		return errors.Errorf("--key must be given at least one")
-	}
-
-	if len(cmd.Amounts) < 1 {
-		return errors.Errorf("empty currency-amount, must be given at least one")
-	}
-
 	{
-		ks := make([]types.AccountKey, len(cmd.Keys))
-		for i := range cmd.Keys {
-			ks[i] = cmd.Keys[i].Key
+		ks := make([]types.AccountKey, len(cmd.Key.Values))
+		for i := range cmd.Key.Values {
+			ks[i] = cmd.Key.Values[i]
 		}
 
 		var kys types.AccountKeys
@@ -94,16 +83,13 @@ func (cmd *CreateAccountCommand) parseFlags() error {
 func (cmd *CreateAccountCommand) createOperation() (base.Operation, error) { // nolint:dupl}
 	var items []currency.CreateAccountItem
 
-	ams := make([]types.Amount, len(cmd.Amounts))
-	for i := range cmd.Amounts {
-		a := cmd.Amounts[i]
-		am := types.NewAmount(a.Big, a.CID)
-		if err := am.IsValid(nil); err != nil {
-			return nil, err
-		}
-
-		ams[i] = am
+	ams := make([]types.Amount, 1)
+	am := types.NewAmount(cmd.Amount.Big, cmd.Amount.CID)
+	if err := am.IsValid(nil); err != nil {
+		return nil, err
 	}
+
+	ams[0] = am
 
 	addrType := types.AddressHint.Type()
 

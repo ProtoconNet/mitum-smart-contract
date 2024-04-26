@@ -13,9 +13,9 @@ var KeyAddressVars = kong.Vars{
 
 type KeyAddressCommand struct {
 	BaseCommand
-	Threshold   uint      `arg:"" name:"threshold" help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
-	Keys        []KeyFlag `arg:"" name:"key" help:"key for address (ex: \"<public key>,<weight>\")" sep:"@" optional:""`
-	AddressType string    `help:"key type for address. select mitum or ether" default:"mitum"`
+	Threshold   uint    `arg:"" name:"threshold" help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
+	Key         KeyFlag `arg:"" name:"key" help:"key for address (ex: \"<public key>,<weight>\") separator @" optional:""`
+	AddressType string  `help:"key type for address. select mitum or ether" default:"mitum"`
 }
 
 func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
@@ -23,9 +23,9 @@ func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	ks := make([]types.AccountKey, len(cmd.Keys))
-	for i := range cmd.Keys {
-		ks[i] = cmd.Keys[i].Key
+	ks := make([]types.AccountKey, len(cmd.Key.Values))
+	for i := range cmd.Key.Values {
+		ks[i] = cmd.Key.Values[i]
 	}
 
 	var a base.Address

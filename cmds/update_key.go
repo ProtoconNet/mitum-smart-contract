@@ -15,7 +15,7 @@ type UpdateKeyCommand struct {
 	OperationFlags
 	Target    AddressFlag    `arg:"" name:"target" help:"target address" required:"true"`
 	Threshold uint           `help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
-	Keys      []KeyFlag      `name:"key" help:"key for new account (ex: \"<public key>,<weight>\")" sep:"@"`
+	Key       KeyFlag        `name:"key" help:"key for new account (ex: \"<public key>,<weight>\") separator @"`
 	Currency  CurrencyIDFlag `arg:"" name:"currency-id" help:"currency id" required:"true"`
 	target    base.Address
 	keys      types.BaseAccountKeys
@@ -54,14 +54,10 @@ func (cmd *UpdateKeyCommand) parseFlags() error {
 	}
 	cmd.target = a
 
-	if len(cmd.Keys) < 1 {
-		return errors.Errorf("--key must be given at least one")
-	}
-
 	{
-		ks := make([]types.AccountKey, len(cmd.Keys))
-		for i := range cmd.Keys {
-			ks[i] = cmd.Keys[i].Key
+		ks := make([]types.AccountKey, len(cmd.Key.Values))
+		for i := range cmd.Key.Values {
+			ks[i] = cmd.Key.Values[i]
 		}
 
 		if kys, err := types.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {

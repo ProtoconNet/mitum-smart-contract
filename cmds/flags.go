@@ -15,10 +15,14 @@ import (
 )
 
 type KeyFlag struct {
-	Key types.BaseAccountKey
+	Values []types.BaseAccountKey
 }
 
 func (v *KeyFlag) UnmarshalText(b []byte) error {
+	if len(b) < 1 {
+		return errors.Errorf("empty Key")
+	}
+
 	if bytes.Equal(bytes.TrimSpace(b), []byte("-")) {
 		c, err := LoadFromStdInput()
 		if err != nil {
@@ -27,31 +31,34 @@ func (v *KeyFlag) UnmarshalText(b []byte) error {
 		b = c
 	}
 
-	l := strings.SplitN(string(b), ",", 2)
-	if len(l) != 2 {
-		return errors.Errorf(`wrong formatted; "<string private key>,<uint weight>"`)
-	}
+	arr := strings.SplitN(string(b), "@", -1)
+	for i := range arr {
+		l := strings.SplitN(arr[i], ",", 2)
+		if len(l) != 2 {
+			return errors.Errorf(`wrong formatted, %s; "<string private key>,<uint weight>"`, arr[i])
+		}
 
-	var pk base.Publickey
-	if k, err := base.DecodePublickeyFromString(l[0], enc); err != nil {
-		return errors.Wrapf(err, "invalid public key, %v for --key", l[0])
-	} else {
-		pk = k
-	}
+		var pk base.Publickey
+		if k, err := base.DecodePublickeyFromString(l[0], enc); err != nil {
+			return errors.Wrapf(err, "invalid public key, %v for --key", l[0])
+		} else {
+			pk = k
+		}
 
-	var weight uint = 100
-	if i, err := strconv.ParseUint(l[1], 10, 8); err != nil {
-		return errors.Wrapf(err, "invalid weight, %v for --key", l[1])
-	} else if i > 0 && i <= 100 {
-		weight = uint(i)
-	}
+		var weight uint = 100
+		if i, err := strconv.ParseUint(l[1], 10, 8); err != nil {
+			return errors.Wrapf(err, "invalid weight, %v for --key", l[1])
+		} else if i > 0 && i <= 100 {
+			weight = uint(i)
+		}
 
-	if k, err := types.NewBaseAccountKey(pk, weight); err != nil {
-		return err
-	} else if err := k.IsValid(nil); err != nil {
-		return errors.Wrap(err, "invalid key string")
-	} else {
-		v.Key = k
+		if k, err := types.NewBaseAccountKey(pk, weight); err != nil {
+			return err
+		} else if err := k.IsValid(nil); err != nil {
+			return errors.Wrap(err, "invalid key string")
+		} else {
+			v.Values = append(v.Values, k)
+		}
 	}
 
 	return nil
@@ -209,6 +216,59 @@ func (v *CurrencyAmountFlag) UnmarshalText(b []byte) error {
 	}
 
 	return nil
+}
+
+type AddressCurrencyAmountFlag struct {
+	address []base.Address
+	amount  []types.Amount
+}
+
+func (v *AddressCurrencyAmountFlag) UnmarshalText(b []byte) error {
+	arr := strings.SplitN(string(b), "@", -1)
+	for i := range arr {
+		l := strings.SplitN(arr[i], ",", 3)
+		if len(l) != 3 {
+			return fmt.Errorf("invalid address-currency-amount, %q", arr[i])
+		}
+
+		add, err := base.DecodeAddress(l[0], enc)
+		if err != nil {
+			return err
+		}
+		v.address = append(v.address, add)
+
+		cid := types.CurrencyID(l[1])
+		if err := cid.IsValid(nil); err != nil {
+			return err
+		}
+
+		b, err := common.NewBigFromString(l[2])
+		if err != nil {
+			return errors.Wrapf(err, "invalid big string, %q", string(l[2]))
+		} else if err := b.IsValid(nil); err != nil {
+			return err
+		}
+
+		am := types.NewAmount(b, cid)
+		if err := am.IsValid(nil); err != nil {
+			return err
+		}
+		v.amount = append(v.amount, am)
+	}
+
+	if len(v.amount) != len(v.address) {
+		return errors.Errorf("failed to parse %s", string(b))
+	}
+
+	return nil
+}
+
+func (v *AddressCurrencyAmountFlag) Address() []base.Address {
+	return v.address
+}
+
+func (v *AddressCurrencyAmountFlag) Amount() []types.Amount {
+	return v.amount
 }
 
 func (v *CurrencyAmountFlag) String() string {
