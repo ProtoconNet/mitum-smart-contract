@@ -80,6 +80,10 @@ func (opp *WithdrawItemProcessor) PreProcess(
 			return err
 		}
 
+		if balance.Big().Compare(am.Big()) < 0 {
+			return errors.Errorf("insufficient contract account balance")
+		}
+
 		tb[am.Currency()] = common.NewBaseStateMergeValue(
 			st.Key(),
 			statecurrency.NewDeductBalanceStateValue(balance),
@@ -253,8 +257,6 @@ func (opp *WithdrawProcessor) Process( // nolint:dupl
 			return nil, base.NewBaseOperationProcessReasonError("process WithdrawItem: %v", err), nil
 		}
 		stateMergeValues = append(stateMergeValues, s...)
-
-		ns[i].Close()
 	}
 
 	for cid := range senderBalSts {
