@@ -70,10 +70,11 @@ func (fact UpdateOperatorFact) IsValid(b []byte) error {
 		return util.ErrInvalid.Errorf("invalid fact: %v", err)
 	}
 
-	if n := len(fact.operators); n < 1 {
-		return util.ErrInvalid.Errorf("empty operators")
-	} else if n > MaxOperators {
-		return util.ErrInvalid.Errorf("operators, %d over max, %d", n, MaxOperators)
+	//if n := len(fact.operators); n < 1 {
+	//	return util.ErrInvalid.Errorf("empty operators")
+	//}
+	if len(fact.operators) > MaxOperators {
+		return util.ErrInvalid.Errorf("operators, %d over max, %d", len(fact.operators), MaxOperators)
 	}
 
 	operatorsMap := make(map[string]struct{})

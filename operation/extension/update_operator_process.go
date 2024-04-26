@@ -76,7 +76,8 @@ func (opp *UpdateOperatorProcessor) PreProcess(
 		return ctx, base.NewBaseOperationProcessReasonError("check existence of sender %v; %w", fact.Sender(), err), nil
 	} else if err := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Sender()), getStateFunc); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError("contract account cannot update operator, %v; %w", fact.Sender(), err), nil
-	} else if err = state.CheckExistsState(currency.StateKeyAccount(fact.Contract()), getStateFunc); err != nil {
+	}
+	if err := state.CheckExistsState(currency.StateKeyAccount(fact.Contract()), getStateFunc); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError("check existence of contract %v; %w", fact.Contract(), err), nil
 	} else if err := state.CheckExistsState(extension.StateKeyContractAccount(fact.Contract()), getStateFunc); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError("check existence of target contract account %v; %w", fact.Contract(), err), nil
