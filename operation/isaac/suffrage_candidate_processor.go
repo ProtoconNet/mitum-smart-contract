@@ -159,7 +159,7 @@ func (p *SuffrageCandidateProcessor) Process(ctx context.Context, op base.Operat
 }
 
 type SuffrageCandidatesStateValueMerger struct {
-	*base.BaseStateValueMerger
+	*common.BaseStateValueMerger
 	existings []base.SuffrageCandidateStateValue
 	added     []base.SuffrageCandidateStateValue
 	removes   []base.Address
@@ -168,7 +168,7 @@ type SuffrageCandidatesStateValueMerger struct {
 
 func NewSuffrageCandidatesStateValueMerger(height base.Height, st base.State) *SuffrageCandidatesStateValueMerger {
 	s := &SuffrageCandidatesStateValueMerger{
-		BaseStateValueMerger: base.NewBaseStateValueMerger(height, isaac.SuffrageCandidateStateKey, st),
+		BaseStateValueMerger: common.NewBaseStateValueMerger(height, isaac.SuffrageCandidateStateKey, st),
 	}
 
 	if st != nil {

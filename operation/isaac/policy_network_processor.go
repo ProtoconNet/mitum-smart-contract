@@ -2,6 +2,7 @@ package isaacoperation
 
 import (
 	"context"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 
 	"github.com/ProtoconNet/mitum2/base"
@@ -136,7 +137,7 @@ func (p *NetworkPolicyProcessor) Process(ctx context.Context, op base.Operation,
 	fact := op.Fact().(NetworkPolicyFact) //nolint:forcetypeassert //...
 
 	return []base.StateMergeValue{
-		base.NewBaseStateMergeValue(
+		common.NewBaseStateMergeValue(
 			isaac.NetworkPolicyStateKey,
 			types.NewNetworkPolicyStateValue(fact.Policy()),
 			nil,
