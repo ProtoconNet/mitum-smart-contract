@@ -164,7 +164,8 @@ func (p *SuffrageJoinProcessor) Process(ctx context.Context, op base.Operation, 
 
 	fact := op.Fact().(SuffrageJoinFact) //nolint:forcetypeassert //...
 
-	member := p.candidates[fact.Candidate().String()]
+	candidate := p.candidates[fact.Candidate().String()]
+	member := isaac.NewNode(candidate.Publickey(), candidate.Address())
 
 	return []base.StateMergeValue{
 		common.NewBaseStateMergeValue(
@@ -206,7 +207,7 @@ func (*SuffrageJoinProcessor) findCandidateFromSigns(op base.Operation) (base.No
 }
 
 type SuffrageJoinStateValueMerger struct {
-	*base.BaseStateValueMerger
+	*common.BaseStateValueMerger
 	existing  base.SuffrageNodesStateValue
 	joined    []base.Node
 	disjoined []base.Address
@@ -215,7 +216,7 @@ type SuffrageJoinStateValueMerger struct {
 
 func NewSuffrageJoinStateValueMerger(height base.Height, st base.State) *SuffrageJoinStateValueMerger {
 	s := &SuffrageJoinStateValueMerger{
-		BaseStateValueMerger: base.NewBaseStateValueMerger(height, isaac.SuffrageStateKey, st),
+		BaseStateValueMerger: common.NewBaseStateValueMerger(height, isaac.SuffrageStateKey, st),
 	}
 
 	s.existing = st.Value().(base.SuffrageNodesStateValue) //nolint:forcetypeassert //...
