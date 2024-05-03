@@ -8,7 +8,6 @@ import (
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
-	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
 
 func (ky BaseAccountKey) MarshalBSON() ([]byte, error) {
@@ -63,17 +62,6 @@ func (ks NilAccountKeys) MarshalBSON() ([]byte, error) {
 	)
 }
 
-func (ks EthAccountKeys) MarshalBSON() ([]byte, error) {
-	return bsonenc.Marshal(
-		bson.M{
-			"_hint":     ks.Hint().String(),
-			"hash":      ks.Hash().String(),
-			"keys":      ks.keys,
-			"threshold": ks.threshold,
-		},
-	)
-}
-
 func (ks ContractAccountKeys) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
@@ -124,49 +112,12 @@ func (ks *BaseAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	ks.keys = keys
 	ks.threshold = uks.Threshold
 
-	ks.h = valuehash.NewBytesFromString(uks.Hash)
-
-	return nil
-}
-
-func (ks *EthAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of EthAccountKeys")
-
-	var uks KeysBSONUnmarshaler
-	if err := bson.Unmarshal(b, &uks); err != nil {
-		return e.Wrap(err)
-	}
-
-	ht, err := hint.ParseHint(uks.Hint)
-	if err != nil {
-		return e.Wrap(err)
-	}
-
-	ks.BaseHinter = hint.NewBaseHinter(ht)
-
-	hks, err := enc.DecodeSlice(uks.Keys)
-	if err != nil {
-		return e.Wrap(err)
-	}
-
-	keys := make([]AccountKey, len(hks))
-	for i := range hks {
-		j, ok := hks[i].(BaseAccountKey)
-		if !ok {
-			return errors.Errorf("expected BaseAccountKey, not %T", hks[i])
-		}
-
-		keys[i] = j
-	}
-	ks.keys = keys
-	ks.threshold = uks.Threshold
-
 	ks.h = common.NewBytesFromString(uks.Hash)
 
 	return nil
 }
 
-func (ks *NilAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+func (ks *NilAccountKeys) DecodeBSON(b []byte, _ *bsonenc.Encoder) error {
 	e := util.StringError("decode bson of NilAccountKeys")
 
 	var uks KeysBSONUnmarshaler
@@ -180,7 +131,7 @@ func (ks *NilAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	}
 
 	ks.BaseHinter = hint.NewBaseHinter(ht)
-	ks.h = valuehash.NewBytesFromString(uks.Hash)
+	ks.h = common.NewBytesFromString(uks.Hash)
 	ks.threshold = uks.Threshold
 
 	return nil
@@ -218,7 +169,7 @@ func (ks *ContractAccountKeys) DecodeBSON(b []byte, enc *bsonenc.Encoder) error 
 	ks.keys = keys
 	ks.threshold = uks.Threshold
 
-	ks.h = valuehash.NewBytesFromString(uks.Hash)
+	ks.h = common.NewBytesFromString(uks.Hash)
 
 	return nil
 }

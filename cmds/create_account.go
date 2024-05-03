@@ -13,13 +13,13 @@ import (
 type CreateAccountCommand struct {
 	BaseCommand
 	OperationFlags
-	Sender      AddressFlag        `arg:"" name:"sender" help:"sender address" required:"true"`
-	Threshold   uint               `help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
-	Key         KeyFlag            `name:"key" help:"key for new account (ex: \"<public key>,<weight>\") separator @"`
-	Amount      CurrencyAmountFlag `arg:"" name:"currency-amount" help:"amount (ex: \"<currency>,<amount>\")"`
-	AddressType string             `help:"address type for new account select mitum or ether" default:"mitum"`
-	sender      base.Address
-	keys        types.AccountKeys
+	Sender    AddressFlag        `arg:"" name:"sender" help:"sender address" required:"true"`
+	Threshold uint               `help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
+	Key       KeyFlag            `name:"key" help:"key for new account (ex: \"<public key>,<weight>\") separator @"`
+	Amount    CurrencyAmountFlag `arg:"" name:"currency-amount" help:"amount (ex: \"<currency>,<amount>\")"`
+	//AddressType string             `help:"address type for new account select mitum or ether" default:"mitum"`
+	sender base.Address
+	keys   types.AccountKeys
 }
 
 func (cmd *CreateAccountCommand) Run(pctx context.Context) error { // nolint:dupl
@@ -59,15 +59,19 @@ func (cmd *CreateAccountCommand) parseFlags() error {
 		}
 
 		var kys types.AccountKeys
-		switch {
-		case cmd.AddressType == "ether":
-			if kys, err = types.NewEthAccountKeys(ks, cmd.Threshold); err != nil {
-				return err
-			}
-		default:
-			if kys, err = types.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
-				return err
-			}
+		//switch {
+		//case cmd.AddressType == "ether":
+		//	if kys, err = types.NewEthAccountKeys(ks, cmd.Threshold); err != nil {
+		//		return err
+		//	}
+		//default:
+		//	if kys, err = types.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
+		//		return err
+		//	}
+		//}
+
+		if kys, err = types.NewBaseAccountKeys(ks, cmd.Threshold); err != nil {
+			return err
 		}
 
 		if err := kys.IsValid(nil); err != nil {
@@ -91,13 +95,13 @@ func (cmd *CreateAccountCommand) createOperation() (base.Operation, error) { // 
 
 	ams[0] = am
 
-	addrType := types.AddressHint.Type()
+	//addrType := types.AddressHint.Type()
+	//
+	//if cmd.AddressType == "ether" {
+	//	addrType = types.EthAddressHint.Type()
+	//}
 
-	if cmd.AddressType == "ether" {
-		addrType = types.EthAddressHint.Type()
-	}
-
-	item := currency.NewCreateAccountItemMultiAmounts(cmd.keys, ams, addrType)
+	item := currency.NewCreateAccountItemMultiAmounts(cmd.keys, ams)
 	if err := item.IsValid(nil); err != nil {
 		return nil, err
 	}

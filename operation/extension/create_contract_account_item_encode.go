@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (it *BaseCreateContractAccountItem) unpack(enc encoder.Encoder, ht hint.Hint, bks []byte, bam []byte, sadtype string) error {
+func (it *BaseCreateContractAccountItem) unpack(enc encoder.Encoder, ht hint.Hint, bks []byte, bam []byte) error {
 	e := util.StringError("unmarshal BaseCreateContractAccountItem")
 
 	it.BaseHinter = hint.NewBaseHinter(ht)
@@ -37,7 +37,6 @@ func (it *BaseCreateContractAccountItem) unpack(enc encoder.Encoder, ht hint.Hin
 	}
 
 	it.amounts = amounts
-	it.addressType = hint.Type(sadtype)
 
 	return nil
 }

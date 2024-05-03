@@ -120,16 +120,8 @@ func (opp *CreateContractAccountItemProcessor) Process(
 
 	sts := make([]base.StateMergeValue, len(opp.item.Amounts())+2)
 
-	var (
-		nac types.Account
-		err error
-	)
+	nac, err := types.NewAccountFromKeys(opp.item.Keys())
 
-	if opp.item.AddressType() == types.EthAddressHint.Type() {
-		nac, err = types.NewEthAccountFromKeys(opp.item.Keys())
-	} else {
-		nac, err = types.NewAccountFromKeys(opp.item.Keys())
-	}
 	if err != nil {
 		return nil, e.Wrap(err)
 	}

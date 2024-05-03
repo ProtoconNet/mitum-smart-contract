@@ -15,13 +15,3 @@ func (ca *Address) DecodeBSON(b []byte, _ *bsonenc.Encoder) error {
 
 	return nil
 }
-
-func (ca EthAddress) MarshalBSONValue() (bsontype.Type, []byte, error) {
-	return bsontype.String, bsoncore.AppendString(nil, ca.String()), nil
-}
-
-func (ca *EthAddress) DecodeBSON(b []byte, _ *bsonenc.Encoder) error {
-	*ca = NewEthAddress(string(b))
-
-	return nil
-}

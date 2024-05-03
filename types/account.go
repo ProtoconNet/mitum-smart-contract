@@ -44,16 +44,6 @@ func NewAccountFromKeys(keys AccountKeys) (Account, error) {
 	}
 }
 
-func NewEthAccountFromKeys(keys AccountKeys) (Account, error) {
-	if a, err := NewEthAddressFromKeys(keys); err != nil {
-		return Account{}, err
-	} else if ac, err := NewAccount(a, keys); err != nil {
-		return Account{}, err
-	} else {
-		return ac, nil
-	}
-}
-
 func (ac Account) Bytes() []byte {
 	bs := make([][]byte, 2)
 	bs[0] = ac.address.Bytes()

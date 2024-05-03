@@ -28,7 +28,6 @@ type CreateAccountItem interface {
 	Keys() types.AccountKeys
 	Address() (base.Address, error)
 	Rebuild() CreateAccountItem
-	AddressType() hint.Type
 }
 
 type CreateAccountFact struct {

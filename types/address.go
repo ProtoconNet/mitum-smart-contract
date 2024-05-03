@@ -1,15 +1,21 @@
 package types
 
 import (
+	"encoding/hex"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"golang.org/x/crypto/sha3"
+	"strings"
 )
 
 var (
-	AddressHint       = hint.MustNewHint("mca-v0.0.1")
-	EthAddressHint    = hint.MustNewHint("eca-v0.0.1")
+	AddressHint       = hint.MustNewHint("fca-v0.0.1")
 	ZeroAddressSuffix = "-X"
+)
+
+const (
+	AddressLength = 20
 )
 
 type Address struct {
@@ -23,45 +29,64 @@ func NewAddress(s string) Address {
 }
 
 func NewAddressFromKeys(keys AccountKeys) (Address, error) {
-	if err := keys.IsValid(nil); err != nil {
-		return Address{}, err
-	}
+	var buf [42]byte
+	copy(buf[:2], "0x")
+	hex.Encode(buf[2:], keys.Hash().Bytes())
+	s := string(ChecksumHex(buf))
 
-	return NewAddress(keys.Hash().String()), nil
+	return NewAddress(s), nil
 }
 
-func (ca Address) IsValid([]byte) error {
-	if err := ca.BaseStringAddress.IsValid(nil); err != nil {
-		return util.ErrInvalid.Errorf("invalid mitum currency address: %v", err)
+func (ad Address) IsValid([]byte) error {
+	if err := ad.BaseStringAddress.IsValid(nil); err != nil {
+		return util.ErrInvalid.Errorf("invalid mitum currency address1: %v", err)
+	}
+
+	sad, _, err := hint.ParseFixedTypedString(ad.String(), 3)
+	if err != nil {
+		return util.ErrInvalid.Errorf("invalid mitum currency address2: %v", err)
+	}
+
+	switch {
+	case IsZeroAddress(sad):
+		return nil
+	default:
+		var buf [42]byte
+
+		copy(buf[:2], "0x")
+		lowered := strings.ToLower(strings.TrimPrefix(sad, "0x"))
+
+		bytes, err := hex.DecodeString(lowered)
+		if err != nil {
+			return util.ErrInvalid.Errorf("invalid mitum currency address3: %v", err)
+		}
+		hex.Encode(buf[2:], bytes)
+		if string(ChecksumHex(buf)) != sad {
+			return util.ErrInvalid.Errorf("invalid mitum currency address: checksum not matched, expeced %v but %v", string(ChecksumHex(buf)), sad)
+		}
 	}
 
 	return nil
 }
 
-type EthAddress struct {
-	base.BaseStringAddress
-}
-
-func NewEthAddress(s string) EthAddress {
-	ca := EthAddress{BaseStringAddress: base.NewBaseStringAddressWithHint(EthAddressHint, s)}
-
-	return ca
-}
-
-func NewEthAddressFromKeys(keys AccountKeys) (EthAddress, error) {
-	//var b valuehash.L32
-	//copy(b[:], keys.Hash().Bytes()[:])
-	//
-	//return NewEthAddress(hex.EncodeToString(b[12:])), nil
-	return NewEthAddress(keys.Hash().String()), nil
-}
-
-func (ca EthAddress) IsValid([]byte) error {
-	if err := ca.BaseStringAddress.IsValid(nil); err != nil {
-		return util.ErrInvalid.Errorf("invalid mitum currency address: %v", err)
+// ChecksumHex return the hex in the manner of EIP55
+func ChecksumHex(buf [42]byte) []byte {
+	// compute checksum
+	sha := sha3.NewLegacyKeccak256()
+	sha.Write(buf[2:])
+	hash := sha.Sum(nil)
+	for i := 2; i < len(buf); i++ {
+		hashByte := hash[(i-2)/2]
+		if i%2 == 0 {
+			hashByte = hashByte >> 4
+		} else {
+			hashByte &= 0xf
+		}
+		if buf[i] > '9' && hashByte > 7 {
+			buf[i] -= 32
+		}
 	}
-
-	return nil
+	return buf[:]
 }
 
 type Addresses interface {
@@ -70,4 +95,8 @@ type Addresses interface {
 
 func ZeroAddress(cid CurrencyID) Address {
 	return NewAddress(cid.String() + ZeroAddressSuffix)
+}
+
+func IsZeroAddress(ad string) bool {
+	return strings.HasSuffix(ad, ZeroAddressSuffix)
 }

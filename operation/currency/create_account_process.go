@@ -100,16 +100,8 @@ func (opp *CreateAccountItemProcessor) Process(
 ) ([]base.StateMergeValue, error) {
 	e := util.StringError("preprocess for CreateAccountItemProcessor")
 
-	var (
-		nac types.Account
-		err error
-	)
+	nac, err := types.NewAccountFromKeys(opp.item.Keys())
 
-	if opp.item.AddressType() == types.EthAddressHint.Type() {
-		nac, err = types.NewEthAccountFromKeys(opp.item.Keys())
-	} else {
-		nac, err = types.NewAccountFromKeys(opp.item.Keys())
-	}
 	if err != nil {
 		return nil, e.Wrap(err)
 	}

@@ -9,26 +9,23 @@ import (
 
 type BaseCreateAccountItem struct {
 	hint.BaseHinter
-	keys        types.AccountKeys
-	amounts     []types.Amount
-	addressType hint.Type
+	keys    types.AccountKeys
+	amounts []types.Amount
 }
 
-func NewBaseCreateAccountItem(ht hint.Hint, keys types.AccountKeys, amounts []types.Amount, addrHint hint.Type) BaseCreateAccountItem {
+func NewBaseCreateAccountItem(ht hint.Hint, keys types.AccountKeys, amounts []types.Amount) BaseCreateAccountItem {
 	return BaseCreateAccountItem{
-		BaseHinter:  hint.NewBaseHinter(ht),
-		keys:        keys,
-		amounts:     amounts,
-		addressType: addrHint,
+		BaseHinter: hint.NewBaseHinter(ht),
+		keys:       keys,
+		amounts:    amounts,
 	}
 }
 
 func (it BaseCreateAccountItem) Bytes() []byte {
-	bs := make([][]byte, len(it.amounts)+2)
+	bs := make([][]byte, len(it.amounts)+1)
 	bs[0] = it.keys.Bytes()
-	bs[1] = it.addressType.Bytes()
 	for i := range it.amounts {
-		bs[i+2] = it.amounts[i].Bytes()
+		bs[i+1] = it.amounts[i].Bytes()
 	}
 
 	return util.ConcatBytesSlice(bs...)
@@ -41,10 +38,6 @@ func (it BaseCreateAccountItem) IsValid([]byte) error {
 
 	if err := util.CheckIsValiders(nil, false, it.BaseHinter, it.keys); err != nil {
 		return err
-	}
-
-	if it.addressType != types.AddressHint.Type() && it.addressType != types.EthAddressHint.Type() {
-		return util.ErrInvalid.Errorf("invalid AddressHint")
 	}
 
 	founds := map[types.CurrencyID]struct{}{}
@@ -70,16 +63,7 @@ func (it BaseCreateAccountItem) Keys() types.AccountKeys {
 }
 
 func (it BaseCreateAccountItem) Address() (base.Address, error) {
-	if it.addressType == types.AddressHint.Type() {
-		return types.NewAddressFromKeys(it.keys)
-	} else if it.addressType == types.EthAddressHint.Type() {
-		return types.NewEthAddressFromKeys(it.keys)
-	}
-	return nil, util.ErrInvalid.Errorf("invalid address hint")
-}
-
-func (it BaseCreateAccountItem) AddressType() hint.Type {
-	return it.addressType
+	return types.NewAddressFromKeys(it.keys)
 }
 
 func (it BaseCreateAccountItem) Amounts() []types.Amount {

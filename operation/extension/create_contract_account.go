@@ -25,7 +25,6 @@ type CreateContractAccountItem interface {
 	Keys() types.AccountKeys
 	Address() (base.Address, error)
 	Rebuild() CreateContractAccountItem
-	AddressType() hint.Type
 }
 
 type CreateContractAccountFact struct {

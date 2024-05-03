@@ -31,30 +31,17 @@ func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
 	var a base.Address
 	var keys types.AccountKeys
 	var err error
-	if cmd.AddressType == "ether" {
-		keys, err = types.NewEthAccountKeys(ks, cmd.Threshold)
-		if err != nil {
-			return err
-		}
 
-		cmd.Log.Debug().Int("number_of_keys", len(ks)).Interface("keys", keys).Msg("keys loaded")
+	keys, err = types.NewBaseAccountKeys(ks, cmd.Threshold)
+	if err != nil {
+		return err
+	}
 
-		a, err = types.NewEthAddressFromKeys(keys)
-		if err != nil {
-			return err
-		}
-	} else {
-		keys, err = types.NewBaseAccountKeys(ks, cmd.Threshold)
-		if err != nil {
-			return err
-		}
+	cmd.Log.Debug().Int("number_of_keys", len(ks)).Interface("keys", keys).Msg("keys loaded")
 
-		cmd.Log.Debug().Int("number_of_keys", len(ks)).Interface("keys", keys).Msg("keys loaded")
-
-		a, err = types.NewAddressFromKeys(keys)
-		if err != nil {
-			return err
-		}
+	a, err = types.NewAddressFromKeys(keys)
+	if err != nil {
+		return err
 	}
 
 	cmd.print(a.String())

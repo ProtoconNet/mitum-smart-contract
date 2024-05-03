@@ -9,25 +9,22 @@ import (
 
 type BaseCreateContractAccountItem struct {
 	hint.BaseHinter
-	keys        types.AccountKeys
-	amounts     []types.Amount
-	addressType hint.Type
+	keys    types.AccountKeys
+	amounts []types.Amount
 }
 
-func NewBaseCreateContractAccountItem(ht hint.Hint, keys types.AccountKeys, amounts []types.Amount, addrType hint.Type) BaseCreateContractAccountItem {
+func NewBaseCreateContractAccountItem(ht hint.Hint, keys types.AccountKeys, amounts []types.Amount) BaseCreateContractAccountItem {
 	return BaseCreateContractAccountItem{
-		BaseHinter:  hint.NewBaseHinter(ht),
-		keys:        keys,
-		amounts:     amounts,
-		addressType: addrType,
+		BaseHinter: hint.NewBaseHinter(ht),
+		keys:       keys,
+		amounts:    amounts,
 	}
 }
 
 func (it BaseCreateContractAccountItem) Bytes() []byte {
-	length := 2
-	bs := make([][]byte, len(it.amounts)+length)
+	length := 1
+	bs := make([][]byte, len(it.amounts)+1)
 	bs[0] = it.keys.Bytes()
-	bs[1] = it.addressType.Bytes()
 	for i := range it.amounts {
 		bs[i+length] = it.amounts[i].Bytes()
 	}
@@ -40,31 +37,10 @@ func (it BaseCreateContractAccountItem) IsValid([]byte) error {
 		return util.ErrInvalid.Errorf("empty amounts")
 	}
 
-	if err := util.CheckIsValiders(nil, false, it.BaseHinter, it.keys, it.addressType); err != nil {
+	if err := util.CheckIsValiders(nil, false, it.BaseHinter, it.keys); err != nil {
 		return err
 	}
 
-	if it.addressType != types.AddressHint.Type() && it.addressType != types.EthAddressHint.Type() {
-		return util.ErrInvalid.Errorf("invalid AddressHint")
-	}
-
-	if it.addressType == types.AddressHint.Type() {
-		if it.keys.Hint().Equal(types.EthAccountKeysHint) {
-			return util.ErrInvalid.Errorf(
-				"keys type not matched with address type, %v, %v",
-				it.keys.Hint().Type(),
-				it.addressType,
-			)
-		}
-	} else {
-		if it.keys.Hint().Equal(types.AccountKeysHint) {
-			return util.ErrInvalid.Errorf(
-				"keys type not matched with address type, %v, %v",
-				it.keys.Hint().Type(),
-				it.addressType,
-			)
-		}
-	}
 	founds := map[types.CurrencyID]struct{}{}
 	for i := range it.amounts {
 		am := it.amounts[i]
@@ -88,16 +64,7 @@ func (it BaseCreateContractAccountItem) Keys() types.AccountKeys {
 }
 
 func (it BaseCreateContractAccountItem) Address() (base.Address, error) {
-	if it.addressType == types.AddressHint.Type() {
-		return types.NewAddressFromKeys(it.keys)
-	} else if it.addressType == types.EthAddressHint.Type() {
-		return types.NewEthAddressFromKeys(it.keys)
-	}
-	return nil, util.ErrInvalid.Errorf("invalid address hint")
-}
-
-func (it BaseCreateContractAccountItem) AddressType() hint.Type {
-	return it.addressType
+	return types.NewAddressFromKeys(it.keys)
 }
 
 func (it BaseCreateContractAccountItem) Amounts() []types.Amount {

@@ -11,9 +11,8 @@ import (
 
 type CreateContractAccountItemJSONMarshaler struct {
 	hint.BaseHinter
-	Keys     types.AccountKeys `json:"keys"`
-	Amounts  []types.Amount    `json:"amounts"`
-	AddrType hint.Type         `json:"addrtype"`
+	Keys    types.AccountKeys `json:"keys"`
+	Amounts []types.Amount    `json:"amounts"`
 }
 
 func (it BaseCreateContractAccountItem) MarshalJSON() ([]byte, error) {
@@ -21,15 +20,13 @@ func (it BaseCreateContractAccountItem) MarshalJSON() ([]byte, error) {
 		BaseHinter: it.BaseHinter,
 		Keys:       it.keys,
 		Amounts:    it.amounts,
-		AddrType:   it.addressType,
 	})
 }
 
 type CreateContractAccountItemJSONUnMarshaler struct {
-	Hint     hint.Hint       `json:"_hint"`
-	Keys     json.RawMessage `json:"keys"`
-	Amounts  json.RawMessage `json:"amounts"`
-	AddrType string          `json:"addrtype"`
+	Hint    hint.Hint       `json:"_hint"`
+	Keys    json.RawMessage `json:"keys"`
+	Amounts json.RawMessage `json:"amounts"`
 }
 
 func (it *BaseCreateContractAccountItem) DecodeJSON(b []byte, enc encoder.Encoder) error {
@@ -40,5 +37,5 @@ func (it *BaseCreateContractAccountItem) DecodeJSON(b []byte, enc encoder.Encode
 		return e.Wrap(err)
 	}
 
-	return it.unpack(enc, uit.Hint, uit.Keys, uit.Amounts, uit.AddrType)
+	return it.unpack(enc, uit.Hint, uit.Keys, uit.Amounts)
 }

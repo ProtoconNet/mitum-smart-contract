@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	MEPrivatekeyHint = hint.MustNewHint("epr-v0.0.1")
-	MEPublickeyHint  = hint.MustNewHint("epu-v0.0.1")
+	MEPrivatekeyHint = hint.MustNewHint("fpr-v0.0.1")
+	MEPublickeyHint  = hint.MustNewHint("fpu-v0.0.1")
 )
 
 // MEPrivatekey is the default privatekey of mitum, it is based on BTC Privatekey.
