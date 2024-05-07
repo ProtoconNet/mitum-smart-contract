@@ -17,6 +17,7 @@ type ManifestDoc struct {
 	confirmedAt time.Time
 	proposer    base.Address
 	round       base.Round
+	gitInfo     string
 }
 
 func NewManifestDoc(
@@ -27,6 +28,7 @@ func NewManifestDoc(
 	confirmedAt time.Time,
 	proposer base.Address,
 	round base.Round,
+	gitInfo string,
 ) (ManifestDoc, error) {
 	b, err := mongodbstorage.NewBaseDoc(nil, manifest, enc)
 	if err != nil {
@@ -41,6 +43,7 @@ func NewManifestDoc(
 		confirmedAt: confirmedAt,
 		proposer:    proposer,
 		round:       round,
+		gitInfo:     gitInfo,
 	}, nil
 }
 
@@ -56,6 +59,7 @@ func (doc ManifestDoc) MarshalBSON() ([]byte, error) {
 	m["confirmed_at"] = doc.confirmedAt.String()
 	m["proposer"] = doc.proposer.String()
 	m["round"] = doc.round.Uint64()
+	m["buildInfo"] = doc.gitInfo
 
 	return bsonenc.Marshal(m)
 }

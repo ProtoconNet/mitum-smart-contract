@@ -56,6 +56,7 @@ type Digester struct {
 	sourceReaders *isaac.BlockItemReaders
 	fromRemotes   isaac.RemotesBlockItemReadFunc
 	networkID     base.NetworkID
+	buildInfo     string
 }
 
 func NewDigester(
@@ -64,6 +65,7 @@ func NewDigester(
 	sourceReaders *isaac.BlockItemReaders,
 	fromRemotes isaac.RemotesBlockItemReadFunc,
 	networkID base.NetworkID,
+	vs string,
 	errChan chan error,
 ) *Digester {
 	di := &Digester{
@@ -77,6 +79,7 @@ func NewDigester(
 		sourceReaders: sourceReaders,
 		fromRemotes:   fromRemotes,
 		networkID:     networkID,
+		buildInfo:     vs,
 	}
 
 	di.ContextDaemon = util.NewContextDaemon(di.start)
@@ -167,7 +170,7 @@ func (di *Digester) digest(ctx context.Context, blk base.BlockMap) error {
 		return e.Wrap(err)
 	}
 
-	if err := DigestBlock(ctx, di.database, blk, ops, opsTree, sts, pr); err != nil {
+	if err := DigestBlock(ctx, di.database, blk, ops, opsTree, sts, pr, di.buildInfo); err != nil {
 		return e.Wrap(err)
 	}
 
@@ -182,12 +185,13 @@ func DigestBlock(
 	opsTree fixedtree.Tree,
 	sts []base.State,
 	proposal base.ProposalSignFact,
+	vs string,
 ) error {
 	if m, _, _, _, _, _ := st.ManifestByHeight(blk.Manifest().Height()); m != nil {
 		return nil
 	}
 
-	bs, err := NewBlockSession(st, blk, ops, opsTree, sts, proposal)
+	bs, err := NewBlockSession(st, blk, ops, opsTree, sts, proposal, vs)
 	if err != nil {
 		return err
 	}

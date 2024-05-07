@@ -24,7 +24,7 @@ func checkURI(uri string) (connstring.ConnString, error) {
 		return connstring.ConnString{}, errors.Errorf("empty database name in mongodb uri: '%v'", uri)
 	}
 
-	return cs, nil
+	return *cs, nil
 }
 
 func parseDurationFromQuery(query url.Values, key string, v time.Duration) (time.Duration, error) {

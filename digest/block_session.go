@@ -3,19 +3,18 @@ package digest
 import (
 	"context"
 	"fmt"
-	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	stateextension "github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-
 	"github.com/ProtoconNet/mitum-currency/v3/digest/isaac"
+	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	stateextension "github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum2/base"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/fixedtree"
+	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var bulkWriteLimit = 500
@@ -47,9 +46,10 @@ type BlockSession struct {
 	currencyModels        []mongo.WriteModel
 	statesValue           *sync.Map
 	balanceAddressList    []string
+	buildinfo             string
 }
 
-func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opsTree fixedtree.Tree, sts []base.State, proposal base.ProposalSignFact) (*BlockSession, error) {
+func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opsTree fixedtree.Tree, sts []base.State, proposal base.ProposalSignFact, vs string) (*BlockSession, error) {
 	if st.Readonly() {
 		return nil, errors.Errorf("readonly mode")
 	}
@@ -67,6 +67,7 @@ func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opsT
 		sts:         sts,
 		proposal:    proposal,
 		statesValue: &sync.Map{},
+		buildinfo:   vs,
 	}, nil
 }
 
@@ -189,7 +190,7 @@ func (bs *BlockSession) prepareBlock() error {
 		bs.block.Manifest().ProposedAt(),
 	)
 
-	doc, err := NewManifestDoc(manifest, bs.st.database.Encoder(), bs.block.Manifest().Height(), bs.ops, bs.block.SignedAt(), bs.proposal.ProposalFact().Proposer(), bs.proposal.ProposalFact().Point().Round())
+	doc, err := NewManifestDoc(manifest, bs.st.database.Encoder(), bs.block.Manifest().Height(), bs.ops, bs.block.SignedAt(), bs.proposal.ProposalFact().Proposer(), bs.proposal.ProposalFact().Point().Round(), bs.buildinfo)
 	if err != nil {
 		return err
 	}
