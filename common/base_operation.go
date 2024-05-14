@@ -67,6 +67,27 @@ func (op BaseOperation) IsValid(networkID []byte) error {
 		return e.Wrap(err)
 	}
 
+	sfs := op.Signs()
+	var duplicatederr error
+
+	switch duplicated := util.IsDuplicatedSlice(sfs, func(i base.Sign) (bool, string) {
+		if i == nil {
+			return true, ""
+		}
+
+		s, ok := i.(base.Sign)
+		if !ok {
+			duplicatederr = errors.Errorf("expected Sign got %T", i)
+		}
+
+		return duplicatederr == nil, s.Signer().String()
+	}); {
+	case duplicatederr != nil:
+		return e.Wrap(duplicatederr)
+	case duplicated:
+		return e.Errorf("duplicated signs found")
+	}
+
 	if err := base.IsValidSignFact(op, networkID); err != nil {
 		return e.Wrap(err)
 	}
