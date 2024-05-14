@@ -4,10 +4,8 @@ go 1.22
 
 toolchain go1.22.1
 
-replace github.com/ProtoconNet/mitum2 => /Users/soonkukkang/go/src/github.com/ProtoconNet/mitum2
-
 require (
-	github.com/ProtoconNet/mitum2 v0.0.0-20240415083536-4ac73fa8ba0b
+	github.com/ProtoconNet/mitum2 v0.0.0-20240514051137-1a856cf657db
 	github.com/alecthomas/kong v0.9.0
 	github.com/arl/statsviz v0.6.0
 	github.com/bluele/gcache v0.0.2
