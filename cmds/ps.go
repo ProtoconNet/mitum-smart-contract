@@ -390,12 +390,17 @@ func PLoadDigestDesign(pctx context.Context) (context.Context, error) {
 			Digest *DigestDesign
 		}
 
-		if err := yaml.Unmarshal(b, &m); err != nil {
-			return pctx, err
+		nb, err := util.ReplaceEnvVariables(b)
+		if err != nil {
+			return pctx, e.Wrap(err)
+		}
+
+		if err := yaml.Unmarshal(nb, &m); err != nil {
+			return pctx, e.Wrap(err)
 		} else if m.Digest == nil {
 			return pctx, nil
 		} else if i, err := m.Digest.Set(pctx); err != nil {
-			return pctx, err
+			return pctx, e.Wrap(err)
 		} else {
 			pctx = i
 		}
