@@ -29,6 +29,7 @@ type GetLastBlockFunc func() (base.BlockMap, bool, error)
 const (
 	DuplicationTypeSender   types.DuplicationType = "sender"
 	DuplicationTypeCurrency types.DuplicationType = "currency"
+	DuplicationTypeContract types.DuplicationType = "contract"
 )
 
 type BaseOperationProcessor interface {
@@ -43,7 +44,7 @@ type OperationProcessor struct {
 	*logging.Logging
 	*base.BaseOperationProcessor
 	processorHintSet     *hint.CompatibleSet[types.GetNewProcessor]
-	Duplicated           map[string]types.DuplicationType
+	Duplicated           map[string]struct{}
 	duplicatedNewAddress map[string]struct{}
 	processorClosers     *sync.Map
 	GetStateFunc         base.GetStateFunc
@@ -60,7 +61,7 @@ func NewOperationProcessor() *OperationProcessor {
 			return c.Str("module", "mitum-currency-operations-processor")
 		}),
 		processorHintSet:     hint.NewCompatibleSet[types.GetNewProcessor](1 << 9),
-		Duplicated:           map[string]types.DuplicationType{},
+		Duplicated:           map[string]struct{}{},
 		duplicatedNewAddress: map[string]struct{}{},
 		processorClosers:     &m,
 	}
@@ -79,12 +80,8 @@ func (opr *OperationProcessor) New(
 	}
 
 	if nopr.Duplicated == nil {
-		nopr.Duplicated = make(map[string]types.DuplicationType)
+		nopr.Duplicated = make(map[string]struct{})
 	}
-
-	// if nopr.duplicatedNewAddress == nil {
-	// 	nopr.duplicatedNewAddress = opr.duplicatedNewAddress
-	// }
 
 	if nopr.duplicatedNewAddress == nil {
 		nopr.duplicatedNewAddress = make(map[string]struct{})
@@ -176,9 +173,9 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation
 func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
 	e := util.StringError("process for OperationProcessor")
 
-	//if err := opr.CheckDuplicationFunc(opr, op); err != nil {
-	//	return nil, base.NewBaseOperationProcessReasonError("duplication found; %w", err), nil
-	//}
+	if err := opr.CheckDuplicationFunc(opr, op); err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("duplication found; %w", err), nil
+	}
 
 	var sp base.OperationProcessor
 	if opr.GetNewProcessorFunc == nil {
@@ -198,78 +195,107 @@ func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, g
 	return stateMergeValues, reasonErr, err
 }
 
+func DuplicationKey(key string, duplType types.DuplicationType) string {
+	return fmt.Sprintf("%s:%s", key, duplType)
+}
+
 func CheckDuplication(opr *OperationProcessor, op base.Operation) error {
 	opr.Lock()
 	defer opr.Unlock()
 
-	// var did string
-	// var didtype DuplicationType
+	var duplicationTypeSenderID string
+	var duplicationTypeCurrencyID string
+	var duplicationTypeContractID string
 	var newAddresses []base.Address
 
 	switch t := op.(type) {
 	case currency.CreateAccount:
 		fact, ok := t.Fact().(currency.CreateAccountFact)
 		if !ok {
-			return errors.Errorf("expected RegisterGenesisCurrencyFact, not %T", t.Fact())
+			return errors.Errorf("expected CreateAccountFact, not %T", t.Fact())
 		}
 		as, err := fact.Targets()
 		if err != nil {
-			return errors.Errorf("get Addresses")
+			return errors.Errorf("failed to get Addresses")
 		}
 		newAddresses = as
-		// did = fact.Sender().String()
-		// didtype = DuplicationTypeSender
+		duplicationTypeSenderID = DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
 	case currency.UpdateKey:
 		fact, ok := t.Fact().(currency.UpdateKeyFact)
 		if !ok {
 			return errors.Errorf("expected UpdateKeyFact, not %T", t.Fact())
 		}
-		as, err := fact.Addresses()
+		duplicationTypeSenderID = DuplicationKey(fact.Target().String(), DuplicationTypeSender)
+	case currency.Transfer:
+		fact, ok := t.Fact().(currency.TransferFact)
+		if !ok {
+			return errors.Errorf("expected TransferFact, not %T", t.Fact())
+		}
+		duplicationTypeSenderID = DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
+	case currency.RegisterCurrency:
+		fact, ok := t.Fact().(currency.RegisterCurrencyFact)
+		if !ok {
+			return errors.Errorf("expected RegisterCurrencyFact, not %T", t.Fact())
+		}
+		duplicationTypeCurrencyID = DuplicationKey(fact.Currency().Currency().String(), DuplicationTypeCurrency)
+	case currency.UpdateCurrency:
+		fact, ok := t.Fact().(currency.UpdateCurrencyFact)
+		if !ok {
+			return errors.Errorf("expected UpdateCurrencyFact, not %T", t.Fact())
+		}
+		duplicationTypeCurrencyID = DuplicationKey(fact.Currency().String(), DuplicationTypeCurrency)
+	case currency.Mint:
+	case extension.CreateContractAccount:
+		fact, ok := t.Fact().(extension.CreateContractAccountFact)
+		if !ok {
+			return errors.Errorf("expected CreateContractAccountFact, not %T", t.Fact())
+		}
+		as, err := fact.Targets()
 		if err != nil {
-			return errors.Errorf("get Addresses")
+			return errors.Errorf("failed to get Addresses")
 		}
 		newAddresses = as
-		// did = fact.Target().String()
-		// didtype = DuplicationTypeSender
-	// case Transfer:
-	// 	fact, ok := t.Fact().(TransferFact)
-	// 	if !ok {
-	// 		return errors.Errorf("expected TransferFact, not %T", t.Fact())
-	// 	}
-	// 	did = fact.Sender().String()
-	// 	didtype = DuplicationTypeSender
-	// case RegisterCurrency:
-	// 	fact, ok := t.Fact().(RegisterCurrencyFact)
-	// 	if !ok {
-	// 		return errors.Errorf("expected RegisterCurrencyFact, not %T", t.Fact())
-	// 	}
-	//  did = fact.Currency().amount.Currency().String()
-	// 	didtype = DuplicationTypeCurrency
-	// case UpdateCurrency:
-	// 	fact, ok := t.Fact().(UpdateCurrencyFact)
-	// 	if !ok {
-	// 		return errors.Errorf("expected UpdateCurrencyFact, not %T", t.Fact())
-	// 	}
-	//  did = fact.Currency().amount.Currency().String()
-	// 	didtype = DuplicationTypeCurrency
+		duplicationTypeSenderID = DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
+		duplicationTypeContractID = DuplicationKey(fact.Sender().String(), DuplicationTypeContract)
+	case extension.Withdraw:
+		fact, ok := t.Fact().(extension.WithdrawFact)
+		if !ok {
+			return errors.Errorf("expected WithdrawFact, not %T", t.Fact())
+		}
+		duplicationTypeSenderID = DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
 	default:
 		return nil
 	}
 
-	// if len(did) > 0 {
-	// 	if _, found := opr.duplicated[did]; found {
-	// 		switch didtype {
-	// 		case DuplicationTypeSender:
-	// 			return errors.Errorf("violates only one sender in proposal")
-	// 		case DuplicationTypeCurrency:
-	// 			return errors.Errorf("duplicated currency id, %v found in proposal", did)
-	// 		default:
-	// 			return errors.Errorf("violates duplication in proposal")
-	// 		}
-	// 	}
+	if len(duplicationTypeSenderID) > 0 {
+		fmt.Println(opr.Duplicated)
+		if _, found := opr.Duplicated[duplicationTypeSenderID]; found {
+			return errors.Errorf("proposal cannot have duplicated sender, %v", duplicationTypeSenderID)
+		}
 
-	// 	opr.duplicated[did] = didtype
-	// }
+		opr.Duplicated[duplicationTypeSenderID] = struct{}{}
+	}
+
+	if len(duplicationTypeCurrencyID) > 0 {
+		if _, found := opr.Duplicated[duplicationTypeCurrencyID]; found {
+			return errors.Errorf(
+				"cannot register duplicated currency id, %v within a proposal",
+				duplicationTypeCurrencyID,
+			)
+		}
+
+		opr.Duplicated[duplicationTypeCurrencyID] = struct{}{}
+	}
+	if len(duplicationTypeContractID) > 0 {
+		if _, found := opr.Duplicated[duplicationTypeContractID]; found {
+			return errors.Errorf(
+				"cannot use a duplicated contract, %v within a proposal",
+				duplicationTypeContractID,
+			)
+		}
+
+		opr.Duplicated[duplicationTypeContractID] = struct{}{}
+	}
 
 	if len(newAddresses) > 0 {
 		if err := opr.CheckNewAddressDuplication(newAddresses); err != nil {
