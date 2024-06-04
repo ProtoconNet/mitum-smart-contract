@@ -52,6 +52,8 @@ func (fact RegisterCurrencyFact) IsValid(b []byte) error {
 		return common.ErrFactInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("Value out of range: Empty genesis account")))
 	}
 
+	//TODO initial supply total supply
+
 	if err := common.IsValidOperationFact(fact, b); err != nil {
 		return common.ErrFactInvalid.Wrap(err)
 	}

@@ -31,13 +31,11 @@ type TestOperationProcessorNoItem interface {
 }
 
 type BaseTestOperationProcessorNoItem[To any] struct {
-	TestProcessor
+	*TestProcessor
 	Op To
 }
 
-func NewBaseTestOperationProcessorNoItem[To any](encs *encoder.Encoders) BaseTestOperationProcessorNoItem[To] {
-	tp := TestProcessor{Encoders: encs}
-
+func NewBaseTestOperationProcessorNoItem[To any](tp *TestProcessor) BaseTestOperationProcessorNoItem[To] {
 	t := BaseTestOperationProcessorNoItem[To]{
 		TestProcessor: tp,
 	}
@@ -100,14 +98,21 @@ func (t *BaseTestOperationProcessorNoItem[To]) RunPreProcess() {
 }
 
 func (t *BaseTestOperationProcessorNoItem[To]) RunProcess() {
-	//t.MockGetter.On("Get", mock.Anything).Return(nil, false, nil)
 	if t.err != nil {
 		panic(t.err)
 	}
 	op, _ := any(t.Op).(base.Operation)
 	stmv, err, _ := t.Opr.Process(context.Background(), op, t.GetStateFunc)
 	for i := range stmv {
-		state := common.NewBaseState(base.Height(1), stmv[i].Key(), stmv[i].Value(), nil, []util.Hash{})
+		st, found, _ := t.MockGetter.Get(stmv[i].Key())
+		var merger base.StateValueMerger
+		if !found {
+			merger = stmv[i].Merger(base.Height(1), nil)
+		} else {
+			merger = stmv[i].Merger(base.Height(1), st)
+		}
+		merger.Merge(stmv[i].Value(), op.Fact().Hash())
+		state, _ := merger.CloseValue()
 		t.SetState(state, true)
 	}
 	t.err = err
@@ -136,14 +141,12 @@ type TestOperationProcessorWithItem[Tim any] interface {
 }
 
 type BaseTestOperationProcessorWithItem[To any, Tim any] struct {
-	TestProcessor
+	*TestProcessor
 	Op    To
 	items []Tim
 }
 
-func NewBaseTestOperationProcessorWithItem[To any, Tim any](encs *encoder.Encoders) BaseTestOperationProcessorWithItem[To, Tim] {
-	tp := TestProcessor{Encoders: encs}
-
+func NewBaseTestOperationProcessorWithItem[To any, Tim any](tp *TestProcessor) BaseTestOperationProcessorWithItem[To, Tim] {
 	t := BaseTestOperationProcessorWithItem[To, Tim]{
 		TestProcessor: tp,
 		items:         make([]Tim, 1),
@@ -211,14 +214,21 @@ func (t *BaseTestOperationProcessorWithItem[To, Tim]) RunPreProcess() {
 }
 
 func (t *BaseTestOperationProcessorWithItem[To, Tim]) RunProcess() {
-	//t.MockGetter.On("Get", mock.Anything).Return(nil, false, nil)
 	if t.err != nil {
 		panic(t.err)
 	}
 	op, _ := any(t.Op).(base.Operation)
 	stmv, err, _ := t.Opr.Process(context.Background(), op, t.GetStateFunc)
 	for i := range stmv {
-		state := common.NewBaseState(base.Height(1), stmv[i].Key(), stmv[i].Value(), nil, []util.Hash{})
+		st, found, _ := t.MockGetter.Get(stmv[i].Key())
+		var merger base.StateValueMerger
+		if !found {
+			merger = stmv[i].Merger(base.Height(1), nil)
+		} else {
+			merger = stmv[i].Merger(base.Height(1), st)
+		}
+		merger.Merge(stmv[i].Value(), op.Fact().Hash())
+		state, _ := merger.CloseValue()
 		t.SetState(state, true)
 	}
 	t.err = err

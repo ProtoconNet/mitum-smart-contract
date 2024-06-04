@@ -2,8 +2,6 @@ package extension
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/test"
-	"github.com/ProtoconNet/mitum2/util/encoder"
-
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 )
@@ -12,8 +10,10 @@ type TestUpdateOperatorProcessor struct {
 	*test.BaseTestOperationProcessorNoItem[UpdateOperator]
 }
 
-func NewTestUpdateOperatorProcessor(encs *encoder.Encoders) TestUpdateOperatorProcessor {
-	t := test.NewBaseTestOperationProcessorNoItem[UpdateOperator](encs)
+func NewTestUpdateOperatorProcessor(
+	tp *test.TestProcessor,
+) TestUpdateOperatorProcessor {
+	t := test.NewBaseTestOperationProcessorNoItem[UpdateOperator](tp)
 	return TestUpdateOperatorProcessor{&t}
 }
 

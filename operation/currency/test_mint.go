@@ -4,7 +4,6 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/test"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type TestMintProcessor struct {
@@ -12,9 +11,9 @@ type TestMintProcessor struct {
 }
 
 func NewTestMintProcessor(
-	encs *encoder.Encoders,
+	tp *test.TestProcessor,
 ) TestMintProcessor {
-	t := test.NewBaseTestOperationProcessorWithItem[Mint, MintItem](encs)
+	t := test.NewBaseTestOperationProcessorWithItem[Mint, MintItem](tp)
 
 	return TestMintProcessor{&t}
 }

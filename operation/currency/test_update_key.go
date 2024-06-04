@@ -4,15 +4,16 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/test"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type TestUpdateKeyProcessor struct {
 	*test.BaseTestOperationProcessorNoItem[UpdateKey]
 }
 
-func NewTestUpdateKeyProcessor(encs *encoder.Encoders) TestUpdateKeyProcessor {
-	t := test.NewBaseTestOperationProcessorNoItem[UpdateKey](encs)
+func NewTestUpdateKeyProcessor(
+	tp *test.TestProcessor,
+) TestUpdateKeyProcessor {
+	t := test.NewBaseTestOperationProcessorNoItem[UpdateKey](tp)
 	return TestUpdateKeyProcessor{&t}
 }
 

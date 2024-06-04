@@ -4,7 +4,6 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/test"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type TestCreateAccountProcessor struct {
@@ -12,9 +11,9 @@ type TestCreateAccountProcessor struct {
 }
 
 func NewTestCreateAccountProcessor(
-	encs *encoder.Encoders,
+	tp *test.TestProcessor,
 ) TestCreateAccountProcessor {
-	t := test.NewBaseTestOperationProcessorWithItem[CreateAccount, CreateAccountItem](encs)
+	t := test.NewBaseTestOperationProcessorWithItem[CreateAccount, CreateAccountItem](tp)
 	return TestCreateAccountProcessor{&t}
 }
 
@@ -80,8 +79,6 @@ func (t *TestCreateAccountProcessor) MakeItem(
 func (t *TestCreateAccountProcessor) MakeOperation(
 	sender base.Address, privatekey base.Privatekey, items []CreateAccountItem,
 ) *TestCreateAccountProcessor {
-	//t.MockGetter.On("Get", mock.Anything).Return(nil, false, nil)
-
 	op, _ := NewCreateAccount(NewCreateAccountFact([]byte("token"), sender, items))
 	_ = op.Sign(privatekey, t.NetworkID)
 	t.Op = op

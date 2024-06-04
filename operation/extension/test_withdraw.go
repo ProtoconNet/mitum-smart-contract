@@ -1,8 +1,6 @@
 package extension
 
 import (
-	"github.com/ProtoconNet/mitum2/util/encoder"
-
 	"github.com/ProtoconNet/mitum-currency/v3/operation/test"
 
 	"github.com/ProtoconNet/mitum-currency/v3/types"
@@ -13,8 +11,10 @@ type TestWithdrawProcessor struct {
 	*test.BaseTestOperationProcessorWithItem[Withdraw, WithdrawItem]
 }
 
-func NewTestWithdrawProcessor(encs *encoder.Encoders) TestWithdrawProcessor {
-	t := test.NewBaseTestOperationProcessorWithItem[Withdraw, WithdrawItem](encs)
+func NewTestWithdrawProcessor(
+	tp *test.TestProcessor,
+) TestWithdrawProcessor {
+	t := test.NewBaseTestOperationProcessorWithItem[Withdraw, WithdrawItem](tp)
 	return TestWithdrawProcessor{&t}
 }
 

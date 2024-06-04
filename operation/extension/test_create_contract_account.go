@@ -2,8 +2,6 @@ package extension
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/test"
-	"github.com/ProtoconNet/mitum2/util/encoder"
-
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 )
@@ -12,8 +10,10 @@ type TestCreateContractAccountProcessor struct {
 	*test.BaseTestOperationProcessorWithItem[CreateContractAccount, CreateContractAccountItem]
 }
 
-func NewTestCreateContractAccountProcessor(encs *encoder.Encoders) TestCreateContractAccountProcessor {
-	t := test.NewBaseTestOperationProcessorWithItem[CreateContractAccount, CreateContractAccountItem](encs)
+func NewTestCreateContractAccountProcessor(
+	tp *test.TestProcessor,
+) TestCreateContractAccountProcessor {
+	t := test.NewBaseTestOperationProcessorWithItem[CreateContractAccount, CreateContractAccountItem](tp)
 	return TestCreateContractAccountProcessor{&t}
 }
 
