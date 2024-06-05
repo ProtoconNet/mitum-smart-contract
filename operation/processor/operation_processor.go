@@ -268,7 +268,6 @@ func CheckDuplication(opr *OperationProcessor, op base.Operation) error {
 	}
 
 	if len(duplicationTypeSenderID) > 0 {
-		fmt.Println(opr.Duplicated)
 		if _, found := opr.Duplicated[duplicationTypeSenderID]; found {
 			return errors.Errorf("proposal cannot have duplicated sender, %v", duplicationTypeSenderID)
 		}

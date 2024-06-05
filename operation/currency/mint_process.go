@@ -140,16 +140,13 @@ func (opp *MintProcessor) Process(
 		//var ab types.Amount
 
 		k := currency.StateKeyBalance(item.Receiver(), item.Amount().Currency())
-		switch st, _, err := getStateFunc(k); {
+		switch st, found, err := getStateFunc(k); {
 		case err != nil:
 			return nil, base.NewBaseOperationProcessReasonError(
-				"find receiver account balance state, %v; %w",
-				k,
-				err,
-			), nil
+				"find receiver account balance state, %v; %w", k, err), nil
 		//case !found:
 		//	ab = types.NewZeroAmount(item.Amount().Currency())
-		default:
+		case found:
 			_, err := currency.StateBalanceValue(st)
 			if err != nil {
 				return nil, base.NewBaseOperationProcessReasonError("get balance value, %v; %w", k, err), nil
