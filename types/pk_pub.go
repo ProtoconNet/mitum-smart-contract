@@ -99,7 +99,14 @@ func (k MEPublickey) Verify(input []byte, sig base.Signature) error {
 		return base.ErrSignatureVerification.WithStack()
 	}
 
+	if len(sig) > 256 {
+		return base.ErrSignatureVerification.WithStack()
+	}
+
 	rlength := int(binary.LittleEndian.Uint32(sig[:4]))
+	if (4 + rlength) > len(sig) {
+		return base.ErrSignatureVerification.WithStack()
+	}
 	r := big.NewInt(0).SetBytes(sig[4 : 4+rlength])
 	s := big.NewInt(0).SetBytes(sig[4+rlength:])
 
