@@ -109,11 +109,11 @@ func (fa FixedFeeer) IsValid([]byte) error {
 	}
 
 	if err := util.CheckIsValiders(nil, false, fa.receiver); err != nil {
-		return util.ErrInvalid.Errorf("Invalid receiver for fixed feeer: %v", err)
+		return util.ErrInvalid.Errorf("invalid receiver for fixed feeer: %v", err)
 	}
 
 	if !fa.amount.OverNil() {
-		return util.ErrInvalid.Errorf("Fixed feeer amount under zero")
+		return util.ErrInvalid.Errorf("fixed feeer amount under zero")
 	}
 
 	return nil

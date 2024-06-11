@@ -62,7 +62,7 @@ func (am Amount) IsValid([]byte) error {
 		am.cid,
 		am.big,
 	); err != nil {
-		return util.ErrInvalid.Errorf("Validation check of Amount, %v", err)
+		return err
 	}
 
 	return nil

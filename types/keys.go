@@ -136,7 +136,7 @@ func (ks BaseAccountKeys) Bytes() []byte {
 
 func (ks BaseAccountKeys) IsValid([]byte) error {
 	if ks.threshold < 1 || ks.threshold > 100 {
-		return util.ErrInvalid.Errorf("Invalid threshold, %d, should be 1 <= threshold <= 100", ks.threshold)
+		return util.ErrInvalid.Errorf("invalid threshold, %d, should be 1 <= threshold <= 100", ks.threshold)
 	}
 
 	if err := util.CheckIsValiders(nil, false, ks.h); err != nil {
@@ -144,9 +144,9 @@ func (ks BaseAccountKeys) IsValid([]byte) error {
 	}
 
 	if n := len(ks.keys); n < 1 {
-		return util.ErrInvalid.Errorf("Empty keys")
+		return util.ErrInvalid.Errorf("empty keys")
 	} else if n > MaxAccountKeyInKeys {
-		return util.ErrInvalid.Errorf("Keys over %d, %d", MaxAccountKeyInKeys, n)
+		return util.ErrInvalid.Errorf("keys over %d, %d", MaxAccountKeyInKeys, n)
 	}
 
 	m := map[string]struct{}{}
@@ -157,7 +157,7 @@ func (ks BaseAccountKeys) IsValid([]byte) error {
 		}
 
 		if _, found := m[k.Key().String()]; found {
-			return util.ErrInvalid.Errorf("Duplicated keys found")
+			return common.ErrDupVal.Wrap(errors.Errorf("duplicated key %v", k.Key()))
 		}
 
 		m[k.Key().String()] = struct{}{}
@@ -169,13 +169,14 @@ func (ks BaseAccountKeys) IsValid([]byte) error {
 	}
 
 	if totalWeight < ks.threshold {
-		return util.ErrInvalid.Errorf("Sum of weight under threshold, %d < %d", totalWeight, ks.threshold)
+		return common.ErrValOOR.Wrap(
+			errors.Errorf("sum of weight under threshold, %d < %d", totalWeight, ks.threshold))
 	}
 
 	if h, err := ks.GenerateHash(); err != nil {
 		return err
 	} else if !ks.h.Equal(h) {
-		return util.ErrInvalid.Errorf("Hash not matched")
+		return util.ErrInvalid.Errorf("hash not matched")
 	}
 
 	return nil

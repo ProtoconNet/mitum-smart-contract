@@ -38,13 +38,13 @@ type BaseOperationJSONUnmarshaler struct {
 
 func (op *BaseOperation) decodeJSON(b []byte, enc encoder.Encoder, u *BaseOperationJSONUnmarshaler) error {
 	if err := enc.Unmarshal(b, u); err != nil {
-		return err
+		return ErrValueInvalid.Wrap(err)
 	}
 
 	op.h = u.Hash.Hash()
 
 	if err := encoder.Decode(enc, u.Fact, &op.fact); err != nil {
-		return err
+		return ErrValueInvalid.Wrap(err)
 	}
 
 	return nil

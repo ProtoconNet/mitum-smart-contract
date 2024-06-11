@@ -63,29 +63,29 @@ func DefaultNetworkPolicy() NetworkPolicy {
 }
 
 func (p NetworkPolicy) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("Invalid NetworkPolicy")
+	e := util.ErrInvalid.Errorf("invalid NetworkPolicy")
 
 	if err := p.BaseHinter.IsValid(NetworkPolicyHint.Type().Bytes()); err != nil {
 		return e.Wrap(err)
 	}
 
 	if p.maxOperationsInProposal < 1 {
-		return e.Errorf("Under zero maxOperationsInProposal")
+		return e.Errorf("under zero maxOperationsInProposal")
 	}
 
 	if p.maxSuffrageSize < 1 {
-		return e.Errorf("Under zero maxSuffrageSize")
+		return e.Errorf("under zero maxSuffrageSize")
 	}
 
 	switch err := p.suffrageCandidateLifespan.IsValid(nil); {
 	case err != nil:
 		return e.WithMessage(err, "invalid SuffrageCandidateLifespan")
 	case p.suffrageCandidateLifespan <= base.GenesisHeight:
-		return e.Errorf("Zero SuffrageCandidateLifespan")
+		return e.Errorf("zero SuffrageCandidateLifespan")
 	}
 
 	if p.suffrageCandidateLimiterRule == nil {
-		return e.Errorf("Empty SuffrageCandidateLimiterRule")
+		return e.Errorf("empty SuffrageCandidateLimiterRule")
 	}
 
 	if err := p.suffrageCandidateLimiterRule.IsValid(nil); err != nil {

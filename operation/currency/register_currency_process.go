@@ -106,7 +106,7 @@ func (opp *RegisterCurrencyProcessor) PreProcess(
 	)
 	if err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("Currency id, %v", design.Currency())), nil
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("currency id %v", design.Currency())), nil
 	}
 
 	if _, err := state.ExistsAccount(design.GenesisAccount(), "genesis account", true, getStateFunc); err != nil {
@@ -126,17 +126,17 @@ func (opp *RegisterCurrencyProcessor) PreProcess(
 		return ctx, nil, err
 	case found:
 		return ctx, nil, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("Currency already registered, %v", design.Currency()))
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("currency %v already registered", design.Currency()))
 	default:
 	}
 
 	switch _, found, err := getStateFunc(currency.StateKeyBalance(design.GenesisAccount(), design.Currency())); {
 	case err != nil:
 		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMAccountNF).Errorf("Genesis account, %v", design.GenesisAccount())), nil
+			common.ErrMPreProcess.Wrap(common.ErrMAccountNF).Errorf("genesis account %v", design.GenesisAccount())), nil
 	case found:
 		return ctx, nil, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("Currency already registered, %v", design.Currency()))
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("currency %v already registered", design.Currency()))
 	default:
 	}
 

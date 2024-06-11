@@ -59,7 +59,7 @@ func (op BaseOperation) HashBytes() []byte {
 
 func (op BaseOperation) IsValid(networkID []byte) error {
 	if len(op.signs) < 1 {
-		return ErrOperationInvalid.Wrap(errors.Errorf("Empty signs"))
+		return ErrOperationInvalid.Wrap(ErrSignInvalid.Wrap(errors.Errorf("empty signs")))
 	}
 
 	if err := util.CheckIsValiders(networkID, false, op.h); err != nil {
@@ -92,7 +92,7 @@ func (op BaseOperation) IsValid(networkID []byte) error {
 	}
 
 	if !op.h.Equal(op.hash()) {
-		return ErrOperationInvalid.Wrap(errors.Errorf("hash does not match"))
+		return ErrOperationInvalid.Wrap(ErrValueInvalid.Wrap(errors.Errorf("hash does not match")))
 	}
 
 	return nil
@@ -162,9 +162,9 @@ func IsValidOperationFact(fact base.Fact, networkID []byte) error {
 
 	switch l := len(fact.Token()); {
 	case l < 1:
-		return errors.Errorf("Operation has empty token")
+		return errors.Errorf("operation has empty token")
 	case l > base.MaxTokenSize:
-		return errors.Errorf("Operation token size too large: %d > %d", l, base.MaxTokenSize)
+		return errors.Errorf("operation token size too large: %d > %d", l, base.MaxTokenSize)
 	}
 
 	hg, ok := fact.(HashGenerator)
@@ -173,7 +173,7 @@ func IsValidOperationFact(fact base.Fact, networkID []byte) error {
 	}
 
 	if !fact.Hash().Equal(hg.GenerateHash()) {
-		return errors.Errorf("Wrong Fact hash")
+		return ErrValueInvalid.Wrap(errors.Errorf("wrong Fact hash"))
 	}
 
 	return nil

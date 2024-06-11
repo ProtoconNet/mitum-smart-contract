@@ -58,7 +58,7 @@ func (opp *CreateContractAccountItemProcessor) PreProcess(
 		}
 
 		if am.Big().Compare(policy.NewAccountMinBalance()) < 0 {
-			return e.Wrap(common.ErrValOOR.Wrap(errors.Errorf("amount under minimum balance, %v < %v", am.Big(), policy.NewAccountMinBalance())))
+			return e.Wrap(common.ErrValOOR.Wrap(errors.Errorf("amount under new account minimum balance, %v < %v", am.Big(), policy.NewAccountMinBalance())))
 
 		}
 	}
@@ -109,7 +109,6 @@ func (opp *CreateContractAccountItemProcessor) PreProcess(
 						currencystate.StateKeyBalance(target, am.Currency()), am.Currency(), st)
 				},
 			)
-			//nb[am.Currency()] = state.NewStateMergeValue(currencystate.StateKeyBalance(target, am.Currency()), currencystate.NewBalanceStateValue(types.NewZeroAmount(am.Currency())))
 		}
 	}
 	opp.nb = nb

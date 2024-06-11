@@ -51,7 +51,7 @@ func (it BaseCreateAccountItem) IsValid([]byte) error {
 		founds[am.Currency()] = struct{}{}
 
 		if err := am.IsValid(nil); err != nil {
-			return err
+			return common.ErrItemInvalid.Wrap(err)
 		} else if !am.Big().OverZero() {
 			return common.ErrItemInvalid.Wrap(common.ErrValOOR.Wrap(errors.Errorf("Amount should be over zero")))
 		}

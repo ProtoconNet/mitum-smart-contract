@@ -101,12 +101,12 @@ func (b BalanceStateValue) HashBytes() []byte {
 func StateBalanceValue(st base.State) (types.Amount, error) {
 	v := st.Value()
 	if v == nil {
-		return types.Amount{}, util.ErrNotFound.Errorf("Balance not found in State")
+		return types.Amount{}, util.ErrNotFound.Errorf("balance not found in State")
 	}
 
 	a, ok := v.(BalanceStateValue)
 	if !ok {
-		return types.Amount{}, errors.Errorf("Invalid balance value found, %T", v)
+		return types.Amount{}, errors.Errorf("invalid balance value found, %T", v)
 	}
 
 	return a.Amount, nil
@@ -197,12 +197,12 @@ func (c CurrencyDesignStateValue) HashBytes() []byte {
 func StateCurrencyDesignValue(st base.State) (types.CurrencyDesign, error) {
 	v := st.Value()
 	if v == nil {
-		return types.CurrencyDesign{}, util.ErrNotFound.Errorf("Currency design not found in State")
+		return types.CurrencyDesign{}, util.ErrNotFound.Errorf("currency design not found in State")
 	}
 
 	de, ok := v.(CurrencyDesignStateValue)
 	if !ok {
-		return types.CurrencyDesign{}, errors.Errorf("Invalid currency design value found, %T", v)
+		return types.CurrencyDesign{}, errors.Errorf("invalid currency design value found, %T", v)
 	}
 
 	return de.CurrencyDesign, nil
@@ -223,12 +223,12 @@ func IsStateAccountKey(key string) bool {
 func LoadStateAccountValue(st base.State) (*types.Account, error) {
 	v := st.Value()
 	if v == nil {
-		return nil, util.ErrNotFound.Errorf("Account not found in State")
+		return nil, util.ErrNotFound.Errorf("account not found in State")
 	}
 
 	s, ok := v.(AccountStateValue)
 	if !ok {
-		return nil, errors.Errorf("Invalid account value found, %T", v)
+		return nil, errors.Errorf("invalid account value found, %T", v)
 	}
 	return &(s.Account), nil
 

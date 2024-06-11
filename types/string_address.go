@@ -27,9 +27,9 @@ func ParseStringAddress(s string) (StringAddress, error) {
 
 	switch {
 	case err != nil:
-		return StringAddress{}, errors.Wrap(err, "Parse StringAddress")
+		return StringAddress{}, errors.Wrap(err, "parse StringAddress")
 	case t != StringAddressHint.Type():
-		return StringAddress{}, util.ErrInvalid.Errorf("Wrong hint type in StringAddress")
+		return StringAddress{}, util.ErrInvalid.Errorf("wrong hint type in StringAddress")
 	}
 
 	return NewStringAddress(b), nil
@@ -41,7 +41,7 @@ func (ad StringAddress) IsValid([]byte) error {
 	}
 
 	if err := ad.BaseStringAddress.IsValid(nil); err != nil {
-		return errors.Wrap(err, "Invalid StringAddress")
+		return errors.Wrap(err, "invalid StringAddress")
 	}
 
 	return nil

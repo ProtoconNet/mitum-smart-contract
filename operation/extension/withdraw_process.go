@@ -186,14 +186,14 @@ func (opp *WithdrawProcessor) PreProcess(
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Wrap(common.ErrMAccountNF).
-				Errorf("sender account, %v", fact.Sender())), nil
+				Errorf("sender %v", fact.Sender())), nil
 	}
 
 	if found, _ := state.CheckNotExistsState(extension.StateKeyContractAccount(fact.Sender()), getStateFunc); found {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Wrap(common.ErrMCAccountNA).
-				Errorf("%v cannot be sender", fact.Sender())), nil
+				Errorf("sender %v is contract account", fact.Sender())), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {

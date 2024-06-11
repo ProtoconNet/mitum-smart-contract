@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"math/big"
 	"strings"
 
@@ -39,9 +40,9 @@ func ParseMEPublickey(s string) (MEPublickey, error) {
 
 	switch {
 	case !strings.HasSuffix(s, t):
-		return MEPublickey{}, util.ErrInvalid.Errorf("Unknown public key string")
+		return MEPublickey{}, util.ErrInvalid.Errorf("unknown public key string")
 	case len(s) <= len(t):
-		return MEPublickey{}, util.ErrInvalid.Errorf("Invalid public key string; too short")
+		return MEPublickey{}, util.ErrInvalid.Errorf("invalid public key string; too short")
 	}
 
 	return LoadMEPublicKey(s[:len(s)-len(t)])
@@ -75,11 +76,11 @@ func (k MEPublickey) IsValid([]byte) error {
 
 	switch {
 	case k.k == nil:
-		return util.ErrInvalid.Errorf("Empty btc public key in MEPublickey")
+		return util.ErrInvalid.Errorf("empty btc public key in MEPublickey")
 	case len(k.s) < 1:
-		return util.ErrInvalid.Errorf("Empty public key string")
+		return util.ErrInvalid.Errorf("empty public key string")
 	case len(k.b) < 1:
-		return util.ErrInvalid.Errorf("Empty public key []byte")
+		return util.ErrInvalid.Errorf("empty public key []byte")
 	}
 
 	return nil
@@ -96,16 +97,16 @@ func (k MEPublickey) Equal(b base.PKKey) bool {
 
 func (k MEPublickey) Verify(input []byte, sig base.Signature) error {
 	if len(sig) < 4 {
-		return base.ErrSignatureVerification.WithStack()
+		return common.ErrValueInvalid.Wrap(base.ErrSignatureVerification.WithStack())
 	}
 
 	if len(sig) > 256 {
-		return base.ErrSignatureVerification.WithStack()
+		return common.ErrValueInvalid.Wrap(base.ErrSignatureVerification.WithStack())
 	}
 
 	rlength := int(binary.LittleEndian.Uint32(sig[:4]))
 	if (4 + rlength) > len(sig) {
-		return base.ErrSignatureVerification.WithStack()
+		return common.ErrValueInvalid.Wrap(base.ErrSignatureVerification.WithStack())
 	}
 	r := big.NewInt(0).SetBytes(sig[4 : 4+rlength])
 	s := big.NewInt(0).SetBytes(sig[4+rlength:])

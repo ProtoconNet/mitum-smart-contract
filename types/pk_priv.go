@@ -107,11 +107,11 @@ func (k MEPrivatekey) IsValid([]byte) error {
 
 	switch {
 	case k.priv == nil:
-		return util.ErrInvalid.Errorf("Empty btc private key")
+		return util.ErrInvalid.Errorf("empty btc private key")
 	case len(k.s) < 1:
-		return util.ErrInvalid.Errorf("Empty private key string")
+		return util.ErrInvalid.Errorf("empty private key string")
 	case len(k.b) < 1:
-		return util.ErrInvalid.Errorf("Empty private key []byte")
+		return util.ErrInvalid.Errorf("empty private key []byte")
 	}
 
 	return nil

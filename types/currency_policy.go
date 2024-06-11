@@ -29,11 +29,11 @@ func (po CurrencyPolicy) Bytes() []byte {
 
 func (po CurrencyPolicy) IsValid([]byte) error {
 	if !po.newAccountMinBalance.OverNil() {
-		return util.ErrInvalid.Errorf("NewAccountMinBalance under zero")
+		return util.ErrInvalid.Errorf("newAccountMinBalance under zero")
 	}
 
 	if err := util.CheckIsValiders(nil, false, po.BaseHinter, po.feeer); err != nil {
-		return util.ErrInvalid.Errorf("Invalid currency policy, %v", err)
+		return util.ErrInvalid.Errorf("invalid currency policy, %v", err)
 	}
 
 	return nil

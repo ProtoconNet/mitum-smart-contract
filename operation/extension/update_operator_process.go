@@ -108,7 +108,7 @@ func (opp *UpdateOperatorProcessor) PreProcess(
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Wrap(common.ErrMAccountNAth).
-				Errorf("sender account is not contract account owner, %v", fact.Sender())), nil
+				Errorf("sender %v is not owner of contract account", fact.Sender())), nil
 	}
 
 	for i := range fact.Operators() {

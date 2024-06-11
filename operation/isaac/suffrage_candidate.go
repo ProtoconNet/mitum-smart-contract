@@ -43,7 +43,7 @@ func (fact SuffrageCandidateFact) IsValid([]byte) error {
 	}
 
 	if !fact.Hash().Equal(fact.hash()) {
-		return e.Errorf("Hash does not match")
+		return e.Errorf("hash does not match")
 	}
 
 	return nil

@@ -1,9 +1,9 @@
 package types
 
 import (
+	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/pkg/errors"
 	"regexp"
-
-	"github.com/ProtoconNet/mitum2/util"
 )
 
 var (
@@ -25,10 +25,11 @@ func (cid CurrencyID) String() string {
 
 func (cid CurrencyID) IsValid([]byte) error {
 	if l := len(cid); l < MinLengthCurrencyID || l > MaxLengthCurrencyID {
-		return util.ErrInvalid.Errorf(
-			"invalid length of currency id, %d <= %d <= %d", MinLengthCurrencyID, l, MaxLengthCurrencyID)
+		return common.ErrValOOR.Wrap(
+			errors.Errorf("invalid length of currency id, %d <= %d <= %d", MinLengthCurrencyID, l, MaxLengthCurrencyID))
 	} else if !ReValidCurrencyID.Match([]byte(cid)) {
-		return util.ErrInvalid.Errorf("Wrong Currency id, %v", cid)
+		return common.ErrValueInvalid.Wrap(
+			errors.Errorf("currency ID %v, must match regex `^[A-Z0-9][A-Z0-9_\\.\\!\\$\\*\\@]*[A-Z0-9]$`", cid))
 	}
 
 	return nil

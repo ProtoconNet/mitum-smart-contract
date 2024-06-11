@@ -82,13 +82,13 @@ func (opp *UpdateKeyProcessor) PreProcess(
 			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).Errorf("%v", cErr)), nil
 	} else if ac, err := currency.LoadStateAccountValue(aState); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMStateValInvalid).Errorf("%v: contract account, %v", fact.Target(), err)), nil
+			common.ErrMPreProcess.Wrap(common.ErrMStateValInvalid).Errorf("%v: target %v", err, fact.Target())), nil
 	} else if _, ok := ac.Keys().(types.NilAccountKeys); ok {
 		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).Errorf("single-sig account cannot be updated, %v", fact.Target())), nil
+			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).Errorf("target %v must be multi-sig account", fact.Target())), nil
 	} else if ac.Keys().Equal(fact.Keys()) {
 		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).Errorf("already registered key, %q", fact.keys.Hash())), nil
+			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).Errorf("target keys is same with keys to update, keys hash %v", fact.keys.Hash())), nil
 	}
 
 	if err := state.CheckFactSignsByState(fact.Target(), op.Signs(), getStateFunc); err != nil {

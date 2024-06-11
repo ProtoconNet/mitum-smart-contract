@@ -54,7 +54,10 @@ func (opp *CreateAccountItemProcessor) PreProcess(
 		}
 
 		if am.Big().Compare(policy.NewAccountMinBalance()) < 0 {
-			return e.Wrap(common.ErrValOOR.Wrap(errors.Errorf("amount under minimum balance, %v < %v", am.Big(), policy.NewAccountMinBalance())))
+			return e.Wrap(
+				common.ErrValOOR.Wrap(
+					errors.Errorf(
+						"amount under new account minimum balance, %v < %v", am.Big(), policy.NewAccountMinBalance())))
 
 		}
 	}
@@ -78,7 +81,7 @@ func (opp *CreateAccountItemProcessor) PreProcess(
 		case err != nil:
 			return e.Wrap(err)
 		case found:
-			return e.Wrap(common.ErrAccountE.Wrap(errors.Errorf("target account balance already exists, %v", target)))
+			return e.Wrap(common.ErrAccountE.Wrap(errors.Errorf("target balance already exists, %v", target)))
 		default:
 			nb[am.Currency()] = common.NewBaseStateMergeValue(
 				currency.StateKeyBalance(target, am.Currency()),
