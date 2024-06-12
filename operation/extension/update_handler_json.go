@@ -9,54 +9,54 @@ import (
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
-type UpdateOperatorFactJSONMarshaler struct {
+type UpdateHandlerFactJSONMarshaler struct {
 	base.BaseFactJSONMarshaler
-	Sender    base.Address     `json:"sender"`
-	Contract  base.Address     `json:"contract"`
-	Operators []base.Address   `json:"operators"`
-	Currency  types.CurrencyID `json:"currency"`
+	Sender   base.Address     `json:"sender"`
+	Contract base.Address     `json:"contract"`
+	Handlers []base.Address   `json:"handlers"`
+	Currency types.CurrencyID `json:"currency"`
 }
 
-func (fact UpdateOperatorFact) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(UpdateOperatorFactJSONMarshaler{
+func (fact UpdateHandlerFact) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(UpdateHandlerFactJSONMarshaler{
 		BaseFactJSONMarshaler: fact.BaseFact.JSONMarshaler(),
 		Sender:                fact.sender,
 		Contract:              fact.contract,
-		Operators:             fact.operators,
+		Handlers:              fact.handlers,
 		Currency:              fact.currency,
 	})
 }
 
-type UpdatOperatorFactJSONUnMarshaler struct {
+type UpdatHandlerFactJSONUnMarshaler struct {
 	base.BaseFactJSONUnmarshaler
-	Sender    string   `json:"sender"`
-	Contract  string   `json:"contract"`
-	Operators []string `json:"operators"`
-	Currency  string   `json:"currency"`
+	Sender   string   `json:"sender"`
+	Contract string   `json:"contract"`
+	Handlers []string `json:"handlers"`
+	Currency string   `json:"currency"`
 }
 
-func (fact *UpdateOperatorFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	var uf UpdatOperatorFactJSONUnMarshaler
+func (fact *UpdateHandlerFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
+	var uf UpdatHandlerFactJSONUnMarshaler
 	if err := enc.Unmarshal(b, &uf); err != nil {
 		return common.DecorateError(err, common.ErrDecodeJson, *fact)
 	}
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	if err := fact.unpack(enc, uf.Sender, uf.Contract, uf.Operators, uf.Currency); err != nil {
+	if err := fact.unpack(enc, uf.Sender, uf.Contract, uf.Handlers, uf.Currency); err != nil {
 		return common.DecorateError(err, common.ErrDecodeJson, *fact)
 	}
 
 	return nil
 }
 
-func (op UpdateOperator) MarshalJSON() ([]byte, error) {
+func (op UpdateHandler) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(currency.BaseOperationMarshaler{
 		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
 	})
 }
 
-func (op *UpdateOperator) DecodeJSON(b []byte, enc encoder.Encoder) error {
+func (op *UpdateHandler) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	var ubo common.BaseOperation
 	if err := ubo.DecodeJSON(b, enc); err != nil {
 		return common.DecorateError(err, common.ErrDecodeJson, *op)

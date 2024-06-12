@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	CreateContractAccountItemSingleAmountHint = hint.MustNewHint("mitum-currency-create-contract-account-single-amount-v0.0.1")
+	CreateContractAccountItemSingleAmountHint = hint.MustNewHint("mitum-extension-create-contract-account-single-amount-v0.0.1")
 )
 
 type CreateContractAccountItemSingleAmount struct {

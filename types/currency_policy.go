@@ -4,6 +4,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -12,35 +13,35 @@ var (
 
 type CurrencyPolicy struct {
 	hint.BaseHinter
-	newAccountMinBalance common.Big
-	feeer                Feeer
+	minBalance common.Big
+	feeer      Feeer
 }
 
 func NewCurrencyPolicy(newAccountMinBalance common.Big, feeer Feeer) CurrencyPolicy {
 	return CurrencyPolicy{
-		BaseHinter:           hint.NewBaseHinter(CurrencyPolicyHint),
-		newAccountMinBalance: newAccountMinBalance, feeer: feeer,
+		BaseHinter: hint.NewBaseHinter(CurrencyPolicyHint),
+		minBalance: newAccountMinBalance, feeer: feeer,
 	}
 }
 
 func (po CurrencyPolicy) Bytes() []byte {
-	return util.ConcatBytesSlice(po.newAccountMinBalance.Bytes(), po.feeer.Bytes())
+	return util.ConcatBytesSlice(po.minBalance.Bytes(), po.feeer.Bytes())
 }
 
 func (po CurrencyPolicy) IsValid([]byte) error {
-	if !po.newAccountMinBalance.OverNil() {
-		return util.ErrInvalid.Errorf("newAccountMinBalance under zero")
+	if !po.minBalance.OverNil() {
+		return common.ErrValueInvalid.Wrap(errors.Errorf("new Account Minimum Balance under zero"))
 	}
 
 	if err := util.CheckIsValiders(nil, false, po.BaseHinter, po.feeer); err != nil {
-		return util.ErrInvalid.Errorf("invalid currency policy, %v", err)
+		return common.ErrValueInvalid.Wrap(errors.Errorf("invalid currency policy, %v", err))
 	}
 
 	return nil
 }
 
-func (po CurrencyPolicy) NewAccountMinBalance() common.Big {
-	return po.newAccountMinBalance
+func (po CurrencyPolicy) MinBalance() common.Big {
+	return po.minBalance
 }
 
 func (po CurrencyPolicy) Feeer() Feeer {

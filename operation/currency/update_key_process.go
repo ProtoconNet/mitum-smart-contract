@@ -74,24 +74,24 @@ func (opp *UpdateKeyProcessor) PreProcess(
 		), nil
 	}
 
-	if aState, _, aErr, cErr := state.ExistsCAccount(fact.Target(), "target", true, false, getStateFunc); aErr != nil {
+	if aState, _, aErr, cErr := state.ExistsCAccount(fact.Sender(), "sender", true, false, getStateFunc); aErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Errorf("%v", aErr)), nil
 	} else if cErr != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).Errorf("%v", cErr)), nil
-	} else if ac, err := currency.LoadStateAccountValue(aState); err != nil {
+	} else if ac, err := currency.LoadAccountStateValue(aState); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMStateValInvalid).Errorf("%v: target %v", err, fact.Target())), nil
+			common.ErrMPreProcess.Wrap(common.ErrMStateValInvalid).Errorf("%v: sender %v", err, fact.Sender())), nil
 	} else if _, ok := ac.Keys().(types.NilAccountKeys); ok {
 		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).Errorf("target %v must be multi-sig account", fact.Target())), nil
+			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).Errorf("sender %v must be multi-sig account", fact.Sender())), nil
 	} else if ac.Keys().Equal(fact.Keys()) {
 		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).Errorf("target keys is same with keys to update, keys hash %v", fact.keys.Hash())), nil
+			common.ErrMPreProcess.Wrap(common.ErrMValueInvalid).Errorf("sender keys is same with keys to update, keys hash %v", fact.keys.Hash())), nil
 	}
 
-	if err := state.CheckFactSignsByState(fact.Target(), op.Signs(), getStateFunc); err != nil {
+	if err := state.CheckFactSignsByState(fact.Sender(), op.Signs(), getStateFunc); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMSignInvalid).Errorf("%v", err)), nil
 	}
@@ -112,25 +112,25 @@ func (opp *UpdateKeyProcessor) Process( // nolint:dupl
 
 	var tgAccSt base.State
 	var err error
-	if tgAccSt, err = state.ExistsState(currency.StateKeyAccount(fact.Target()), "target keys", getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("target account not found, %v; %w", fact.Target(), err), nil
+	if tgAccSt, err = state.ExistsState(currency.AccountStateKey(fact.Sender()), "sender keys", getStateFunc); err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("sender account not found, %v; %w", fact.Sender(), err), nil
 	}
 
 	var fee common.Big
 	policy, err := state.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check existence of currency %v; %w", fact.Currency(), err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check existence of currency id %q; %w", fact.Currency(), err), nil
 	} else if fee, err = policy.Feeer().Fee(common.ZeroBig); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check fee of currency %v; %w", fact.Currency(), err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check fee of currency id %q; %w", fact.Currency(), err), nil
 	}
 
 	var tgBalSt base.State
-	if tgBalSt, err = state.ExistsState(currency.StateKeyBalance(fact.Target(), fact.Currency()), "balance of target", getStateFunc); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("target account balance not found, %v; %w", fact.Target(), err), nil
+	if tgBalSt, err = state.ExistsState(currency.BalanceStateKey(fact.Sender(), fact.Currency()), "balance of sender", getStateFunc); err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("sender account balance not found, %v; %w", fact.Sender(), err), nil
 	} else if b, err := currency.StateBalanceValue(tgBalSt); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("failed to get target balance value, %v, %v; %w", fact.Currency(), fact.Target(), err), nil
+		return nil, base.NewBaseOperationProcessReasonError("failed to get sender balance value, %v, %v; %w", fact.Currency(), fact.Sender(), err), nil
 	} else if b.Big().Compare(fee) < 0 {
-		return nil, base.NewBaseOperationProcessReasonError("insufficient balance with fee %v ,%v", fact.Currency(), fact.Target()), nil
+		return nil, base.NewBaseOperationProcessReasonError("insufficient balance with fee %v ,%v", fact.Currency(), fact.Sender()), nil
 	}
 
 	var stmvs []base.StateMergeValue // nolint:prealloc
@@ -140,9 +140,9 @@ func (opp *UpdateKeyProcessor) Process( // nolint:dupl
 	}
 
 	if policy.Feeer().Receiver() != nil {
-		if err := state.CheckExistsState(currency.StateKeyAccount(policy.Feeer().Receiver()), getStateFunc); err != nil {
+		if err := state.CheckExistsState(currency.AccountStateKey(policy.Feeer().Receiver()), getStateFunc); err != nil {
 			return nil, nil, errors.Errorf("feeer receiver %s not found", policy.Feeer().Receiver())
-		} else if feeRcvrSt, found, err := getStateFunc(currency.StateKeyBalance(policy.Feeer().Receiver(), fact.Currency())); err != nil {
+		} else if feeRcvrSt, found, err := getStateFunc(currency.BalanceStateKey(policy.Feeer().Receiver(), fact.Currency())); err != nil {
 			return nil, nil, errors.Errorf("feeer receiver %s balance of %s not found", policy.Feeer().Receiver(), fact.Currency())
 		} else if !found {
 			return nil, nil, errors.Errorf("feeer receiver %s balance of %s not found", policy.Feeer().Receiver(), fact.Currency())
@@ -169,7 +169,7 @@ func (opp *UpdateKeyProcessor) Process( // nolint:dupl
 		}
 	}
 
-	ac, err := currency.LoadStateAccountValue(tgAccSt)
+	ac, err := currency.LoadAccountStateValue(tgAccSt)
 	if err != nil {
 		return nil, nil, err
 	}

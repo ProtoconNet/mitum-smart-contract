@@ -85,24 +85,24 @@ func (b *BalanceStateValue) DecodeBSON(v []byte, enc *bsonenc.Encoder) error {
 	return nil
 }
 
-func (c CurrencyDesignStateValue) MarshalBSON() ([]byte, error) {
+func (c DesignStateValue) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":          c.Hint().String(),
-			"currencydesign": c.CurrencyDesign,
+			"_hint":           c.Hint().String(),
+			"currency_design": c.Design,
 		},
 	)
 }
 
-type CurrencyDesignStateValueBSONUnmarshaler struct {
+type DesignStateValueBSONUnmarshaler struct {
 	Hint           string   `bson:"_hint"`
-	CurrencyDesign bson.Raw `bson:"currencydesign"`
+	CurrencyDesign bson.Raw `bson:"currency_design"`
 }
 
-func (c *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("Decode CurrencyDesignStateValue")
+func (c *DesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+	e := util.StringError("Decode DesignStateValue")
 
-	var u CurrencyDesignStateValueBSONUnmarshaler
+	var u DesignStateValueBSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
 		return e.Wrap(err)
 	}
@@ -118,7 +118,7 @@ func (c *CurrencyDesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 		return e.Wrap(err)
 	}
 
-	c.CurrencyDesign = cd
+	c.Design = cd
 
 	return nil
 }

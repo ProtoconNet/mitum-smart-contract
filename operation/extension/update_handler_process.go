@@ -15,39 +15,39 @@ import (
 	"github.com/pkg/errors"
 )
 
-var UpdateOperatorProcessorPool = sync.Pool{
+var UpdateHandlerProcessorPool = sync.Pool{
 	New: func() interface{} {
-		return new(UpdateOperatorProcessor)
+		return new(UpdateHandlerProcessor)
 	},
 }
 
-func (UpdateOperator) Process(
+func (UpdateHandler) Process(
 	_ context.Context, _ base.GetStateFunc,
 ) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
 	// NOTE Process is nil func
 	return nil, nil, nil
 }
 
-type UpdateOperatorProcessor struct {
+type UpdateHandlerProcessor struct {
 	*base.BaseOperationProcessor
 	ca  base.StateMergeValue
 	sb  base.StateMergeValue
 	fee common.Big
 }
 
-func NewUpdateOperatorProcessor() types.GetNewProcessor {
+func NewUpdateHandlerProcessor() types.GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	) (base.OperationProcessor, error) {
-		e := util.StringError("create new UpdateOperatorProcessor")
+		e := util.StringError("create new UpdateHandlerProcessor")
 
-		nopp := UpdateOperatorProcessorPool.Get()
-		opp, ok := nopp.(*UpdateOperatorProcessor)
+		nopp := UpdateHandlerProcessorPool.Get()
+		opp, ok := nopp.(*UpdateHandlerProcessor)
 		if !ok {
-			return nil, errors.Errorf("expected UpdateOperatorProcessor, not %T", nopp)
+			return nil, errors.Errorf("expected UpdateHandlerProcessor, not %T", nopp)
 		}
 
 		b, err := base.NewBaseOperationProcessor(
@@ -61,15 +61,15 @@ func NewUpdateOperatorProcessor() types.GetNewProcessor {
 	}
 }
 
-func (opp *UpdateOperatorProcessor) PreProcess(
+func (opp *UpdateHandlerProcessor) PreProcess(
 	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc,
 ) (context.Context, base.OperationProcessReasonError, error) {
-	fact, ok := op.Fact().(UpdateOperatorFact)
+	fact, ok := op.Fact().(UpdateHandlerFact)
 	if !ok {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Wrap(common.ErrMTypeMismatch).
-				Errorf("expected UpdateOperatorFact, not %T", op.Fact())), nil
+				Errorf("expected UpdateHandlerFact, not %T", op.Fact())), nil
 	}
 
 	_, err := state.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
@@ -111,8 +111,8 @@ func (opp *UpdateOperatorProcessor) PreProcess(
 				Errorf("sender %v is not owner of contract account", fact.Sender())), nil
 	}
 
-	for i := range fact.Operators() {
-		if _, _, aErr, cErr := state.ExistsCAccount(fact.Operators()[i], "operator", true, false, getStateFunc); aErr != nil {
+	for i := range fact.Handlers() {
+		if _, _, aErr, cErr := state.ExistsCAccount(fact.Handlers()[i], "handler", true, false, getStateFunc); aErr != nil {
 			return ctx, base.NewBaseOperationProcessReasonError(
 				common.ErrMPreProcess.
 					Errorf("%v", aErr)), nil
@@ -134,15 +134,15 @@ func (opp *UpdateOperatorProcessor) PreProcess(
 	return ctx, nil, nil
 }
 
-func (opp *UpdateOperatorProcessor) Process( // nolint:dupl
+func (opp *UpdateHandlerProcessor) Process( // nolint:dupl
 	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
-	e := util.StringError("process UpdateOperator")
+	e := util.StringError("process UpdateHandler")
 
-	fact, ok := op.Fact().(UpdateOperatorFact)
+	fact, ok := op.Fact().(UpdateHandlerFact)
 	if !ok {
-		return nil, nil, e.Errorf("expected UpdateOperatorFact, not %T", op.Fact())
+		return nil, nil, e.Errorf("expected UpdateHandlerFact, not %T", op.Fact())
 	}
 
 	var ctAccSt base.State
@@ -155,13 +155,13 @@ func (opp *UpdateOperatorProcessor) Process( // nolint:dupl
 	var fee common.Big
 	policy, err := state.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check existence of currency %v; %w", fact.Currency(), err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check existence of currency id %q; %w", fact.Currency(), err), nil
 	} else if fee, err = policy.Feeer().Fee(common.ZeroBig); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check fee of currency %v; %w", fact.Currency(), err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check fee of currency id %q; %w", fact.Currency(), err), nil
 	}
 
 	var sdBalSt base.State
-	if sdBalSt, err = state.ExistsState(currency.StateKeyBalance(fact.Sender(), fact.Currency()), "balance of sender", getStateFunc); err != nil {
+	if sdBalSt, err = state.ExistsState(currency.BalanceStateKey(fact.Sender(), fact.Currency()), "balance of sender", getStateFunc); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("check existence of sender balance %v ; %w", fact.Sender(), err), nil
 	} else if b, err := currency.StateBalanceValue(sdBalSt); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("check existence of sender balance %v, %v ; %w", fact.Currency(), fact.Sender(), err), nil
@@ -176,9 +176,9 @@ func (opp *UpdateOperatorProcessor) Process( // nolint:dupl
 	}
 
 	if policy.Feeer().Receiver() != nil {
-		if err := state.CheckExistsState(currency.StateKeyAccount(policy.Feeer().Receiver()), getStateFunc); err != nil {
+		if err := state.CheckExistsState(currency.AccountStateKey(policy.Feeer().Receiver()), getStateFunc); err != nil {
 			return nil, nil, errors.Errorf("feeer receiver %s not found", policy.Feeer().Receiver())
-		} else if feeRcvrSt, found, err := getStateFunc(currency.StateKeyBalance(policy.Feeer().Receiver(), fact.Currency())); err != nil {
+		} else if feeRcvrSt, found, err := getStateFunc(currency.BalanceStateKey(policy.Feeer().Receiver(), fact.Currency())); err != nil {
 			return nil, nil, errors.Errorf("feeer receiver %s balance of %s not found", policy.Feeer().Receiver(), fact.Currency())
 		} else if !found {
 			return nil, nil, errors.Errorf("feeer receiver %s balance of %s not found", policy.Feeer().Receiver(), fact.Currency())
@@ -216,7 +216,7 @@ func (opp *UpdateOperatorProcessor) Process( // nolint:dupl
 	}
 
 	status := sv.Status()
-	err = status.SetOperators(fact.Operators())
+	err = status.SetHandlers(fact.Handlers())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -226,8 +226,8 @@ func (opp *UpdateOperatorProcessor) Process( // nolint:dupl
 	return stmvs, nil, nil
 }
 
-func (opp *UpdateOperatorProcessor) Close() error {
-	UpdateOperatorProcessorPool.Put(opp)
+func (opp *UpdateHandlerProcessor) Close() error {
+	UpdateHandlerProcessorPool.Put(opp)
 
 	return nil
 }

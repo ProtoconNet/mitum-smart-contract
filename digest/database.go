@@ -3,7 +3,7 @@ package digest
 import (
 	"context"
 	"fmt"
-	mongodbstorage "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
+	digestmongo "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
 	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
@@ -50,28 +50,28 @@ var DigestStorageLastBlockKey = "digest_last_block"
 type Database struct {
 	sync.RWMutex
 	*logging.Logging
-	mitum     *isaacdatabase.Center
-	database  *mongodbstorage.Database
+	mitumDB   *isaacdatabase.Center
+	digestDB  *digestmongo.Database
 	readonly  bool
 	lastBlock base.Height
 }
 
-func NewDatabase(mitum *isaacdatabase.Center, st *mongodbstorage.Database) (*Database, error) {
+func NewDatabase(mitumDB *isaacdatabase.Center, digestDB *digestmongo.Database) (*Database, error) {
 	nst := &Database{
 		Logging: logging.NewLogging(func(c zerolog.Context) zerolog.Context {
 			return c.Str("module", "digest-mongodb-database")
 		}),
-		mitum:     mitum,
-		database:  st,
+		mitumDB:   mitumDB,
+		digestDB:  digestDB,
 		lastBlock: base.NilHeight,
 	}
-	_ = nst.SetLogging(mitum.Logging)
+	_ = nst.SetLogging(mitumDB.Logging)
 
 	return nst, nil
 }
 
-func NewReadonlyDatabase(mitum *isaacdatabase.Center, st *mongodbstorage.Database) (*Database, error) {
-	nst, err := NewDatabase(mitum, st)
+func NewReadonlyDatabase(mitumDB *isaacdatabase.Center, digestDB *digestmongo.Database) (*Database, error) {
+	nst, err := NewDatabase(mitumDB, digestDB)
 	if err != nil {
 		return nil, err
 	}
@@ -80,82 +80,68 @@ func NewReadonlyDatabase(mitum *isaacdatabase.Center, st *mongodbstorage.Databas
 	return nst, nil
 }
 
-func (st *Database) New() (*Database, error) {
-	if st.readonly {
+func (db *Database) New() (*Database, error) {
+	if db.readonly {
 		return nil, errors.Errorf("Readonly mode")
 	}
 
-	nst, err := st.database.New()
+	nst, err := db.digestDB.New()
 	if err != nil {
 		return nil, err
 	}
-	return NewDatabase(st.mitum, nst)
+	return NewDatabase(db.mitumDB, nst)
 }
 
-func (st *Database) Readonly() bool {
-	return st.readonly
+func (db *Database) Readonly() bool {
+	return db.readonly
 }
 
-func (st *Database) Close() error {
-	return st.database.Close()
+func (db *Database) Close() error {
+	return db.digestDB.Close()
 }
 
-func (st *Database) DatabaseClient() *mongodbstorage.Client {
-	return st.database.Client()
+func (db *Database) MongoClient() *digestmongo.Client {
+	return db.digestDB.Client()
 }
 
-func (st *Database) DatabaseEncoder() encoder.Encoder {
-	return st.database.Encoder()
+func (db *Database) Encoder() encoder.Encoder {
+	return db.digestDB.Encoder()
 }
 
-func (st *Database) DatabaseEncoders() *encoder.Encoders {
-	return st.database.Encoders()
+func (db *Database) Encoders() *encoder.Encoders {
+	return db.digestDB.Encoders()
 }
 
-func (st *Database) Initialize() error {
-	st.Lock()
-	defer st.Unlock()
+func (db *Database) Initialize() error {
+	db.Lock()
+	defer db.Unlock()
 
-	switch h, found, err := loadLastBlock(st); {
+	switch h, found, err := loadLastBlock(db); {
 	case err != nil:
 		return errors.Wrap(err, "initialize digest database")
 	case !found:
-		st.lastBlock = base.NilHeight
-		st.Log().Debug().Msg("last block for digest not found")
+		db.lastBlock = base.NilHeight
+		db.Log().Debug().Msg("last block for digest not found")
 	default:
-		st.lastBlock = h
+		db.lastBlock = h
 	}
-	// 	if !st.readonly {
-	// 		if err := st.createIndex(); err != nil {
-	// 			return err
-	// 		}
 
-	// 		if err := st.cleanByHeight(context.Background(), h+1); err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// }
-
-	if !st.readonly {
-		if err := st.createIndex(); err != nil {
+	if !db.readonly {
+		if err := db.createIndex(); err != nil {
 			return err
 		}
-
-		// if err := st.cleanByHeight(context.Background(), h+1); err != nil {
-		// 	return err
-		// }
 	}
 
 	return nil
 }
 
-func (st *Database) createIndex() error {
-	if st.readonly {
+func (db *Database) createIndex() error {
+	if db.readonly {
 		return errors.Errorf("Readonly mode")
 	}
 
 	for col, models := range defaultIndexes {
-		if err := st.database.CreateIndex(col, models, indexPrefix); err != nil {
+		if err := db.digestDB.CreateIndex(col, models, indexPrefix); err != nil {
 			return err
 		}
 	}
@@ -163,52 +149,52 @@ func (st *Database) createIndex() error {
 	return nil
 }
 
-func (st *Database) LastBlock() base.Height {
-	st.RLock()
-	defer st.RUnlock()
+func (db *Database) LastBlock() base.Height {
+	db.RLock()
+	defer db.RUnlock()
 
-	return st.lastBlock
+	return db.lastBlock
 }
 
-func (st *Database) SetLastBlock(height base.Height) error {
-	if st.readonly {
+func (db *Database) SetLastBlock(height base.Height) error {
+	if db.readonly {
 		return errors.Errorf("Readonly mode")
 	}
 
-	st.Lock()
-	defer st.Unlock()
+	db.Lock()
+	defer db.Unlock()
 
-	if height <= st.lastBlock {
+	if height <= db.lastBlock {
 		return nil
 	}
 
-	return st.setLastBlock(height)
+	return db.setLastBlock(height)
 }
 
-func (st *Database) setLastBlock(height base.Height) error {
-	if err := st.database.SetInfo(DigestStorageLastBlockKey, height.Bytes()); err != nil {
-		st.Log().Debug().Int64("height", height.Int64()).Msg("set last block")
+func (db *Database) setLastBlock(height base.Height) error {
+	if err := db.digestDB.SetInfo(DigestStorageLastBlockKey, height.Bytes()); err != nil {
+		db.Log().Debug().Int64("height", height.Int64()).Msg("set last block")
 
 		return err
 	}
-	st.lastBlock = height
-	st.Log().Debug().Int64("height", height.Int64()).Msg("set last block")
+	db.lastBlock = height
+	db.Log().Debug().Int64("height", height.Int64()).Msg("set last block")
 
 	return nil
 }
 
-func (st *Database) Clean() error {
-	if st.readonly {
+func (db *Database) Clean() error {
+	if db.readonly {
 		return errors.Errorf("Readonly mode")
 	}
 
-	st.Lock()
-	defer st.Unlock()
+	db.Lock()
+	defer db.Unlock()
 
-	return st.clean(context.Background())
+	return db.clean(context.Background())
 }
 
-func (st *Database) clean(ctx context.Context) error {
+func (db *Database) clean(ctx context.Context) error {
 	for _, col := range []string{
 		defaultColNameAccount,
 		defaultColNameBalance,
@@ -216,36 +202,36 @@ func (st *Database) clean(ctx context.Context) error {
 		defaultColNameOperation,
 		defaultColNameBlock,
 	} {
-		if err := st.database.Client().Collection(col).Drop(ctx); err != nil {
+		if err := db.digestDB.Client().Collection(col).Drop(ctx); err != nil {
 			return err
 		}
 
-		st.Log().Debug().Str("collection", col).Msg("drop collection by height")
+		db.Log().Debug().Str("collection", col).Msg("drop collection by height")
 	}
 
-	if err := st.setLastBlock(base.NilHeight); err != nil {
+	if err := db.setLastBlock(base.NilHeight); err != nil {
 		return err
 	}
 
-	st.Log().Debug().Msg("clean digest")
+	db.Log().Debug().Msg("clean digest")
 
 	return nil
 }
 
-func (st *Database) CleanByHeight(ctx context.Context, height base.Height) error {
-	if st.readonly {
+func (db *Database) CleanByHeight(ctx context.Context, height base.Height) error {
+	if db.readonly {
 		return errors.Errorf("Readonly mode")
 	}
 
-	st.Lock()
-	defer st.Unlock()
+	db.Lock()
+	defer db.Unlock()
 
-	return st.cleanByHeight(ctx, height)
+	return db.cleanByHeight(ctx, height)
 }
 
-func (st *Database) cleanByHeight(ctx context.Context, height base.Height) error {
+func (db *Database) cleanByHeight(ctx context.Context, height base.Height) error {
 	if height <= base.GenesisHeight {
-		return st.clean(ctx)
+		return db.clean(ctx)
 	}
 
 	opts := options.BulkWrite().SetOrdered(true)
@@ -258,7 +244,7 @@ func (st *Database) cleanByHeight(ctx context.Context, height base.Height) error
 		defaultColNameOperation,
 		defaultColNameBlock,
 	} {
-		res, err := st.database.Client().Collection(col).BulkWrite(
+		res, err := db.digestDB.Client().Collection(col).BulkWrite(
 			ctx,
 			[]mongo.WriteModel{removeByHeight},
 			opts,
@@ -267,10 +253,10 @@ func (st *Database) cleanByHeight(ctx context.Context, height base.Height) error
 			return err
 		}
 
-		st.Log().Debug().Str("collection", col).Interface("result", res).Msg("clean collection by height")
+		db.Log().Debug().Str("collection", col).Interface("result", res).Msg("clean collection by height")
 	}
 
-	return st.setLastBlock(height - 1)
+	return db.setLastBlock(height - 1)
 }
 
 /*
@@ -280,7 +266,7 @@ func (st *Database) Manifest(h mitumutil.Hash) (base.Manifest, bool, error) {
 */
 
 // Manifests returns block.Manifests by order and height.
-func (st *Database) Manifests(
+func (db *Database) Manifests(
 	load bool,
 	reverse bool,
 	offset base.Height,
@@ -313,12 +299,12 @@ func (st *Database) Manifests(
 		opt = opt.SetLimit(limit)
 	}
 
-	return st.database.Client().Find(
+	return db.digestDB.Client().Find(
 		context.Background(),
 		defaultColNameBlock,
 		filter,
 		func(cursor *mongo.Cursor) (bool, error) {
-			va, ops, confirmed, proposer, round, err := LoadManifest(cursor.Decode, st.database.Encoders())
+			va, ops, confirmed, proposer, round, err := LoadManifest(cursor.Decode, db.digestDB.Encoders())
 			if err != nil {
 				return false, err
 			}
@@ -335,7 +321,7 @@ func (st *Database) Manifests(
 // * reverse: order by height; if true, higher height will be returned first.
 // *  offset: returns from next of offset, usually it is combination of
 // "<height>,<fact>".
-func (st *Database) OperationsByAddress(
+func (db *Database) OperationsByAddress(
 	address base.Address,
 	load,
 	reverse bool,
@@ -369,7 +355,7 @@ func (st *Database) OperationsByAddress(
 		opt = opt.SetProjection(bson.M{"fact": 1})
 	}
 
-	return st.database.Client().Find(
+	return db.digestDB.Client().Find(
 		context.Background(),
 		defaultColNameOperation,
 		filter,
@@ -382,7 +368,7 @@ func (st *Database) OperationsByAddress(
 				return callback(h, OperationValue{})
 			}
 
-			va, err := LoadOperation(cursor.Decode, st.database.Encoders())
+			va, err := LoadOperation(cursor.Decode, db.digestDB.Encoders())
 			if err != nil {
 				return false, err
 			}
@@ -394,17 +380,17 @@ func (st *Database) OperationsByAddress(
 
 // Operation returns operation.Operation. If load is false, just returns nil
 // Operation.
-func (st *Database) Operation(
+func (db *Database) Operation(
 	h mitumutil.Hash, /* fact hash */
 	load bool,
 ) (OperationValue, bool /* exists */, error) {
 	if !load {
-		exists, err := st.database.Client().Exists(defaultColNameOperation, util.NewBSONFilter("fact", h).D())
+		exists, err := db.digestDB.Client().Exists(defaultColNameOperation, util.NewBSONFilter("fact", h).D())
 		return OperationValue{}, exists, err
 	}
 
 	var va OperationValue
-	if err := st.database.Client().GetByFilter(
+	if err := db.digestDB.Client().GetByFilter(
 		defaultColNameOperation,
 		util.NewBSONFilter("fact", h).D(),
 		func(res *mongo.SingleResult) error {
@@ -412,7 +398,7 @@ func (st *Database) Operation(
 				return nil
 			}
 
-			i, err := LoadOperation(res.Decode, st.database.Encoders())
+			i, err := LoadOperation(res.Decode, db.digestDB.Encoders())
 			if err != nil {
 				return err
 			}
@@ -431,7 +417,7 @@ func (st *Database) Operation(
 }
 
 // Operations returns operation.Operations by order, height and index.
-func (st *Database) Operations(
+func (db *Database) Operations(
 	filter bson.M,
 	load bool,
 	reverse bool,
@@ -459,12 +445,12 @@ func (st *Database) Operations(
 		opt = opt.SetProjection(bson.M{"fact": 1})
 	}
 
-	count, err := st.database.Client().Count(context.Background(), defaultColNameOperation, bson.D{})
+	count, err := db.digestDB.Client().Count(context.Background(), defaultColNameOperation, bson.D{})
 	if err != nil {
 		return err
 	}
 
-	return st.database.Client().Find(
+	return db.digestDB.Client().Find(
 		context.Background(),
 		defaultColNameOperation,
 		filter,
@@ -477,7 +463,7 @@ func (st *Database) Operations(
 				return callback(h, OperationValue{}, count)
 			}
 
-			va, err := LoadOperation(cursor.Decode, st.database.Encoders())
+			va, err := LoadOperation(cursor.Decode, db.digestDB.Encoders())
 			if err != nil {
 				return false, err
 			}
@@ -488,13 +474,13 @@ func (st *Database) Operations(
 }
 
 // Account returns AccountValue.
-func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, error) {
+func (db *Database) Account(a base.Address) (AccountValue, bool /* exists */, error) {
 	var rs AccountValue
-	if err := st.database.Client().GetByFilter(
+	if err := db.digestDB.Client().GetByFilter(
 		defaultColNameAccount,
 		util.NewBSONFilter("address", a.String()).D(),
 		func(res *mongo.SingleResult) error {
-			i, err := LoadAccountValue(res.Decode, st.database.Encoders())
+			i, err := LoadAccountValue(res.Decode, db.digestDB.Encoders())
 			if err != nil {
 				return err
 			}
@@ -513,7 +499,7 @@ func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, er
 	}
 
 	// NOTE load balance
-	switch am, lastHeight, err := st.balance(a); {
+	switch am, lastHeight, err := db.balance(a); {
 	case err != nil:
 		return rs, false, err
 	case len(am) < 1:
@@ -522,7 +508,7 @@ func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, er
 			SetHeight(lastHeight)
 	}
 	// NOTE load contract account status
-	switch status, lastHeight, err := st.contractAccountStatus(a); {
+	switch status, lastHeight, err := db.contractAccountStatus(a); {
 	case err != nil:
 		return rs, true, nil
 	default:
@@ -536,7 +522,7 @@ func (st *Database) Account(a base.Address) (AccountValue, bool /* exists */, er
 // AccountsByPublickey finds Accounts, which are related with the given
 // Publickey.
 // *  offset: returns from next of offset, usually it is "<height>,<address>".
-func (st *Database) AccountsByPublickey(
+func (db *Database) AccountsByPublickey(
 	pub base.Publickey,
 	loadBalance bool,
 	offsetHeight base.Height,
@@ -552,7 +538,7 @@ func (st *Database) AccountsByPublickey(
 	filter["height"] = bson.M{"$lte": offsetHeight}
 
 	var sas []string
-	switch i, err := st.addressesByPublickey(filter); {
+	switch i, err := db.addressesByPublickey(filter); {
 	case err != nil:
 		return err
 	default:
@@ -594,7 +580,7 @@ end:
 		}
 
 		limited := filteredAddress[i*50 : l]
-		switch done, err := st.filterAccountByPublickey(
+		switch done, err := db.filterAccountByPublickey(
 			pub, limited, limit, loadBalance, callback,
 		); {
 		case err != nil:
@@ -607,7 +593,7 @@ end:
 	return nil
 }
 
-func (st *Database) balance(a base.Address) ([]types.Amount, base.Height, error) {
+func (db *Database) balance(a base.Address) ([]types.Amount, base.Height, error) {
 	lastHeight := base.NilHeight
 	var cids []string
 
@@ -623,11 +609,11 @@ func (st *Database) balance(a base.Address) ([]types.Amount, base.Height, error)
 		}
 
 		var sta base.State
-		if err := st.database.Client().GetByFilter(
+		if err := db.digestDB.Client().GetByFilter(
 			defaultColNameBalance,
 			q,
 			func(res *mongo.SingleResult) error {
-				i, err := LoadBalance(res.Decode, st.database.Encoders())
+				i, err := LoadBalance(res.Decode, db.digestDB.Encoders())
 				if err != nil {
 					return err
 				}
@@ -667,7 +653,7 @@ func (st *Database) balance(a base.Address) ([]types.Amount, base.Height, error)
 	return ams, lastHeight, nil
 }
 
-func (st *Database) contractAccountStatus(a base.Address) (types.ContractAccountStatus, base.Height, error) {
+func (db *Database) contractAccountStatus(a base.Address) (types.ContractAccountStatus, base.Height, error) {
 	lastHeight := base.NilHeight
 
 	filter := util.NewBSONFilter("address", a)
@@ -677,11 +663,11 @@ func (st *Database) contractAccountStatus(a base.Address) (types.ContractAccount
 		util.NewBSONFilter("height", -1).D(),
 	)
 	var sta base.State
-	if err := st.database.Client().GetByFilter(
+	if err := db.digestDB.Client().GetByFilter(
 		defaultColNameContractAccount,
 		filter.D(),
 		func(res *mongo.SingleResult) error {
-			i, err := LoadContractAccountStatus(res.Decode, st.database.Encoders())
+			i, err := LoadContractAccountStatus(res.Decode, db.digestDB.Encoders())
 			if err != nil {
 				return err
 			}
@@ -707,7 +693,7 @@ func (st *Database) contractAccountStatus(a base.Address) (types.ContractAccount
 	}
 }
 
-func (st *Database) currencies() ([]string, error) {
+func (db *Database) currencies() ([]string, error) {
 	var cids []string
 
 	for {
@@ -724,11 +710,11 @@ func (st *Database) currencies() ([]string, error) {
 			util.NewBSONFilter("height", -1).D(),
 		)
 		var sta base.State
-		if err := st.database.Client().GetByFilter(
+		if err := db.digestDB.Client().GetByFilter(
 			defaultColNameCurrency,
 			q,
 			func(res *mongo.SingleResult) error {
-				i, err := LoadCurrency(res.Decode, st.database.Encoders())
+				i, err := LoadCurrency(res.Decode, db.digestDB.Encoders())
 				if err != nil {
 					return err
 				}
@@ -745,7 +731,7 @@ func (st *Database) currencies() ([]string, error) {
 		}
 
 		if sta != nil {
-			i, err := currency.StateCurrencyDesignValue(sta)
+			i, err := currency.GetDesignFromState(sta)
 			if err != nil {
 				return nil, err
 			}
@@ -759,17 +745,17 @@ func (st *Database) currencies() ([]string, error) {
 	return cids, nil
 }
 
-func (st *Database) ManifestByHeight(height base.Height) (base.Manifest, uint64, string, string, uint64, error) {
+func (db *Database) ManifestByHeight(height base.Height) (base.Manifest, uint64, string, string, uint64, error) {
 	q := util.NewBSONFilter("height", height).D()
 
 	var m base.Manifest
 	var operations, round uint64
 	var confirmed, proposer string
-	if err := st.database.Client().GetByFilter(
+	if err := db.digestDB.Client().GetByFilter(
 		defaultColNameBlock,
 		q,
 		func(res *mongo.SingleResult) error {
-			v, ops, cfrm, prps, rnd, err := LoadManifest(res.Decode, st.database.Encoders())
+			v, ops, cfrm, prps, rnd, err := LoadManifest(res.Decode, db.digestDB.Encoders())
 			if err != nil {
 				return err
 			}
@@ -791,17 +777,17 @@ func (st *Database) ManifestByHeight(height base.Height) (base.Manifest, uint64,
 	}
 }
 
-func (st *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, uint64, string, string, uint64, error) {
+func (db *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, uint64, string, string, uint64, error) {
 	q := util.NewBSONFilter("block", hash).D()
 
 	var m base.Manifest
 	var operations, round uint64
 	var confirmed, proposer string
-	if err := st.database.Client().GetByFilter(
+	if err := db.digestDB.Client().GetByFilter(
 		defaultColNameBlock,
 		q,
 		func(res *mongo.SingleResult) error {
-			v, ops, cfrm, prps, rnd, err := LoadManifest(res.Decode, st.database.Encoders())
+			v, ops, cfrm, prps, rnd, err := LoadManifest(res.Decode, db.digestDB.Encoders())
 			if err != nil {
 				return err
 			}
@@ -823,18 +809,18 @@ func (st *Database) ManifestByHash(hash mitumutil.Hash) (base.Manifest, uint64, 
 	}
 }
 
-func (st *Database) currency(cid string) (types.CurrencyDesign, base.State, error) {
+func (db *Database) currency(cid string) (types.CurrencyDesign, base.State, error) {
 	q := util.NewBSONFilter("currency", cid).D()
 
 	opt := options.FindOne().SetSort(
 		util.NewBSONFilter("height", -1).D(),
 	)
 	var sta base.State
-	if err := st.database.Client().GetByFilter(
+	if err := db.digestDB.Client().GetByFilter(
 		defaultColNameCurrency,
 		q,
 		func(res *mongo.SingleResult) error {
-			i, err := LoadCurrency(res.Decode, st.database.Encoders())
+			i, err := LoadCurrency(res.Decode, db.digestDB.Encoders())
 			if err != nil {
 				return err
 			}
@@ -847,7 +833,7 @@ func (st *Database) currency(cid string) (types.CurrencyDesign, base.State, erro
 	}
 
 	if sta != nil {
-		de, err := currency.StateCurrencyDesignValue(sta)
+		de, err := currency.GetDesignFromState(sta)
 		if err != nil {
 			return types.CurrencyDesign{}, nil, err
 		}
@@ -857,9 +843,9 @@ func (st *Database) currency(cid string) (types.CurrencyDesign, base.State, erro
 	}
 }
 
-func (st *Database) topHeightByPublickey(pub base.Publickey) (base.Height, error) {
+func (db *Database) topHeightByPublickey(pub base.Publickey) (base.Height, error) {
 	var sas []string
-	switch r, err := st.database.Client().Collection(defaultColNameAccount).Distinct(
+	switch r, err := db.digestDB.Client().Collection(defaultColNameAccount).Distinct(
 		context.Background(),
 		"address",
 		buildAccountsFilterByPublickey(pub),
@@ -882,7 +868,7 @@ func (st *Database) topHeightByPublickey(pub base.Publickey) (base.Height, error
 			l = n
 		}
 
-		switch h, err := st.partialTopHeightByPublickey(sas[i*50 : l]); {
+		switch h, err := db.partialTopHeightByPublickey(sas[i*50 : l]); {
 		case err != nil:
 			return base.NilHeight, err
 		case top <= base.NilHeight:
@@ -895,9 +881,9 @@ func (st *Database) topHeightByPublickey(pub base.Publickey) (base.Height, error
 	return top, nil
 }
 
-func (st *Database) partialTopHeightByPublickey(as []string) (base.Height, error) {
+func (db *Database) partialTopHeightByPublickey(as []string) (base.Height, error) {
 	var top base.Height
-	err := st.database.Client().Find(
+	err := db.digestDB.Client().Find(
 		context.Background(),
 		defaultColNameAccount,
 		bson.M{"address": bson.M{"$in": as}},
@@ -919,8 +905,8 @@ func (st *Database) partialTopHeightByPublickey(as []string) (base.Height, error
 	return top, err
 }
 
-func (st *Database) addressesByPublickey(filter bson.M) ([]string, error) {
-	r, err := st.database.Client().Collection(defaultColNameAccount).Distinct(context.Background(), "address", filter)
+func (db *Database) addressesByPublickey(filter bson.M) ([]string, error) {
+	r, err := db.digestDB.Client().Collection(defaultColNameAccount).Distinct(context.Background(), "address", filter)
 	if err != nil {
 		return nil, errors.Wrap(err, "get distinct addresses")
 	}
@@ -939,7 +925,7 @@ func (st *Database) addressesByPublickey(filter bson.M) ([]string, error) {
 	return sas, nil
 }
 
-func (st *Database) filterAccountByPublickey(
+func (db *Database) filterAccountByPublickey(
 	pub base.Publickey,
 	addresses []string,
 	limit int64,
@@ -951,7 +937,7 @@ func (st *Database) filterAccountByPublickey(
 	var lastAddress string
 	var called int64
 	var stopped bool
-	if err := st.database.Client().Find(
+	if err := db.digestDB.Client().Find(
 		context.Background(),
 		defaultColNameAccount,
 		filter,
@@ -976,13 +962,13 @@ func (st *Database) filterAccountByPublickey(
 				return true, nil
 			}
 
-			va, err := LoadAccountValue(cursor.Decode, st.database.Encoders())
+			va, err := LoadAccountValue(cursor.Decode, db.digestDB.Encoders())
 			if err != nil {
 				return false, err
 			}
 
 			if loadBalance { // NOTE load balance
-				switch am, lastHeight, err := st.balance(va.Account().Address()); {
+				switch am, lastHeight, err := db.balance(va.Account().Address()); {
 				case err != nil:
 					return false, err
 				default:
@@ -1011,14 +997,14 @@ func (st *Database) filterAccountByPublickey(
 	return stopped || called == limit, nil
 }
 
-func (st *Database) CleanByHeightColName(
+func (db *Database) CleanByHeightColName(
 	ctx context.Context,
 	height base.Height,
 	colName string,
 	filters ...bson.D,
 ) error {
 	if height <= base.GenesisHeight {
-		return st.clean(ctx)
+		return db.clean(ctx)
 	}
 
 	opts := options.BulkWrite().SetOrdered(true)
@@ -1039,7 +1025,7 @@ func (st *Database) CleanByHeightColName(
 
 	removeByHeight := mongo.NewDeleteManyModel().SetFilter(filter)
 
-	res, err := st.database.Client().Collection(colName).BulkWrite(
+	res, err := db.digestDB.Client().Collection(colName).BulkWrite(
 		ctx,
 		[]mongo.WriteModel{removeByHeight},
 		opts,
@@ -1048,20 +1034,20 @@ func (st *Database) CleanByHeightColName(
 		return err
 	}
 
-	st.Log().Debug().Str("collection", colName).Interface("result", res).Msg("clean collection by height")
+	db.Log().Debug().Str("collection", colName).Interface("result", res).Msg("clean collection by height")
 
 	return nil
 }
 
-func (st *Database) cleanBalanceByHeightAndAccount(ctx context.Context, height base.Height, address string) error {
+func (db *Database) cleanBalanceByHeightAndAccount(ctx context.Context, height base.Height, address string) error {
 	if height <= base.GenesisHeight+1 {
-		return st.clean(ctx)
+		return db.clean(ctx)
 	}
 
 	opts := options.BulkWrite().SetOrdered(true)
 	removeByAddress := mongo.NewDeleteManyModel().SetFilter(bson.M{"address": address, "height": bson.M{"$lte": height}})
 
-	res, err := st.database.Client().Collection(defaultColNameBalance).BulkWrite(
+	res, err := db.digestDB.Client().Collection(defaultColNameBalance).BulkWrite(
 		context.Background(),
 		[]mongo.WriteModel{removeByAddress},
 		opts,
@@ -1070,13 +1056,13 @@ func (st *Database) cleanBalanceByHeightAndAccount(ctx context.Context, height b
 		return err
 	}
 
-	st.Log().Debug().Str("collection", defaultColNameBalance).Interface("result", res).Msg("clean Balancecollection by address")
+	db.Log().Debug().Str("collection", defaultColNameBalance).Interface("result", res).Msg("clean Balancecollection by address")
 
 	return nil
 }
 
 func loadLastBlock(st *Database) (base.Height, bool, error) {
-	switch b, found, err := st.database.Info(DigestStorageLastBlockKey); {
+	switch b, found, err := st.digestDB.Info(DigestStorageLastBlockKey); {
 	case err != nil:
 		return base.NilHeight, false, errors.Wrap(err, "get last block for digest")
 	case !found:

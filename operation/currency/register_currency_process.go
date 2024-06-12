@@ -100,13 +100,13 @@ func (opp *RegisterCurrencyProcessor) PreProcess(
 	design := fact.currency
 
 	_, err := state.NotExistsState(
-		currency.StateKeyCurrencyDesign(design.Currency()),
+		currency.DesignStateKey(design.Currency()),
 		design.Currency().String(),
 		getStateFunc,
 	)
 	if err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("currency id %v", design.Currency())), nil
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("currency id %q", design.Currency())), nil
 	}
 
 	if _, err := state.ExistsAccount(design.GenesisAccount(), "genesis account", true, getStateFunc); err != nil {
@@ -121,22 +121,22 @@ func (opp *RegisterCurrencyProcessor) PreProcess(
 		}
 	}
 
-	switch _, found, err := getStateFunc(currency.StateKeyCurrencyDesign(design.Currency())); {
+	switch _, found, err := getStateFunc(currency.DesignStateKey(design.Currency())); {
 	case err != nil:
 		return ctx, nil, err
 	case found:
 		return ctx, nil, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("currency %v already registered", design.Currency()))
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("currency id %q already registered", design.Currency()))
 	default:
 	}
 
-	switch _, found, err := getStateFunc(currency.StateKeyBalance(design.GenesisAccount(), design.Currency())); {
+	switch _, found, err := getStateFunc(currency.BalanceStateKey(design.GenesisAccount(), design.Currency())); {
 	case err != nil:
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.Wrap(common.ErrMAccountNF).Errorf("genesis account %v", design.GenesisAccount())), nil
 	case found:
 		return ctx, nil, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("currency %v already registered", design.Currency()))
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyE).Errorf("currency id %q already registered", design.Currency()))
 	default:
 	}
 
@@ -156,18 +156,18 @@ func (opp *RegisterCurrencyProcessor) Process(
 
 	design := fact.Currency()
 
-	//ba := currency.NewBalanceStateValue(design.Amount())
+	//ba := currency.NewBalanceStateValue(design.InitialSupply())
 	//sts[0] = state.NewStateMergeValue(
-	//	currency.StateKeyBalance(design.GenesisAccount(), design.Currency()),
+	//	currency.BalanceStateKey(design.GenesisAccount(), design.Currency()),
 	//	ba,
 	//)
 	sts[0] = common.NewBaseStateMergeValue(
-		currency.StateKeyBalance(design.GenesisAccount(), design.Currency()),
-		currency.NewAddBalanceStateValue(design.Amount()),
+		currency.BalanceStateKey(design.GenesisAccount(), design.Currency()),
+		currency.NewAddBalanceStateValue(design.InitialSupply()),
 		func(height base.Height, st base.State) base.StateValueMerger {
 			return currency.NewBalanceStateValueMerger(
 				height,
-				currency.StateKeyBalance(design.GenesisAccount(), design.Currency()),
+				currency.BalanceStateKey(design.GenesisAccount(), design.Currency()),
 				design.Currency(),
 				st,
 			)
@@ -175,7 +175,7 @@ func (opp *RegisterCurrencyProcessor) Process(
 	)
 
 	de := currency.NewCurrencyDesignStateValue(design)
-	sts[1] = state.NewStateMergeValue(currency.StateKeyCurrencyDesign(design.Currency()), de)
+	sts[1] = state.NewStateMergeValue(currency.DesignStateKey(design.Currency()), de)
 
 	{
 		l, err := createZeroAccount(design.Currency(), getStateFunc)
@@ -198,14 +198,14 @@ func createZeroAccount(
 	if err != nil {
 		return nil, err
 	}
-	ast, err := state.NotExistsState(currency.StateKeyAccount(ac.Address()), "keys of zero account", getStateFunc)
+	ast, err := state.NotExistsState(currency.AccountStateKey(ac.Address()), "keys of zero account", getStateFunc)
 	if err != nil {
 		return nil, err
 	}
 
 	sts[0] = state.NewStateMergeValue(ast.Key(), currency.NewAccountStateValue(ac))
 
-	bst, err := state.NotExistsState(currency.StateKeyBalance(ac.Address(), cid), "balance of zero account", getStateFunc)
+	bst, err := state.NotExistsState(currency.BalanceStateKey(ac.Address(), cid), "balance of zero account", getStateFunc)
 	if err != nil {
 		return nil, err
 	}

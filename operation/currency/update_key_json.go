@@ -12,7 +12,7 @@ import (
 
 type UpdateKeyFactJSONMarshaler struct {
 	base.BaseFactJSONMarshaler
-	Target   base.Address      `json:"target"`
+	Sender   base.Address      `json:"sender"`
 	Keys     types.AccountKeys `json:"keys"`
 	Currency types.CurrencyID  `json:"currency"`
 }
@@ -20,7 +20,7 @@ type UpdateKeyFactJSONMarshaler struct {
 func (fact UpdateKeyFact) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(UpdateKeyFactJSONMarshaler{
 		BaseFactJSONMarshaler: fact.BaseFact.JSONMarshaler(),
-		Target:                fact.target,
+		Sender:                fact.sender,
 		Keys:                  fact.keys,
 		Currency:              fact.currency,
 	})
@@ -28,7 +28,7 @@ func (fact UpdateKeyFact) MarshalJSON() ([]byte, error) {
 
 type UpdateKeyFactJSONUnMarshaler struct {
 	base.BaseFactJSONUnmarshaler
-	Target   string          `json:"target"`
+	Sender   string          `json:"sender"`
 	Keys     json.RawMessage `json:"keys"`
 	Currency string          `json:"currency"`
 }
@@ -41,7 +41,7 @@ func (fact *UpdateKeyFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 
 	fact.BaseFact.SetJSONUnmarshaler(uf.BaseFactJSONUnmarshaler)
 
-	if err := fact.unpack(enc, uf.Target, uf.Keys, uf.Currency); err != nil {
+	if err := fact.unpack(enc, uf.Sender, uf.Keys, uf.Currency); err != nil {
 		return common.DecorateError(err, common.ErrDecodeJson, *fact)
 	}
 

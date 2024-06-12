@@ -104,7 +104,7 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 		_ = bs.close()
 	}()
 
-	_, err := bs.st.database.Client().WithSession(func(txnCtx mongo.SessionContext, collection func(string) *mongo.Collection) (interface{}, error) {
+	_, err := bs.st.digestDB.Client().WithSession(func(txnCtx mongo.SessionContext, collection func(string) *mongo.Collection) (interface{}, error) {
 		if err := bs.writeModels(txnCtx, defaultColNameBlock, bs.blockModels); err != nil {
 			return nil, err
 		}
@@ -190,7 +190,7 @@ func (bs *BlockSession) prepareBlock() error {
 		bs.block.Manifest().ProposedAt(),
 	)
 
-	doc, err := NewManifestDoc(manifest, bs.st.database.Encoder(), bs.block.Manifest().Height(), bs.ops, bs.block.SignedAt(), bs.proposal.ProposalFact().Proposer(), bs.proposal.ProposalFact().Point().Round(), bs.buildinfo)
+	doc, err := NewManifestDoc(manifest, bs.st.digestDB.Encoder(), bs.block.Manifest().Height(), bs.ops, bs.block.SignedAt(), bs.proposal.ProposalFact().Proposer(), bs.proposal.ProposalFact().Point().Round(), bs.buildinfo)
 	if err != nil {
 		return err
 	}
@@ -232,7 +232,7 @@ func (bs *BlockSession) prepareOperations() error {
 			}
 			d, err := NewOperationDoc(
 				op,
-				bs.st.database.Encoder(),
+				bs.st.digestDB.Encoder(),
 				bs.block.Manifest().Height(),
 				bs.block.SignedAt(),
 				inState,
@@ -263,13 +263,13 @@ func (bs *BlockSession) prepareAccounts() error {
 		st := bs.sts[i]
 
 		switch {
-		case statecurrency.IsStateAccountKey(st.Key()):
+		case statecurrency.IsAccountStateKey(st.Key()):
 			j, err := bs.handleAccountState(st)
 			if err != nil {
 				return err
 			}
 			accountModels = append(accountModels, j...)
-		case statecurrency.IsStateBalanceKey(st.Key()):
+		case statecurrency.IsBalanceStateKey(st.Key()):
 			j, address, err := bs.handleBalanceState(st)
 			if err != nil {
 				return err
@@ -302,7 +302,7 @@ func (bs *BlockSession) prepareCurrencies() error {
 	for i := range bs.sts {
 		st := bs.sts[i]
 		switch {
-		case statecurrency.IsStateCurrencyDesignKey(st.Key()):
+		case statecurrency.IsDesignStateKey(st.Key()):
 			j, err := bs.handleCurrencyState(st)
 			if err != nil {
 				return err
@@ -321,7 +321,7 @@ func (bs *BlockSession) prepareCurrencies() error {
 func (bs *BlockSession) handleAccountState(st base.State) ([]mongo.WriteModel, error) {
 	if rs, err := NewAccountValue(st); err != nil {
 		return nil, err
-	} else if doc, err := NewAccountDoc(rs, bs.st.database.Encoder()); err != nil {
+	} else if doc, err := NewAccountDoc(rs, bs.st.digestDB.Encoder()); err != nil {
 		return nil, err
 	} else {
 		return []mongo.WriteModel{mongo.NewInsertOneModel().SetDocument(doc)}, nil
@@ -329,7 +329,7 @@ func (bs *BlockSession) handleAccountState(st base.State) ([]mongo.WriteModel, e
 }
 
 func (bs *BlockSession) handleBalanceState(st base.State) ([]mongo.WriteModel, string, error) {
-	doc, address, err := NewBalanceDoc(st, bs.st.database.Encoder())
+	doc, address, err := NewBalanceDoc(st, bs.st.digestDB.Encoder())
 	if err != nil {
 		return nil, "", err
 	}
@@ -337,7 +337,7 @@ func (bs *BlockSession) handleBalanceState(st base.State) ([]mongo.WriteModel, s
 }
 
 func (bs *BlockSession) handleContractAccountState(st base.State) ([]mongo.WriteModel, error) {
-	doc, err := NewContractAccountStatusDoc(st, bs.st.database.Encoder())
+	doc, err := NewContractAccountStatusDoc(st, bs.st.digestDB.Encoder())
 	if err != nil {
 		return nil, err
 	}
@@ -345,7 +345,7 @@ func (bs *BlockSession) handleContractAccountState(st base.State) ([]mongo.Write
 }
 
 func (bs *BlockSession) handleCurrencyState(st base.State) ([]mongo.WriteModel, error) {
-	doc, err := NewCurrencyDoc(st, bs.st.database.Encoder())
+	doc, err := NewCurrencyDoc(st, bs.st.digestDB.Encoder())
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +387,7 @@ func (bs *BlockSession) writeModels(ctx context.Context, col string, models []mo
 
 func (bs *BlockSession) writeModelsChunk(ctx context.Context, col string, models []mongo.WriteModel) error {
 	opts := options.BulkWrite().SetOrdered(false)
-	if res, err := bs.st.database.Client().Collection(col).BulkWrite(ctx, models, opts); err != nil {
+	if res, err := bs.st.digestDB.Client().Collection(col).BulkWrite(ctx, models, opts); err != nil {
 		return err
 	} else if res != nil && res.InsertedCount < 1 {
 		return errors.Errorf("Not inserted to %s", col)

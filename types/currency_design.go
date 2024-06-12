@@ -19,7 +19,7 @@ type CurrencyDesign struct {
 	decimal        common.Big
 	genesisAccount base.Address
 	policy         CurrencyPolicy
-	aggregate      common.Big
+	totalSupply    common.Big
 }
 
 func NewCurrencyDesign(
@@ -32,7 +32,7 @@ func NewCurrencyDesign(
 		decimal:        decimal,
 		genesisAccount: genesisAccount,
 		policy:         po,
-		aggregate:      initialSupply,
+		totalSupply:    initialSupply,
 	}
 }
 
@@ -40,7 +40,7 @@ func (de CurrencyDesign) IsValid([]byte) error {
 	if err := util.CheckIsValiders(nil, false,
 		de.BaseHinter,
 		de.currency,
-		de.aggregate,
+		de.totalSupply,
 	); err != nil {
 		return util.ErrInvalid.Errorf("Invalid currency design, %v", err)
 	}
@@ -48,8 +48,8 @@ func (de CurrencyDesign) IsValid([]byte) error {
 	switch {
 	case !de.initialSupply.OverZero():
 		return util.ErrInvalid.Errorf("Currency balance should be over zero")
-	case !de.aggregate.OverZero():
-		return util.ErrInvalid.Errorf("Aggregate should be over zero")
+	case !de.totalSupply.OverZero():
+		return util.ErrInvalid.Errorf("TotalSupply should be over zero")
 	}
 
 	if de.genesisAccount != nil {
@@ -77,7 +77,7 @@ func (de CurrencyDesign) Bytes() []byte {
 		de.decimal.Bytes(),
 		gb,
 		de.policy.Bytes(),
-		de.aggregate.Bytes(),
+		de.totalSupply.Bytes(),
 	)
 }
 
@@ -85,7 +85,7 @@ func (de CurrencyDesign) GenesisAccount() base.Address {
 	return de.genesisAccount
 }
 
-func (de CurrencyDesign) Amount() Amount {
+func (de CurrencyDesign) InitialSupply() Amount {
 	return NewAmount(de.initialSupply, de.currency)
 }
 
@@ -109,16 +109,16 @@ func (de *CurrencyDesign) SetPolicy(po CurrencyPolicy) {
 	de.policy = po
 }
 
-func (de CurrencyDesign) Aggregate() common.Big {
-	return de.aggregate
+func (de CurrencyDesign) TotalSupply() common.Big {
+	return de.totalSupply
 }
 
-func (de CurrencyDesign) AddAggregate(b common.Big) (CurrencyDesign, error) {
+func (de CurrencyDesign) AddTotalSupply(b common.Big) (CurrencyDesign, error) {
 	if !b.OverZero() {
-		return de, errors.Errorf("New aggregate not over zero")
+		return de, errors.Errorf("amount to add to total supply must be greater than zero")
 	}
 
-	de.aggregate = de.aggregate.Add(b)
+	de.totalSupply = de.totalSupply.Add(b)
 
 	return de, nil
 }

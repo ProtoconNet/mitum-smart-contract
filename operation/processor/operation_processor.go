@@ -225,7 +225,7 @@ func CheckDuplication(opr *OperationProcessor, op base.Operation) error {
 		if !ok {
 			return errors.Errorf("expected UpdateKeyFact, not %T", t.Fact())
 		}
-		duplicationTypeSenderID = DuplicationKey(fact.Target().String(), DuplicationTypeSender)
+		duplicationTypeSenderID = DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
 	case currency.Transfer:
 		fact, ok := t.Fact().(currency.TransferFact)
 		if !ok {
@@ -353,7 +353,7 @@ func GetNewProcessor(opr *OperationProcessor, op base.Operation) (base.Operation
 		currency.UpdateCurrency,
 		currency.Mint,
 		extension.CreateContractAccount,
-		extension.UpdateOperator,
+		extension.UpdateHandler,
 		extension.Withdraw:
 		return nil, false, errors.Errorf("%T needs SetProcessor", t)
 	default:

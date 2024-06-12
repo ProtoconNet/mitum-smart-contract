@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	WithdrawItemSingleAmountHint = hint.MustNewHint("mitum-currency-contract-account-withdraw-single-amount-v0.0.1")
+	WithdrawItemSingleAmountHint = hint.MustNewHint("mitum-extension-contract-account-withdraw-single-amount-v0.0.1")
 )
 
 type WithdrawItemSingleAmount struct {

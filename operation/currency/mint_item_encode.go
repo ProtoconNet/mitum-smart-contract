@@ -20,7 +20,7 @@ func (it *MintItem) unpack(enc encoder.Encoder, ht hint.Hint, rc string, bam []b
 	if hinter, err := enc.Decode(bam); err != nil {
 		return err
 	} else if am, ok := hinter.(types.Amount); !ok {
-		return common.ErrTypeMismatch.Wrap(errors.Errorf("expected Amount, not %T", hinter))
+		return common.ErrTypeMismatch.Wrap(errors.Errorf("expected InitialSupply, not %T", hinter))
 	} else {
 		it.amount = am
 	}

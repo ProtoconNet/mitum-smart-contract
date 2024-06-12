@@ -28,11 +28,11 @@ var (
 )
 
 func IsAccountState(st base.State) (types.Account, bool, error) {
-	if !currency.IsStateAccountKey(st.Key()) {
+	if !currency.IsAccountStateKey(st.Key()) {
 		return types.Account{}, false, nil
 	}
 
-	ac, err := currency.LoadStateAccountValue(st)
+	ac, err := currency.LoadAccountStateValue(st)
 	if err != nil {
 		return types.Account{}, false, err
 	}
@@ -40,7 +40,7 @@ func IsAccountState(st base.State) (types.Account, bool, error) {
 }
 
 func IsBalanceState(st base.State) (types.Amount, bool, error) {
-	if !currency.IsStateBalanceKey(st.Key()) {
+	if !currency.IsBalanceStateKey(st.Key()) {
 		return types.Amount{}, false, nil
 	}
 

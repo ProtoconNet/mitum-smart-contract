@@ -11,7 +11,7 @@ func (po *CurrencyPolicy) unpack(enc encoder.Encoder, ht hint.Hint, mn string, b
 	if big, err := common.NewBigFromString(mn); err != nil {
 		return err
 	} else {
-		po.newAccountMinBalance = big
+		po.minBalance = big
 	}
 
 	po.BaseHinter = hint.NewBaseHinter(ht)

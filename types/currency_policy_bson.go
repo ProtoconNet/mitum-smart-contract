@@ -11,17 +11,17 @@ import (
 func (po CurrencyPolicy) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":                   po.Hint().String(),
-			"new_account_min_balance": po.newAccountMinBalance.String(),
-			"feeer":                   po.feeer,
+			"_hint":       po.Hint().String(),
+			"min_balance": po.minBalance.String(),
+			"feeer":       po.feeer,
 		},
 	)
 }
 
 type CurrencyPolicyBSONUnmarshaler struct {
-	Hint          string   `bson:"_hint"`
-	NewAccountMin string   `bson:"new_account_min_balance"`
-	Feeer         bson.Raw `bson:"feeer"`
+	Hint       string   `bson:"_hint"`
+	MinBalance string   `bson:"min_balance"`
+	Feeer      bson.Raw `bson:"feeer"`
 }
 
 func (po *CurrencyPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -37,5 +37,5 @@ func (po *CurrencyPolicy) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return po.unpack(enc, ht, upo.NewAccountMin, upo.Feeer)
+	return po.unpack(enc, ht, upo.MinBalance, upo.Feeer)
 }

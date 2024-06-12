@@ -332,7 +332,7 @@ func (t *TestProcessor) SetState(state base.State, inState bool) {
 // NewTestAccountState returns address, keys, private key, account state
 func (t *TestProcessor) NewTestAccountState(priv string, inState bool) (base.Address, types.AccountKeys, base.Privatekey) {
 	account, address, keys, privateKey := t.NewTestAccount(priv)
-	state := common.NewBaseState(base.Height(1), statecurrency.StateKeyAccount(address), statecurrency.NewAccountStateValue(account), nil, []util.Hash{})
+	state := common.NewBaseState(base.Height(1), statecurrency.AccountStateKey(address), statecurrency.NewAccountStateValue(account), nil, []util.Hash{})
 
 	t.SetState(state, inState)
 
@@ -343,7 +343,7 @@ func (t *TestProcessor) NewTestContractAccountState(owner base.Address, priv str
 	account, address, _, privateKey := t.NewTestAccount(priv)
 	cKeys, _ := types.NewContractAccountKeys()
 	naccount, _ := account.SetKeys(cKeys)
-	state := common.NewBaseState(base.Height(1), statecurrency.StateKeyAccount(address), statecurrency.NewAccountStateValue(naccount), nil, []util.Hash{})
+	state := common.NewBaseState(base.Height(1), statecurrency.AccountStateKey(address), statecurrency.NewAccountStateValue(naccount), nil, []util.Hash{})
 
 	//_, ownerAddress, _, _ := t.NewTestAccount(owner.String())
 	status := types.NewContractAccountStatus(owner, []base.Address{})
@@ -361,7 +361,7 @@ func (t *TestProcessor) NewTestBalanceState(addr base.Address, cid types.Currenc
 	}
 	state := common.NewBaseState(
 		base.Height(1),
-		statecurrency.StateKeyBalance(addr, cid),
+		statecurrency.BalanceStateKey(addr, cid),
 		statecurrency.NewBalanceStateValue(types.NewAmount(common.NewBig(am), cid)),
 		nil,
 		[]util.Hash{},
@@ -380,7 +380,7 @@ func (t *TestProcessor) NewTestCurrencyState(cid string, addr base.Address, inSt
 
 	currencyID := types.CurrencyID(cid)
 	design := types.NewCurrencyDesign(common.ZeroBig, currencyID, common.NewBig(9), addr, types.NewCurrencyPolicy(common.ZeroBig, types.NewNilFeeer()))
-	state := common.NewBaseState(base.Height(1), statecurrency.StateKeyCurrencyDesign(currencyID), statecurrency.NewCurrencyDesignStateValue(design), nil, []util.Hash{})
+	state := common.NewBaseState(base.Height(1), statecurrency.DesignStateKey(currencyID), statecurrency.NewCurrencyDesignStateValue(design), nil, []util.Hash{})
 
 	t.SetState(state, inState)
 

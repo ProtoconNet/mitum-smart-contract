@@ -78,7 +78,7 @@ func NewBalanceDoc(st base.State, enc encoder.Encoder) (BalanceDoc, string, erro
 		BaseDoc: b,
 		st:      st,
 		am:      am,
-	}, st.Key()[:len(st.Key())-len(currency.StateKeyBalanceSuffix)-len(am.Currency())-1], nil
+	}, st.Key()[:len(st.Key())-len(currency.BalanceStateKeySuffix)-len(am.Currency())-1], nil
 }
 
 func (doc BalanceDoc) MarshalBSON() ([]byte, error) {
@@ -87,7 +87,7 @@ func (doc BalanceDoc) MarshalBSON() ([]byte, error) {
 		return nil, err
 	}
 
-	address := doc.st.Key()[:len(doc.st.Key())-len(currency.StateKeyBalanceSuffix)-len(doc.am.Currency())-1]
+	address := doc.st.Key()[:len(doc.st.Key())-len(currency.BalanceStateKeySuffix)-len(doc.am.Currency())-1]
 	m["address"] = address
 	m["currency"] = doc.am.Currency().String()
 	m["height"] = doc.st.Height()

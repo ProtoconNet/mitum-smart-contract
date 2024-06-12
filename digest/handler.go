@@ -3,6 +3,7 @@ package digest
 import (
 	"context"
 	"fmt"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
@@ -31,7 +32,7 @@ var (
 var (
 	HandlerPathNodeInfo                   = `/`
 	HandlerPathCurrencies                 = `/currency`
-	HandlerPathCurrency                   = `/currency/{currencyid:.*}`
+	HandlerPathCurrency                   = `/currency/{currency_id:.*}`
 	HandlerPathManifests                  = `/block/manifests`
 	HandlerPathOperations                 = `/block/operations`
 	HandlerPathOperation                  = `/block/operation/{hash:(?i)[0-9a-z][0-9a-z]+}`
@@ -40,8 +41,8 @@ var (
 	HandlerPathOperationsByHeight         = `/block/{height:[0-9]+}/operations`
 	HandlerPathManifestByHeight           = `/block/{height:[0-9]+}/manifest`
 	HandlerPathManifestByHash             = `/block/{hash:(?i)[0-9a-z][0-9a-z]+}/manifest`
-	HandlerPathAccount                    = `/account/{address:(?i)` + base.REStringAddressString + `}`            // revive:disable-line:line-length-limit
-	HandlerPathAccountOperations          = `/account/{address:(?i)` + base.REStringAddressString + `}/operations` // revive:disable-line:line-length-limit
+	HandlerPathAccount                    = `/account/{address:(?i)` + types.REStringAddressString + `}`            // revive:disable-line:line-length-limit
+	HandlerPathAccountOperations          = `/account/{address:(?i)` + types.REStringAddressString + `}/operations` // revive:disable-line:line-length-limit
 	HandlerPathAccounts                   = `/accounts`
 	HandlerPathOperationBuildFactTemplate = `/builder/operation/fact/template/{fact:[\w][\w\-]*}`
 	HandlerPathOperationBuildFact         = `/builder/operation/fact`
@@ -50,8 +51,8 @@ var (
 	HandlerPathSend                       = `/builder/send`
 	HandlerPathQueueSend                  = `/builder/send/queue`
 	HandelrPathEventOperation             = `/event/operation/{hash:(?i)[0-9a-z][0-9a-z]+}`
-	HandelrPathEventAccount               = `/event/account/{address:(?i)` + base.REStringAddressString + `}`
-	HandlerPathEventContract              = `/event/contract/{address:(?i)` + base.REStringAddressString + `}`
+	HandelrPathEventAccount               = `/event/account/{address:(?i)` + types.REStringAddressString + `}`
+	HandlerPathEventContract              = `/event/contract/{address:(?i)` + types.REStringAddressString + `}`
 )
 
 var (

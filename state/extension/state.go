@@ -97,8 +97,8 @@ func CheckCAAuthFromState(st base.State, addr base.Address) (*types.ContractAcco
 	if err != nil {
 		return nil, err
 	}
-	if !ca.Owner().Equal(addr) && !ca.IsOperator(addr) {
-		return nil, common.ErrAccountNAth.Wrap(errors.Errorf("neither the owner nor the operator of the contract account, %v",
+	if !ca.Owner().Equal(addr) && !ca.IsHandler(addr) {
+		return nil, common.ErrAccountNAth.Wrap(errors.Errorf("neither the owner nor the handler of the contract account, %v",
 			addr))
 	}
 	return ca, nil

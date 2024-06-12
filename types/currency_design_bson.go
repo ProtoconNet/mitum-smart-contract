@@ -17,7 +17,7 @@ func (de CurrencyDesign) MarshalBSON() ([]byte, error) {
 			"decimal":         de.decimal,
 			"genesis_account": de.genesisAccount,
 			"policy":          de.policy,
-			"aggregate":       de.aggregate.String(),
+			"total_supply":    de.totalSupply.String(),
 		},
 	)
 }
@@ -29,7 +29,7 @@ type CurrencyDesignBSONUnmarshaler struct {
 	Decimal       string   `bson:"decimal"`
 	Genesis       string   `bson:"genesis_account"`
 	Policy        bson.Raw `bson:"policy"`
-	Aggregate     string   `bson:"aggregate"`
+	TotalSupply   string   `bson:"total_supply"`
 }
 
 func (de *CurrencyDesign) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -45,5 +45,10 @@ func (de *CurrencyDesign) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return de.unpack(enc, ht, ude.InitialSupply, ude.Currency, ude.Decimal, ude.Genesis, ude.Policy, ude.Aggregate)
+	err = de.unpack(enc, ht, ude.InitialSupply, ude.Currency, ude.Decimal, ude.Genesis, ude.Policy, ude.TotalSupply)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
+	return nil
 }

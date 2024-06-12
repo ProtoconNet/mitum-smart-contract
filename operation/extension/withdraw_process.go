@@ -73,7 +73,7 @@ func (opp *WithdrawItemProcessor) PreProcess(
 			return e.Wrap(err)
 		}
 
-		st, _, err := getStateFunc(statecurrency.StateKeyBalance(opp.item.Target(), am.Currency()))
+		st, _, err := getStateFunc(statecurrency.BalanceStateKey(opp.item.Target(), am.Currency()))
 		if err != nil {
 			return e.Wrap(err)
 		}
@@ -182,7 +182,7 @@ func (opp *WithdrawProcessor) PreProcess(
 				Errorf("expected WithdrawFact, not %T", op.Fact())), nil
 	}
 
-	if err := state.CheckExistsState(statecurrency.StateKeyAccount(fact.Sender()), getStateFunc); err != nil {
+	if err := state.CheckExistsState(statecurrency.AccountStateKey(fact.Sender()), getStateFunc); err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Wrap(common.ErrMAccountNF).

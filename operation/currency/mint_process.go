@@ -145,7 +145,7 @@ func (opp *MintProcessor) Process(
 
 		//var ab types.Amount
 
-		k := currency.StateKeyBalance(item.Receiver(), item.Amount().Currency())
+		k := currency.BalanceStateKey(item.Receiver(), item.Amount().Currency())
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
 			return nil, base.NewBaseOperationProcessReasonError(
@@ -182,21 +182,21 @@ func (opp *MintProcessor) Process(
 	for cid, big := range aggs {
 		var de types.CurrencyDesign
 
-		k := currency.StateKeyCurrencyDesign(cid)
+		k := currency.DesignStateKey(cid)
 		switch st, found, err := getStateFunc(k); {
 		case err != nil:
 			return nil, base.NewBaseOperationProcessReasonError("find currency design state, %v: %w", cid, err), nil
 		case !found:
 			return nil, base.NewBaseOperationProcessReasonError("Currency not found, %v: %w", cid, err), nil
 		default:
-			d, err := currency.StateCurrencyDesignValue(st)
+			d, err := currency.GetDesignFromState(st)
 			if err != nil {
 				return nil, base.NewBaseOperationProcessReasonError("get currency design value, %v: %w", cid, err), nil
 			}
 			de = d
 		}
 
-		ade, err := de.AddAggregate(big)
+		ade, err := de.AddTotalSupply(big)
 		if err != nil {
 			return nil, base.NewBaseOperationProcessReasonError("add aggregate, %v: %w", cid, err), nil
 		}

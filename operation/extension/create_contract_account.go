@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	CreateContractAccountFactHint = hint.MustNewHint("mitum-currency-create-contract-account-operation-fact-v0.0.1")
-	CreateContractAccountHint     = hint.MustNewHint("mitum-currency-create-contract-account-operation-v0.0.1")
+	CreateContractAccountFactHint = hint.MustNewHint("mitum-extension-create-contract-account-operation-fact-v0.0.1")
+	CreateContractAccountHint     = hint.MustNewHint("mitum-extension-create-contract-account-operation-v0.0.1")
 )
 
 var MaxCreateContractAccountItems uint = 5000

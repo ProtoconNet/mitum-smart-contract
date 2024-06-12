@@ -78,24 +78,24 @@ func (b *BalanceStateValue) DecodeJSON(v []byte, enc encoder.Encoder) error {
 	return nil
 }
 
-type CurrencyDesignStateValueJSONMarshaler struct {
+type DesignStateValueJSONMarshaler struct {
 	hint.BaseHinter
-	CurrencyDesign types.CurrencyDesign `json:"currencydesign"`
+	CurrencyDesign types.CurrencyDesign `json:"currency_design"`
 }
 
-func (c CurrencyDesignStateValue) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(CurrencyDesignStateValueJSONMarshaler{
+func (c DesignStateValue) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(DesignStateValueJSONMarshaler{
 		BaseHinter:     c.BaseHinter,
-		CurrencyDesign: c.CurrencyDesign,
+		CurrencyDesign: c.Design,
 	})
 }
 
 type CurrencyDesignStateValueJSONUnmarshaler struct {
-	CD json.RawMessage `json:"currencydesign"`
+	CD json.RawMessage `json:"currency_design"`
 }
 
-func (c *CurrencyDesignStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("Decode CurrencyDesignStateValue")
+func (c *DesignStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
+	e := util.StringError("Decode DesignStateValue")
 
 	var u CurrencyDesignStateValueJSONUnmarshaler
 	if err := enc.Unmarshal(b, &u); err != nil {
@@ -108,7 +108,7 @@ func (c *CurrencyDesignStateValue) DecodeJSON(b []byte, enc encoder.Encoder) err
 		return e.Wrap(err)
 	}
 
-	c.CurrencyDesign = cd
+	c.Design = cd
 
 	return nil
 }

@@ -8,12 +8,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (fact *UpdateKeyFact) unpack(enc encoder.Encoder, tg string, bks []byte, cid string) error {
-	switch ad, err := base.DecodeAddress(tg, enc); {
+func (fact *UpdateKeyFact) unpack(enc encoder.Encoder, sd string, bks []byte, cid string) error {
+	switch ad, err := base.DecodeAddress(sd, enc); {
 	case err != nil:
 		return err
 	default:
-		fact.target = ad
+		fact.sender = ad
 	}
 
 	if hinter, err := enc.Decode(bks); err != nil {

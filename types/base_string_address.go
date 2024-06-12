@@ -12,7 +12,7 @@ var (
 	MaxAddressSize             = 100
 	MinAddressSize             = base.AddressTypeSize + 3
 	reBlankStringAddressString = regexp.MustCompile(`[\s][\s]*`)
-	REStringAddressString      = `[a-zA-Z0-9][\w\-\.\!\$\*\@]*[a-zA-Z0-9]`
+	REStringAddressString      = `[a-zA-Z0-9][\w]*[a-zA-Z0-9]`
 	reStringAddressString      = regexp.MustCompile(`^` + REStringAddressString + `$`)
 )
 

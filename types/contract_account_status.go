@@ -15,21 +15,21 @@ var ContractAccountStatusHint = hint.MustNewHint("mitum-currency-contract-accoun
 
 type ContractAccountStatus struct {
 	hint.BaseHinter
-	owner     base.Address
-	isActive  bool
-	operators []base.Address
+	owner    base.Address
+	isActive bool
+	handlers []base.Address
 }
 
-func NewContractAccountStatus(owner base.Address, operators []base.Address) ContractAccountStatus {
-	sort.Slice(operators, func(i, j int) bool {
-		return bytes.Compare(operators[i].Bytes(), operators[j].Bytes()) < 0
+func NewContractAccountStatus(owner base.Address, handlers []base.Address) ContractAccountStatus {
+	sort.Slice(handlers, func(i, j int) bool {
+		return bytes.Compare(handlers[i].Bytes(), handlers[j].Bytes()) < 0
 	})
 
 	us := ContractAccountStatus{
 		BaseHinter: hint.NewBaseHinter(ContractAccountStatusHint),
 		owner:      owner,
 		isActive:   false,
-		operators:  operators,
+		handlers:   handlers,
 	}
 	return us
 }
@@ -39,12 +39,12 @@ func (cs ContractAccountStatus) Bytes() []byte {
 	if cs.isActive {
 		v = 1
 	}
-	operators := make([][]byte, len(cs.operators))
-	for i := range cs.operators {
-		operators[i] = cs.operators[i].Bytes()
+	handlers := make([][]byte, len(cs.handlers))
+	for i := range cs.handlers {
+		handlers[i] = cs.handlers[i].Bytes()
 	}
 
-	return util.ConcatBytesSlice(cs.owner.Bytes(), []byte{byte(v)}, util.ConcatBytesSlice(operators...))
+	return util.ConcatBytesSlice(cs.owner.Bytes(), []byte{byte(v)}, util.ConcatBytesSlice(handlers...))
 }
 
 func (cs ContractAccountStatus) Hash() util.Hash {
@@ -81,30 +81,30 @@ func (cs *ContractAccountStatus) SetOwner(a base.Address) error { // nolint:revi
 	return nil
 }
 
-func (cs ContractAccountStatus) Operators() []base.Address { // nolint:revive
-	return cs.operators
+func (cs ContractAccountStatus) Handlers() []base.Address { // nolint:revive
+	return cs.handlers
 }
 
-func (cs *ContractAccountStatus) SetOperators(operators []base.Address) error {
-	sort.Slice(operators, func(i, j int) bool {
-		return bytes.Compare(operators[i].Bytes(), operators[j].Bytes()) < 0
+func (cs *ContractAccountStatus) SetHandlers(handlers []base.Address) error {
+	sort.Slice(handlers, func(i, j int) bool {
+		return bytes.Compare(handlers[i].Bytes(), handlers[j].Bytes()) < 0
 	})
 
-	for i := range operators {
-		err := operators[i].IsValid(nil)
+	for i := range handlers {
+		err := handlers[i].IsValid(nil)
 		if err != nil {
 			return err
 		}
 	}
 
-	cs.operators = operators
+	cs.handlers = handlers
 
 	return nil
 }
 
-func (cs ContractAccountStatus) IsOperator(ad base.Address) bool { // nolint:revive
-	for i := range cs.Operators() {
-		if ad.Equal(cs.Operators()[i]) {
+func (cs ContractAccountStatus) IsHandler(ad base.Address) bool { // nolint:revive
+	for i := range cs.Handlers() {
+		if ad.Equal(cs.Handlers()[i]) {
 			return true
 		}
 	}
@@ -128,8 +128,8 @@ func (cs ContractAccountStatus) Equal(b ContractAccountStatus) bool {
 		return false
 	}
 
-	for i := range cs.operators {
-		if !cs.operators[i].Equal(b.operators[i]) {
+	for i := range cs.handlers {
+		if !cs.handlers[i].Equal(b.handlers[i]) {
 			return false
 		}
 	}

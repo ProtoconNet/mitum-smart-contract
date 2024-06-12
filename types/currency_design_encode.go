@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, isp, cr, dc, ga string, bpo []byte, ag string) error {
+func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, isp, cr, dc, ga string, bpo []byte, ts string) error {
 	de.BaseHinter = hint.NewBaseHinter(ht)
 
 	if initialSupply, err := common.NewBigFromString(isp); err != nil {
@@ -44,10 +44,10 @@ func (de *CurrencyDesign) unpack(enc encoder.Encoder, ht hint.Hint, isp, cr, dc,
 
 	de.policy = policy
 
-	if big, err := common.NewBigFromString(ag); err != nil {
+	if big, err := common.NewBigFromString(ts); err != nil {
 		return err
 	} else {
-		de.aggregate = big
+		de.totalSupply = big
 	}
 
 	return nil

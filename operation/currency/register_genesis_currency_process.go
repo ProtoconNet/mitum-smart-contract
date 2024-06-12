@@ -30,7 +30,7 @@ func (op RegisterGenesisCurrency) Process(
 		return nil, base.NewBaseOperationProcessReasonError("failed to get genesis account address, %w", err), nil
 	}
 
-	ns, err := state.NotExistsState(currency.StateKeyAccount(newAddress), "key of genesis", getStateFunc)
+	ns, err := state.NotExistsState(currency.AccountStateKey(newAddress), "key of genesis", getStateFunc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -43,14 +43,14 @@ func (op RegisterGenesisCurrency) Process(
 		c.SetGenesisAccount(newAddress)
 		cs[i] = c
 
-		st, err := state.NotExistsState(currency.StateKeyCurrencyDesign(c.Currency()), "currency", getStateFunc)
+		st, err := state.NotExistsState(currency.DesignStateKey(c.Currency()), "currency", getStateFunc)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		sts[c.Currency()] = state.NewStateMergeValue(st.Key(), currency.NewCurrencyDesignStateValue(c))
 
-		st, err = state.NotExistsState(currency.StateKeyBalance(newAddress, c.Currency()), "balance of genesis", getStateFunc)
+		st, err = state.NotExistsState(currency.BalanceStateKey(newAddress, c.Currency()), "balance of genesis", getStateFunc)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -86,7 +86,7 @@ func (op RegisterGenesisCurrency) Process(
 
 		gst := common.NewBaseStateMergeValue(
 			gas[c.Currency()].Key(),
-			currency.NewAddBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(c.Amount().Big()))),
+			currency.NewAddBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(c.InitialSupply().Big()))),
 			func(height base.Height, st base.State) base.StateValueMerger {
 				return currency.NewBalanceStateValueMerger(
 					height,

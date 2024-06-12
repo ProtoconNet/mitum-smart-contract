@@ -57,7 +57,7 @@ var AddedHinters = []encoder.DecodeDetail{
 	{Hint: extension.CreateContractAccountHint, Instance: extension.CreateContractAccount{}},
 	{Hint: extension.CreateContractAccountItemMultiAmountsHint, Instance: extension.CreateContractAccountItemMultiAmounts{}},
 	{Hint: extension.CreateContractAccountItemSingleAmountHint, Instance: extension.CreateContractAccountItemSingleAmount{}},
-	{Hint: extension.UpdateOperatorHint, Instance: extension.UpdateOperator{}},
+	{Hint: extension.UpdateHandlerHint, Instance: extension.UpdateHandler{}},
 	{Hint: extension.WithdrawHint, Instance: extension.Withdraw{}},
 	{Hint: extension.WithdrawItemMultiAmountsHint, Instance: extension.WithdrawItemMultiAmounts{}},
 	{Hint: extension.WithdrawItemSingleAmountHint, Instance: extension.WithdrawItemSingleAmount{}},
@@ -76,7 +76,7 @@ var AddedHinters = []encoder.DecodeDetail{
 
 	{Hint: statecurrency.AccountStateValueHint, Instance: statecurrency.AccountStateValue{}},
 	{Hint: statecurrency.BalanceStateValueHint, Instance: statecurrency.BalanceStateValue{}},
-	{Hint: statecurrency.CurrencyDesignStateValueHint, Instance: statecurrency.CurrencyDesignStateValue{}},
+	{Hint: statecurrency.DesignStateValueHint, Instance: statecurrency.DesignStateValue{}},
 
 	{Hint: stateextension.ContractAccountStateValueHint, Instance: stateextension.ContractAccountStateValue{}},
 
@@ -94,7 +94,7 @@ var AddedSupportedHinters = []encoder.DecodeDetail{
 	{Hint: currency.TransferFactHint, Instance: currency.TransferFact{}},
 
 	{Hint: extension.CreateContractAccountFactHint, Instance: extension.CreateContractAccountFact{}},
-	{Hint: extension.UpdateOperatorFactHint, Instance: extension.UpdateOperatorFact{}},
+	{Hint: extension.UpdateHandlerFactHint, Instance: extension.UpdateHandlerFact{}},
 	{Hint: extension.WithdrawFactHint, Instance: extension.WithdrawFact{}},
 
 	{Hint: isaacoperation.GenesisNetworkPolicyFactHint, Instance: isaacoperation.GenesisNetworkPolicyFact{}},

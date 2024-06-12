@@ -57,8 +57,8 @@ func (opp *CreateContractAccountItemProcessor) PreProcess(
 			return e.Wrap(err)
 		}
 
-		if am.Big().Compare(policy.NewAccountMinBalance()) < 0 {
-			return e.Wrap(common.ErrValOOR.Wrap(errors.Errorf("amount under new account minimum balance, %v < %v", am.Big(), policy.NewAccountMinBalance())))
+		if am.Big().Compare(policy.MinBalance()) < 0 {
+			return e.Wrap(common.ErrValOOR.Wrap(errors.Errorf("amount under new account minimum balance, %v < %v", am.Big(), policy.MinBalance())))
 
 		}
 	}
@@ -83,7 +83,7 @@ func (opp *CreateContractAccountItemProcessor) PreProcess(
 		return e.Wrap(aErr)
 	}
 
-	oac, err := currencystate.LoadStateAccountValue(aSt)
+	oac, err := currencystate.LoadAccountStateValue(aSt)
 	if err != nil {
 		return e.Wrap(err)
 	}
@@ -93,7 +93,7 @@ func (opp *CreateContractAccountItemProcessor) PreProcess(
 	nb := map[types.CurrencyID]base.StateMergeValue{}
 	for i := range opp.item.Amounts() {
 		am := opp.item.Amounts()[i]
-		switch _, found, err := getStateFunc(currencystate.StateKeyBalance(target, am.Currency())); {
+		switch _, found, err := getStateFunc(currencystate.BalanceStateKey(target, am.Currency())); {
 		case err != nil:
 			return e.Wrap(err)
 		case found:
@@ -101,12 +101,12 @@ func (opp *CreateContractAccountItemProcessor) PreProcess(
 
 		default:
 			nb[am.Currency()] = common.NewBaseStateMergeValue(
-				currencystate.StateKeyBalance(target, am.Currency()),
+				currencystate.BalanceStateKey(target, am.Currency()),
 				currencystate.NewAddBalanceStateValue(types.NewZeroAmount(am.Currency())),
 				func(height base.Height, st base.State) base.StateValueMerger {
 					return currencystate.NewBalanceStateValueMerger(
 						height,
-						currencystate.StateKeyBalance(target, am.Currency()), am.Currency(), st)
+						currencystate.BalanceStateKey(target, am.Currency()), am.Currency(), st)
 				},
 			)
 		}
@@ -231,7 +231,7 @@ func (opp *CreateContractAccountProcessor) PreProcess(
 				Wrap(common.ErrMCAccountNA).Errorf("%v", cErr)), nil
 	}
 
-	ac, err := currencystate.LoadStateAccountValue(aSt)
+	ac, err := currencystate.LoadAccountStateValue(aSt)
 	if err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.

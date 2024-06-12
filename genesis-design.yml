@@ -32,10 +32,9 @@ facts:
         genesis_account:
         policy:
           _hint: mitum-currency-currency-policy-v0.0.1
-          new_account_min_balance: "1"
+          min_balance: "1"
           feeer:
             _hint: mitum-currency-fixed-feeer-v0.0.1
             receiver: "${GAC_ADR}"
             amount: "1"
-            exchange_min_amount: "1"
-        aggregate: "100000000000000000000000000000000000000000"
+        total_supply: "100000000000000000000000000000000000000000"

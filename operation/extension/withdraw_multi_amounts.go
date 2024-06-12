@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	WithdrawItemMultiAmountsHint = hint.MustNewHint("mitum-currency-contract-account-withdraw-multi-amounts-v0.0.1")
+	WithdrawItemMultiAmountsHint = hint.MustNewHint("mitum-extension-contract-account-withdraw-multi-amounts-v0.0.1")
 )
 
 var maxCurenciesWithdrawItemMultiAmounts = 10

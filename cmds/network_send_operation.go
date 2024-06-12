@@ -19,12 +19,12 @@ import (
 type NetworkClientCommand struct { //nolint:govet //...
 	//revive:disable:line-length-limit
 	//revive:disable:nested-structs
-	NodeInfo       launchcmd.NetworkClientNodeInfoCommand       `cmd:"" name:"node-info" help:"remote node info"`
-	SendOperation  NetworkClientSendOperationCommand            `cmd:"" name:"send-operation" help:"send operation"`
-	State          NetworkClientStateCommand                    `cmd:"" name:"state" help:"get state"`
-	LastBlockMap   launchcmd.NetworkClientLastBlockMapCommand   `cmd:"" name:"last-blockmap" help:"get last blockmap"`
-	BlockItemFiles launchcmd.NetworkClientBlockItemFilesCommand `cmd:"" name:"block-item-files" help:"download block item files"`
-	BlockItemFile  launchcmd.NetworkClientBlockItemFileCommand  `cmd:"" name:"block-item-file" help:"download block item file"`
+	NodeInfo       launchcmd.NetworkClientNodeInfoCommand     `cmd:"" name:"node-info" help:"remote node info"`
+	SendOperation  NetworkClientSendOperationCommand          `cmd:"" name:"send-operation" help:"send operation"`
+	State          NetworkClientStateCommand                  `cmd:"" name:"state" help:"get state"`
+	LastBlockMap   launchcmd.NetworkClientLastBlockMapCommand `cmd:"" name:"last-blockmap" help:"get last blockmap"`
+	BlockItemFiles NetworkClientBlockItemFilesCommand         `cmd:"" name:"block-item-files" help:"download block item files"`
+	BlockItemFile  NetworkClientBlockItemFileCommand          `cmd:"" name:"block-item-file" help:"download block item file"`
 	Node           struct {
 		Read  launchcmd.NetworkClientReadNodeCommand  `cmd:"" name:"read" help:"read node value"`
 		Write launchcmd.NetworkClientWriteNodeCommand `cmd:"" name:"write" help:"write node value"`

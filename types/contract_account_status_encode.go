@@ -12,7 +12,7 @@ func (cs *ContractAccountStatus) unpack(
 	ht hint.Hint,
 	ow string,
 	ia bool,
-	oprs []string,
+	hds []string,
 ) error {
 	cs.BaseHinter = hint.NewBaseHinter(ht)
 
@@ -24,16 +24,16 @@ func (cs *ContractAccountStatus) unpack(
 	}
 
 	cs.isActive = ia
-	operators := make([]base.Address, len(oprs))
-	for i, opr := range oprs {
-		switch operator, err := base.DecodeAddress(opr, enc); {
+	handlers := make([]base.Address, len(hds))
+	for i, opr := range hds {
+		switch handler, err := base.DecodeAddress(opr, enc); {
 		case err != nil:
 			return err
 		default:
-			operators[i] = operator
+			handlers[i] = handler
 		}
 	}
-	cs.operators = operators
+	cs.handlers = handlers
 
 	return nil
 }

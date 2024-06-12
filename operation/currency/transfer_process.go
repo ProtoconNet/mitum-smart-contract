@@ -51,7 +51,7 @@ func (opp *TransferItemProcessor) PreProcess(
 			return err
 		}
 
-		st, _, err := getStateFunc(currency.StateKeyBalance(opp.item.Receiver(), am.Currency()))
+		st, _, err := getStateFunc(currency.BalanceStateKey(opp.item.Receiver(), am.Currency()))
 		if err != nil {
 			return err
 		}
@@ -67,12 +67,12 @@ func (opp *TransferItemProcessor) PreProcess(
 		}
 
 		rb[am.Currency()] = common.NewBaseStateMergeValue(
-			currency.StateKeyBalance(opp.item.Receiver(), am.Currency()),
+			currency.BalanceStateKey(opp.item.Receiver(), am.Currency()),
 			currency.NewAddBalanceStateValue(balance),
 			func(height base.Height, st base.State) base.StateValueMerger {
 				return currency.NewBalanceStateValueMerger(
 					height,
-					currency.StateKeyBalance(opp.item.Receiver(), am.Currency()),
+					currency.BalanceStateKey(opp.item.Receiver(), am.Currency()),
 					am.Currency(),
 					st,
 				)
@@ -91,7 +91,7 @@ func (opp *TransferItemProcessor) Process(
 	e := util.StringError("preprocess TransferItemProcessor")
 
 	var sts []base.StateMergeValue
-	k := currency.StateKeyAccount(opp.item.Receiver())
+	k := currency.AccountStateKey(opp.item.Receiver())
 	switch _, found, err := getStateFunc(k); {
 	case err != nil:
 		return nil, e.Wrap(err)

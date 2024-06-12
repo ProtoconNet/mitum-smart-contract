@@ -98,10 +98,10 @@ func (opp *UpdateCurrencyProcessor) PreProcess(
 			common.ErrMPreProcess.Wrap(common.ErrMTypeMismatch).Errorf("expected UpdateCurrencyFact, not %T", op.Fact())), nil
 	}
 
-	err := state.CheckExistsState(statecurrency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc)
+	err := state.CheckExistsState(statecurrency.DesignStateKey(fact.Currency()), getStateFunc)
 	if err != nil {
 		return ctx, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id %v", fact.Currency())), nil
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id %q", fact.Currency())), nil
 	}
 
 	if receiver := fact.Policy().Feeer().Receiver(); receiver != nil {
@@ -111,9 +111,9 @@ func (opp *UpdateCurrencyProcessor) PreProcess(
 		}
 	}
 
-	if err := state.CheckExistsState(statecurrency.StateKeyCurrencyDesign(fact.Currency()), getStateFunc); err != nil {
+	if err := state.CheckExistsState(statecurrency.DesignStateKey(fact.Currency()), getStateFunc); err != nil {
 		return ctx, nil, base.NewBaseOperationProcessReasonError(
-			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id %v", fact.Currency()))
+			common.ErrMPreProcess.Wrap(common.ErrMCurrencyNF).Errorf("currency id %q", fact.Currency()))
 	}
 
 	return ctx, nil, nil
@@ -130,12 +130,12 @@ func (opp *UpdateCurrencyProcessor) Process(
 
 	sts := make([]base.StateMergeValue, 1)
 
-	st, err := state.ExistsState(statecurrency.StateKeyCurrencyDesign(fact.Currency()), fmt.Sprintf("currency design, %v", fact.Currency()), getStateFunc)
+	st, err := state.ExistsState(statecurrency.DesignStateKey(fact.Currency()), fmt.Sprintf("currency design, %v", fact.Currency()), getStateFunc)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check existence of currency %v; %w", fact.Currency(), err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check existence of currency id %q; %w", fact.Currency(), err), nil
 	}
 
-	de, err := statecurrency.StateCurrencyDesignValue(st)
+	de, err := statecurrency.GetDesignFromState(st)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("get currency design of %v; %w", fact.Currency(), err), nil
 	}

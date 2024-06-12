@@ -33,14 +33,14 @@ func (hd *Handlers) handleCurrencies(w http.ResponseWriter, r *http.Request) {
 
 func (hd *Handlers) handleCurrenciesInGroup() ([]byte, error) {
 	var hal Hal = NewBaseHal(nil, NewHalLink(HandlerPathCurrencies, nil))
-	hal = hal.AddLink("currency:{currencyid}", NewHalLink(HandlerPathCurrency, nil).SetTemplated())
+	hal = hal.AddLink("currency:{currency_id}", NewHalLink(HandlerPathCurrency, nil).SetTemplated())
 
 	cids, err := hd.database.currencies()
 	if err != nil {
 		return nil, err
 	}
 	for i := range cids {
-		h, err := hd.combineURL(HandlerPathCurrency, "currencyid", cids[i])
+		h, err := hd.combineURL(HandlerPathCurrency, "currency_id", cids[i])
 		if err != nil {
 			return nil, err
 		}
@@ -57,7 +57,7 @@ func (hd *Handlers) handleCurrency(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var cid string
-	s, found := mux.Vars(r)["currencyid"]
+	s, found := mux.Vars(r)["currency_id"]
 	if !found {
 		HTTP2ProblemWithError(w, errors.Errorf("Empty currency id"), http.StatusBadRequest)
 
@@ -102,7 +102,7 @@ func (hd *Handlers) handleCurrencyInGroup(cid string) ([]byte, error) {
 }
 
 func (hd *Handlers) buildCurrency(de types.CurrencyDesign, st base.State) (Hal, error) {
-	h, err := hd.combineURL(HandlerPathCurrency, "currencyid", de.Currency().String())
+	h, err := hd.combineURL(HandlerPathCurrency, "currency_id", de.Currency().String())
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (hd *Handlers) buildCurrency(de types.CurrencyDesign, st base.State) (Hal, 
 	var hal Hal
 	hal = NewBaseHal(de, NewHalLink(h, nil))
 
-	hal = hal.AddLink("currency:{currencyid}", NewHalLink(HandlerPathCurrency, nil).SetTemplated())
+	hal = hal.AddLink("currency:{currency_id}", NewHalLink(HandlerPathCurrency, nil).SetTemplated())
 
 	h, err = hd.combineURL(HandlerPathBlockByHeight, "height", st.Height().String())
 	if err != nil {

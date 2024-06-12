@@ -92,8 +92,8 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 	); err != nil {
 		return pctx, err
 	} else if err := opr.SetProcessor(
-		extension.UpdateOperatorHint,
-		extension.NewUpdateOperatorProcessor(),
+		extension.UpdateHandlerHint,
+		extension.NewUpdateHandlerProcessor(),
 	); err != nil {
 		return pctx, err
 	} else if err := opr.SetProcessor(
@@ -173,7 +173,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(extension.UpdateOperatorHint,
+	_ = set.Add(extension.UpdateHandlerHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return opr.New(
 				height,

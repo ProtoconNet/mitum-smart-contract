@@ -13,11 +13,11 @@ import (
 type UpdateKeyCommand struct {
 	BaseCommand
 	OperationFlags
-	Target    AddressFlag    `arg:"" name:"target" help:"target address" required:"true"`
+	Sender    AddressFlag    `arg:"" name:"sender" help:"sender address" required:"true"`
 	Threshold uint           `help:"threshold for keys (default: ${create_account_threshold})" default:"${create_account_threshold}"` // nolint
 	Key       KeyFlag        `name:"key" help:"key for new account (ex: \"<public key>,<weight>\") separator @"`
 	Currency  CurrencyIDFlag `arg:"" name:"currency-id" help:"currency id" required:"true"`
-	target    base.Address
+	sender    base.Address
 	keys      types.BaseAccountKeys
 }
 
@@ -48,11 +48,11 @@ func (cmd *UpdateKeyCommand) parseFlags() error {
 		return err
 	}
 
-	a, err := cmd.Target.Encode(enc)
+	a, err := cmd.Sender.Encode(enc)
 	if err != nil {
-		return errors.Wrapf(err, "invalid sender format, %v", cmd.Target.String())
+		return errors.Wrapf(err, "invalid sender format, %v", cmd.Sender.String())
 	}
-	cmd.target = a
+	cmd.sender = a
 
 	{
 		ks := make([]types.AccountKey, len(cmd.Key.Values))
@@ -73,7 +73,7 @@ func (cmd *UpdateKeyCommand) parseFlags() error {
 }
 
 func (cmd *UpdateKeyCommand) createOperation() (base.Operation, error) { // nolint:dupl}
-	fact := currency.NewUpdateKeyFact([]byte(cmd.Token), cmd.target, cmd.keys, cmd.Currency.CID)
+	fact := currency.NewUpdateKeyFact([]byte(cmd.Token), cmd.sender, cmd.keys, cmd.Currency.CID)
 
 	op, err := currency.NewUpdateKey(fact)
 	if err != nil {

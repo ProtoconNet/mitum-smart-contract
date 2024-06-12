@@ -6,7 +6,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
-func (fact *UpdateOperatorFact) unpack(enc encoder.Encoder, sd, ct string, oprs []string, cid string) error {
+func (fact *UpdateHandlerFact) unpack(enc encoder.Encoder, sd, ct string, hds []string, cid string) error {
 	switch ad, err := base.DecodeAddress(sd, enc); {
 	case err != nil:
 		return err
@@ -21,16 +21,16 @@ func (fact *UpdateOperatorFact) unpack(enc encoder.Encoder, sd, ct string, oprs 
 		fact.contract = ad
 	}
 
-	operators := make([]base.Address, len(oprs))
-	for i := range oprs {
-		switch ad, err := base.DecodeAddress(oprs[i], enc); {
+	handlers := make([]base.Address, len(hds))
+	for i := range hds {
+		switch ad, err := base.DecodeAddress(hds[i], enc); {
 		case err != nil:
 			return err
 		default:
-			operators[i] = ad
+			handlers[i] = ad
 		}
 	}
-	fact.operators = operators
+	fact.handlers = handlers
 
 	fact.currency = types.CurrencyID(cid)
 

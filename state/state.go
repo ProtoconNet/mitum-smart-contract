@@ -99,18 +99,18 @@ func NotExistsState(
 
 func ExistsCurrencyPolicy(cid types.CurrencyID, getStateFunc base.GetStateFunc) (*types.CurrencyPolicy, error) {
 	var policy types.CurrencyPolicy
-	switch st, found, err := getStateFunc(currency.StateKeyCurrencyDesign(cid)); {
+	switch st, found, err := getStateFunc(currency.DesignStateKey(cid)); {
 	case err != nil:
 		return nil, err
 	case !found:
 		return nil, common.ErrCurrencyNF.Wrap(errors.Errorf("currency id, %v", cid))
 	default:
-		cd, ok := st.Value().(currency.CurrencyDesignStateValue)
+		cd, ok := st.Value().(currency.DesignStateValue)
 		if !ok {
 			return nil, common.ErrTypeMismatch.Wrap(errors.Errorf("expected CurrencyDesignStateValue, not %T", st.Value()))
 
 		}
-		policy = cd.CurrencyDesign.Policy()
+		policy = cd.Design.Policy()
 	}
 	return &policy, nil
 }
@@ -119,7 +119,7 @@ func ExistsAccount(addr base.Address, name string, isExist bool, getStateFunc ba
 	var st base.State
 	var found bool
 	var err error
-	k := currency.StateKeyAccount(addr)
+	k := currency.AccountStateKey(addr)
 	switch st, found, err = getStateFunc(k); {
 	case err != nil:
 		return st, common.ErrStateValInvalid.Wrap(errors.Errorf("%s account, %v: %v", name, addr, err))
@@ -133,7 +133,7 @@ func ExistsAccount(addr base.Address, name string, isExist bool, getStateFunc ba
 		if !isExist {
 			return st, common.ErrAccountE.Wrap(errors.Errorf("%s account, %v", name, addr))
 		}
-		//account, err = currency.LoadStateAccountValue(st)
+		//account, err = currency.LoadAccountStateValue(st)
 		//if err != nil {
 		//	return st, common.ErrStateValInvalid.Wrap(errors.Errorf("%s account, %v: %v", name, addr, err))
 		//}
@@ -144,7 +144,7 @@ func ExistsAccount(addr base.Address, name string, isExist bool, getStateFunc ba
 func ExistsCAccount(addr base.Address, name string, isExist, isContract bool, getStateFunc base.GetStateFunc) (
 	accountState, caccountState base.State, accountErr, caccountErr error) {
 	var accountFound, caccountFound bool
-	ak := currency.StateKeyAccount(addr)
+	ak := currency.AccountStateKey(addr)
 	cak := extension.StateKeyContractAccount(addr)
 	accountState, accountFound, accountErr = getStateFunc(ak)
 	caccountState, caccountFound, caccountErr = getStateFunc(cak)
@@ -192,11 +192,11 @@ func CheckFactSignsByState(
 	fs []base.Sign,
 	getState base.GetStateFunc,
 ) error {
-	st, err := ExistsState(currency.StateKeyAccount(address), "signer account", getState)
+	st, err := ExistsState(currency.AccountStateKey(address), "signer account", getState)
 	if err != nil {
 		return common.ErrAccountNF.Wrap(err)
 	}
-	keys, err := currency.StateKeysValue(st)
+	keys, err := currency.GetAccountKeysFromState(st)
 	switch {
 	case err != nil:
 		return common.ErrStateValInvalid.Wrap(errors.Errorf("signer account; %v", err))

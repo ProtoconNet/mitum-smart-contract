@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -15,7 +16,7 @@ type CurrencyDesignJSONMarshaler struct {
 	Decimal       string         `json:"decimal"`
 	Genesis       base.Address   `json:"genesis_account"`
 	Policy        CurrencyPolicy `json:"policy"`
-	Aggregate     string         `json:"aggregate"`
+	TotalSupply   string         `json:"total_supply"`
 }
 
 func (de CurrencyDesign) MarshalJSON() ([]byte, error) {
@@ -26,7 +27,7 @@ func (de CurrencyDesign) MarshalJSON() ([]byte, error) {
 		Decimal:       de.decimal.String(),
 		Genesis:       de.genesisAccount,
 		Policy:        de.policy,
-		Aggregate:     de.aggregate.String(),
+		TotalSupply:   de.totalSupply.String(),
 	})
 }
 
@@ -37,7 +38,7 @@ type CurrencyDesignJSONUnmarshaler struct {
 	Decimal       string          `json:"decimal"`
 	Genesis       string          `json:"genesis_account"`
 	Policy        json.RawMessage `json:"policy"`
-	Aggregate     string          `json:"aggregate"`
+	TotalSupply   string          `json:"total_supply"`
 }
 
 func (de *CurrencyDesign) DecodeJSON(b []byte, enc encoder.Encoder) error {
@@ -48,5 +49,5 @@ func (de *CurrencyDesign) DecodeJSON(b []byte, enc encoder.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return de.unpack(enc, ude.Hint, ude.InitialSupply, ude.Currency, ude.Decimal, ude.Genesis, ude.Policy, ude.Aggregate)
+	return de.unpack(enc, ude.Hint, ude.InitialSupply, ude.Currency, ude.Decimal, ude.Genesis, ude.Policy, ude.TotalSupply)
 }

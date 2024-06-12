@@ -9,29 +9,29 @@ import (
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
 
-func (fact UpdateOperatorFact) MarshalBSON() ([]byte, error) {
+func (fact UpdateHandlerFact) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":     fact.Hint().String(),
-			"sender":    fact.sender,
-			"contract":  fact.contract,
-			"operators": fact.operators,
-			"currency":  fact.currency,
-			"hash":      fact.BaseFact.Hash().String(),
-			"token":     fact.BaseFact.Token(),
+			"_hint":    fact.Hint().String(),
+			"sender":   fact.sender,
+			"contract": fact.contract,
+			"handlers": fact.handlers,
+			"currency": fact.currency,
+			"hash":     fact.BaseFact.Hash().String(),
+			"token":    fact.BaseFact.Token(),
 		},
 	)
 }
 
-type UpdateOperatorFactBSONUnmarshaler struct {
-	Hint      string   `bson:"_hint"`
-	Sender    string   `bson:"sender"`
-	Contract  string   `bson:"contract"`
-	Operators []string `bson:"operators"`
-	Currency  string   `bson:"currency"`
+type UpdateHandlerFactBSONUnmarshaler struct {
+	Hint     string   `bson:"_hint"`
+	Sender   string   `bson:"sender"`
+	Contract string   `bson:"contract"`
+	Handlers []string `bson:"handlers"`
+	Currency string   `bson:"currency"`
 }
 
-func (fact *UpdateOperatorFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+func (fact *UpdateHandlerFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	var u common.BaseFactBSONUnmarshaler
 
 	err := enc.Unmarshal(b, &u)
@@ -47,7 +47,7 @@ func (fact *UpdateOperatorFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error
 		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
-	var uf UpdateOperatorFactBSONUnmarshaler
+	var uf UpdateHandlerFactBSONUnmarshaler
 	if err := bson.Unmarshal(b, &uf); err != nil {
 		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
@@ -58,14 +58,14 @@ func (fact *UpdateOperatorFact) DecodeBSON(b []byte, enc *bsonenc.Encoder) error
 	}
 	fact.BaseHinter = hint.NewBaseHinter(ht)
 
-	if err := fact.unpack(enc, uf.Sender, uf.Contract, uf.Operators, uf.Currency); err != nil {
+	if err := fact.unpack(enc, uf.Sender, uf.Contract, uf.Handlers, uf.Currency); err != nil {
 		return common.DecorateError(err, common.ErrDecodeBson, *fact)
 	}
 
 	return nil
 }
 
-func (op UpdateOperator) MarshalBSON() ([]byte, error) {
+func (op UpdateHandler) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
 			"_hint": op.Hint().String(),
@@ -75,7 +75,7 @@ func (op UpdateOperator) MarshalBSON() ([]byte, error) {
 		})
 }
 
-func (op *UpdateOperator) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
+func (op *UpdateHandler) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	var ubo common.BaseOperation
 	if err := ubo.DecodeBSON(b, enc); err != nil {
 		return common.DecorateError(err, common.ErrDecodeBson, *op)

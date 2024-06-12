@@ -10,7 +10,7 @@ import (
 var maxCurrenciesCreateContractAccountItemMultiAmounts = 10
 
 var (
-	CreateContractAccountItemMultiAmountsHint = hint.MustNewHint("mitum-currency-create-contract-account-multiple-amounts-v0.0.1")
+	CreateContractAccountItemMultiAmountsHint = hint.MustNewHint("mitum-extension-create-contract-account-multiple-amounts-v0.0.1")
 )
 
 type CreateContractAccountItemMultiAmounts struct {

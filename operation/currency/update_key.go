@@ -16,21 +16,21 @@ var (
 
 type UpdateKeyFact struct {
 	base.BaseFact
-	target   base.Address
+	sender   base.Address
 	keys     types.AccountKeys
 	currency types.CurrencyID
 }
 
 func NewUpdateKeyFact(
 	token []byte,
-	target base.Address,
+	sender base.Address,
 	keys types.AccountKeys,
 	currency types.CurrencyID,
 ) UpdateKeyFact {
 	bf := base.NewBaseFact(UpdateKeyFactHint, token)
 	fact := UpdateKeyFact{
 		BaseFact: bf,
-		target:   target,
+		sender:   sender,
 		keys:     keys,
 		currency: currency,
 	}
@@ -50,7 +50,7 @@ func (fact UpdateKeyFact) GenerateHash() util.Hash {
 func (fact UpdateKeyFact) Bytes() []byte {
 	return util.ConcatBytesSlice(
 		fact.Token(),
-		fact.target.Bytes(),
+		fact.sender.Bytes(),
 		fact.keys.Bytes(),
 		fact.currency.Bytes(),
 	)
@@ -61,7 +61,7 @@ func (fact UpdateKeyFact) IsValid(b []byte) error {
 		return common.ErrFactInvalid.Wrap(err)
 	}
 
-	if err := util.CheckIsValiders(nil, false, fact.target, fact.keys, fact.currency); err != nil {
+	if err := util.CheckIsValiders(nil, false, fact.sender, fact.keys, fact.currency); err != nil {
 		return common.ErrFactInvalid.Wrap(err)
 	}
 
@@ -76,13 +76,13 @@ func (fact UpdateKeyFact) Token() base.Token {
 	return fact.BaseFact.Token()
 }
 
-func (fact UpdateKeyFact) Target() base.Address {
-	return fact.target
+func (fact UpdateKeyFact) Sender() base.Address {
+	return fact.sender
 }
 
 func (fact UpdateKeyFact) Addresses() ([]base.Address, error) {
 	as := make([]base.Address, 1)
-	as[0] = fact.Target()
+	as[0] = fact.Sender()
 	return as, nil
 }
 

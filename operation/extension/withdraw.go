@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	WithdrawFactHint = hint.MustNewHint("mitum-currency-contract-account-withdraw-operation-fact-v0.0.1")
-	WithdrawHint     = hint.MustNewHint("mitum-currency-contract-account-withdraw-operation-v0.0.1")
+	WithdrawFactHint = hint.MustNewHint("mitum-extension-withdraw-operation-fact-v0.0.1")
+	WithdrawHint     = hint.MustNewHint("mitum-extension-withdraw-operation-v0.0.1")
 )
 
 var MaxWithdrawItems uint = 10

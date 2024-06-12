@@ -53,11 +53,11 @@ func (opp *CreateAccountItemProcessor) PreProcess(
 			return e.Wrap(err)
 		}
 
-		if am.Big().Compare(policy.NewAccountMinBalance()) < 0 {
+		if am.Big().Compare(policy.MinBalance()) < 0 {
 			return e.Wrap(
 				common.ErrValOOR.Wrap(
 					errors.Errorf(
-						"amount under new account minimum balance, %v < %v", am.Big(), policy.NewAccountMinBalance())))
+						"amount under new account minimum balance, %v < %v", am.Big(), policy.MinBalance())))
 
 		}
 	}
@@ -77,21 +77,21 @@ func (opp *CreateAccountItemProcessor) PreProcess(
 	nb := map[types.CurrencyID]base.StateMergeValue{}
 	for i := range opp.item.Amounts() {
 		am := opp.item.Amounts()[i]
-		switch _, found, err := getStateFunc(currency.StateKeyBalance(target, am.Currency())); {
+		switch _, found, err := getStateFunc(currency.BalanceStateKey(target, am.Currency())); {
 		case err != nil:
 			return e.Wrap(err)
 		case found:
 			return e.Wrap(common.ErrAccountE.Wrap(errors.Errorf("target balance already exists, %v", target)))
 		default:
 			nb[am.Currency()] = common.NewBaseStateMergeValue(
-				currency.StateKeyBalance(target, am.Currency()),
+				currency.BalanceStateKey(target, am.Currency()),
 				currency.NewAddBalanceStateValue(types.NewZeroAmount(am.Currency())),
 				func(height base.Height, st base.State) base.StateValueMerger {
-					return currency.NewBalanceStateValueMerger(height, currency.StateKeyBalance(target, am.Currency()), am.Currency(), st)
+					return currency.NewBalanceStateValueMerger(height, currency.BalanceStateKey(target, am.Currency()), am.Currency(), st)
 				},
 			)
 
-			//nb[am.Currency()] = state.NewStateMergeValue(currency.StateKeyBalance(target, am.Currency()), currency.NewBalanceStateValue(types.NewZeroAmount(am.Currency())))
+			//nb[am.Currency()] = state.NewStateMergeValue(currency.BalanceStateKey(target, am.Currency()), currency.NewBalanceStateValue(types.NewZeroAmount(am.Currency())))
 		}
 	}
 	opp.nb = nb
@@ -422,9 +422,9 @@ func CalculateItemsFee(getStateFunc base.GetStateFunc, items []AmountsItem) (
 				continue
 			}
 
-			if err := state.CheckExistsState(currency.StateKeyAccount(policy.Feeer().Receiver()), getStateFunc); err != nil {
+			if err := state.CheckExistsState(currency.AccountStateKey(policy.Feeer().Receiver()), getStateFunc); err != nil {
 				return nil, nil, errors.Errorf("Feeer receiver account not found, %s", policy.Feeer().Receiver())
-			} else if st, found, err := getStateFunc(currency.StateKeyBalance(policy.Feeer().Receiver(), am.Currency())); err != nil {
+			} else if st, found, err := getStateFunc(currency.BalanceStateKey(policy.Feeer().Receiver(), am.Currency())); err != nil {
 				return nil, nil, errors.Errorf("Feeer receiver account not found, %s", policy.Feeer().Receiver())
 			} else if !found {
 				return nil, nil, errors.Errorf("Feeer receiver account not found, %s", policy.Feeer().Receiver())
@@ -447,7 +447,7 @@ func CheckEnoughBalance(
 	for cid := range required {
 		rq := required[cid]
 
-		st, err := state.ExistsState(currency.StateKeyBalance(holder, cid), fmt.Sprintf("balance of account, %v", holder), getStateFunc)
+		st, err := state.ExistsState(currency.BalanceStateKey(holder, cid), fmt.Sprintf("balance of account, %v", holder), getStateFunc)
 		if err != nil {
 			return nil, err
 		}

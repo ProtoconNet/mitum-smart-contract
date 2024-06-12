@@ -11,15 +11,15 @@ import (
 )
 
 var (
-	AccountStateValueHint        = hint.MustNewHint("account-state-value-v0.0.1")
-	BalanceStateValueHint        = hint.MustNewHint("balance-state-value-v0.0.1")
-	CurrencyDesignStateValueHint = hint.MustNewHint("currency-design-state-value-v0.0.1")
+	AccountStateValueHint = hint.MustNewHint("account-state-value-v0.0.1")
+	BalanceStateValueHint = hint.MustNewHint("balance-state-value-v0.0.1")
+	DesignStateValueHint  = hint.MustNewHint("currency-design-state-value-v0.0.1")
 )
 
 var (
-	StateKeyAccountSuffix        = ":account"
-	StateKeyBalanceSuffix        = ":balance"
-	StateKeyCurrencyDesignPrefix = "currencydesign:"
+	AccountStateKeySuffix = ":account"
+	BalanceStateKeySuffix = ":balance"
+	DesignStateKeyPrefix  = "currencydesign:"
 )
 
 type AccountStateValue struct {
@@ -56,8 +56,8 @@ func (a AccountStateValue) HashBytes() []byte {
 	return a.Account.Bytes()
 }
 
-func StateKeysValue(st base.State) (types.AccountKeys, error) {
-	ac, err := LoadStateAccountValue(st)
+func GetAccountKeysFromState(st base.State) (types.AccountKeys, error) {
+	ac, err := LoadAccountStateValue(st)
 	if err != nil {
 		return nil, err
 	}
@@ -160,92 +160,92 @@ func (b DeductBalanceStateValue) HashBytes() []byte {
 	return b.Amount.Bytes()
 }
 
-type CurrencyDesignStateValue struct {
+type DesignStateValue struct {
 	hint.BaseHinter
-	CurrencyDesign types.CurrencyDesign
+	Design types.CurrencyDesign
 }
 
-func NewCurrencyDesignStateValue(currencyDesign types.CurrencyDesign) CurrencyDesignStateValue {
-	return CurrencyDesignStateValue{
-		BaseHinter:     hint.NewBaseHinter(CurrencyDesignStateValueHint),
-		CurrencyDesign: currencyDesign,
+func NewCurrencyDesignStateValue(currencyDesign types.CurrencyDesign) DesignStateValue {
+	return DesignStateValue{
+		BaseHinter: hint.NewBaseHinter(DesignStateValueHint),
+		Design:     currencyDesign,
 	}
 }
 
-func (c CurrencyDesignStateValue) Hint() hint.Hint {
+func (c DesignStateValue) Hint() hint.Hint {
 	return c.BaseHinter.Hint()
 }
 
-func (c CurrencyDesignStateValue) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("Invalid CurrencyDesignStateValue")
+func (c DesignStateValue) IsValid([]byte) error {
+	e := util.ErrInvalid.Errorf("Invalid DesignStateValue")
 
-	if err := c.BaseHinter.IsValid(CurrencyDesignStateValueHint.Type().Bytes()); err != nil {
+	if err := c.BaseHinter.IsValid(DesignStateValueHint.Type().Bytes()); err != nil {
 		return e.Wrap(err)
 	}
 
-	if err := util.CheckIsValiders(nil, false, c.CurrencyDesign); err != nil {
+	if err := util.CheckIsValiders(nil, false, c.Design); err != nil {
 		return e.Wrap(err)
 	}
 
 	return nil
 }
 
-func (c CurrencyDesignStateValue) HashBytes() []byte {
-	return c.CurrencyDesign.Bytes()
+func (c DesignStateValue) HashBytes() []byte {
+	return c.Design.Bytes()
 }
 
-func StateCurrencyDesignValue(st base.State) (types.CurrencyDesign, error) {
+func GetDesignFromState(st base.State) (types.CurrencyDesign, error) {
 	v := st.Value()
 	if v == nil {
-		return types.CurrencyDesign{}, util.ErrNotFound.Errorf("currency design not found in State")
+		return types.CurrencyDesign{}, errors.Errorf("state value is nil")
 	}
 
-	de, ok := v.(CurrencyDesignStateValue)
+	de, ok := v.(DesignStateValue)
 	if !ok {
-		return types.CurrencyDesign{}, errors.Errorf("invalid currency design value found, %T", v)
+		return types.CurrencyDesign{}, errors.Errorf("expected DesignStateValue, but %T", v)
 	}
 
-	return de.CurrencyDesign, nil
+	return de.Design, nil
 }
 
-func StateBalanceKeyPrefix(a base.Address, cid types.CurrencyID) string {
+func BalanceStateKeyPrefix(a base.Address, cid types.CurrencyID) string {
 	return fmt.Sprintf("%s-%s", a.String(), cid)
 }
 
-func StateKeyAccount(a base.Address) string {
-	return fmt.Sprintf("%s%s", a.String(), StateKeyAccountSuffix)
+func AccountStateKey(a base.Address) string {
+	return fmt.Sprintf("%s%s", a.String(), AccountStateKeySuffix)
 }
 
-func IsStateAccountKey(key string) bool {
-	return strings.HasSuffix(key, StateKeyAccountSuffix)
+func IsAccountStateKey(key string) bool {
+	return strings.HasSuffix(key, AccountStateKeySuffix)
 }
 
-func LoadStateAccountValue(st base.State) (*types.Account, error) {
+func LoadAccountStateValue(st base.State) (*types.Account, error) {
 	v := st.Value()
 	if v == nil {
-		return nil, util.ErrNotFound.Errorf("account not found in State")
+		return nil, util.ErrNotFound.Errorf("state value is nil")
 	}
 
 	s, ok := v.(AccountStateValue)
 	if !ok {
-		return nil, errors.Errorf("invalid account value found, %T", v)
+		return nil, errors.Errorf("expected %T, but %T", AccountStateValue{}, v)
 	}
 	return &(s.Account), nil
 
 }
 
-func StateKeyBalance(a base.Address, cid types.CurrencyID) string {
-	return fmt.Sprintf("%s%s", StateBalanceKeyPrefix(a, cid), StateKeyBalanceSuffix)
+func BalanceStateKey(a base.Address, cid types.CurrencyID) string {
+	return fmt.Sprintf("%s%s", BalanceStateKeyPrefix(a, cid), BalanceStateKeySuffix)
 }
 
-func IsStateBalanceKey(key string) bool {
-	return strings.HasSuffix(key, StateKeyBalanceSuffix)
+func IsBalanceStateKey(key string) bool {
+	return strings.HasSuffix(key, BalanceStateKeySuffix)
 }
 
-func IsStateCurrencyDesignKey(key string) bool {
-	return strings.HasPrefix(key, StateKeyCurrencyDesignPrefix)
+func IsDesignStateKey(key string) bool {
+	return strings.HasPrefix(key, DesignStateKeyPrefix)
 }
 
-func StateKeyCurrencyDesign(cid types.CurrencyID) string {
-	return fmt.Sprintf("%s%s", StateKeyCurrencyDesignPrefix, cid)
+func DesignStateKey(cid types.CurrencyID) string {
+	return fmt.Sprintf("%s%s", DesignStateKeyPrefix, cid)
 }
