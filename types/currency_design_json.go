@@ -10,28 +10,34 @@ import (
 
 type CurrencyDesignJSONMarshaler struct {
 	hint.BaseHinter
-	Amount    Amount         `json:"amount"`
-	Genesis   base.Address   `json:"genesis_account"`
-	Policy    CurrencyPolicy `json:"policy"`
-	Aggregate string         `json:"aggregate"`
+	InitialSupply string         `json:"initial_supply"`
+	Currency      string         `json:"currency_id"`
+	Decimal       string         `json:"decimal"`
+	Genesis       base.Address   `json:"genesis_account"`
+	Policy        CurrencyPolicy `json:"policy"`
+	Aggregate     string         `json:"aggregate"`
 }
 
 func (de CurrencyDesign) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(CurrencyDesignJSONMarshaler{
-		BaseHinter: de.BaseHinter,
-		Amount:     de.amount,
-		Genesis:    de.genesisAccount,
-		Policy:     de.policy,
-		Aggregate:  de.aggregate.String(),
+		BaseHinter:    de.BaseHinter,
+		InitialSupply: de.initialSupply.String(),
+		Currency:      de.currency.String(),
+		Decimal:       de.decimal.String(),
+		Genesis:       de.genesisAccount,
+		Policy:        de.policy,
+		Aggregate:     de.aggregate.String(),
 	})
 }
 
 type CurrencyDesignJSONUnmarshaler struct {
-	Hint      hint.Hint       `json:"_hint"`
-	Amount    json.RawMessage `json:"amount"`
-	Genesis   string          `json:"genesis_account"`
-	Policy    json.RawMessage `json:"policy"`
-	Aggregate string          `json:"aggregate"`
+	Hint          hint.Hint       `json:"_hint"`
+	InitialSupply string          `json:"initial_supply"`
+	Currency      string          `json:"currency_id"`
+	Decimal       string          `json:"decimal"`
+	Genesis       string          `json:"genesis_account"`
+	Policy        json.RawMessage `json:"policy"`
+	Aggregate     string          `json:"aggregate"`
 }
 
 func (de *CurrencyDesign) DecodeJSON(b []byte, enc encoder.Encoder) error {
@@ -42,5 +48,5 @@ func (de *CurrencyDesign) DecodeJSON(b []byte, enc encoder.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	return de.unpack(enc, ude.Hint, ude.Amount, ude.Genesis, ude.Policy, ude.Aggregate)
+	return de.unpack(enc, ude.Hint, ude.InitialSupply, ude.Currency, ude.Decimal, ude.Genesis, ude.Policy, ude.Aggregate)
 }

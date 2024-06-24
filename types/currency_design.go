@@ -14,33 +14,39 @@ var (
 
 type CurrencyDesign struct {
 	hint.BaseHinter
-	amount         Amount
+	initialSupply  common.Big
+	currency       CurrencyID
+	decimal        common.Big
 	genesisAccount base.Address
 	policy         CurrencyPolicy
 	aggregate      common.Big
 }
 
-func NewCurrencyDesign(amount Amount, genesisAccount base.Address, po CurrencyPolicy) CurrencyDesign {
+func NewCurrencyDesign(
+	initialSupply common.Big, currency CurrencyID, decimal common.Big, genesisAccount base.Address, po CurrencyPolicy,
+) CurrencyDesign {
 	return CurrencyDesign{
 		BaseHinter:     hint.NewBaseHinter(CurrencyDesignHint),
-		amount:         amount,
+		initialSupply:  initialSupply,
+		currency:       currency,
+		decimal:        decimal,
 		genesisAccount: genesisAccount,
 		policy:         po,
-		aggregate:      amount.Big(),
+		aggregate:      initialSupply,
 	}
 }
 
 func (de CurrencyDesign) IsValid([]byte) error {
 	if err := util.CheckIsValiders(nil, false,
 		de.BaseHinter,
-		de.amount,
+		de.currency,
 		de.aggregate,
 	); err != nil {
-		return util.ErrInvalid.Errorf("Invalid currency balance, %v", err)
+		return util.ErrInvalid.Errorf("Invalid currency design, %v", err)
 	}
 
 	switch {
-	case !de.amount.Big().OverZero():
+	case !de.initialSupply.OverZero():
 		return util.ErrInvalid.Errorf("Currency balance should be over zero")
 	case !de.aggregate.OverZero():
 		return util.ErrInvalid.Errorf("Aggregate should be over zero")
@@ -66,7 +72,9 @@ func (de CurrencyDesign) Bytes() []byte {
 	}
 
 	return util.ConcatBytesSlice(
-		de.amount.Bytes(),
+		de.initialSupply.Bytes(),
+		de.currency.Bytes(),
+		de.decimal.Bytes(),
 		gb,
 		de.policy.Bytes(),
 		de.aggregate.Bytes(),
@@ -78,11 +86,15 @@ func (de CurrencyDesign) GenesisAccount() base.Address {
 }
 
 func (de CurrencyDesign) Amount() Amount {
-	return de.amount
+	return NewAmount(de.initialSupply, de.currency)
 }
 
 func (de CurrencyDesign) Currency() CurrencyID {
-	return de.amount.cid
+	return de.currency
+}
+
+func (de CurrencyDesign) Decimal() common.Big {
+	return de.decimal
 }
 
 func (de CurrencyDesign) Policy() CurrencyPolicy {

@@ -379,7 +379,7 @@ func (t *TestProcessor) NewTestCurrencyState(cid string, addr base.Address, inSt
 	}
 
 	currencyID := types.CurrencyID(cid)
-	design := types.NewCurrencyDesign(types.NewZeroAmount(currencyID), addr, types.NewCurrencyPolicy(common.ZeroBig, types.NewNilFeeer()))
+	design := types.NewCurrencyDesign(common.ZeroBig, currencyID, common.NewBig(9), addr, types.NewCurrencyPolicy(common.ZeroBig, types.NewNilFeeer()))
 	state := common.NewBaseState(base.Height(1), statecurrency.StateKeyCurrencyDesign(currencyID), statecurrency.NewCurrencyDesignStateValue(design), nil, []util.Hash{})
 
 	t.SetState(state, inState)

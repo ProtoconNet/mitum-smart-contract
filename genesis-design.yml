@@ -2,9 +2,8 @@ facts:
   - _hint: currency-suffrage-genesis-join-fact-v0.0.1
     nodes:
       - _hint: currency-node-v0.0.1
-        address: no0sas
-        publickey: bXTT1hoetSKYPUmfu3bMRcs8aU342MTTzhgeCQ1bTavBmpu
-
+        address: "${N0_ADR}"
+        publickey: "${N0_PUB}"
   - _hint: currency-genesis-network-policy-fact-v0.0.1
     policy:
       _hint: currency-network-policy-v0.0.1
@@ -13,29 +12,30 @@ facts:
       suffrage_candidate_limiter:
         _hint: currency-fixed-suffrage-candidate-limiter-rule-v0.0.1
         limit: 1
-      max_suffrage_size: 3
+      max_suffrage_size: 99
+      suffrage_expel_lifespan: 99
   - _hint: mitum-currency-register-genesis-currency-operation-fact-v0.0.1
-    genesis_node_key: bXTT1hoetSKYPUmfu3bMRcs8aU342MTTzhgeCQ1bTavBmpu
+    genesis_node_key: "${N0_PUB}"
     keys:
-      _hint: mitum-currency-keys-v0.0.1  
-      keys: 
+      _hint: mitum-currency-keys-v0.0.1
+      keys:
         - _hint: mitum-currency-key-v0.0.1
-          key: kYJADZP1XKNvUNn7XHY39yisp9QCfU1LtyxGw2HRjQwXmpu
-          # D4QPRNSTgYmgRymYVS1mLgyGtCbzeAPYhd5r4jNQahwampr
+          key: "${GAC_PUB}"
+          # privatekey: EQmEPFeUTf6Asgs1aoHEdfYndFYkVMHrc5F1X4EcGZXympr
           weight: 100
       threshold: 100
     currencies:
       - _hint: mitum-currency-currency-design-v0.0.1
-        amount: 
-          _hint: mitum-currency-amount-v0.0.1
-          amount: "1000000000000000000000000000"
-          currency: MCC
+        initial_supply: "100000000000000000000000000000000000000000"
+        currency_id: "${CID}"
+        decimal: "9"
         genesis_account:
         policy:
           _hint: mitum-currency-currency-policy-v0.0.1
           new_account_min_balance: "1"
           feeer:
             _hint: mitum-currency-fixed-feeer-v0.0.1
-            receiver: FQacpLf7kQQQQGhHv43pehSZn4mCjz1qViky5DG36ZPAmca
+            receiver: "${GAC_ADR}"
             amount: "1"
-        aggregate: "1000000000000000000000000000"
+            exchange_min_amount: "1"
+        aggregate: "100000000000000000000000000000000000000000"

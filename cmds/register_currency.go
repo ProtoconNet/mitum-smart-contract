@@ -71,6 +71,7 @@ func (*CurrencyPolicyFlags) IsValid([]byte) error {
 type CurrencyDesignFlags struct {
 	Currency                CurrencyIDFlag `arg:"" name:"currency-id" help:"currency id" required:"true"`
 	GenesisAmount           BigFlag        `arg:"" name:"genesis-amount" help:"genesis amount" required:"true"`
+	Decimal                 BigFlag        `arg:"" name:"decimal" help:"decimal" required:"true"`
 	GenesisAccount          AddressFlag    `arg:"" name:"genesis-account" help:"genesis-account address for genesis balance" required:"true"` // nolint lll
 	CurrencyPolicyFlags     `prefix:"policy-" help:"currency policy" required:"true"`
 	FeeerString             string `name:"feeer" help:"feeer type, {nil, fixed, ratio}" required:"true"`
@@ -125,7 +126,7 @@ func (fl *CurrencyDesignFlags) IsValid([]byte) error {
 		return err
 	}
 
-	fl.currencyDesign = types.NewCurrencyDesign(am, genesisAccount, po)
+	fl.currencyDesign = types.NewCurrencyDesign(fl.GenesisAmount.Big, fl.Currency.CID, fl.Decimal.Big, genesisAccount, po)
 	return fl.currencyDesign.IsValid(nil)
 }
 
