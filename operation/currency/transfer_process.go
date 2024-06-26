@@ -2,16 +2,14 @@ package currency
 
 import (
 	"context"
-	"sync"
-
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/state"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
+	"sync"
 )
 
 var transferItemProcessorPool = sync.Pool{
@@ -43,22 +41,24 @@ func (opp *TransferItemProcessor) PreProcess(
 	_ context.Context, _ base.Operation, getStateFunc base.GetStateFunc,
 ) error {
 	rb := map[types.CurrencyID]base.StateMergeValue{}
-	for i := range opp.item.Amounts() {
-		am := opp.item.Amounts()[i]
-
-		_, err := state.ExistsCurrencyPolicy(am.Currency(), getStateFunc)
+	amounts := opp.item.Amounts()
+	for i := range amounts {
+		am := amounts[i]
+		cid := am.Currency()
+		receiver := opp.item.Receiver()
+		_, err := state.ExistsCurrencyPolicy(cid, getStateFunc)
 		if err != nil {
 			return err
 		}
 
-		st, _, err := getStateFunc(currency.BalanceStateKey(opp.item.Receiver(), am.Currency()))
+		st, _, err := getStateFunc(currency.BalanceStateKey(receiver, cid))
 		if err != nil {
 			return err
 		}
 
 		var balance types.Amount
 		if st == nil {
-			balance = types.NewZeroAmount(am.Currency())
+			balance = types.NewZeroAmount(cid)
 		} else {
 			balance, err = currency.StateBalanceValue(st)
 			if err != nil {
@@ -67,13 +67,13 @@ func (opp *TransferItemProcessor) PreProcess(
 		}
 
 		rb[am.Currency()] = common.NewBaseStateMergeValue(
-			currency.BalanceStateKey(opp.item.Receiver(), am.Currency()),
+			currency.BalanceStateKey(receiver, cid),
 			currency.NewAddBalanceStateValue(balance),
 			func(height base.Height, st base.State) base.StateValueMerger {
 				return currency.NewBalanceStateValueMerger(
 					height,
-					currency.BalanceStateKey(opp.item.Receiver(), am.Currency()),
-					am.Currency(),
+					currency.BalanceStateKey(receiver, cid),
+					cid,
 					st,
 				)
 			},
@@ -91,16 +91,17 @@ func (opp *TransferItemProcessor) Process(
 	e := util.StringError("preprocess TransferItemProcessor")
 
 	var sts []base.StateMergeValue
-	k := currency.AccountStateKey(opp.item.Receiver())
+	receiver := opp.item.Receiver()
+	k := currency.AccountStateKey(receiver)
 	switch _, found, err := getStateFunc(k); {
 	case err != nil:
 		return nil, e.Wrap(err)
 	case !found:
-		nilKys, err := types.NewNilAccountKeysFromAddress(opp.item.Receiver())
+		nilKys, err := types.NewNilAccountKeysFromAddress(receiver)
 		if err != nil {
 			return nil, e.Wrap(err)
 		}
-		acc, err := types.NewAccount(opp.item.Receiver(), nilKys)
+		acc, err := types.NewAccount(receiver, nilKys)
 		if err != nil {
 			return nil, e.Wrap(err)
 		}
@@ -109,19 +110,20 @@ func (opp *TransferItemProcessor) Process(
 	default:
 	}
 
-	for i := range opp.item.Amounts() {
-		am := opp.item.Amounts()[i]
-		v, ok := opp.rb[am.Currency()].Value().(currency.AddBalanceStateValue)
+	amounts := opp.item.Amounts()
+	for i := range amounts {
+		am := amounts[i]
+		cid := am.Currency()
+		stv := opp.rb[cid]
+		v, ok := stv.Value().(currency.AddBalanceStateValue)
 		if !ok {
-			return nil, errors.Errorf("not AddBalanceStateValue, %T", opp.rb[am.Currency()].Value())
+			return nil, errors.Errorf("not AddBalanceStateValue, %T", stv.Value())
 		}
-		//stv := currency.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(am.Big())))
-		//sts[i] = state.NewStateMergeValue(opp.rb[am.Currency()].Key(), stv)
 		sts = append(sts, common.NewBaseStateMergeValue(
-			opp.rb[am.Currency()].Key(),
+			stv.Key(),
 			currency.NewAddBalanceStateValue(v.Amount.WithBig(am.Big())),
 			func(height base.Height, st base.State) base.StateValueMerger {
-				return currency.NewBalanceStateValueMerger(height, opp.rb[am.Currency()].Key(), am.Currency(), st)
+				return currency.NewBalanceStateValueMerger(height, stv.Key(), cid, st)
 			},
 		))
 	}
@@ -139,7 +141,7 @@ func (opp *TransferItemProcessor) Close() {
 
 type TransferProcessor struct {
 	*base.BaseOperationProcessor
-	ns       []*TransferItemProcessor
+	//ns       []*TransferItemProcessor
 	required map[types.CurrencyID][2]common.Big
 }
 
@@ -165,7 +167,7 @@ func NewTransferProcessor() types.GetNewProcessor {
 		}
 
 		opp.BaseOperationProcessor = b
-		opp.ns = nil
+		//opp.ns = nil
 		opp.required = nil
 
 		return opp, nil
@@ -195,22 +197,42 @@ func (opp *TransferProcessor) PreProcess(
 			common.ErrMPreProcess.Wrap(common.ErrMSignInvalid).Errorf("%v", err)), nil
 	}
 
+	var wg sync.WaitGroup
+	errChan := make(chan *base.BaseOperationProcessReasonError, len(fact.items))
 	for i := range fact.items {
-		tip := transferItemProcessorPool.Get()
-		t, ok := tip.(*TransferItemProcessor)
-		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.Wrap(common.ErrMTypeMismatch).Errorf("expected %T, not %T", &TransferItemProcessor{}, tip)), nil
-		}
+		wg.Add(1)
+		go func(item TransferItem) {
+			defer wg.Done()
+			tip := transferItemProcessorPool.Get()
+			t, ok := tip.(*TransferItemProcessor)
+			if !ok {
+				err := base.NewBaseOperationProcessReasonError(
+					common.ErrMPreProcess.Wrap(
+						common.ErrMTypeMismatch).Errorf("expected %T, not %T", &TransferItemProcessor{}, tip))
+				errChan <- &err
+				return
+			}
 
-		t.h = op.Hash()
-		t.item = fact.items[i]
+			t.h = op.Hash()
+			t.item = item
 
-		if err := t.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.Errorf("%v", err)), nil
+			if err := t.PreProcess(ctx, op, getStateFunc); err != nil {
+				err := base.NewBaseOperationProcessReasonError(common.ErrMPreProcess.Errorf("%v", err))
+				errChan <- &err
+				return
+			}
+			t.Close()
+		}(fact.items[i])
+	}
+	go func() {
+		wg.Wait()
+		close(errChan)
+	}()
+
+	for err := range errChan {
+		if err != nil {
+			return nil, *err, nil
 		}
-		t.Close()
 	}
 
 	return ctx, nil, nil
@@ -239,38 +261,59 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 		opp.required = required
 	}
 
-	ns := make([]*TransferItemProcessor, len(fact.items))
-	for i := range fact.items {
-		cip := transferItemProcessorPool.Get()
-		c, ok := cip.(*TransferItemProcessor)
-		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", &TransferItemProcessor{}, cip), nil
-		}
-
-		c.h = op.Hash()
-		c.item = fact.items[i]
-
-		if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("fail to preprocess transfer item: %w", err), nil
-		}
-
-		ns[i] = c
-	}
-	opp.ns = ns
-
+	//ns := make([]*TransferItemProcessor, len(fact.items))
 	var stmvs []base.StateMergeValue // nolint:prealloc
-	for i := range opp.ns {
-		s, err := opp.ns[i].Process(ctx, op, getStateFunc)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	errChan := make(chan *base.BaseOperationProcessReasonError, len(fact.items))
+	for i := range fact.items {
+		wg.Add(1)
+		go func(item TransferItem) {
+			defer wg.Done()
+			cip := transferItemProcessorPool.Get()
+			c, ok := cip.(*TransferItemProcessor)
+			if !ok {
+				err := base.NewBaseOperationProcessReasonError("expected %T, not %T", &TransferItemProcessor{}, cip)
+				errChan <- &err
+				return
+			}
+
+			c.h = op.Hash()
+			c.item = fact.items[i]
+
+			if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
+				err := base.NewBaseOperationProcessReasonError("fail to preprocess transfer item: %w", err)
+				errChan <- &err
+				return
+			}
+
+			s, err := c.Process(ctx, op, getStateFunc)
+			if err != nil {
+				err := base.NewBaseOperationProcessReasonError("process transfer item: %w", err)
+				errChan <- &err
+				return
+			}
+			mu.Lock()
+			stmvs = append(stmvs, s...)
+			mu.Unlock()
+			c.Close()
+		}(fact.items[i])
+	}
+	go func() {
+		wg.Wait()
+		close(errChan)
+	}()
+	for err := range errChan {
 		if err != nil {
-			return nil, base.NewBaseOperationProcessReasonError("process transfer item: %w", err), nil
+			return nil, *err, nil
 		}
-		stmvs = append(stmvs, s...)
 	}
 
 	for cid := range senderBalSts {
 		v, ok := senderBalSts[cid].Value().(currency.BalanceStateValue)
 		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError("expected %T, not %T", currency.BalanceStateValue{}, senderBalSts[cid].Value()), nil
+			return nil, base.NewBaseOperationProcessReasonError(
+				"expected %T, not %T", currency.BalanceStateValue{}, senderBalSts[cid].Value()), nil
 		}
 
 		_, feeReceiverFound := feeReceiverBalSts[cid]
@@ -316,11 +359,6 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 }
 
 func (opp *TransferProcessor) Close() error {
-	for i := range opp.ns {
-		opp.ns[i].Close()
-	}
-
-	opp.ns = nil
 	opp.required = nil
 
 	transferProcessorPool.Put(opp)
