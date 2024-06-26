@@ -2,8 +2,8 @@ facts:
   - _hint: currency-suffrage-genesis-join-fact-v0.0.1
     nodes:
       - _hint: currency-node-v0.0.1
-        address: "${N0_ADR}"
-        publickey: "${N0_PUB}"
+        address: node0sas
+        publickey: 02b61050d2e795ce08121572acfc12fe53c5644f8d9a74999f3936a23ba6f0c1e3fpu
   - _hint: currency-genesis-network-policy-fact-v0.0.1
     policy:
       _hint: currency-network-policy-v0.0.1
@@ -15,19 +15,19 @@ facts:
       max_suffrage_size: 99
       suffrage_expel_lifespan: 99
   - _hint: mitum-currency-register-genesis-currency-operation-fact-v0.0.1
-    genesis_node_key: "${N0_PUB}"
+    genesis_node_key: 02b61050d2e795ce08121572acfc12fe53c5644f8d9a74999f3936a23ba6f0c1e3fpu
     keys:
       _hint: mitum-currency-keys-v0.0.1
       keys:
         - _hint: mitum-currency-key-v0.0.1
-          key: "${GAC_PUB}"
+          key: 02bb41168240ca6a2b74f130ba3760204b494fba7381d25bcde601d7c39185df25fpu
           # privatekey: EQmEPFeUTf6Asgs1aoHEdfYndFYkVMHrc5F1X4EcGZXympr
           weight: 100
       threshold: 100
     currencies:
       - _hint: mitum-currency-currency-design-v0.0.1
         initial_supply: "100000000000000000000000000000000000000000"
-        currency_id: "${CID}"
+        currency_id: MCC
         decimal: "9"
         genesis_account:
         policy:
@@ -35,6 +35,6 @@ facts:
           min_balance: "1"
           feeer:
             _hint: mitum-currency-fixed-feeer-v0.0.1
-            receiver: "${GAC_ADR}"
+            receiver: 0x4526f3D0EdC63D9EaeCD94D56551e0f061CFCa47fca
             amount: "1"
         total_supply: "100000000000000000000000000000000000000000"

@@ -1,32 +1,23 @@
-address: no0sas
-privatekey: EYc4WdFjP9qkgfwJZfnsVXeh827rsNppm5HUSjSDeMFFmpr
-network_id: mitum
+address: "${N0_ADR}"
+privatekey: "${N0_PRV}"
+network_id: "${NETWORK_ID}"
 network:
   bind: 0.0.0.0:4320
   tls_insecure: true
 storage:
   base: ./mitum-data
-  database: leveldb://
 digest:
   network:
-    bind: http://localhost:54320
+    bind: http://0.0.0.0:54320
     url: http://localhost:54320
-  database: 
-    uri: mongodb://127.0.0.1:27017/mc2
+  database:
+    uri: mongodb://127.0.0.1:27017/mc?replicaSet=mitum
 parameters:
-  network:
-    ratelimit:
-      default:
-        default: nolimit
-        state: nolimit
-        blockmap: nolimit
   misc:
-    max_message_size: 50000000
-    object_cache_size: 5000000
+    max_message_size: 3000000
+    object_cache_size: 3000000
   isaac:
-    threshold: 100
-    interval_broadcast_ballot: 3s
-    wait_preparing_init_ballot: 5s
-    ballot_stuck_wait: 33s
-    ballot_stuck_resolve_after: 66s
-    max_operation_size: 50000000
+    threshold: "100"
+    interval_broadcast_ballot: 1.5s
+    wait_preparing_init_ballot: 3s
+    min_wait_next_block_init_ballot: 1.5s
