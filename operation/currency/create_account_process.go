@@ -8,10 +8,9 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
-	"sync"
-
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
+	"sync"
 )
 
 var createAccountItemProcessorPool = sync.Pool{
@@ -45,22 +44,22 @@ func (opp *CreateAccountItemProcessor) PreProcess(
 ) error {
 	e := util.StringError("preprocess CreateAccountItemProcessor")
 
-	for i := range opp.item.Amounts() {
-		am := opp.item.Amounts()[i]
-
-		policy, err := state.ExistsCurrencyPolicy(am.Currency(), getStateFunc)
-		if err != nil {
-			return e.Wrap(err)
-		}
-
-		if am.Big().Compare(policy.MinBalance()) < 0 {
-			return e.Wrap(
-				common.ErrValOOR.Wrap(
-					errors.Errorf(
-						"amount under new account minimum balance, %v < %v", am.Big(), policy.MinBalance())))
-
-		}
-	}
+	//for i := range opp.item.Amounts() {
+	//	am := opp.item.Amounts()[i]
+	//
+	//	policy, err := state.ExistsCurrencyPolicy(am.Currency(), getStateFunc)
+	//	if err != nil {
+	//		return e.Wrap(err)
+	//	}
+	//
+	//	if am.Big().Compare(policy.MinBalance()) < 0 {
+	//		return e.Wrap(
+	//			common.ErrValOOR.Wrap(
+	//				errors.Errorf(
+	//					"amount under new account minimum balance, %v < %v", am.Big(), policy.MinBalance())))
+	//
+	//	}
+	//}
 
 	target, err := opp.item.Address()
 	if err != nil {
@@ -75,25 +74,39 @@ func (opp *CreateAccountItemProcessor) PreProcess(
 	opp.ns = state.NewStateMergeValue(st.Key(), st.Value())
 
 	nb := map[types.CurrencyID]base.StateMergeValue{}
-	for i := range opp.item.Amounts() {
-		am := opp.item.Amounts()[i]
-		switch _, found, err := getStateFunc(currency.BalanceStateKey(target, am.Currency())); {
+	amounts := opp.item.Amounts()
+
+	for i := range amounts {
+		am := amounts[i]
+		k := currency.BalanceStateKey(target, am.Currency())
+		policy, err := state.ExistsCurrencyPolicy(am.Currency(), getStateFunc)
+		if err != nil {
+			return e.Wrap(err)
+		}
+
+		if am.Big().Compare(policy.MinBalance()) < 0 {
+			return e.Wrap(
+				common.ErrValOOR.Wrap(
+					errors.Errorf(
+						"amount under new account minimum balance, %v < %v", am.Big(), policy.MinBalance())))
+		}
+
+		switch _, found, err := getStateFunc(k); {
 		case err != nil:
 			return e.Wrap(err)
 		case found:
 			return e.Wrap(common.ErrAccountE.Wrap(errors.Errorf("target balance already exists, %v", target)))
 		default:
 			nb[am.Currency()] = common.NewBaseStateMergeValue(
-				currency.BalanceStateKey(target, am.Currency()),
+				k,
 				currency.NewAddBalanceStateValue(types.NewZeroAmount(am.Currency())),
 				func(height base.Height, st base.State) base.StateValueMerger {
-					return currency.NewBalanceStateValueMerger(height, currency.BalanceStateKey(target, am.Currency()), am.Currency(), st)
+					return currency.NewBalanceStateValueMerger(height, k, am.Currency(), st)
 				},
 			)
-
-			//nb[am.Currency()] = state.NewStateMergeValue(currency.BalanceStateKey(target, am.Currency()), currency.NewBalanceStateValue(types.NewZeroAmount(am.Currency())))
 		}
 	}
+
 	opp.nb = nb
 
 	return nil
@@ -116,8 +129,9 @@ func (opp *CreateAccountItemProcessor) Process(
 	sts := make([]base.StateMergeValue, len(opp.item.Amounts())+1)
 	sts[0] = state.NewStateMergeValue(opp.ns.Key(), currency.NewAccountStateValue(nac))
 
-	for i := range opp.item.Amounts() {
-		am := opp.item.Amounts()[i]
+	amounts := opp.item.Amounts()
+	for i := range amounts {
+		am := amounts[i]
 		v, ok := opp.nb[am.Currency()].Value().(currency.AddBalanceStateValue)
 		if !ok {
 			return nil, e.Wrap(
@@ -129,8 +143,6 @@ func (opp *CreateAccountItemProcessor) Process(
 			)
 		}
 
-		//stv := currency.NewBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(am.Big())))
-		//sts[i+1] = state.NewStateMergeValue(opp.nb[am.Currency()].Key(), stv)
 		sts[i+1] = common.NewBaseStateMergeValue(
 			opp.nb[am.Currency()].Key(),
 			currency.NewAddBalanceStateValue(v.Amount.WithBig(v.Amount.Big().Add(am.Big()))),
@@ -394,42 +406,44 @@ func CalculateItemsFee(getStateFunc base.GetStateFunc, items []AmountsItem) (
 
 	for i := range items {
 		it := items[i]
-
-		for j := range it.Amounts() {
-			am := it.Amounts()[j]
-
+		amounts := it.Amounts()
+		for j := range amounts {
+			am := amounts[j]
+			cid := am.Currency()
+			big := am.Big()
 			rq := [2]common.Big{common.ZeroBig, common.ZeroBig}
-			if k, found := required[am.Currency()]; found {
+			if k, found := required[cid]; found {
 				rq = k
 			}
 
-			policy, err := state.ExistsCurrencyPolicy(am.Currency(), getStateFunc)
+			policy, err := state.ExistsCurrencyPolicy(cid, getStateFunc)
 			if err != nil {
 				return nil, nil, err
 			}
 
 			var k common.Big
-			switch k, err = policy.Feeer().Fee(am.Big()); {
+			switch k, err = policy.Feeer().Fee(big); {
 			case err != nil:
 				return nil, nil, err
 			case !k.OverZero():
-				required[am.Currency()] = [2]common.Big{rq[0].Add(am.Big()), rq[1]}
+				required[cid] = [2]common.Big{rq[0].Add(big), rq[1]}
 			default:
-				required[am.Currency()] = [2]common.Big{rq[0].Add(am.Big()).Add(k), rq[1].Add(k)}
+				required[cid] = [2]common.Big{rq[0].Add(big).Add(k), rq[1].Add(k)}
 			}
 
-			if policy.Feeer().Receiver() == nil {
+			receiver := policy.Feeer().Receiver()
+			if receiver == nil {
 				continue
 			}
 
-			if err := state.CheckExistsState(currency.AccountStateKey(policy.Feeer().Receiver()), getStateFunc); err != nil {
-				return nil, nil, errors.Errorf("Feeer receiver account not found, %s", policy.Feeer().Receiver())
-			} else if st, found, err := getStateFunc(currency.BalanceStateKey(policy.Feeer().Receiver(), am.Currency())); err != nil {
-				return nil, nil, errors.Errorf("Feeer receiver account not found, %s", policy.Feeer().Receiver())
+			if err := state.CheckExistsState(currency.AccountStateKey(receiver), getStateFunc); err != nil {
+				return nil, nil, errors.Errorf("Feeer receiver account not found, %s", receiver)
+			} else if st, found, err := getStateFunc(currency.BalanceStateKey(receiver, cid)); err != nil {
+				return nil, nil, errors.Errorf("Feeer receiver account not found, %s", receiver)
 			} else if !found {
-				return nil, nil, errors.Errorf("Feeer receiver account not found, %s", policy.Feeer().Receiver())
+				return nil, nil, errors.Errorf("Feeer receiver account not found, %s", receiver)
 			} else {
-				feeReceiveSts[am.Currency()] = st
+				feeReceiveSts[cid] = st
 			}
 		}
 	}
