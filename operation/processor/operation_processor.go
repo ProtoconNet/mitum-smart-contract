@@ -142,6 +142,10 @@ func (opr *OperationProcessor) SetGetNewProcessorFunc(
 func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (context.Context, base.OperationProcessReasonError, error) {
 	e := util.StringError("preprocess for OperationProcessor")
 
+	if err := opr.CheckDuplicationFunc(opr, op); err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("duplication found; %w", err), nil
+	}
+
 	if opr.processorClosers == nil {
 		opr.processorClosers = &sync.Map{}
 	}
@@ -172,10 +176,6 @@ func (opr *OperationProcessor) PreProcess(ctx context.Context, op base.Operation
 
 func (opr *OperationProcessor) Process(ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) ([]base.StateMergeValue, base.OperationProcessReasonError, error) {
 	e := util.StringError("process for OperationProcessor")
-
-	if err := opr.CheckDuplicationFunc(opr, op); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("duplication found; %w", err), nil
-	}
 
 	var sp base.OperationProcessor
 	if opr.GetNewProcessorFunc == nil {
@@ -404,7 +404,7 @@ func (opr *OperationProcessor) close() {
 		return true
 	})
 
-	// opr.pool = nil
+	//opr.pool = nil
 	opr.Duplicated = nil
 	opr.duplicatedNewAddress = nil
 	opr.processorClosers = &sync.Map{}
