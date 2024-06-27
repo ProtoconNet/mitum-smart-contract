@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.1
 
 require (
-	github.com/ProtoconNet/mitum2 v0.0.0-20240625020019-5f6a015c2be3
+	github.com/ProtoconNet/mitum2 v0.0.0-20240627070350-ec432c13c4bd
 	github.com/alecthomas/kong v0.9.0
 	github.com/arl/statsviz v0.6.0
 	github.com/bluele/gcache v0.0.2
