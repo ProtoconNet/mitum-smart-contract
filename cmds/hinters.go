@@ -72,7 +72,6 @@ var AddedHinters = []encoder.DecodeDetail{
 	{Hint: isaacoperation.SuffrageGenesisJoinHint, Instance: isaacoperation.SuffrageGenesisJoin{}},
 	{Hint: isaacoperation.SuffrageJoinHint, Instance: isaacoperation.SuffrageJoin{}},
 	{Hint: isaacoperation.NetworkPolicyHint, Instance: isaacoperation.NetworkPolicy{}},
-	{Hint: isaacoperation.NetworkPolicyFactHint, Instance: isaacoperation.NetworkPolicyFact{}},
 
 	{Hint: statecurrency.AccountStateValueHint, Instance: statecurrency.AccountStateValue{}},
 	{Hint: statecurrency.BalanceStateValueHint, Instance: statecurrency.BalanceStateValue{}},
@@ -102,6 +101,7 @@ var AddedSupportedHinters = []encoder.DecodeDetail{
 	{Hint: isaacoperation.SuffrageDisjoinFactHint, Instance: isaacoperation.SuffrageDisjoinFact{}},
 	{Hint: isaacoperation.SuffrageGenesisJoinFactHint, Instance: isaacoperation.SuffrageGenesisJoinFact{}},
 	{Hint: isaacoperation.SuffrageJoinFactHint, Instance: isaacoperation.SuffrageJoinFact{}},
+	{Hint: isaacoperation.NetworkPolicyFactHint, Instance: isaacoperation.NetworkPolicyFact{}},
 }
 
 func init() {
