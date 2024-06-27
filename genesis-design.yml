@@ -21,7 +21,7 @@ facts:
       keys:
         - _hint: mitum-currency-key-v0.0.1
           key: 02bb41168240ca6a2b74f130ba3760204b494fba7381d25bcde601d7c39185df25fpu
-          # privatekey: EQmEPFeUTf6Asgs1aoHEdfYndFYkVMHrc5F1X4EcGZXympr
+          # 41f08256757d96a522e6d36a097bd2f761109059b72eb6589ff827f7ac877d30fpr
           weight: 100
       threshold: 100
     currencies:

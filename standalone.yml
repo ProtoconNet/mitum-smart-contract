@@ -1,6 +1,6 @@
-address: "${N0_ADR}"
-privatekey: "${N0_PRV}"
-network_id: "${NETWORK_ID}"
+address: node0sas
+privatekey: 803e1cd1970812db3204c37a56a87dcd8a84e45acf73e22942bea0a2cbd54e6ffpr
+network_id: mitum
 network:
   bind: 0.0.0.0:4320
   tls_insecure: true
@@ -20,4 +20,4 @@ parameters:
     threshold: "100"
     interval_broadcast_ballot: 1.5s
     wait_preparing_init_ballot: 3s
-    min_wait_next_block_init_ballot: 1.5s
+    min_wait_next_block_init_ballot: 3s
