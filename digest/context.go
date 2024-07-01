@@ -1,4 +1,4 @@
-package cmds
+package digest
 
 import "github.com/ProtoconNet/mitum2/util"
 

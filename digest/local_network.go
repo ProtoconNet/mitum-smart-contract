@@ -1,4 +1,4 @@
-package cmds
+package digest
 
 import (
 	"context"

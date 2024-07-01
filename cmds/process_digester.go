@@ -31,7 +31,7 @@ func ProcessDigester(ctx context.Context) (context.Context, error) {
 	}
 
 	var st *digest.Database
-	if err := util.LoadFromContext(ctx, ContextValueDigestDatabase, &st); err != nil {
+	if err := util.LoadFromContext(ctx, digest.ContextValueDigestDatabase, &st); err != nil {
 		return ctx, err
 	}
 
@@ -67,12 +67,12 @@ func ProcessDigester(ctx context.Context) (context.Context, error) {
 	di := digest.NewDigester(st, root, sourceReaders, fromRemotes, design.NetworkID, vs.String(), nil)
 	_ = di.SetLogging(log)
 
-	return context.WithValue(ctx, ContextValueDigester, di), nil
+	return context.WithValue(ctx, digest.ContextValueDigester, di), nil
 }
 
 func ProcessStartDigester(ctx context.Context) (context.Context, error) {
 	var di *digest.Digester
-	if err := util.LoadFromContext(ctx, ContextValueDigester, &di); err != nil {
+	if err := util.LoadFromContext(ctx, digest.ContextValueDigester, &di); err != nil {
 		return ctx, err
 	}
 	if di == nil {
@@ -96,7 +96,7 @@ func PdigesterFollowUp(ctx context.Context) (context.Context, error) {
 	}
 
 	var st *digest.Database
-	if err := util.LoadFromContext(ctx, ContextValueDigestDatabase, &st); err != nil {
+	if err := util.LoadFromContext(ctx, digest.ContextValueDigestDatabase, &st); err != nil {
 		return ctx, err
 	}
 	if st == nil {
@@ -134,7 +134,7 @@ func digestFollowup(ctx context.Context, height base.Height) error {
 	}
 
 	var st *digest.Database
-	if err := util.LoadFromContextOK(ctx, ContextValueDigestDatabase, &st); err != nil {
+	if err := util.LoadFromContextOK(ctx, digest.ContextValueDigestDatabase, &st); err != nil {
 		return err
 	}
 

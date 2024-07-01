@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+	"github.com/ProtoconNet/mitum-currency/v3/digest"
 	"os"
 	"path/filepath"
 
@@ -387,7 +388,7 @@ func PLoadDigestDesign(pctx context.Context) (context.Context, error) {
 		}
 
 		var m struct {
-			Digest *DigestDesign
+			Digest *digest.YamlDigestDesign
 		}
 
 		nb, err := util.ReplaceEnvVariables(b)
@@ -405,7 +406,7 @@ func PLoadDigestDesign(pctx context.Context) (context.Context, error) {
 			pctx = i
 		}
 
-		pctx = context.WithValue(pctx, ContextValueDigestDesign, *m.Digest)
+		pctx = context.WithValue(pctx, digest.ContextValueDigestDesign, *m.Digest)
 
 		log.Log().Debug().Object("design", *m.Digest).Msg("digest design loaded")
 	default:

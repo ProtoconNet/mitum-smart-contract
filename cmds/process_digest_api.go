@@ -15,7 +15,7 @@ import (
 
 func ProcessStartDigestAPI(ctx context.Context) (context.Context, error) {
 	var nt *digest.HTTP2Server
-	if err := mitumutil.LoadFromContext(ctx, ContextValueDigestNetwork, &nt); err != nil {
+	if err := mitumutil.LoadFromContext(ctx, digest.ContextValueDigestNetwork, &nt); err != nil {
 		return ctx, err
 	}
 	if nt == nil {
@@ -26,8 +26,8 @@ func ProcessStartDigestAPI(ctx context.Context) (context.Context, error) {
 }
 
 func ProcessDigestAPI(ctx context.Context) (context.Context, error) {
-	var design DigestDesign
-	if err := mitumutil.LoadFromContext(ctx, ContextValueDigestDesign, &design); err != nil {
+	var design digest.YamlDigestDesign
+	if err := mitumutil.LoadFromContext(ctx, digest.ContextValueDigestDesign, &design); err != nil {
 		return ctx, err
 	}
 
@@ -43,7 +43,7 @@ func ProcessDigestAPI(ctx context.Context) (context.Context, error) {
 	}
 
 	var st *digest.Database
-	if err := mitumutil.LoadFromContextOK(ctx, ContextValueDigestDatabase, &st); err != nil {
+	if err := mitumutil.LoadFromContextOK(ctx, digest.ContextValueDigestDatabase, &st); err != nil {
 		log.Log().Debug().Err(err).Msg("digest api disabled; empty database")
 
 		return ctx, nil
@@ -115,5 +115,5 @@ func ProcessDigestAPI(ctx context.Context) (context.Context, error) {
 		},
 	)
 
-	return context.WithValue(ctx, ContextValueDigestNetwork, nt), nil
+	return context.WithValue(ctx, digest.ContextValueDigestNetwork, nt), nil
 }

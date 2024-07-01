@@ -193,7 +193,7 @@ func (cmd *RunCommand) pWhenNewBlockSavedInSyncingStateFunc(pctx context.Context
 		return pctx, err
 	}
 
-	if err := util.LoadFromContext(pctx, ContextValueDigester, &di); err != nil {
+	if err := util.LoadFromContext(pctx, digest.ContextValueDigester, &di); err != nil {
 		return pctx, err
 	}
 
@@ -269,7 +269,7 @@ func (cmd *RunCommand) pWhenNewBlockConfirmed(pctx context.Context) (context.Con
 		return pctx, err
 	}
 
-	if err := util.LoadFromContext(pctx, ContextValueDigester, &di); err != nil {
+	if err := util.LoadFromContext(pctx, digest.ContextValueDigester, &di); err != nil {
 		return pctx, err
 	}
 
@@ -384,8 +384,8 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return nil, err
 	}
 
-	var design DigestDesign
-	if err := util.LoadFromContext(ctx, ContextValueDigestDesign, &design); err != nil {
+	var design digest.YamlDigestDesign
+	if err := util.LoadFromContext(ctx, digest.ContextValueDigestDesign, &design); err != nil {
 		if errors.Is(err, util.ErrNotFound) {
 			return ctx, nil
 		}
@@ -393,7 +393,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return nil, err
 	}
 
-	if design.Equal(DigestDesign{}) {
+	if design.Equal(digest.YamlDigestDesign{}) {
 		return ctx, nil
 	}
 
@@ -403,7 +403,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 	}
 
 	var dnt *digest.HTTP2Server
-	if err := util.LoadFromContext(ctx, ContextValueDigestNetwork, &dnt); err != nil {
+	if err := util.LoadFromContext(ctx, digest.ContextValueDigestNetwork, &dnt); err != nil {
 		return ctx, err
 	}
 
@@ -421,7 +421,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 	return ctx, nil
 }
 
-func (cmd *RunCommand) loadCache(_ context.Context, design DigestDesign) (digest.Cache, error) {
+func (cmd *RunCommand) loadCache(_ context.Context, design digest.YamlDigestDesign) (digest.Cache, error) {
 	c, err := digest.NewCacheFromURI(design.Cache().String())
 	if err != nil {
 		cmd.log.Err(err).Str("cache", design.Cache().String()).Msg("connect cache server")
@@ -440,7 +440,11 @@ func (cmd *RunCommand) setDigestDefaultHandlers(
 	queue chan digest.RequestWrapper,
 ) (*digest.Handlers, error) {
 	var st *digest.Database
-	if err := util.LoadFromContext(ctx, ContextValueDigestDatabase, &st); err != nil {
+	if err := util.LoadFromContext(ctx, digest.ContextValueDigestDatabase, &st); err != nil {
+		return nil, err
+	}
+	var design digest.YamlDigestDesign
+	if err := util.LoadFromContext(ctx, digest.ContextValueDigestDesign, &design); err != nil {
 		return nil, err
 	}
 
@@ -460,8 +464,8 @@ func (cmd *RunCommand) setDigestNetworkClient(
 	params *launch.LocalParams,
 	handlers *digest.Handlers,
 ) (*digest.Handlers, error) {
-	var design DigestDesign
-	if err := util.LoadFromContext(ctx, ContextValueDigestDesign, &design); err != nil {
+	var design digest.YamlDigestDesign
+	if err := util.LoadFromContext(ctx, digest.ContextValueDigestDesign, &design); err != nil {
 		if errors.Is(err, util.ErrNotFound) {
 			return handlers, nil
 		}
@@ -469,7 +473,7 @@ func (cmd *RunCommand) setDigestNetworkClient(
 		return nil, err
 	}
 
-	if design.Equal(DigestDesign{}) {
+	if design.Equal(digest.YamlDigestDesign{}) {
 		return handlers, nil
 	}
 

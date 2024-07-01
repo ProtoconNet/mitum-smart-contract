@@ -14,12 +14,12 @@ import (
 )
 
 func ProcessDatabase(ctx context.Context) (context.Context, error) {
-	var l DigestDesign
-	if err := util.LoadFromContext(ctx, ContextValueDigestDesign, &l); err != nil {
+	var l digest.YamlDigestDesign
+	if err := util.LoadFromContext(ctx, digest.ContextValueDigestDesign, &l); err != nil {
 		return ctx, err
 	}
 
-	if l.Equal(DigestDesign{}) {
+	if l.Equal(digest.YamlDigestDesign{}) {
 		return ctx, nil
 	}
 	conf := l.Database()
@@ -32,7 +32,7 @@ func ProcessDatabase(ctx context.Context) (context.Context, error) {
 	}
 }
 
-func processMongodbDatabase(ctx context.Context, l DigestDesign) (context.Context, error) {
+func processMongodbDatabase(ctx context.Context, l digest.YamlDigestDesign) (context.Context, error) {
 	conf := l.Database()
 
 	/*
@@ -77,7 +77,7 @@ func processMongodbDatabase(ctx context.Context, l DigestDesign) (context.Contex
 
 	_ = dst.SetLogging(log)
 
-	return context.WithValue(ctx, ContextValueDigestDatabase, dst), nil
+	return context.WithValue(ctx, digest.ContextValueDigestDatabase, dst), nil
 }
 
 func loadDigestDatabase(mst *isaacdatabase.Center, st *mongodbstorage.Database, readonly bool) (*digest.Database, error) {
