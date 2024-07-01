@@ -16,7 +16,6 @@ type CurrencyDoc struct {
 	cd types.CurrencyDesign
 }
 
-// NewBalanceDoc gets the State of InitialSupply
 func NewCurrencyDoc(st base.State, enc encoder.Encoder) (CurrencyDoc, error) {
 	cd, err := currency.GetDesignFromState(st)
 	if err != nil {

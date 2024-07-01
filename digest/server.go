@@ -5,17 +5,11 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"net"
-	"net/http"
-	"sync"
-	"time"
-
-	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
-
 	"github.com/ProtoconNet/mitum-currency/v3/digest/network"
 	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
 	"github.com/ProtoconNet/mitum2/base"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -24,6 +18,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"golang.org/x/net/http2"
+	"net"
+	"net/http"
+	"sync"
+	"time"
 )
 
 type RequestWrapper struct {
@@ -49,12 +47,18 @@ type HTTP2Server struct {
 	encs   *encoder.Encoders
 }
 
-func NewHTTP2Server(bind, host string, certs []tls.Certificate, encs *encoder.Encoders, networkID base.NetworkID) (*HTTP2Server, error) {
+func NewHTTP2Server(
+	bind, host string, certs []tls.Certificate, encs *encoder.Encoders, networkID base.NetworkID,
+) (*HTTP2Server, error) {
 	if err := util.CheckBindIsOpen("tcp", bind, time.Second*1); err != nil {
 		return nil, errors.Wrap(err, "open digest server")
 	}
 
 	idleTimeout := time.Second * 10
+
+	r := mux.NewRouter()
+	//r.Use(RateLimiter(5, 20))
+
 	sv := &HTTP2Server{
 		Logging: logging.NewLogging(func(c zerolog.Context) zerolog.Context {
 			return c.Str("module", "http2-server")
@@ -66,7 +70,7 @@ func NewHTTP2Server(bind, host string, certs []tls.Certificate, encs *encoder.En
 		idleTimeout:      idleTimeout,     // TODO can be configurable
 		activeTimeout:    time.Minute * 1, // TODO can be configurable
 		keepAliveTimeout: time.Minute * 1, // TODO can be configurable
-		router:           mux.NewRouter(),
+		router:           r,
 		encs:             encs,
 	}
 
@@ -380,3 +384,17 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 
 	return tc, nil
 }
+
+//func RateLimiter(rps int, burst int) mux.MiddlewareFunc {
+//	limiter := rate.NewLimiter(rate.Limit(rps), burst)
+//
+//	return func(next http.Handler) http.Handler {
+//		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//			if !limiter.Allow() {
+//				http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+//				return
+//			}
+//			next.ServeHTTP(w, r)
+//		})
+//	}
+//}

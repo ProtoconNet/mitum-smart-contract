@@ -7,6 +7,7 @@ import (
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
+	"golang.org/x/time/rate"
 	"net/http"
 	"strings"
 	"time"
@@ -32,7 +33,7 @@ var (
 var (
 	HandlerPathNodeInfo                   = `/`
 	HandlerPathCurrencies                 = `/currency`
-	HandlerPathCurrency                   = `/currency/{currency_id:.*}`
+	HandlerPathCurrency                   = `/currency/{currency_id:` + types.ReCurrencyID + `}`
 	HandlerPathManifests                  = `/block/manifests`
 	HandlerPathOperations                 = `/block/operations`
 	HandlerPathOperation                  = `/block/operation/{hash:(?i)[0-9a-z][0-9a-z]+}`
@@ -80,7 +81,6 @@ type Handlers struct {
 	queue           chan RequestWrapper
 	nodeInfoHandler NodeInfoHandler
 	send            func(interface{}) (base.Operation, error)
-	//client          func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error)
 	client          func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error)
 	router          *mux.Router
 	routes          map[ /* path */ string]*mux.Route
@@ -157,31 +157,33 @@ func (hd *Handlers) Handler() http.Handler {
 }
 
 func (hd *Handlers) setHandlers() {
-	_ = hd.setHandler(HandlerPathCurrencies, hd.handleCurrencies, true).
+	post := 50
+	get := 1000
+	_ = hd.setHandler(HandlerPathCurrencies, hd.handleCurrencies, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathCurrency, hd.handleCurrency, true).
+	_ = hd.setHandler(HandlerPathCurrency, hd.handleCurrency, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathManifests, hd.handleManifests, true).
+	_ = hd.setHandler(HandlerPathManifests, hd.handleManifests, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathOperations, hd.handleOperations, true).
+	_ = hd.setHandler(HandlerPathOperations, hd.handleOperations, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathOperation, hd.handleOperation, true).
+	_ = hd.setHandler(HandlerPathOperation, hd.handleOperation, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathOperationsByHeight, hd.handleOperationsByHeight, true).
+	_ = hd.setHandler(HandlerPathOperationsByHeight, hd.handleOperationsByHeight, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathManifestByHeight, hd.handleManifestByHeight, true).
+	_ = hd.setHandler(HandlerPathManifestByHeight, hd.handleManifestByHeight, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathManifestByHash, hd.handleManifestByHash, true).
+	_ = hd.setHandler(HandlerPathManifestByHash, hd.handleManifestByHash, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathBlockByHeight, hd.handleBlock, true).
+	_ = hd.setHandler(HandlerPathBlockByHeight, hd.handleBlock, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathBlockByHash, hd.handleBlock, true).
+	_ = hd.setHandler(HandlerPathBlockByHash, hd.handleBlock, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathAccount, hd.handleAccount, true).
+	_ = hd.setHandler(HandlerPathAccount, hd.handleAccount, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathAccountOperations, hd.handleAccountOperations, true).
+	_ = hd.setHandler(HandlerPathAccountOperations, hd.handleAccountOperations, true, get, get).
 		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathAccounts, hd.handleAccounts, true).
+	_ = hd.setHandler(HandlerPathAccounts, hd.handleAccounts, true, get, get).
 		Methods(http.MethodOptions, "GET")
 	// _ = hd.setHandler(HandlerPathOperationBuildFactTemplate, hd.handleOperationBuildFactTemplate, true).
 	// 	Methods(http.MethodOptions, "GET")
@@ -191,15 +193,15 @@ func (hd *Handlers) setHandlers() {
 	// 	Methods(http.MethodOptions, http.MethodPost)
 	// _ = hd.setHandler(HandlerPathOperationBuild, hd.handleOperationBuild, true).
 	// 	Methods(http.MethodOptions, http.MethodGet, http.MethodPost)
-	_ = hd.setHandler(HandlerPathSend, hd.handleSend, false).
+	_ = hd.setHandler(HandlerPathSend, hd.handleSend, false, post, post).
 		Methods(http.MethodOptions, http.MethodPost)
-	_ = hd.setHandler(HandlerPathQueueSend, hd.handleQueueSend, false).
+	_ = hd.setHandler(HandlerPathQueueSend, hd.handleQueueSend, false, post, post).
 		Methods(http.MethodOptions, http.MethodPost)
-	_ = hd.setHandler(HandlerPathNodeInfo, hd.handleNodeInfo, true).
+	_ = hd.setHandler(HandlerPathNodeInfo, hd.handleNodeInfo, true, get, get).
 		Methods(http.MethodOptions, "GET")
 }
 
-func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCache bool) *mux.Route {
+func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCache bool, rps, burst int) *mux.Route {
 	var handler http.Handler
 	if !useCache {
 		handler = http.HandlerFunc(h)
@@ -222,6 +224,8 @@ func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCach
 	} else {
 		route = hd.router.Name(name)
 	}
+
+	handler = RateLimiter(rps, burst)(handler)
 
 	/*
 		if rules, found := hd.rateLimit[prefix]; found {
@@ -291,4 +295,27 @@ func CacheKey(key string, s ...string) string {
 
 func DefaultItemsLimiter(string) int64 {
 	return GlobalItemsLimit
+}
+
+func RateLimiter(rps int, burst int) func(http.Handler) http.Handler {
+	if rps <= 0 {
+		// Rate limiting is disabled
+		return func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				next.ServeHTTP(w, r)
+			})
+		}
+	}
+
+	limiter := rate.NewLimiter(rate.Limit(rps), burst)
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !limiter.Allow() {
+				http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }

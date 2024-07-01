@@ -56,14 +56,14 @@ func (hd *Handlers) handleSend(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hd *Handlers) sendItem(v interface{}) (Hal, error) {
-	switch t := v.(type) {
-	case base.Operation:
-		if err := t.IsValid(hd.networkID); err != nil {
-			return nil, err
-		}
-	default:
-		return nil, errors.Errorf("Unsupported message type, %T", v)
-	}
+	//switch t := v.(type) {
+	//case base.Operation:
+	//if err := t.IsValid(hd.networkID); err != nil {
+	//	return nil, err
+	//}
+	//default:
+	//	return nil, errors.Errorf("Unsupported message type, %T", v)
+	//}
 
 	return hd.sendOperation(v)
 }
