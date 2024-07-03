@@ -15,7 +15,7 @@ var (
 	WithdrawHint     = hint.MustNewHint("mitum-extension-withdraw-operation-v0.0.1")
 )
 
-var MaxWithdrawItems uint = 10
+var MaxWithdrawItems uint = 1000
 
 type WithdrawItem interface {
 	hint.Hinter

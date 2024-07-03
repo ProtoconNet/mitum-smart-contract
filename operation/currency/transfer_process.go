@@ -40,6 +40,8 @@ type TransferItemProcessor struct {
 func (opp *TransferItemProcessor) PreProcess(
 	_ context.Context, _ base.Operation, getStateFunc base.GetStateFunc,
 ) error {
+	e := util.StringError("preprocess TransferItemProcessor")
+
 	rb := map[types.CurrencyID]base.StateMergeValue{}
 	amounts := opp.item.Amounts()
 	for i := range amounts {
@@ -48,7 +50,13 @@ func (opp *TransferItemProcessor) PreProcess(
 		receiver := opp.item.Receiver()
 		_, err := state.ExistsCurrencyPolicy(cid, getStateFunc)
 		if err != nil {
-			return err
+			return e.Wrap(err)
+		}
+
+		if _, _, _, cErr := state.ExistsCAccount(
+			receiver, "receiver", true, false, getStateFunc); cErr != nil {
+			return e.Wrap(
+				common.ErrCAccountNA.Wrap(errors.Errorf("%v: receiver %v is contract account", cErr, receiver)))
 		}
 
 		st, _, err := getStateFunc(currency.BalanceStateKey(receiver, cid))
@@ -92,23 +100,30 @@ func (opp *TransferItemProcessor) Process(
 
 	var sts []base.StateMergeValue
 	receiver := opp.item.Receiver()
-	k := currency.AccountStateKey(receiver)
-	switch _, found, err := getStateFunc(k); {
-	case err != nil:
+	smv, err := state.CreateNotExistAccount(receiver, getStateFunc)
+	if err != nil {
 		return nil, e.Wrap(err)
-	case !found:
-		nilKys, err := types.NewNilAccountKeysFromAddress(receiver)
-		if err != nil {
-			return nil, e.Wrap(err)
-		}
-		acc, err := types.NewAccount(receiver, nilKys)
-		if err != nil {
-			return nil, e.Wrap(err)
-		}
-
-		sts = append(sts, state.NewStateMergeValue(k, currency.NewAccountStateValue(acc)))
-	default:
+	} else if smv != nil {
+		sts = append(sts, smv)
 	}
+
+	//k := currency.AccountStateKey(receiver)
+	//switch _, found, err := getStateFunc(k); {
+	//case err != nil:
+	//	return nil, e.Wrap(err)
+	//case !found:
+	//	nilKys, err := types.NewNilAccountKeysFromAddress(receiver)
+	//	if err != nil {
+	//		return nil, e.Wrap(err)
+	//	}
+	//	acc, err := types.NewAccount(receiver, nilKys)
+	//	if err != nil {
+	//		return nil, e.Wrap(err)
+	//	}
+	//
+	//	sts = append(sts, state.NewStateMergeValue(k, currency.NewAccountStateValue(acc)))
+	//default:
+	//}
 
 	amounts := opp.item.Amounts()
 	for i := range amounts {
@@ -279,7 +294,7 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 			}
 
 			c.h = op.Hash()
-			c.item = fact.items[i]
+			c.item = item
 
 			if err := c.PreProcess(ctx, op, getStateFunc); err != nil {
 				err := base.NewBaseOperationProcessReasonError("fail to preprocess transfer item: %w", err)

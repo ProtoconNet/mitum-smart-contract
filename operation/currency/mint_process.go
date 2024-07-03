@@ -113,13 +113,19 @@ func (opp *MintProcessor) PreProcess(
 			), nil
 		}
 
-		if _, _, aErr, cErr := state.ExistsCAccount(item.Receiver(), "receiver", true, false, getStateFunc); aErr != nil {
+		if _, _, _, cErr := state.ExistsCAccount(
+			item.Receiver(), "receiver", true, false, getStateFunc); cErr != nil {
 			return ctx, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.Errorf("%v", aErr)), nil
-		} else if cErr != nil {
-			return ctx, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).Errorf("%v", cErr)), nil
+				common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).Errorf("%v: receiver %v is contract account", cErr, item.Receiver())), nil
 		}
+
+		//if _, _, aErr, cErr := state.ExistsCAccount(item.Receiver(), "receiver", true, false, getStateFunc); aErr != nil {
+		//	return ctx, base.NewBaseOperationProcessReasonError(
+		//		common.ErrMPreProcess.Errorf("%v", aErr)), nil
+		//} else if cErr != nil {
+		//	return ctx, base.NewBaseOperationProcessReasonError(
+		//		common.ErrMPreProcess.Wrap(common.ErrMCAccountNA).Errorf("%v", cErr)), nil
+		//}
 	}
 
 	return ctx, nil, nil
@@ -143,7 +149,13 @@ func (opp *MintProcessor) Process(
 	for i := range fact.Items() {
 		item := fact.Items()[i]
 
-		//var ab types.Amount
+		smv, err := state.CreateNotExistAccount(item.Receiver(), getStateFunc)
+		if err != nil {
+			return nil, base.NewBaseOperationProcessReasonError(
+				"%w", err), nil
+		} else if smv != nil {
+			sts = append(sts, smv)
+		}
 
 		k := currency.BalanceStateKey(item.Receiver(), item.Amount().Currency())
 		switch st, found, err := getStateFunc(k); {

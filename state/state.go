@@ -211,6 +211,31 @@ func CheckFactSignsByState(
 	return nil
 }
 
+func CreateNotExistAccount(address base.Address, getStateFunc base.GetStateFunc) (base.StateMergeValue, error) {
+	var smv base.StateMergeValue
+	k := currency.AccountStateKey(address)
+	switch _, found, err := getStateFunc(k); {
+	case err != nil:
+		return nil, errors.Errorf("failed to get state: %v", err)
+	case !found:
+		nilKys, err := types.NewNilAccountKeysFromAddress(address)
+		if err != nil {
+			return nil, errors.Errorf(
+				"failed to get single sig account key from address %v: %v", address, err)
+		}
+		acc, err := types.NewAccount(address, nilKys)
+		if err != nil {
+			return nil, errors.Errorf(
+				"failed to get account from address and keys, %v: %v", address, err)
+		}
+		smv = NewStateMergeValue(k, currency.NewAccountStateValue(acc))
+
+		return smv, nil
+	default:
+	}
+	return nil, nil
+}
+
 func ParseStateKey(key string, Prefix string, expected int) ([]string, error) {
 	parsedKey := strings.Split(key, ":")
 	if parsedKey[0] != Prefix {

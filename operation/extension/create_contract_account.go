@@ -16,7 +16,7 @@ var (
 	CreateContractAccountHint     = hint.MustNewHint("mitum-extension-create-contract-account-operation-v0.0.1")
 )
 
-var MaxCreateContractAccountItems uint = 5000
+var MaxCreateContractAccountItems uint = 1000
 
 type CreateContractAccountItem interface {
 	hint.Hinter

@@ -88,7 +88,7 @@ func (opp *UpdateHandlerProcessor) PreProcess(
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Wrap(common.ErrMCAccountNA).
-				Errorf("%v", cErr)), nil
+				Errorf("%v: sender %v is contract account", cErr, fact.Sender())), nil
 	}
 
 	if _, cSt, aErr, cErr := state.ExistsCAccount(fact.Contract(), "contract", true, true, getStateFunc); aErr != nil {
@@ -112,15 +112,12 @@ func (opp *UpdateHandlerProcessor) PreProcess(
 	}
 
 	for i := range fact.Handlers() {
-		if _, _, aErr, cErr := state.ExistsCAccount(fact.Handlers()[i], "handler", true, false, getStateFunc); aErr != nil {
-			return ctx, base.NewBaseOperationProcessReasonError(
-				common.ErrMPreProcess.
-					Errorf("%v", aErr)), nil
-		} else if cErr != nil {
+		if _, _, _, cErr := state.ExistsCAccount(
+			fact.Handlers()[i], "handler", true, false, getStateFunc); cErr != nil {
 			return ctx, base.NewBaseOperationProcessReasonError(
 				common.ErrMPreProcess.
 					Wrap(common.ErrMCAccountNA).
-					Errorf("%v", cErr)), nil
+					Errorf("%v: handler %v is contract account", cErr, fact.Handlers()[i])), nil
 		}
 	}
 
@@ -155,9 +152,20 @@ func (opp *UpdateHandlerProcessor) Process( // nolint:dupl
 	var fee common.Big
 	policy, err := state.ExistsCurrencyPolicy(fact.Currency(), getStateFunc)
 	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check existence of currency id %q; %w", fact.Currency(), err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check existence of currency id %q: %w", fact.Currency(), err), nil
 	} else if fee, err = policy.Feeer().Fee(common.ZeroBig); err != nil {
-		return nil, base.NewBaseOperationProcessReasonError("check fee of currency id %q; %w", fact.Currency(), err), nil
+		return nil, base.NewBaseOperationProcessReasonError("check fee of currency id %q: %w", fact.Currency(), err), nil
+	}
+
+	var stmvs []base.StateMergeValue // nolint:prealloc
+
+	for _, handler := range fact.Handlers() {
+		smv, err := state.CreateNotExistAccount(handler, getStateFunc)
+		if err != nil {
+			return nil, base.NewBaseOperationProcessReasonError("%w", err), nil
+		} else if smv != nil {
+			stmvs = append(stmvs, smv)
+		}
 	}
 
 	var sdBalSt base.State
@@ -169,7 +177,6 @@ func (opp *UpdateHandlerProcessor) Process( // nolint:dupl
 		return nil, base.NewBaseOperationProcessReasonError("insufficient balance with fee %v ,%v", fact.Currency(), fact.Sender()), nil
 	}
 
-	var stmvs []base.StateMergeValue // nolint:prealloc
 	v, ok := sdBalSt.Value().(currency.BalanceStateValue)
 	if !ok {
 		return nil, base.NewBaseOperationProcessReasonError("expected BalanceStateValue, not %T", sdBalSt.Value()), nil
