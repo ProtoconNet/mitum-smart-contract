@@ -74,7 +74,7 @@ var operationIndexModels = []mongo.IndexModel{
 	},
 }
 
-var defaultIndexes = map[string] /* collection */ []mongo.IndexModel{
+var DefaultIndexes = map[string] /* collection */ []mongo.IndexModel{
 	defaultColNameBlock:     blockIndexModels,
 	defaultColNameAccount:   accountIndexModels,
 	defaultColNameBalance:   balanceIndexModels,

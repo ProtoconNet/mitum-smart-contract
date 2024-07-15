@@ -96,7 +96,7 @@ func loadDigestDatabase(mst *isaacdatabase.Center, st *mongodbstorage.Database, 
 		dst = s
 	}
 
-	if err := dst.Initialize(); err != nil {
+	if err := dst.Initialize(digest.DefaultIndexes); err != nil {
 		return nil, err
 	}
 

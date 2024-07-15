@@ -103,12 +103,6 @@ func ProcessDigestAPI(ctx context.Context) (context.Context, error) {
 		nt = sv
 	}
 
-	// nt = nt.SetNetworkClientFunc(
-	// 	func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, error) { // nolint:contextcheck
-	// 		return client, memberList, nil
-	// 	},
-	// )
-
 	nt = nt.SetNetworkClientFunc(
 		func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error) { // nolint:contextcheck
 			return client, memberList, nodeList, nil

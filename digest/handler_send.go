@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/ProtoconNet/mitum-currency/v3/common"
+	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
+	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"io"
@@ -56,15 +58,6 @@ func (hd *Handlers) handleSend(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hd *Handlers) sendItem(v interface{}) (Hal, error) {
-	//switch t := v.(type) {
-	//case base.Operation:
-	//if err := t.IsValid(hd.networkID); err != nil {
-	//	return nil, err
-	//}
-	//default:
-	//	return nil, errors.Errorf("Unsupported message type, %T", v)
-	//}
-
 	return hd.sendOperation(v)
 }
 
@@ -74,7 +67,24 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 		return nil, errors.Errorf("expected Operation, not %T", v)
 	}
 
-	client, memberList, nodeList, err := hd.client()
+	params, memberList, nodeList, err := hd.client()
+	connectionPool, err := launch.NewConnectionPool(
+		1<<9,
+		params.ISAAC.NetworkID(),
+		nil,
+	)
+	client := isaacnetwork.NewBaseClient( //nolint:gomnd //...
+		hd.encs, hd.enc,
+		connectionPool.Dial,
+		connectionPool.CloseAll,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		_ = client.Close()
+	}()
 
 	switch {
 	case err != nil:
@@ -82,7 +92,7 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 
 	default:
 		var wg sync.WaitGroup
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 		defer cancel()
 
 		connInfo := make(map[string]quicstream.ConnInfo)
@@ -110,21 +120,34 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 				}
 			}(ci)
 		}
-		wg.Wait()
-		close(errCh)
-		close(sentCh)
+		go func() {
+			wg.Wait()
+			close(errCh)
+			close(sentCh)
+		}()
 
 		var errList []error
 		var sentList []bool
-		for err := range errCh {
-			if err != nil {
-				errList = append(errList, err)
-			}
-		}
 
-		for sent := range sentCh {
-			if sent {
-				sentList = append(sentList, sent)
+	loop:
+		for {
+			select {
+			case err, ok := <-errCh:
+				if !ok {
+					errCh = nil
+				} else if err != nil {
+					errList = append(errList, err)
+				}
+			case sent, ok := <-sentCh:
+				if !ok {
+					sentCh = nil
+				} else if sent {
+					sentList = append(sentList, sent)
+				}
+			}
+
+			if errCh == nil && sentCh == nil {
+				break loop
 			}
 		}
 

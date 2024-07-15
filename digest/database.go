@@ -112,7 +112,7 @@ func (db *Database) Encoders() *encoder.Encoders {
 	return db.digestDB.Encoders()
 }
 
-func (db *Database) Initialize() error {
+func (db *Database) Initialize(dIndexes map[string][]mongo.IndexModel) error {
 	db.Lock()
 	defer db.Unlock()
 
@@ -127,7 +127,7 @@ func (db *Database) Initialize() error {
 	}
 
 	if !db.readonly {
-		if err := db.createIndex(); err != nil {
+		if err := db.CreateIndex(dIndexes); err != nil {
 			return err
 		}
 	}
@@ -135,12 +135,12 @@ func (db *Database) Initialize() error {
 	return nil
 }
 
-func (db *Database) createIndex() error {
+func (db *Database) CreateIndex(dIndexes map[string][]mongo.IndexModel) error {
 	if db.readonly {
 		return errors.Errorf("Readonly mode")
 	}
 
-	for col, models := range defaultIndexes {
+	for col, models := range dIndexes {
 		if err := db.digestDB.CreateIndex(col, models, indexPrefix); err != nil {
 			return err
 		}

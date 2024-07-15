@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
-	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"golang.org/x/time/rate"
@@ -81,7 +80,7 @@ type Handlers struct {
 	queue           chan RequestWrapper
 	nodeInfoHandler NodeInfoHandler
 	send            func(interface{}) (base.Operation, error)
-	client          func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error)
+	client          func() (*launch.LocalParams, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error)
 	router          *mux.Router
 	routes          map[ /* path */ string]*mux.Route
 	itemsLimiter    func(string /* request type */) int64
@@ -157,7 +156,7 @@ func (hd *Handlers) Handler() http.Handler {
 }
 
 func (hd *Handlers) setHandlers() {
-	post := 50
+	post := 10
 	get := 1000
 	_ = hd.setHandler(HandlerPathCurrencies, hd.handleCurrencies, true, get, get).
 		Methods(http.MethodOptions, "GET")

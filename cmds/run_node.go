@@ -5,7 +5,6 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/digest"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
-	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
@@ -482,24 +481,9 @@ func (cmd *RunCommand) setDigestNetworkClient(
 		return nil, err
 	}
 
-	connectionPool, err := launch.NewConnectionPool(
-		1<<9,
-		params.ISAAC.NetworkID(),
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	client := isaacnetwork.NewBaseClient( //nolint:gomnd //...
-		encs, enc,
-		connectionPool.Dial,
-		connectionPool.CloseAll,
-	)
-
 	handlers = handlers.SetNetworkClientFunc(
-		func() (*isaacnetwork.BaseClient, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error) { // nolint:contextcheck
-			return client, memberList, design.ConnInfo, nil
+		func() (*launch.LocalParams, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error) { // nolint:contextcheck
+			return params, memberList, design.ConnInfo, nil
 		},
 	)
 
