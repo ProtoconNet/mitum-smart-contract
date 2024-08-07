@@ -26,7 +26,7 @@ func (hd *Handlers) handleCurrencies(w http.ResponseWriter, r *http.Request) {
 		HTTP2WriteHalBytes(hd.enc, w, v.([]byte), http.StatusOK)
 
 		if !shared {
-			HTTP2WriteCache(w, cachekey, time.Second*3)
+			HTTP2WriteCache(w, cachekey, time.Second*1)
 		}
 	}
 }
@@ -80,7 +80,7 @@ func (hd *Handlers) handleCurrency(w http.ResponseWriter, r *http.Request) {
 		HTTP2WriteHalBytes(hd.enc, w, v.([]byte), http.StatusOK)
 
 		if !shared {
-			HTTP2WriteCache(w, cachekey, time.Second*3)
+			HTTP2WriteCache(w, cachekey, time.Second*1)
 		}
 	}
 }

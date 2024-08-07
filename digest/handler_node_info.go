@@ -40,7 +40,7 @@ func (hd *Handlers) handleNodeInfo(w http.ResponseWriter, r *http.Request) {
 		HTTP2WriteHalBytes(hd.enc, w, v.([]byte), http.StatusOK)
 
 		if !shared {
-			HTTP2WriteCache(w, cachekey, time.Second*3)
+			HTTP2WriteCache(w, cachekey, time.Millisecond*100)
 		}
 	}
 }

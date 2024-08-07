@@ -156,7 +156,7 @@ func (hd *Handlers) Handler() http.Handler {
 }
 
 func (hd *Handlers) setHandlers() {
-	post := 10
+	post := 5
 	get := 1000
 	_ = hd.setHandler(HandlerPathCurrencies, hd.handleCurrencies, true, get, get).
 		Methods(http.MethodOptions, "GET")
