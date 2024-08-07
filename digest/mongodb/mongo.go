@@ -2,6 +2,7 @@ package mongodbstorage
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"time"
 
 	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
@@ -70,6 +71,10 @@ func NewClient(uri string, connectTimeout, execTimeout time.Duration) (*Client, 
 		connectTimeout: connectTimeout,
 		execTimeout:    execTimeout,
 	}, nil
+}
+
+func (cl *Client) MongoClient() *mongo.Client {
+	return cl.client
 }
 
 func (cl *Client) Collection(col string) *mongo.Collection {
@@ -283,14 +288,20 @@ func (cl *Client) Exists(col string, filter bson.D) (bool, error) {
 func (cl *Client) WithSession(
 	callback func(mongo.SessionContext, func(string /* collection */) *mongo.Collection) (interface{}, error),
 ) (interface{}, error) {
-	opts := options.Session().SetDefaultReadConcern(readconcern.Majority())
+	opts := options.Session().
+		SetCausalConsistency(true).
+		SetDefaultReadConcern(readconcern.Majority()).
+		SetDefaultWriteConcern(writeconcern.New(writeconcern.WMajority()))
 	sess, err := cl.client.StartSession(opts)
 	if err != nil {
 		return nil, err
 	}
 	defer sess.EndSession(context.TODO())
 
-	txnOpts := options.Transaction().SetReadPreference(readpref.PrimaryPreferred())
+	txnOpts := options.Transaction().
+		SetReadConcern(readconcern.Snapshot()).
+		SetWriteConcern(writeconcern.New(writeconcern.WMajority())).
+		SetReadPreference(readpref.Primary())
 	result, err := sess.WithTransaction(
 		context.TODO(),
 		func(sessCtx mongo.SessionContext) (interface{}, error) {
