@@ -9,6 +9,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"net/http"
@@ -89,6 +90,19 @@ func ParseLimitQuery(s string) int64 {
 
 func ParseStringQuery(s string) string {
 	return strings.TrimSpace(s)
+}
+
+func ParseRequest(_ http.ResponseWriter, r *http.Request, v string) (string, error, int) {
+	s, found := mux.Vars(r)[v]
+	if !found {
+		return "", errors.Errorf("empty %s", v), http.StatusNotFound
+	}
+
+	s = strings.TrimSpace(s)
+	if len(s) < 1 {
+		return "", errors.Errorf("empty %s", v), http.StatusBadRequest
+	}
+	return s, nil, http.StatusOK
 }
 
 func StringOffsetQuery(offset string) string {
