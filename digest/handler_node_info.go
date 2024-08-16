@@ -105,7 +105,7 @@ func (hd *Handlers) buildNodeInfoHal(ni []isaacnetwork.NodeInfo) (Hal, error) {
 }
 
 func NodeInfo(client *isaacnetwork.BaseClient, connInfo quicstream.ConnInfo) (*isaacnetwork.NodeInfo, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
 	stream, _, err := client.Dial(ctx, connInfo)
