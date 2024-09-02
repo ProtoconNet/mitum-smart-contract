@@ -11,6 +11,13 @@ type GetNewProcessor func(
 	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 	newProcessConstraintFunc base.NewOperationProcessorProcessFunc) (base.OperationProcessor, error)
 
+type GetNewProcessorWithProposal func(
+	height base.Height,
+	proposal *base.ProposalSignFact,
+	getStateFunc base.GetStateFunc,
+	newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
+	newProcessConstraintFunc base.NewOperationProcessorProcessFunc) (base.OperationProcessor, error)
+
 type DuplicationType string
 
 type AddFee map[CurrencyID][2]common.Big

@@ -30,6 +30,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type NewOperationProcessorInternalWithProposalFunc func(base.Height, base.ProposalSignFact, base.GetStateFunc) (base.OperationProcessor, error)
+
 func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 	var isaacParams *isaac.Params
 	var db isaac.Database
@@ -46,7 +48,8 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 		return pctx, err
 	}
 
-	set := hint.NewCompatibleSet[isaac.NewOperationProcessorInternalFunc](1 << 9)
+	setA := hint.NewCompatibleSet[isaac.NewOperationProcessorInternalFunc](1 << 9)
+	setB := hint.NewCompatibleSet[NewOperationProcessorInternalWithProposalFunc](1 << 9)
 
 	opr := processor.NewOperationProcessor()
 	err = opr.SetCheckDuplicationFunc(processor.CheckDuplication)
@@ -104,7 +107,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 		return pctx, err
 	}
 
-	_ = set.Add(currency.CreateAccountHint,
+	_ = setA.Add(currency.CreateAccountHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return opr.New(
 				height,
@@ -114,7 +117,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(currency.UpdateKeyHint,
+	_ = setA.Add(currency.UpdateKeyHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return opr.New(
 				height,
@@ -124,7 +127,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(currency.TransferHint,
+	_ = setA.Add(currency.TransferHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return opr.New(
 				height,
@@ -134,7 +137,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(currency.RegisterCurrencyHint,
+	_ = setA.Add(currency.RegisterCurrencyHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return opr.New(
 				height,
@@ -144,7 +147,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(currency.UpdateCurrencyHint,
+	_ = setA.Add(currency.UpdateCurrencyHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return opr.New(
 				height,
@@ -154,7 +157,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(currency.MintHint,
+	_ = setA.Add(currency.MintHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return opr.New(
 				height,
@@ -164,7 +167,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(extension.CreateContractAccountHint,
+	_ = setA.Add(extension.CreateContractAccountHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return opr.New(
 				height,
@@ -174,7 +177,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(extension.UpdateHandlerHint,
+	_ = setA.Add(extension.UpdateHandlerHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return opr.New(
 				height,
@@ -184,7 +187,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(extension.WithdrawHint,
+	_ = setA.Add(extension.WithdrawHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return opr.New(
 				height,
@@ -194,7 +197,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(isaacoperation.SuffrageCandidateHint,
+	_ = setA.Add(isaacoperation.SuffrageCandidateHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			policy := db.LastNetworkPolicy()
 			if policy == nil { // NOTE Usually it means empty block data
@@ -210,7 +213,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(isaacoperation.SuffrageJoinHint,
+	_ = setA.Add(isaacoperation.SuffrageJoinHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			policy := db.LastNetworkPolicy()
 			if policy == nil { // NOTE Usually it means empty block data
@@ -226,7 +229,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(isaac.SuffrageExpelOperationHint,
+	_ = setA.Add(isaac.SuffrageExpelOperationHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			policy := db.LastNetworkPolicy()
 			if policy == nil { // NOTE Usually it means empty block data
@@ -241,7 +244,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(isaacoperation.SuffrageDisjoinHint,
+	_ = setA.Add(isaacoperation.SuffrageDisjoinHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return isaacoperation.NewSuffrageDisjoinProcessor(
 				height,
@@ -251,7 +254,7 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = set.Add(isaacoperation.NetworkPolicyHint,
+	_ = setA.Add(isaacoperation.NetworkPolicyHint,
 		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 			return isaacoperation.NewNetworkPolicyProcessor(
 				height,
@@ -265,7 +268,8 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 	//var f ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
 
 	pctx = context.WithValue(pctx, OperationProcessorContextKey, opr)
-	pctx = context.WithValue(pctx, launch.OperationProcessorsMapContextKey, set) //revive:disable-line:modifies-parameter
+	pctx = context.WithValue(pctx, launch.OperationProcessorsMapContextKey, setA) //revive:disable-line:modifies-parameter
+	pctx = context.WithValue(pctx, OperationProcessorsMapBContextKey, setB)       //revive:disable-line:modifies-parameter
 	//pctx = context.WithValue(pctx, ProposalOperationFactHintContextKey, f)
 
 	return pctx, nil

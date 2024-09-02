@@ -134,11 +134,13 @@ func SendOperationFilterFunc(ctx context.Context) (
 ) {
 	var db isaac.Database
 	var oprs *hint.CompatibleSet[isaac.NewOperationProcessorInternalFunc]
+	var oprsB *hint.CompatibleSet[NewOperationProcessorInternalWithProposalFunc]
 	var f ProposalOperationFactHintFunc
 
 	if err := util.LoadFromContextOK(ctx,
 		launch.CenterDatabaseContextKey, &db,
 		launch.OperationProcessorsMapContextKey, &oprs,
+		OperationProcessorsMapBContextKey, &oprsB,
 		ProposalOperationFactHintContextKey, &f,
 	); err != nil {
 		return nil, err
@@ -164,7 +166,7 @@ func SendOperationFilterFunc(ctx context.Context) (
 			height = m.Manifest().Height()
 		}
 
-		f, closeF, err := launch.OperationPreProcess(db, oprs, op, height)
+		f, closeF, err := OperationPreProcess(db, oprs, oprsB, op, height)
 		if err != nil {
 			return false, err
 		}
@@ -195,4 +197,46 @@ func IsSupportedProposalOperationFactHintFunc() func(hint.Hint) bool {
 
 		return false
 	}
+}
+
+func OperationPreProcess(
+	db isaac.Database,
+	oprsA *hint.CompatibleSet[isaac.NewOperationProcessorInternalFunc],
+	oprsB *hint.CompatibleSet[NewOperationProcessorInternalWithProposalFunc],
+	op base.Operation,
+	height base.Height,
+) (
+	preprocess func(context.Context, base.GetStateFunc) (context.Context, base.OperationProcessReasonError, error),
+	cancel func() error,
+	_ error,
+) {
+	fA, foundA := oprsA.Find(op.Hint())
+	fB, foundB := oprsB.Find(op.Hint())
+	if !foundA && !foundB {
+		return op.PreProcess, util.EmptyCancelFunc, nil
+	}
+
+	if foundA {
+		switch opp, err := fA(height, db.State); {
+		case err != nil:
+			return nil, nil, err
+		default:
+			return func(pctx context.Context, getStateFunc base.GetStateFunc) (
+				context.Context, base.OperationProcessReasonError, error,
+			) {
+				return opp.PreProcess(pctx, op, getStateFunc)
+			}, opp.Close, nil
+		}
+	}
+	switch opp, err := fB(height, nil, db.State); {
+	case err != nil:
+		return nil, nil, err
+	default:
+		return func(pctx context.Context, getStateFunc base.GetStateFunc) (
+			context.Context, base.OperationProcessReasonError, error,
+		) {
+			return opp.PreProcess(pctx, op, getStateFunc)
+		}, opp.Close, nil
+	}
+
 }
