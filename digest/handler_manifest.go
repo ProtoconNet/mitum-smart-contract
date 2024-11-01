@@ -12,6 +12,7 @@ import (
 )
 
 func (hd *Handlers) handleManifestByHeight(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	if err := LoadFromCache(hd.cache, CacheKeyPath(r), w); err == nil {
 		return
 	}
@@ -54,6 +55,7 @@ func (hd *Handlers) handleManifestByHeightInGroup(
 }
 
 func (hd *Handlers) handleManifestByHash(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	if err := LoadFromCache(hd.cache, CacheKeyPath(r), w); err == nil {
 		return
 	}
@@ -141,6 +143,7 @@ func (hd *Handlers) buildManifestHal(manifest base.Manifest, ops uint64, confirm
 }
 
 func (hd *Handlers) handleManifests(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	limit := ParseLimitQuery(r.URL.Query().Get("limit"))
 	offset := ParseStringQuery(r.URL.Query().Get("offset"))
 	reverse := ParseBoolQuery(r.URL.Query().Get("reverse"))

@@ -17,6 +17,7 @@ var halBlockTemplate = map[string]HalLink{
 }
 
 func (hd *Handlers) handleBlock(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	cachekey := CacheKeyPath(r)
 	if err := LoadFromCache(hd.cache, cachekey, w); err == nil {
 		return

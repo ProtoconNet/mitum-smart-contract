@@ -398,6 +398,12 @@ func (bs *BlockSession) writeModelsChunk(ctx context.Context, col string, models
 
 func (bs *BlockSession) close() error {
 	bs.block = nil
+	bs.ops = nil
+	bs.opsTree = fixedtree.EmptyTree()
+	bs.sts = nil
+	bs.proposal = nil
+	bs.opsTreeNodes = nil
+	bs.blockModels = nil
 	bs.operationModels = nil
 	bs.currencyModels = nil
 	bs.accountModels = nil

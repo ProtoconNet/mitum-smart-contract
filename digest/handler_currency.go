@@ -13,6 +13,7 @@ import (
 )
 
 func (hd *Handlers) handleCurrencies(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	cachekey := CacheKeyPath(r)
 	if err := LoadFromCache(hd.cache, cachekey, w); err == nil {
 		return
@@ -51,6 +52,7 @@ func (hd *Handlers) handleCurrenciesInGroup() ([]byte, error) {
 }
 
 func (hd *Handlers) handleCurrency(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	cachekey := CacheKeyPath(r)
 	if err := LoadFromCache(hd.cache, cachekey, w); err == nil {
 		return

@@ -3,7 +3,6 @@ package digest
 import (
 	"context"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
-	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	quicstreamheader "github.com/ProtoconNet/mitum2/network/quicstream/header"
@@ -20,6 +19,7 @@ func (hd *Handlers) SetNodeInfoHandler(handler NodeInfoHandler) *Handlers {
 }
 
 func (hd *Handlers) handleNodeInfo(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 
 	//if hd.nodeInfoHandler == nil {
 	//	HTTP2NotSupported(w, nil)
@@ -46,12 +46,12 @@ func (hd *Handlers) handleNodeInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hd *Handlers) handleNodeInfoInGroup() (interface{}, error) {
-	params, memberList, nodeList, err := hd.client()
-	connectionPool, err := launch.NewConnectionPool(
-		1<<9,
-		params.ISAAC.NetworkID(),
-		nil,
-	)
+	connectionPool, memberList, nodeList, err := hd.client()
+	//connectionPool, err := launch.NewConnectionPool(
+	//	1<<9,
+	//	params.ISAAC.NetworkID(),
+	//	nil,
+	//)
 	client := isaacnetwork.NewBaseClient( //nolint:gomnd //...
 		hd.encs, hd.enc,
 		connectionPool.Dial,

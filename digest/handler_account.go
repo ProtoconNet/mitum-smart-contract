@@ -15,6 +15,7 @@ import (
 )
 
 func (hd *Handlers) handleAccount(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	cachekey := CacheKeyPath(r)
 	if err := LoadFromCache(hd.cache, cachekey, w); err == nil {
 		return
@@ -113,6 +114,7 @@ func (hd *Handlers) buildAccountHal(va AccountValue) (Hal, error) {
 }
 
 func (hd *Handlers) handleAccountOperations(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	var address base.Address
 	if a, err := base.DecodeAddress(strings.TrimSpace(mux.Vars(r)["address"]), hd.enc); err != nil {
 		HTTP2ProblemWithError(w, err, http.StatusBadRequest)
@@ -262,6 +264,7 @@ func (hd *Handlers) buildAccountOperationsHal(
 }
 
 func (hd *Handlers) handleAccounts(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	offset := ParseStringQuery(r.URL.Query().Get("offset"))
 
 	var pub base.Publickey

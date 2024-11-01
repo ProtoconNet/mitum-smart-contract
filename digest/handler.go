@@ -80,7 +80,8 @@ type Handlers struct {
 	queue           chan RequestWrapper
 	nodeInfoHandler NodeInfoHandler
 	send            func(interface{}) (base.Operation, error)
-	client          func() (*launch.LocalParams, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error)
+	client          func() (*quicstream.ConnectionPool, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error)
+	//connectionPool  *quicstream.ConnectionPool
 	router          *mux.Router
 	routes          map[ /* path */ string]*mux.Route
 	itemsLimiter    func(string /* request type */) int64
@@ -157,6 +158,7 @@ func (hd *Handlers) Handler() http.Handler {
 
 func (hd *Handlers) setHandlers() {
 	post := 5
+	postQueue := 10000
 	get := 1000
 	_ = hd.setHandler(HandlerPathCurrencies, hd.handleCurrencies, true, get, get).
 		Methods(http.MethodOptions, "GET")
@@ -194,7 +196,7 @@ func (hd *Handlers) setHandlers() {
 	// 	Methods(http.MethodOptions, http.MethodGet, http.MethodPost)
 	_ = hd.setHandler(HandlerPathSend, hd.handleSend, false, post, post).
 		Methods(http.MethodOptions, http.MethodPost)
-	_ = hd.setHandler(HandlerPathQueueSend, hd.handleQueueSend, false, post, post).
+	_ = hd.setHandler(HandlerPathQueueSend, hd.handleQueueSend, false, postQueue, postQueue).
 		Methods(http.MethodOptions, http.MethodPost)
 	_ = hd.setHandler(HandlerPathNodeInfo, hd.handleNodeInfo, true, get, get).
 		Methods(http.MethodOptions, "GET")

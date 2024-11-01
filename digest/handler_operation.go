@@ -16,6 +16,7 @@ import (
 )
 
 func (hd *Handlers) handleOperation(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	cachekey := CacheKeyPath(r)
 	if err := LoadFromCache(hd.cache, cachekey, w); err == nil {
 		return
@@ -64,6 +65,7 @@ func (hd *Handlers) handleOperationInGroup(h mitumutil.Hash) ([]byte, error) {
 }
 
 func (hd *Handlers) handleOperations(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	limit := ParseLimitQuery(r.URL.Query().Get("limit"))
 	offset := ParseStringQuery(r.URL.Query().Get("offset"))
 	reverse := ParseBoolQuery(r.URL.Query().Get("reverse"))
@@ -134,6 +136,7 @@ func (hd *Handlers) handleOperationsInGroup(offset string, reverse bool, l int64
 }
 
 func (hd *Handlers) handleOperationsByHeight(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	limit := ParseLimitQuery(r.URL.Query().Get("limit"))
 	offset := ParseStringQuery(r.URL.Query().Get("offset"))
 	reverse := ParseBoolQuery(r.URL.Query().Get("reverse"))

@@ -5,17 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum2/base"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
-	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"sync"
 	"time"
-
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/pkg/errors"
 )
 
 func (hd *Handlers) handleQueueSend(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +28,9 @@ func (hd *Handlers) handleQueueSend(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hd *Handlers) handleSend(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	body := &bytes.Buffer{}
+	defer body.Reset()
 	if _, err := io.Copy(body, r.Body); err != nil {
 		HTTP2ProblemWithError(w, err, http.StatusInternalServerError)
 		return
@@ -67,96 +67,91 @@ func (hd *Handlers) sendOperation(v interface{}) (Hal, error) {
 		return nil, errors.Errorf("expected Operation, not %T", v)
 	}
 
-	params, memberList, nodeList, err := hd.client()
-	connectionPool, err := launch.NewConnectionPool(
-		1<<9,
-		params.ISAAC.NetworkID(),
-		nil,
-	)
+	connectionPool, memberList, nodeList, err := hd.client()
+	if err != nil {
+		return nil, err
+	}
+
 	client := isaacnetwork.NewBaseClient( //nolint:gomnd //...
 		hd.encs, hd.enc,
 		connectionPool.Dial,
 		connectionPool.CloseAll,
 	)
-	if err != nil {
-		return nil, err
-	}
-
 	defer func() {
 		_ = client.Close()
 	}()
 
-	switch {
-	case err != nil:
-		return nil, err
+	var wg sync.WaitGroup
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
 
-	default:
-		var wg sync.WaitGroup
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-		defer cancel()
+	connInfo := make(map[string]quicstream.ConnInfo)
+	memberList.Members(func(node quicmemberlist.Member) bool {
+		connInfo[node.ConnInfo().String()] = node.ConnInfo()
+		return true
+	})
+	for _, c := range nodeList {
+		connInfo[c.String()] = c
+	}
 
-		connInfo := make(map[string]quicstream.ConnInfo)
-		memberList.Members(func(node quicmemberlist.Member) bool {
-			connInfo[node.ConnInfo().String()] = node.ConnInfo()
-			return true
-		})
-		for _, c := range nodeList {
-			connInfo[c.String()] = c
-		}
+	//sent, err := client.SendOperation(ctx, nodeList[0], op)
+	//if err != nil {
+	//	return nil, err
+	//} else if !sent {
+	//	return nil, errors.Errorf("failed to send operation")
+	//}
 
-		errCh := make(chan error, len(connInfo))
-		sentCh := make(chan bool, len(connInfo))
-		for _, ci := range connInfo {
-			wg.Add(1)
-			go func(node quicstream.ConnInfo) {
-				defer wg.Done()
+	errCh := make(chan error, len(connInfo))
+	sentCh := make(chan bool, len(connInfo))
+	for _, ci := range connInfo {
+		wg.Add(1)
+		go func(node quicstream.ConnInfo) {
+			defer wg.Done()
 
-				sent, err := client.SendOperation(ctx, node, op)
-				if err != nil {
-					errCh <- err
-				}
-				if sent {
-					sentCh <- sent
-				}
-			}(ci)
-		}
-		go func() {
-			wg.Wait()
-			close(errCh)
-			close(sentCh)
-		}()
-
-		var errList []error
-		var sentList []bool
-
-	loop:
-		for {
-			select {
-			case err, ok := <-errCh:
-				if !ok {
-					errCh = nil
-				} else if err != nil {
-					errList = append(errList, err)
-				}
-			case sent, ok := <-sentCh:
-				if !ok {
-					sentCh = nil
-				} else if sent {
-					sentList = append(sentList, sent)
-				}
+			sent, err := client.SendOperation(ctx, node, op)
+			if err != nil {
+				errCh <- err
 			}
+			if sent {
+				sentCh <- sent
+			}
+		}(ci)
+	}
+	go func() {
+		wg.Wait()
+		close(errCh)
+		close(sentCh)
+	}()
 
-			if errCh == nil && sentCh == nil {
-				break loop
+	var errList []error
+	var sentList []bool
+loop:
+	for {
+		select {
+		case err, ok := <-errCh:
+			if !ok {
+				errCh = nil
+			} else if err != nil {
+				errList = append(errList, err)
+			}
+		case sent, ok := <-sentCh:
+			if !ok {
+				sentCh = nil
+			} else if sent {
+				sentList = append(sentList, sent)
 			}
 		}
 
-		if len(sentList) < 1 {
-			if len(errList) > 0 {
-				return nil, errList[0]
-			} else {
-				return nil, errors.Errorf("Failed to send operation to node")
-			}
+		if errCh == nil && sentCh == nil {
+			break loop
+		}
+	}
+
+	if len(sentList) < 1 {
+		if len(errList) > 0 {
+			return nil, errList[0]
+		} else {
+			return nil, errors.Errorf("Failed to send operation to node")
 		}
 	}
 
