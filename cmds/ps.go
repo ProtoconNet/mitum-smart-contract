@@ -2,11 +2,13 @@ package cmds
 
 import (
 	"context"
-	"github.com/ProtoconNet/mitum-currency/v3/digest"
 	"os"
 	"path/filepath"
 
+	"github.com/ProtoconNet/mitum-currency/v3/digest"
+
 	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
+	"github.com/ProtoconNet/mitum-currency/v3/operation/contract"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
 	isaacoperation "github.com/ProtoconNet/mitum-currency/v3/operation/isaac"
@@ -35,10 +37,12 @@ type NewOperationProcessorInternalWithProposalFunc func(base.Height, base.Propos
 func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 	var isaacParams *isaac.Params
 	var db isaac.Database
+	var encs *encoder.Encoders
 
 	if err := util.LoadFromContextOK(pctx,
 		launch.ISAACParamsContextKey, &isaacParams,
 		launch.CenterDatabaseContextKey, &db,
+		launch.EncodersContextKey, &encs,
 	); err != nil {
 		return pctx, err
 	}
@@ -103,6 +107,16 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 	} else if err := opr.SetProcessor(
 		extension.WithdrawHint,
 		extension.NewWithdrawProcessor(),
+	); err != nil {
+		return pctx, err
+	} else if err := opr.SetProcessor(
+		contract.RegisterContractHint,
+		contract.NewRegisterContractProcessor(*encs),
+	); err != nil {
+		return pctx, err
+	} else if err := opr.SetProcessor(
+		contract.CallContractHint,
+		contract.NewCallContractProcessor(*encs),
 	); err != nil {
 		return pctx, err
 	}
@@ -259,6 +273,26 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			return isaacoperation.NewNetworkPolicyProcessor(
 				height,
 				isaacParams.Threshold(),
+				getStatef,
+				nil,
+				nil,
+			)
+		})
+
+	_ = setA.Add(contract.RegisterContractHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return opr.New(
+				height,
+				getStatef,
+				nil,
+				nil,
+			)
+		})
+
+	_ = setA.Add(contract.CallContractHint,
+		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			return opr.New(
+				height,
 				getStatef,
 				nil,
 				nil,

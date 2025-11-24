@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	launchcmd "github.com/ProtoconNet/mitum2/launch/cmd"
 	"os"
+
+	launchcmd "github.com/ProtoconNet/mitum2/launch/cmd"
 
 	"github.com/ProtoconNet/mitum-currency/v3/cmds"
 	"github.com/ProtoconNet/mitum2/base"
@@ -29,8 +30,9 @@ var CLI struct { //nolint:govet //...
 	Run       cmds.RunCommand  `cmd:"" help:"run node"`
 	Storage   cmds.Storage     `cmd:""`
 	Operation struct {
-		Currency cmds.CurrencyCommand `cmd:"" help:"currency operation"`
-		Suffrage cmds.SuffrageCommand `cmd:"" help:"suffrage operation"`
+		Currency      cmds.CurrencyCommand `cmd:"" help:"currency operation"`
+		Suffrage      cmds.SuffrageCommand `cmd:"" help:"suffrage operation"`
+		SmartContract cmds.PluginCommand   `cmd:"" help:"smart-contract operation"`
 	} `cmd:"" help:"create operation"`
 	Network struct {
 		Client cmds.NetworkClientCommand `cmd:"" help:"network client"`

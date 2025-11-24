@@ -1,17 +1,17 @@
 module github.com/ProtoconNet/mitum-currency/v3
 
-go 1.22
+go 1.24.4
 
-toolchain go1.22.1
+toolchain go1.24.5
 
 require (
-	github.com/ProtoconNet/mitum2 v0.0.0-20241101032300-fbbe79d8122c
+	github.com/ProtoconNet/mitum2 v0.0.0-20250612112846-83e5237de28b
 	github.com/alecthomas/kong v0.9.0
 	github.com/arl/statsviz v0.6.0
 	github.com/bluele/gcache v0.0.2
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
-	github.com/ethereum/go-ethereum v1.13.8
+	github.com/ethereum/go-ethereum v1.14.13
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/json-iterator/go v1.1.12
@@ -19,11 +19,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rainycape/memcache v0.0.0-20150622160815-1031fa0ce2f2
 	github.com/rs/zerolog v1.32.0
+	github.com/traefik/yaegi v0.16.1
 	go.mongodb.org/mongo-driver v1.15.0
-	golang.org/x/crypto v0.23.0
+	golang.org/x/crypto v0.31.0
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
-	golang.org/x/net v0.25.0
-	golang.org/x/sync v0.7.0
+	golang.org/x/net v0.33.0
+	golang.org/x/sync v0.10.0
 	golang.org/x/time v0.5.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -32,15 +33,22 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/beevik/ntp v1.3.1 // indirect
+	github.com/bits-and-blooms/bitset v1.13.0 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
 	github.com/bytedance/sonic v1.11.3 // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
-	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.1 // indirect
+	github.com/consensys/bavard v0.1.13 // indirect
+	github.com/consensys/gnark-crypto v0.12.1 // indirect
+	github.com/crate-crypto/go-ipa v0.0.0-20240223125850-b1e8a79f509c // indirect
+	github.com/crate-crypto/go-kzg-4844 v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/ethereum/c-kzg-4844 v1.0.0 // indirect
+	github.com/ethereum/go-verkle v0.1.1-0.20240829091221-dffa7562dbe9 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
@@ -67,7 +75,7 @@ require (
 	github.com/hashicorp/memberlist v0.5.1 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/hashicorp/vault/api v1.12.2 // indirect
-	github.com/holiman/uint256 v1.2.4 // indirect
+	github.com/holiman/uint256 v1.3.1 // indirect
 	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -75,6 +83,7 @@ require (
 	github.com/miekg/dns v1.1.58 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
@@ -88,6 +97,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/supranational/blst v0.3.13 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
@@ -95,13 +105,14 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240424034433-3c2c7870ae76 // indirect
 	github.com/zeebo/blake3 v0.2.3 // indirect
-	go.uber.org/mock v0.4.0 // indirect
+	go.uber.org/mock v0.5.0 // indirect
 	golang.org/x/arch v0.7.0 // indirect
-	golang.org/x/mod v0.17.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
-	golang.org/x/tools v0.21.0 // indirect
+	golang.org/x/mod v0.18.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/tools v0.22.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
 replace github.com/hashicorp/memberlist => github.com/spikeekips/memberlist v0.0.0-20230626195851-39f17fa10d23 // latest fix-data-race branch

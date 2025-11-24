@@ -37,3 +37,6 @@ tests/*/*/coverage/
 .golangci.excludes.txt
 /config.yml
 /genesis.yml
+/sh
+/yml*
+/log*

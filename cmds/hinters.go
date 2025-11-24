@@ -4,12 +4,15 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/digest"
 	digestisaac "github.com/ProtoconNet/mitum-currency/v3/digest/isaac"
+	"github.com/ProtoconNet/mitum-currency/v3/operation/contract"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
 	isaacoperation "github.com/ProtoconNet/mitum-currency/v3/operation/isaac"
+	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
 	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	stateextension "github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
+	ptypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
@@ -82,6 +85,12 @@ var AddedHinters = []encoder.DecodeDetail{
 	{Hint: digest.AccountValueHint, Instance: digest.AccountValue{}},
 	{Hint: digest.OperationValueHint, Instance: digest.OperationValue{}},
 	{Hint: digestisaac.ManifestHint, Instance: digestisaac.Manifest{}},
+
+	{Hint: contract.RegisterContractHint, Instance: contract.RegisterContract{}},
+	{Hint: contract.CallContractHint, Instance: contract.CallContract{}},
+	{Hint: ptypes.DesignHint, Instance: ptypes.Design{}},
+	{Hint: pstate.DesignStateValueHint, Instance: pstate.DesignStateValue{}},
+	{Hint: pstate.DataStateValueHint, Instance: pstate.DataStateValue{}},
 }
 
 var AddedSupportedHinters = []encoder.DecodeDetail{
@@ -102,6 +111,8 @@ var AddedSupportedHinters = []encoder.DecodeDetail{
 	{Hint: isaacoperation.SuffrageGenesisJoinFactHint, Instance: isaacoperation.SuffrageGenesisJoinFact{}},
 	{Hint: isaacoperation.SuffrageJoinFactHint, Instance: isaacoperation.SuffrageJoinFact{}},
 	{Hint: isaacoperation.NetworkPolicyFactHint, Instance: isaacoperation.NetworkPolicyFact{}},
+	{Hint: contract.RegisterContractFactHint, Instance: contract.RegisterContractFact{}},
+	{Hint: contract.CallContractFactHint, Instance: contract.CallContractFact{}},
 }
 
 func init() {
