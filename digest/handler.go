@@ -3,13 +3,14 @@ package digest
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"golang.org/x/time/rate"
-	"net/http"
-	"strings"
-	"time"
 
 	"github.com/ProtoconNet/mitum-currency/v3/digest/network"
 	"github.com/ProtoconNet/mitum2/base"
@@ -51,6 +52,8 @@ var (
 	HandlerPathOperationBuild             = `/builder/operation`
 	HandlerPathSend                       = `/builder/send`
 	HandlerPathQueueSend                  = `/builder/send/queue`
+	HandlerPathContractDesign             = `/contract/{contract:(?i)` + types.REStringAddressString + `}`
+	HandlerPathContractData               = `/contract/{contract:(?i)` + types.REStringAddressString + `}/data/{data_key:` + types.ReSpecialCh + `}`
 	HandelrPathEventOperation             = `/event/operation/{hash:(?i)[0-9a-z][0-9a-z]+}`
 	HandelrPathEventAccount               = `/event/account/{address:(?i)` + types.REStringAddressString + `}`
 	HandlerPathEventContract              = `/event/contract/{address:(?i)` + types.REStringAddressString + `}`
@@ -188,6 +191,10 @@ func (hd *Handlers) setHandlers() {
 	_ = hd.setHandler(HandlerPathAccountOperations, hd.handleAccountOperations, true, get, get).
 		Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathAccounts, hd.handleAccounts, true, get, get).
+		Methods(http.MethodOptions, "GET")
+	_ = hd.setHandler(HandlerPathContractData, hd.handleContractData, true, get, get).
+		Methods(http.MethodOptions, "GET")
+	_ = hd.setHandler(HandlerPathContractDesign, hd.handleContractDesign, true, get, get).
 		Methods(http.MethodOptions, "GET")
 	// _ = hd.setHandler(HandlerPathOperationBuildFactTemplate, hd.handleOperationBuildFactTemplate, true).
 	// 	Methods(http.MethodOptions, "GET")
