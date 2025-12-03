@@ -12,6 +12,24 @@ func (s S1) Name() string {
 	return s.N
 }
 
+type Data struct {
+	key       string
+	value     interface{}
+	valueType string
+}
+
+func NewData(
+	key string, value interface{}, valueType string,
+) Data {
+	data := Data{
+		key:       key,
+		value:     value,
+		valueType: valueType,
+	}
+
+	return data
+}
+
 type APICollection func(int, string) (interface{}, error)
 type GetAccountStateFunc func(string) (bool, error)
 type GetDataStateFunc func(string) (map[string]interface{}, error)
