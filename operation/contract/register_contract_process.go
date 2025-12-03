@@ -3,6 +3,9 @@ package contract
 import (
 	"context"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"reflect"
 	"sync"
@@ -133,6 +136,10 @@ func (opp *RegisterContractProcessor) Process(
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
 	fact, _ := op.Fact().(RegisterContractFact)
+
+	if err := ValidateContract(fact.ContractCode()); err != nil {
+		return nil, err, nil
+	}
 
 	var sts []base.StateMergeValue
 
@@ -268,6 +275,50 @@ func GetDataStateFunc(
 		}
 	}
 	return data, nil
+}
+
+func ValidateContract(sourceCode string) base.OperationProcessReasonError {
+	fset := token.NewFileSet()
+	node, err := parser.ParseFile(fset, "", sourceCode, 0)
+	if err != nil {
+		return base.NewBaseOperationProcessReasonError(
+			"failed to parse contract code: %w", err)
+	}
+
+	var validationErr base.OperationProcessReasonError
+
+	ast.Inspect(node, func(n ast.Node) bool {
+		if validationErr != nil {
+			return false
+		}
+
+		switch n.(type) {
+		case *ast.GoStmt:
+			validationErr = base.NewBaseOperationProcessReasonError(
+				"failed to validate contract code: 'go' routines are not allowed in this contract")
+			return false
+
+		case *ast.ForStmt:
+			validationErr = base.NewBaseOperationProcessReasonError(
+				"failed to validate contract code: 'for' loops are not allowed in this contract")
+			return false
+
+		case *ast.RangeStmt:
+			validationErr = base.NewBaseOperationProcessReasonError(
+				"failed to validate contract code: 'range' loops are not allowed in this contract")
+			return false
+		}
+
+		//case *ast.MapType:
+		//	validationErr = base.NewBaseOperationProcessReasonError(
+		//		"failed to validate contract code: 'map' types are not allowed in this contract")
+		//	return false
+		//}
+
+		return true
+	})
+
+	return validationErr
 }
 
 func ExecuteContract(
