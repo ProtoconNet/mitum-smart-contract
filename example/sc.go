@@ -28,7 +28,7 @@ func CreateData(ctx util.ContractContext) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("data not found in call data")
 	}
 	userData := NewData(
-		sender, dataArg, "userAddress",
+		sender, dataArg, "userValue",
 	)
 
 	return userData, nil
@@ -46,7 +46,7 @@ func UpdateData(ctx util.ContractContext) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("data not found in call data")
 	}
 	userData := NewData(
-		sender, dataArg, "userAddress",
+		sender, dataArg, "userValue",
 	)
 
 	return userData, nil
