@@ -85,6 +85,38 @@ func (opp *RegisterContractProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
+	_, cSt, aErr, cErr := cstate.ExistsCAccount(fact.Contract(), "contract", true, true, getStateFunc)
+	if aErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", aErr)), nil
+	} else if cErr != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", cErr)), nil
+	}
+
+	ca, err := cestate.CheckCAAuthFromState(cSt, fact.Sender())
+	if err != nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Errorf("%v", err)), nil
+	}
+
+	if ca == nil {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMValueInvalid).Errorf(
+				"contract account value is nil")), nil
+	}
+
+	if ca.IsActive() {
+		return ctx, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMServiceE).Errorf(
+				"contract account %v has already been activated", fact.Contract())), nil
+	}
+
 	if found, _ := cstate.CheckNotExistsState(pstate.DesignStateKey(fact.Contract()), getStateFunc); found {
 		return ctx, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
