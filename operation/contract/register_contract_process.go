@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go/ast"
+	"go/build"
 	"go/parser"
 	"go/token"
 	"os"
@@ -336,7 +337,8 @@ func ExecuteContract(
 		}()
 
 		i := interp.New(interp.Options{
-			Env: os.Environ(),
+			GoPath: build.Default.GOPATH,
+			Env:    os.Environ(),
 		})
 
 		err := i.Use(stdlib.Symbols)
