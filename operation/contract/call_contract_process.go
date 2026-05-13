@@ -131,6 +131,12 @@ func (opp *CallContractProcessor) Process(
 			"failed to initialize contract code at %v; %v", fact.Contract(), err), nil
 	}
 	if result != nil {
+		if err := ValidateContractResultData(result); err != nil {
+			return nil, base.NewBaseOperationProcessReasonError(
+				"invalid %v result of contract code at %v: %v", fName, fact.Contract(), err,
+			), nil
+		}
+
 		key, found := result["key"]
 		if !found {
 			return nil, base.NewBaseOperationProcessReasonError(

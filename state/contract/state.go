@@ -109,6 +109,12 @@ func (sv DataStateValue) IsValid([]byte) error {
 		return e.Wrap(err)
 	}
 
+	if sv.Data != nil {
+		if _, err := json.Marshal(sv.Data); err != nil {
+			return e.Wrap(errors.Wrap(err, "data is not JSON-serializable"))
+		}
+	}
+
 	return nil
 }
 

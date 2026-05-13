@@ -2,6 +2,7 @@ package contract
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -189,6 +190,12 @@ func (opp *RegisterContractProcessor) Process(
 			"failed to initialize contract code at %v; %v", fact.Contract(), err), nil
 	}
 	if result != nil {
+		if err := ValidateContractResultData(result); err != nil {
+			return nil, base.NewBaseOperationProcessReasonError(
+				"invalid initialize result of contract code at %v: %v", fact.Contract(), err,
+			), nil
+		}
+
 		_, found := result["valueType"]
 		if !found {
 			return nil, base.NewBaseOperationProcessReasonError(
@@ -292,6 +299,18 @@ func GetDataStateFunc(
 	return data, nil
 }
 
+func ValidateContractResultData(data map[string]interface{}) error {
+	if data == nil {
+		return nil
+	}
+
+	if _, err := json.Marshal(data); err != nil {
+		return errors.Wrap(err, "contract result is not JSON-serializable")
+	}
+
+	return nil
+}
+
 func isAllowedContractImport(importPath string) bool {
 	if importPath == contractSDKImport {
 		return true
@@ -349,6 +368,13 @@ func ValidateContract(sourceCode string) base.OperationProcessReasonError {
 			validationErr = base.NewBaseOperationProcessReasonError(
 				"failed to validate contract code: 'range' loops are not allowed in this contract")
 			return false
+
+		case *ast.FuncDecl:
+			if v.Name != nil && v.Name.Name == "init" {
+				validationErr = base.NewBaseOperationProcessReasonError(
+					"failed to validate contract code: 'init()' is not allowed in this contract")
+				return false
+			}
 
 		case *ast.CallExpr:
 			if ident, ok := v.Fun.(*ast.Ident); ok && ident.Name == "recover" {
