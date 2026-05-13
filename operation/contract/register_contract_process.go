@@ -7,6 +7,7 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
+	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -33,6 +34,18 @@ var registerContractProcessorPool = sync.Pool{
 	New: func() interface{} {
 		return new(RegisterContractProcessor)
 	},
+}
+
+const contractSDKImport = "github.com/ProtoconNet/mitum-currency/v3/operation/contract/util"
+
+var allowedContractStdlibImports = map[string]struct{}{
+	"fmt":           {},
+	"errors":        {},
+	"strings":       {},
+	"strconv":       {},
+	"bytes":         {},
+	"encoding/json": {},
+	"encoding/hex":  {},
 }
 
 var initializeFuncName = "Initialize"
@@ -279,17 +292,21 @@ func GetDataStateFunc(
 	return data, nil
 }
 
+func isAllowedContractImport(importPath string) bool {
+	if importPath == contractSDKImport {
+		return true
+	}
+
+	_, ok := allowedContractStdlibImports[importPath]
+	return ok
+}
+
 func ValidateContract(sourceCode string) base.OperationProcessReasonError {
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, "", sourceCode, 0)
 	if err != nil {
 		return base.NewBaseOperationProcessReasonError(
 			"failed to parse contract code: %w", err)
-	}
-
-	allowed := map[string]struct{}{
-		"fmt": {},
-		"github.com/ProtoconNet/mitum-currency/v3/operation/contract/util": {},
 	}
 
 	for _, imp := range node.Imports {
@@ -304,7 +321,7 @@ func ValidateContract(sourceCode string) base.OperationProcessReasonError {
 				"relative imports are not allowed: %s", path)
 		}
 
-		if _, ok := allowed[path]; !ok {
+		if !isAllowedContractImport(path) {
 			return base.NewBaseOperationProcessReasonError(
 				"import not allowed in contract: %s", path)
 		}
@@ -353,6 +370,24 @@ func ValidateContract(sourceCode string) base.OperationProcessReasonError {
 	return validationErr
 }
 
+func filterExportsByImportPath(values interp.Exports, allowed map[string]struct{}) interp.Exports {
+	filtered := interp.Exports{}
+
+	for k, v := range values {
+		if k == "." {
+			filtered[k] = v
+			continue
+		}
+
+		importPath := path.Dir(k)
+		if _, ok := allowed[importPath]; ok {
+			filtered[k] = v
+		}
+	}
+
+	return filtered
+}
+
 func ExecuteContract(
 	encs encoder.Encoders, getStateFunc base.GetStateFunc, contract, sender base.Address,
 	contractCode, method string, callData map[string]string,
@@ -371,10 +406,10 @@ func ExecuteContract(
 			GoPath: build.Default.GOPATH,
 		})
 
-		err := i.Use(stdlib.Symbols)
+		err := i.Use(filterExportsByImportPath(stdlib.Symbols, allowedContractStdlibImports))
 		if err != nil {
 			berr = base.NewBaseOperationProcessReasonError(
-				"failed to use stdlib Symbols: %w", err)
+				"failed to use filtered stdlib Symbols: %w", err)
 			return
 		}
 		err = i.Use(sdk.Symbols)
