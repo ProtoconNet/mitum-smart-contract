@@ -7,7 +7,6 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
-	"os"
 	"reflect"
 	"sync"
 	"time"
@@ -338,7 +337,6 @@ func ExecuteContract(
 
 		i := interp.New(interp.Options{
 			GoPath: build.Default.GOPATH,
-			Env:    os.Environ(),
 		})
 
 		err := i.Use(stdlib.Symbols)
