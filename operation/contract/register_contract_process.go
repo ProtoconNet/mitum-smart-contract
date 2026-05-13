@@ -8,6 +8,8 @@ import (
 	"go/parser"
 	"go/token"
 	"reflect"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -76,52 +78,52 @@ func (opp *RegisterContractProcessor) PreProcess(
 ) (context.Context, base.OperationProcessReasonError, error) {
 	fact, ok := op.Fact().(RegisterContractFact)
 	if !ok {
-		return ctx, base.NewBaseOperationProcessReasonError(
+		return ctx, base.NewBaseOperationProcessReasonError("%s",
 			common.ErrMPreProcess.
 				Wrap(common.ErrMTypeMismatch).
 				Errorf("expected %T, not %T", RegisterContractFact{}, op.Fact())), nil
 	}
 
 	if err := fact.IsValid(nil); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
+		return ctx, base.NewBaseOperationProcessReasonError("%s",
 			common.ErrMPreProcess.
 				Errorf("%v", err)), nil
 	}
 
 	_, cSt, aErr, cErr := cstate.ExistsCAccount(fact.Contract(), "contract", true, true, getStateFunc)
 	if aErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
+		return ctx, base.NewBaseOperationProcessReasonError("%s",
 			common.ErrMPreProcess.
 				Errorf("%v", aErr)), nil
 	} else if cErr != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
+		return ctx, base.NewBaseOperationProcessReasonError("%s",
 			common.ErrMPreProcess.
 				Errorf("%v", cErr)), nil
 	}
 
 	ca, err := cestate.CheckCAAuthFromState(cSt, fact.Sender())
 	if err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
+		return ctx, base.NewBaseOperationProcessReasonError("%s",
 			common.ErrMPreProcess.
 				Errorf("%v", err)), nil
 	}
 
 	if ca == nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
+		return ctx, base.NewBaseOperationProcessReasonError("%s",
 			common.ErrMPreProcess.
 				Wrap(common.ErrMValueInvalid).Errorf(
 				"contract account value is nil")), nil
 	}
 
 	if ca.IsActive() {
-		return ctx, base.NewBaseOperationProcessReasonError(
+		return ctx, base.NewBaseOperationProcessReasonError("%s",
 			common.ErrMPreProcess.
 				Wrap(common.ErrMServiceE).Errorf(
 				"contract account %v has already been activated", fact.Contract())), nil
 	}
 
 	if found, _ := cstate.CheckNotExistsState(pstate.DesignStateKey(fact.Contract()), getStateFunc); found {
-		return ctx, base.NewBaseOperationProcessReasonError(
+		return ctx, base.NewBaseOperationProcessReasonError("%s",
 			common.ErrMPreProcess.
 				Wrap(common.ErrMServiceE).Errorf("wasm service for contract account %v",
 				fact.Contract(),
@@ -156,7 +158,7 @@ func (opp *RegisterContractProcessor) Process(
 		result, ok = results[0].Interface().(map[string]interface{})
 		if !ok {
 			return nil, base.NewBaseOperationProcessReasonError(
-				"initialize must return map[string]interface{}, but got %T; %v", results[0].Interface()), nil
+				"initialize must return map[string]interface{}, but got %T", results[0].Interface()), nil
 		}
 	}
 
@@ -285,6 +287,29 @@ func ValidateContract(sourceCode string) base.OperationProcessReasonError {
 			"failed to parse contract code: %w", err)
 	}
 
+	allowed := map[string]struct{}{
+		"fmt": {},
+		"github.com/ProtoconNet/mitum-currency/v3/operation/contract/util": {},
+	}
+
+	for _, imp := range node.Imports {
+		path, err := strconv.Unquote(imp.Path.Value)
+		if err != nil {
+			return base.NewBaseOperationProcessReasonError(
+				"failed to validate contract import: %w", err)
+		}
+
+		if strings.HasPrefix(path, ".") {
+			return base.NewBaseOperationProcessReasonError(
+				"relative imports are not allowed: %s", path)
+		}
+
+		if _, ok := allowed[path]; !ok {
+			return base.NewBaseOperationProcessReasonError(
+				"import not allowed in contract: %s", path)
+		}
+	}
+
 	var validationErr base.OperationProcessReasonError
 
 	ast.Inspect(node, func(n ast.Node) bool {
@@ -292,7 +317,7 @@ func ValidateContract(sourceCode string) base.OperationProcessReasonError {
 			return false
 		}
 
-		switch n.(type) {
+		switch v := n.(type) {
 		case *ast.GoStmt:
 			validationErr = base.NewBaseOperationProcessReasonError(
 				"failed to validate contract code: 'go' routines are not allowed in this contract")
@@ -307,6 +332,13 @@ func ValidateContract(sourceCode string) base.OperationProcessReasonError {
 			validationErr = base.NewBaseOperationProcessReasonError(
 				"failed to validate contract code: 'range' loops are not allowed in this contract")
 			return false
+
+		case *ast.CallExpr:
+			if ident, ok := v.Fun.(*ast.Ident); ok && ident.Name == "recover" {
+				validationErr = base.NewBaseOperationProcessReasonError(
+					"failed to validate contract code: 'recover()' is not allowed in this contract")
+				return false
+			}
 		}
 
 		//case *ast.MapType:
@@ -342,13 +374,13 @@ func ExecuteContract(
 		err := i.Use(stdlib.Symbols)
 		if err != nil {
 			berr = base.NewBaseOperationProcessReasonError(
-				"failed to use stdlib Symbols: %w", contract, err)
+				"failed to use stdlib Symbols: %w", err)
 			return
 		}
 		err = i.Use(sdk.Symbols)
 		if err != nil {
 			berr = base.NewBaseOperationProcessReasonError(
-				"failed to use sdk Symbols: %w", contract, err)
+				"failed to use sdk Symbols: %w", err)
 			return
 		}
 

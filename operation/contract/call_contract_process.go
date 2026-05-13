@@ -61,14 +61,14 @@ func (opp *CallContractProcessor) PreProcess(
 ) (context.Context, base.OperationProcessReasonError, error) {
 	fact, ok := op.Fact().(CallContractFact)
 	if !ok {
-		return ctx, base.NewBaseOperationProcessReasonError(
+		return ctx, base.NewBaseOperationProcessReasonError("%s",
 			common.ErrMPreProcess.
 				Wrap(common.ErrMTypeMismatch).
 				Errorf("expected %T, not %T", CallContractFact{}, op.Fact())), nil
 	}
 
 	if err := fact.IsValid(nil); err != nil {
-		return ctx, base.NewBaseOperationProcessReasonError(
+		return ctx, base.NewBaseOperationProcessReasonError("%s",
 			common.ErrMPreProcess.
 				Errorf("%v", err)), nil
 	}
@@ -114,7 +114,7 @@ func (opp *CallContractProcessor) Process(
 		result, ok = results[0].Interface().(map[string]interface{})
 		if !ok {
 			return nil, base.NewBaseOperationProcessReasonError(
-				"%v function must return map[string]interface{}, but got %T; %v", fName, results[0].Interface()), nil
+				"%v function must return map[string]interface{}, but got %T", fName, results[0].Interface()), nil
 		}
 	}
 
