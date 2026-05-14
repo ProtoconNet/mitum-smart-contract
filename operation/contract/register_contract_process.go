@@ -148,7 +148,7 @@ func (opp *RegisterContractProcessor) PreProcess(
 }
 
 func (opp *RegisterContractProcessor) Process(
-	_ context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
+	ctx context.Context, op base.Operation, getStateFunc base.GetStateFunc) (
 	[]base.StateMergeValue, base.OperationProcessReasonError, error,
 ) {
 	fact, _ := op.Fact().(RegisterContractFact)

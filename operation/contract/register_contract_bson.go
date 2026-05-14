@@ -17,7 +17,7 @@ func (fact RegisterContractFact) MarshalBSON() ([]byte, error) {
 			"sender":    fact.sender,
 			"contract":  fact.contract,
 			"code":      fact.code,
-			"call_data": fact.callData,
+			"init_data": fact.callData,
 			"currency":  fact.currency,
 		},
 	)
@@ -28,7 +28,7 @@ type RegisterModelFactBSONUnmarshaler struct {
 	Sender   string            `bson:"sender"`
 	Contract string            `bson:"contract"`
 	Code     string            `bson:"code"`
-	CallData map[string]string `bson:"call_data"`
+	CallData map[string]string `bson:"init_data"`
 	Currency string            `bson:"currency"`
 }
 

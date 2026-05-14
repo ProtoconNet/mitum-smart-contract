@@ -14,7 +14,7 @@ type RegisterContractFactJSONMarshaler struct {
 	Sender   base.Address      `json:"sender"`
 	Contract base.Address      `json:"contract"`
 	Code     string            `json:"code"`
-	CallData map[string]string `json:"call_data"`
+	CallData map[string]string `json:"init_data"`
 	Currency types.CurrencyID  `json:"currency"`
 }
 
@@ -34,7 +34,7 @@ type RegisterContractFactJSONUnmarshaler struct {
 	Sender   string            `json:"sender"`
 	Contract string            `json:"contract"`
 	Code     string            `json:"code"`
-	CallData map[string]string `json:"call_data"`
+	CallData map[string]string `json:"init_data"`
 	Currency string            `json:"currency"`
 }
 
