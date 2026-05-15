@@ -1,99 +1,79 @@
-package main
+//go:build ignore
+// +build ignore
+
+// Runtime-only Gno contract example. This file is not part of the normal Go build.
+package contract
 
 import (
 	"fmt"
 
-	"github.com/ProtoconNet/mitum-currency/v3/operation/contract/util"
+	"mitum/chain"
 )
 
-func Initialize(ctx util.ContractContext) (map[string]interface{}, error) {
-	sender := ctx.GetSender()
-	_, err := ctx.GetAccountState(sender)
-	if err != nil {
-		return nil, err
+var initialized bool
+var owner string
+var value string
+var revision int64
+
+func Initialize(ctx chain.ContractContext) error {
+	if initialized {
+		return nil
 	}
 
-	return nil, nil
-}
+	owner = ctx.GetSender()
+	value = ""
+	revision = 0
+	initialized = true
 
-func CreateData(ctx util.ContractContext) (map[string]interface{}, error) {
-	sender := ctx.GetSender()
-	data, _ := ctx.GetDataState(sender)
-	if data != nil {
-		return nil, fmt.Errorf("already exist data state for data key %v", sender)
-	}
-	callData := ctx.GetCallData()
-	dataArg, found := callData["data"]
-	if !found {
-		return nil, fmt.Errorf("data not found in call data")
-	}
-	userData := NewData(
-		sender, dataArg, "userValue",
-	)
-
-	return userData, nil
-}
-
-func UpdateData(ctx util.ContractContext) (map[string]interface{}, error) {
-	sender := ctx.GetSender()
-	data, _ := ctx.GetDataState(sender)
-	if data == nil {
-		return nil, fmt.Errorf("not found data state for data key %v", sender)
-	}
-	callData := ctx.GetCallData()
-	dataArg, found := callData["data"]
-	if !found {
-		return nil, fmt.Errorf("data not found in call data")
-	}
-	userData := NewData(
-		sender, dataArg, "userValue",
-	)
-
-	return userData, nil
-}
-
-type Data map[string]interface{}
-
-func NewData(
-	key, value, valueType string,
-) Data {
-	data := map[string]interface{}{
-		"valueType": valueType,
-		"key":       key,
-		"value":     value,
-	}
-
-	return data
-}
-
-func (d Data) IsValid([]byte) error {
 	return nil
 }
 
-func (d Data) Key() *string {
-	v, found := d["key"]
-	if !found {
-		return nil
+func CreateData(ctx chain.ContractContext, data string) error {
+	if !initialized {
+		return fmt.Errorf("contract is not initialized")
+	}
+	if ctx.GetSender() != owner {
+		return fmt.Errorf("only owner can create data")
+	}
+	if value != "" {
+		return fmt.Errorf("data already exists")
 	}
 
-	str, ok := v.(string)
-	if !ok {
-		return nil
-	}
+	value = data
+	revision = 1
 
-	return &str
+	return nil
 }
 
-func (d Data) Value() *string {
-	v, found := d["value"]
-	if !found {
-		return nil
+func UpdateData(ctx chain.ContractContext, data string) error {
+	if !initialized {
+		return fmt.Errorf("contract is not initialized")
+	}
+	if ctx.GetSender() != owner {
+		return fmt.Errorf("only owner can update data")
+	}
+	if value == "" {
+		return fmt.Errorf("data does not exist")
 	}
 
-	str, ok := v.(string)
-	if !ok {
-		return nil
+	value = data
+	revision = revision + 1
+
+	return nil
+}
+
+func GetValue(ctx chain.ContractContext) string {
+	return value
+}
+
+func GetRevision(ctx chain.ContractContext) int64 {
+	return revision
+}
+
+func GetValueIfPresent(ctx chain.ContractContext) (string, bool) {
+	if value == "" {
+		return "", false
 	}
 
-	return &str
+	return value, true
 }

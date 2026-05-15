@@ -3,6 +3,12 @@ package digest
 import (
 	"context"
 	"fmt"
+	"math"
+	"sort"
+	"strconv"
+	"strings"
+	"sync"
+
 	digestmongo "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
 	"github.com/ProtoconNet/mitum-currency/v3/digest/util"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
@@ -19,11 +25,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"math"
-	"sort"
-	"strconv"
-	"strings"
-	"sync"
 )
 
 var maxLimit int64 = 50
@@ -39,10 +40,15 @@ var (
 
 var AllCollections = []string{
 	defaultColNameAccount,
+	defaultColNameContractAccount,
 	defaultColNameBalance,
 	defaultColNameCurrency,
 	defaultColNameOperation,
 	defaultColNameBlock,
+	DefaultColNameContract,
+	DefaultColNameContractData,
+	DefaultColNameContractRuntime,
+	DefaultColNameContractSnapshot,
 }
 
 var DigestStorageLastBlockKey = "digest_last_block"
@@ -195,13 +201,7 @@ func (db *Database) Clean() error {
 }
 
 func (db *Database) clean(ctx context.Context) error {
-	for _, col := range []string{
-		defaultColNameAccount,
-		defaultColNameBalance,
-		defaultColNameCurrency,
-		defaultColNameOperation,
-		defaultColNameBlock,
-	} {
+	for _, col := range AllCollections {
 		if err := db.digestDB.Client().Collection(col).Drop(ctx); err != nil {
 			return err
 		}
@@ -237,13 +237,7 @@ func (db *Database) cleanByHeight(ctx context.Context, height base.Height) error
 	opts := options.BulkWrite().SetOrdered(true)
 	removeByHeight := mongo.NewDeleteManyModel().SetFilter(bson.M{"height": bson.M{"$gte": height}})
 
-	for _, col := range []string{
-		defaultColNameAccount,
-		defaultColNameBalance,
-		defaultColNameCurrency,
-		defaultColNameOperation,
-		defaultColNameBlock,
-	} {
+	for _, col := range AllCollections {
 		res, err := db.digestDB.Client().Collection(col).BulkWrite(
 			ctx,
 			[]mongo.WriteModel{removeByHeight},

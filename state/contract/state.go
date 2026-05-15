@@ -3,6 +3,7 @@ package contract
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
@@ -148,4 +149,170 @@ func IsDataStateKey(key string) bool {
 
 func DataStateKey(addr base.Address, key string) string {
 	return fmt.Sprintf("%s:%s:%s", ContractStateKey(addr), key, DataStateKeySuffix)
+}
+
+var (
+	RuntimeStateValueHint = hint.MustNewHint("mitum-contract-runtime-state-value-v0.0.1")
+	RuntimeStateKeySuffix = "runtime"
+
+	SnapshotStateValueHint = hint.MustNewHint("mitum-contract-snapshot-state-value-v0.0.1")
+	SnapshotStateKeySuffix = "snapshot"
+)
+
+type RuntimeEngine string
+
+const (
+	RuntimeEngineYaegi       RuntimeEngine = "yaegi-v1"
+	RuntimeEngineGnoSnapshot RuntimeEngine = "gno-snapshot-v1"
+)
+
+type RuntimeStateValue struct {
+	hint.BaseHinter
+	Engine          RuntimeEngine
+	ABIVersion      string
+	PackageName     string
+	PackagePath     string
+	SnapshotVersion uint64
+}
+
+func NewRuntimeStateValue(
+	engine RuntimeEngine,
+	abiVersion string,
+	packageName string,
+	packagePath string,
+	snapshotVersion uint64,
+) RuntimeStateValue {
+	return RuntimeStateValue{
+		BaseHinter:      hint.NewBaseHinter(RuntimeStateValueHint),
+		Engine:          engine,
+		ABIVersion:      abiVersion,
+		PackageName:     packageName,
+		PackagePath:     packagePath,
+		SnapshotVersion: snapshotVersion,
+	}
+}
+
+func (sv RuntimeStateValue) Hint() hint.Hint { return sv.BaseHinter.Hint() }
+
+func (sv RuntimeStateValue) IsValid([]byte) error {
+	e := util.ErrInvalid.Errorf("invalid RuntimeStateValue")
+
+	if err := sv.BaseHinter.IsValid(RuntimeStateValueHint.Type().Bytes()); err != nil {
+		return e.Wrap(err)
+	}
+	if len(sv.Engine) < 1 {
+		return e.Errorf("empty engine")
+	}
+	if len(sv.ABIVersion) < 1 {
+		return e.Errorf("empty abi version")
+	}
+	if len(sv.PackageName) < 1 {
+		return e.Errorf("empty package name")
+	}
+	if len(sv.PackagePath) < 1 {
+		return e.Errorf("empty package path")
+	}
+
+	return nil
+}
+
+func (sv RuntimeStateValue) HashBytes() []byte {
+	return util.ConcatBytesSlice(
+		[]byte(sv.Engine),
+		[]byte(sv.ABIVersion),
+		[]byte(sv.PackageName),
+		[]byte(sv.PackagePath),
+		[]byte(strconv.FormatUint(sv.SnapshotVersion, 10)),
+	)
+}
+
+func RuntimeStateKey(addr base.Address) string {
+	return fmt.Sprintf("%s:%s", ContractStateKey(addr), RuntimeStateKeySuffix)
+}
+
+func IsRuntimeStateKey(key string) bool {
+	return strings.HasPrefix(key, ContractStateKeyPrefix) && strings.HasSuffix(key, RuntimeStateKeySuffix)
+}
+
+func GetRuntimeFromState(st base.State) (RuntimeStateValue, error) {
+	v := st.Value()
+	if v == nil {
+		return RuntimeStateValue{}, common.ErrValueInvalid.Wrap(
+			errors.Errorf("state value is nil"),
+		)
+	}
+
+	sv, ok := v.(RuntimeStateValue)
+	if !ok {
+		return RuntimeStateValue{}, common.ErrTypeMismatch.Wrap(
+			errors.Errorf("expected RuntimeStateValue found, %T", v),
+		)
+	}
+
+	return sv, nil
+}
+
+type SnapshotStateValue struct {
+	hint.BaseHinter
+	Version  uint64
+	Codec    string
+	Snapshot []byte
+}
+
+func NewSnapshotStateValue(version uint64, codec string, snapshot []byte) SnapshotStateValue {
+	return SnapshotStateValue{
+		BaseHinter: hint.NewBaseHinter(SnapshotStateValueHint),
+		Version:    version,
+		Codec:      codec,
+		Snapshot:   snapshot,
+	}
+}
+
+func (sv SnapshotStateValue) Hint() hint.Hint { return sv.BaseHinter.Hint() }
+
+func (sv SnapshotStateValue) IsValid([]byte) error {
+	e := util.ErrInvalid.Errorf("invalid SnapshotStateValue")
+
+	if err := sv.BaseHinter.IsValid(SnapshotStateValueHint.Type().Bytes()); err != nil {
+		return e.Wrap(err)
+	}
+	if len(sv.Codec) < 1 {
+		return e.Errorf("empty codec")
+	}
+
+	return nil
+}
+
+func (sv SnapshotStateValue) HashBytes() []byte {
+	return util.ConcatBytesSlice(
+		[]byte(strconv.FormatUint(sv.Version, 10)),
+		[]byte(sv.Codec),
+		valuehash.NewSHA256(sv.Snapshot).Bytes(),
+	)
+}
+
+func SnapshotStateKey(addr base.Address) string {
+	return fmt.Sprintf("%s:%s", ContractStateKey(addr), SnapshotStateKeySuffix)
+}
+
+func IsSnapshotStateKey(key string) bool {
+	return strings.HasPrefix(key, ContractStateKeyPrefix) && strings.HasSuffix(key, SnapshotStateKeySuffix)
+}
+
+func GetSnapshotFromState(st base.State) (SnapshotStateValue, error) {
+	v := st.Value()
+	if v == nil {
+		return SnapshotStateValue{}, common.ErrValueInvalid.Wrap(
+			errors.Errorf("state value is nil"),
+		)
+	}
+
+	sv, ok := v.(SnapshotStateValue)
+	if !ok {
+		return SnapshotStateValue{}, common.ErrTypeMismatch.Wrap(
+			errors.Errorf("expected SnapshotStateValue but %T", v),
+		)
+	}
+
+	return sv, nil
 }

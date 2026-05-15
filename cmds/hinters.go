@@ -85,12 +85,13 @@ var AddedHinters = []encoder.DecodeDetail{
 	{Hint: digest.AccountValueHint, Instance: digest.AccountValue{}},
 	{Hint: digest.OperationValueHint, Instance: digest.OperationValue{}},
 	{Hint: digestisaac.ManifestHint, Instance: digestisaac.Manifest{}},
-
 	{Hint: contract.RegisterContractHint, Instance: contract.RegisterContract{}},
 	{Hint: contract.CallContractHint, Instance: contract.CallContract{}},
 	{Hint: ptypes.DesignHint, Instance: ptypes.Design{}},
 	{Hint: pstate.DesignStateValueHint, Instance: pstate.DesignStateValue{}},
 	{Hint: pstate.DataStateValueHint, Instance: pstate.DataStateValue{}},
+	{Hint: pstate.RuntimeStateValueHint, Instance: pstate.RuntimeStateValue{}},
+	{Hint: pstate.SnapshotStateValueHint, Instance: pstate.SnapshotStateValue{}},
 }
 
 var AddedSupportedHinters = []encoder.DecodeDetail{

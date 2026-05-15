@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/alecthomas/kong"
@@ -44,7 +45,7 @@ func (cmd *KeyAddressCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	cmd.print(a.String())
+	cmd.print("%s", a.String())
 
 	return nil
 }

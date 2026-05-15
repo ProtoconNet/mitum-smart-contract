@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
+	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
 	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
 	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
 	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
@@ -101,56 +102,55 @@ func (opp *CallContractProcessor) Process(
 			"%v", err), nil
 	}
 
-	results, bErr := ExecuteContract(
-		*opp.encs, getStateFunc, fact.Contract(), fact.Sender(), cd.ContractCode(), fName, fact.callData,
+	execResult, bErr := contractEngine.ExecuteContract(
+		*opp.encs,
+		getStateFunc,
+		cruntime.ExecuteRequest{
+			Mode:         cruntime.InvocationModeCall,
+			Contract:     fact.Contract(),
+			Sender:       fact.Sender(),
+			Height:       opp.Height(),
+			ContractCode: cd.ContractCode(),
+			Function:     fName,
+			CallData:     fact.callData,
+		},
 	)
 	if bErr != nil {
 		return nil, bErr, nil
 	}
 
-	var result map[string]interface{}
-	var ok bool
-	if !results[0].IsNil() {
-		result, ok = results[0].Interface().(map[string]interface{})
-		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError(
-				"%v function must return map[string]interface{}, but got %T", fName, results[0].Interface()), nil
-		}
-	}
+	switch execResult.Engine {
+	case pstate.RuntimeEngineYaegi:
+		result := execResult.Data
 
-	if !results[1].IsNil() {
-		err, ok = results[1].Interface().(error)
-		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError(
-				"%v function did not return an error as expected, got %T", fName, results[1].Interface()), nil
-		}
-	}
+		if result != nil {
+			key, found := result["key"]
+			if !found {
+				return nil, base.NewBaseOperationProcessReasonError(
+					"key not found from contract result at %v", fact.Contract(),
+				), nil
+			}
 
-	if err != nil {
+			stKey, ok := key.(string)
+			if !ok {
+				return nil, base.NewBaseOperationProcessReasonError(
+					"key type expected string, but %T", key,
+				), nil
+			}
+
+			sts = append(sts, cstate.NewStateMergeValue(
+				pstate.DataStateKey(fact.Contract(), stKey),
+				pstate.NewDataStateValue(result),
+			))
+		}
+
+	case pstate.RuntimeEngineGnoSnapshot:
+		sts = append(sts, execResult.StateMerges...)
+
+	default:
 		return nil, base.NewBaseOperationProcessReasonError(
-			"failed to initialize contract code at %v; %v", fact.Contract(), err), nil
-	}
-	if result != nil {
-		if err := ValidateContractResultData(result); err != nil {
-			return nil, base.NewBaseOperationProcessReasonError(
-				"invalid %v result of contract code at %v: %v", fName, fact.Contract(), err,
-			), nil
-		}
-
-		key, found := result["key"]
-		if !found {
-			return nil, base.NewBaseOperationProcessReasonError(
-				"key not found from Initialize result of contract code at %v", fact.Contract()), nil
-		}
-		stKey, ok := key.(string)
-		if !ok {
-			return nil, base.NewBaseOperationProcessReasonError(
-				"key type expected string, but %T", key), nil
-		}
-		sts = append(sts, cstate.NewStateMergeValue(
-			pstate.DataStateKey(fact.Contract(), stKey),
-			pstate.NewDataStateValue(result),
-		))
+			"unsupported runtime engine %q", execResult.Engine,
+		), nil
 	}
 
 	return sts, nil, nil

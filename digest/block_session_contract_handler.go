@@ -13,6 +13,9 @@ func (bs *BlockSession) prepareContract() error {
 
 	var contractModels []mongo.WriteModel
 	var contractDataModels []mongo.WriteModel
+	var contractRuntimeModels []mongo.WriteModel
+	var contractSnapshotModels []mongo.WriteModel
+
 	for i := range bs.sts {
 		st := bs.sts[i]
 		switch {
@@ -22,18 +25,36 @@ func (bs *BlockSession) prepareContract() error {
 				return err
 			}
 			contractModels = append(contractModels, j...)
+
+		case pstate.IsRuntimeStateKey(st.Key()):
+			j, err := bs.handleContractRuntimeState(st)
+			if err != nil {
+				return err
+			}
+			contractRuntimeModels = append(contractRuntimeModels, j...)
+
+		case pstate.IsSnapshotStateKey(st.Key()):
+			j, err := bs.handleContractSnapshotState(st)
+			if err != nil {
+				return err
+			}
+			contractSnapshotModels = append(contractSnapshotModels, j...)
+
 		case pstate.IsDataStateKey(st.Key()):
 			j, err := bs.handleContractDataState(st)
 			if err != nil {
 				return err
 			}
 			contractDataModels = append(contractDataModels, j...)
+
 		default:
 			continue
 		}
 	}
 
 	bs.contractModels = contractModels
+	bs.contractRuntimeModels = contractRuntimeModels
+	bs.contractSnapshotModels = contractSnapshotModels
 	bs.contractDataModels = contractDataModels
 
 	return nil
@@ -55,6 +76,26 @@ func (bs *BlockSession) handleContractDataState(st base.State) ([]mongo.WriteMod
 	} else {
 		return []mongo.WriteModel{
 			mongo.NewInsertOneModel().SetDocument(dataDoc),
+		}, nil
+	}
+}
+
+func (bs *BlockSession) handleContractRuntimeState(st base.State) ([]mongo.WriteModel, error) {
+	if doc, err := NewContractRuntimeDoc(st, bs.st.Encoder()); err != nil {
+		return nil, err
+	} else {
+		return []mongo.WriteModel{
+			mongo.NewInsertOneModel().SetDocument(doc),
+		}, nil
+	}
+}
+
+func (bs *BlockSession) handleContractSnapshotState(st base.State) ([]mongo.WriteModel, error) {
+	if doc, err := NewContractSnapshotDoc(st, bs.st.Encoder()); err != nil {
+		return nil, err
+	} else {
+		return []mongo.WriteModel{
+			mongo.NewInsertOneModel().SetDocument(doc),
 		}, nil
 	}
 }

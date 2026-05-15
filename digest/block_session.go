@@ -29,26 +29,28 @@ type BlockSessioner interface {
 
 type BlockSession struct {
 	sync.RWMutex
-	block                 base.BlockMap
-	ops                   []base.Operation
-	opsTree               fixedtree.Tree
-	sts                   []base.State
-	st                    *Database
-	proposal              base.ProposalSignFact
-	opsTreeNodes          map[string]base.OperationFixedtreeNode
-	WriteModels           map[string][]mongo.WriteModel
-	WriteModelsFunc       map[string][]mongo.WriteModel
-	blockModels           []mongo.WriteModel
-	operationModels       []mongo.WriteModel
-	accountModels         []mongo.WriteModel
-	contractAccountModels []mongo.WriteModel
-	balanceModels         []mongo.WriteModel
-	currencyModels        []mongo.WriteModel
-	contractModels        []mongo.WriteModel
-	contractDataModels    []mongo.WriteModel
-	statesValue           *sync.Map
-	balanceAddressList    []string
-	buildinfo             string
+	block                  base.BlockMap
+	ops                    []base.Operation
+	opsTree                fixedtree.Tree
+	sts                    []base.State
+	st                     *Database
+	proposal               base.ProposalSignFact
+	opsTreeNodes           map[string]base.OperationFixedtreeNode
+	WriteModels            map[string][]mongo.WriteModel
+	WriteModelsFunc        map[string][]mongo.WriteModel
+	blockModels            []mongo.WriteModel
+	operationModels        []mongo.WriteModel
+	accountModels          []mongo.WriteModel
+	contractAccountModels  []mongo.WriteModel
+	balanceModels          []mongo.WriteModel
+	currencyModels         []mongo.WriteModel
+	contractModels         []mongo.WriteModel
+	contractDataModels     []mongo.WriteModel
+	contractRuntimeModels  []mongo.WriteModel
+	contractSnapshotModels []mongo.WriteModel
+	statesValue            *sync.Map
+	balanceAddressList     []string
+	buildinfo              string
 }
 
 func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opsTree fixedtree.Tree, sts []base.State, proposal base.ProposalSignFact, vs string) (*BlockSession, error) {
@@ -153,6 +155,18 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 
 		if len(bs.contractDataModels) > 0 {
 			if err := bs.writeModels(txnCtx, DefaultColNameContractData, bs.contractDataModels); err != nil {
+				return nil, err
+			}
+		}
+
+		if len(bs.contractRuntimeModels) > 0 {
+			if err := bs.writeModels(txnCtx, DefaultColNameContractRuntime, bs.contractRuntimeModels); err != nil {
+				return nil, err
+			}
+		}
+
+		if len(bs.contractSnapshotModels) > 0 {
+			if err := bs.writeModels(txnCtx, DefaultColNameContractSnapshot, bs.contractSnapshotModels); err != nil {
 				return nil, err
 			}
 		}

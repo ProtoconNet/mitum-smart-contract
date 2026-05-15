@@ -157,7 +157,7 @@ func (cmd *NetworkClientBlockItemFilesCommand) downloadBlockItemFiles(
 	case err != nil:
 		return nil, err
 	case !found:
-		kctx.Errorf(util.ErrNotFound.Errorf("block item files").Error())
+		kctx.Errorf("%s", util.ErrNotFound.Errorf("block item files").Error())
 		kctx.Exit(2)
 	}
 
@@ -210,7 +210,7 @@ func (cmd *NetworkClientBlockItemFilesCommand) downloadBlockItems(
 			case err != nil:
 				return err
 			case !found:
-				kctx.Errorf(util.ErrNotFound.Errorf("block item file, %q", t.String()).Error())
+				kctx.Errorf("%s", util.ErrNotFound.Errorf("block item file, %q", t.String()).Error())
 				kctx.Exit(2)
 			}
 
@@ -386,7 +386,7 @@ func (cmd *NetworkClientBlockItemFileCommand) Run(
 	case err != nil:
 		return err
 	case !found:
-		kctx.Errorf(util.ErrNotFound.Errorf("block item file").Error())
+		kctx.Errorf("%s", util.ErrNotFound.Errorf("block item file").Error())
 		kctx.Exit(2)
 	}
 

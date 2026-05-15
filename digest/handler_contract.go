@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"time"
 
+	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
 	ptypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
 	"github.com/ProtoconNet/mitum2/base"
+	"github.com/pkg/errors"
 )
 
 func (hd *Handlers) handleContractDesign(w http.ResponseWriter, r *http.Request) {
@@ -42,14 +44,21 @@ func (hd *Handlers) handleContractDesignInGroup(contract string) ([]byte, error)
 		return nil, err
 	}
 
-	i, err := hd.buildContractDesign(contract, de, st)
+	querySupported := false
+	if _, runtimeValue, _, found, err := ContractRuntimeFromChainState(hd.database, contract); err != nil {
+		return nil, err
+	} else if found && runtimeValue.Engine == pstate.RuntimeEngineGnoSnapshot {
+		querySupported = true
+	}
+
+	i, err := hd.buildContractDesign(contract, de, st, querySupported)
 	if err != nil {
 		return nil, err
 	}
 	return hd.enc.Marshal(i)
 }
 
-func (hd *Handlers) buildContractDesign(contract string, de ptypes.Design, st base.State) (Hal, error) {
+func (hd *Handlers) buildContractDesign(contract string, de ptypes.Design, st base.State, querySupported bool) (Hal, error) {
 	h, err := hd.combineURL(HandlerPathContractDesign, "contract", contract)
 	if err != nil {
 		return nil, err
@@ -63,6 +72,14 @@ func (hd *Handlers) buildContractDesign(contract string, de ptypes.Design, st ba
 		return nil, err
 	}
 	hal = hal.AddLink("block", NewHalLink(h, nil))
+
+	if querySupported {
+		h, err = hd.combineURL(HandlerPathContractQuery, "contract", contract)
+		if err != nil {
+			return nil, err
+		}
+		hal = hal.AddLink("query", NewHalLink(h, nil))
+	}
 
 	for i := range st.Operations() {
 		h, err := hd.combineURL(HandlerPathOperation, "hash", st.Operations()[i].String())
@@ -107,6 +124,19 @@ func (hd *Handlers) handleContractData(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hd *Handlers) handleContractDataInGroup(contract, key string) ([]byte, error) {
+	_, runtimeValue, _, found, err := ContractRuntimeFromChainState(hd.database, contract)
+	if err != nil {
+		return nil, err
+	}
+
+	if found && runtimeValue.Engine == pstate.RuntimeEngineGnoSnapshot {
+		return nil, errors.Errorf(
+			"legacy contract data endpoint is not supported for Gno snapshot contract %s; use POST %s",
+			contract,
+			HandlerPathContractQuery,
+		)
+	}
+
 	data, st, err := ContractData(hd.database, contract, key)
 	if err != nil {
 		return nil, err

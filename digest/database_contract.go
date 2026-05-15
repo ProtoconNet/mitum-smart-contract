@@ -12,8 +12,10 @@ import (
 )
 
 var (
-	DefaultColNameContract     = "digest_sc"
-	DefaultColNameContractData = "digest_sc_data"
+	DefaultColNameContract         = "digest_sc"
+	DefaultColNameContractData     = "digest_sc_data"
+	DefaultColNameContractRuntime  = "digest_sc_runtime"
+	DefaultColNameContractSnapshot = "digest_sc_snapshot"
 )
 
 func ContractDesign(st *Database, contract string) (types.Design, base.State, error) {
@@ -88,4 +90,76 @@ func ContractData(db *Database, contract, key string) (map[string]interface{}, b
 	} else {
 		return nil, nil, errors.Errorf("data is nil")
 	}
+}
+
+func ContractDesignFromChainState(db *Database, contract string) (base.Address, types.Design, base.State, error) {
+	address, err := base.DecodeAddress(contract, db.Encoders().JSON())
+	if err != nil {
+		return nil, types.Design{}, nil, errors.Wrap(err, "invalid contract address")
+	}
+
+	st, found, err := db.mitumDB.State(state.DesignStateKey(address))
+	if err != nil {
+		return nil, types.Design{}, nil, errors.Wrap(err, "failed to read design state from chain")
+	}
+	if !found {
+		return nil, types.Design{}, nil, utilm.ErrNotFound.Errorf("contract design not found for %s", contract)
+	}
+
+	de, err := state.GetDesignFromState(st)
+	if err != nil {
+		return nil, types.Design{}, nil, err
+	}
+
+	return address, de, st, nil
+}
+
+func ContractRuntimeFromChainState(
+	db *Database,
+	contract string,
+) (base.Address, state.RuntimeStateValue, base.State, bool, error) {
+	address, err := base.DecodeAddress(contract, db.Encoders().JSON())
+	if err != nil {
+		return nil, state.RuntimeStateValue{}, nil, false, errors.Wrap(err, "invalid contract address")
+	}
+
+	st, found, err := db.mitumDB.State(state.RuntimeStateKey(address))
+	if err != nil {
+		return nil, state.RuntimeStateValue{}, nil, false, errors.Wrap(err, "failed to read runtime state from chain")
+	}
+	if !found {
+		return address, state.RuntimeStateValue{}, nil, false, nil
+	}
+
+	rv, err := state.GetRuntimeFromState(st)
+	if err != nil {
+		return nil, state.RuntimeStateValue{}, nil, false, err
+	}
+
+	return address, rv, st, true, nil
+}
+
+func ContractSnapshotFromChainState(
+	db *Database,
+	contract string,
+) (base.Address, state.SnapshotStateValue, base.State, bool, error) {
+	address, err := base.DecodeAddress(contract, db.Encoders().JSON())
+	if err != nil {
+		return nil, state.SnapshotStateValue{}, nil, false, errors.Wrap(err, "invalid contract address")
+	}
+
+	st, found, err := db.mitumDB.State(state.SnapshotStateKey(address))
+	if err != nil {
+		return nil, state.SnapshotStateValue{}, nil, false, errors.Wrap(err, "failed to read snapshot state from chain")
+	}
+	if !found {
+		return address, state.SnapshotStateValue{}, nil, false, nil
+	}
+
+	sv, err := state.GetSnapshotFromState(st)
+	if err != nil {
+		return nil, state.SnapshotStateValue{}, nil, false, err
+	}
+
+	return address, sv, st, true, nil
 }

@@ -74,9 +74,73 @@ var operationIndexModels = []mongo.IndexModel{
 	},
 }
 
+var contractAccountIndexModels = []mongo.IndexModel{
+	{
+		Keys:    bson.D{bson.E{Key: "address", Value: 1}, bson.E{Key: "height", Value: -1}},
+		Options: options.Index().SetName("mitum_digest_contract_account"),
+	},
+	{
+		Keys:    bson.D{bson.E{Key: "height", Value: -1}},
+		Options: options.Index().SetName("mitum_digest_contract_account_height"),
+	},
+}
+
+var contractDesignIndexModels = []mongo.IndexModel{
+	{
+		Keys:    bson.D{bson.E{Key: "contract", Value: 1}, bson.E{Key: "height", Value: -1}},
+		Options: options.Index().SetName("mitum_digest_contract_design"),
+	},
+	{
+		Keys:    bson.D{bson.E{Key: "height", Value: -1}},
+		Options: options.Index().SetName("mitum_digest_contract_design_height"),
+	},
+}
+
+var contractDataIndexModels = []mongo.IndexModel{
+	{
+		Keys: bson.D{
+			bson.E{Key: "contract", Value: 1},
+			bson.E{Key: "data_key", Value: 1},
+			bson.E{Key: "height", Value: -1},
+		},
+		Options: options.Index().SetName("mitum_digest_contract_data"),
+	},
+	{
+		Keys:    bson.D{bson.E{Key: "height", Value: -1}},
+		Options: options.Index().SetName("mitum_digest_contract_data_height"),
+	},
+}
+
+var contractRuntimeIndexModels = []mongo.IndexModel{
+	{
+		Keys:    bson.D{bson.E{Key: "contract", Value: 1}, bson.E{Key: "height", Value: -1}},
+		Options: options.Index().SetName("mitum_digest_contract_runtime"),
+	},
+	{
+		Keys:    bson.D{bson.E{Key: "engine", Value: 1}, bson.E{Key: "height", Value: -1}},
+		Options: options.Index().SetName("mitum_digest_contract_runtime_engine"),
+	},
+}
+
+var contractSnapshotIndexModels = []mongo.IndexModel{
+	{
+		Keys:    bson.D{bson.E{Key: "contract", Value: 1}, bson.E{Key: "height", Value: -1}},
+		Options: options.Index().SetName("mitum_digest_contract_snapshot"),
+	},
+	{
+		Keys:    bson.D{bson.E{Key: "codec", Value: 1}, bson.E{Key: "height", Value: -1}},
+		Options: options.Index().SetName("mitum_digest_contract_snapshot_codec"),
+	},
+}
+
 var DefaultIndexes = map[string] /* collection */ []mongo.IndexModel{
-	defaultColNameBlock:     blockIndexModels,
-	defaultColNameAccount:   accountIndexModels,
-	defaultColNameBalance:   balanceIndexModels,
-	defaultColNameOperation: operationIndexModels,
+	defaultColNameBlock:            blockIndexModels,
+	defaultColNameAccount:          accountIndexModels,
+	defaultColNameBalance:          balanceIndexModels,
+	defaultColNameOperation:        operationIndexModels,
+	DefaultColNameContract:         contractDesignIndexModels,
+	DefaultColNameContractData:     contractDataIndexModels,
+	DefaultColNameContractRuntime:  contractRuntimeIndexModels,
+	DefaultColNameContractSnapshot: contractSnapshotIndexModels,
+	defaultColNameContractAccount:  contractAccountIndexModels,
 }
