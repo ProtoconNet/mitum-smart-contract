@@ -89,7 +89,6 @@ var AddedHinters = []encoder.DecodeDetail{
 	{Hint: contract.CallContractHint, Instance: contract.CallContract{}},
 	{Hint: ptypes.DesignHint, Instance: ptypes.Design{}},
 	{Hint: pstate.DesignStateValueHint, Instance: pstate.DesignStateValue{}},
-	{Hint: pstate.DataStateValueHint, Instance: pstate.DataStateValue{}},
 	{Hint: pstate.RuntimeStateValueHint, Instance: pstate.RuntimeStateValue{}},
 	{Hint: pstate.SnapshotStateValueHint, Instance: pstate.SnapshotStateValue{}},
 }

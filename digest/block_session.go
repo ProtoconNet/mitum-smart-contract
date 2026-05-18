@@ -45,7 +45,6 @@ type BlockSession struct {
 	balanceModels          []mongo.WriteModel
 	currencyModels         []mongo.WriteModel
 	contractModels         []mongo.WriteModel
-	contractDataModels     []mongo.WriteModel
 	contractRuntimeModels  []mongo.WriteModel
 	contractSnapshotModels []mongo.WriteModel
 	statesValue            *sync.Map
@@ -149,12 +148,6 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 
 		if len(bs.contractModels) > 0 {
 			if err := bs.writeModels(txnCtx, DefaultColNameContract, bs.contractModels); err != nil {
-				return nil, err
-			}
-		}
-
-		if len(bs.contractDataModels) > 0 {
-			if err := bs.writeModels(txnCtx, DefaultColNameContractData, bs.contractDataModels); err != nil {
 				return nil, err
 			}
 		}

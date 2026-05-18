@@ -53,7 +53,6 @@ var (
 	HandlerPathSend                       = `/builder/send`
 	HandlerPathQueueSend                  = `/builder/send/queue`
 	HandlerPathContractDesign             = `/contract/{contract:(?i)` + types.REStringAddressString + `}`
-	HandlerPathContractData               = `/contract/{contract:(?i)` + types.REStringAddressString + `}/data/{data_key:` + types.ReSpecialCh + `}`
 	HandlerPathContractQuery              = `/contract/{contract:(?i)` + types.REStringAddressString + `}/query`
 	HandelrPathEventOperation             = `/event/operation/{hash:(?i)[0-9a-z][0-9a-z]+}`
 	HandelrPathEventAccount               = `/event/account/{address:(?i)` + types.REStringAddressString + `}`
@@ -192,8 +191,6 @@ func (hd *Handlers) setHandlers() {
 	_ = hd.setHandler(HandlerPathAccountOperations, hd.handleAccountOperations, true, get, get).
 		Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathAccounts, hd.handleAccounts, true, get, get).
-		Methods(http.MethodOptions, "GET")
-	_ = hd.setHandler(HandlerPathContractData, hd.handleContractData, true, get, get).
 		Methods(http.MethodOptions, "GET")
 	_ = hd.setHandler(HandlerPathContractDesign, hd.handleContractDesign, true, get, get).
 		Methods(http.MethodOptions, "GET")

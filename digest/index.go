@@ -96,21 +96,6 @@ var contractDesignIndexModels = []mongo.IndexModel{
 	},
 }
 
-var contractDataIndexModels = []mongo.IndexModel{
-	{
-		Keys: bson.D{
-			bson.E{Key: "contract", Value: 1},
-			bson.E{Key: "data_key", Value: 1},
-			bson.E{Key: "height", Value: -1},
-		},
-		Options: options.Index().SetName("mitum_digest_contract_data"),
-	},
-	{
-		Keys:    bson.D{bson.E{Key: "height", Value: -1}},
-		Options: options.Index().SetName("mitum_digest_contract_data_height"),
-	},
-}
-
 var contractRuntimeIndexModels = []mongo.IndexModel{
 	{
 		Keys:    bson.D{bson.E{Key: "contract", Value: 1}, bson.E{Key: "height", Value: -1}},
@@ -139,7 +124,6 @@ var DefaultIndexes = map[string] /* collection */ []mongo.IndexModel{
 	defaultColNameBalance:          balanceIndexModels,
 	defaultColNameOperation:        operationIndexModels,
 	DefaultColNameContract:         contractDesignIndexModels,
-	DefaultColNameContractData:     contractDataIndexModels,
 	DefaultColNameContractRuntime:  contractRuntimeIndexModels,
 	DefaultColNameContractSnapshot: contractSnapshotIndexModels,
 	defaultColNameContractAccount:  contractAccountIndexModels,

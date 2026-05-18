@@ -55,48 +55,6 @@ func (doc ContractDesignDoc) MarshalBSON() ([]byte, error) {
 	return bsonutil.Marshal(m)
 }
 
-type ContractDataDoc struct {
-	mongodb.BaseDoc
-	st   base.State
-	data map[string]interface{}
-}
-
-func NewContractDataDoc(st base.State, enc encoder.Encoder) (ContractDataDoc, error) {
-	data, err := pstate.GetDataFromState(st)
-	if err != nil {
-		return ContractDataDoc{}, err
-	}
-
-	b, err := mongodb.NewBaseDoc(nil, st, enc)
-	if err != nil {
-		return ContractDataDoc{}, err
-	}
-
-	return ContractDataDoc{
-		BaseDoc: b,
-		st:      st,
-		data:    data,
-	}, nil
-}
-
-func (doc ContractDataDoc) MarshalBSON() ([]byte, error) {
-	m, err := doc.BaseDoc.M()
-	if err != nil {
-		return nil, err
-	}
-
-	parsedKey, err := cstate.ParseStateKey(doc.st.Key(), pstate.ContractStateKeyPrefix, 4)
-	if err != nil {
-		return nil, err
-	}
-
-	m["contract"] = parsedKey[1]
-	m["data_key"] = parsedKey[2]
-	m["height"] = doc.st.Height()
-
-	return bsonutil.Marshal(m)
-}
-
 type ContractRuntimeDoc struct {
 	mongodb.BaseDoc
 	st      base.State

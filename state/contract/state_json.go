@@ -44,36 +44,6 @@ func (sv *DesignStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
 	return nil
 }
 
-type DataStateValueJSONMarshaler struct {
-	hint.BaseHinter
-	Data map[string]interface{} `json:"data"`
-}
-
-func (sv DataStateValue) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(
-		DataStateValueJSONMarshaler(sv),
-	)
-}
-
-type DataStateValueJSONUnmarshaler struct {
-	Hint hint.Hint              `json:"_hint"`
-	Data map[string]interface{} `json:"data"`
-}
-
-func (sv *DataStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("decode json of DataStateValue")
-
-	var u DataStateValueJSONUnmarshaler
-	if err := enc.Unmarshal(b, &u); err != nil {
-		return e.Wrap(err)
-	}
-
-	sv.BaseHinter = hint.NewBaseHinter(u.Hint)
-	sv.Data = u.Data
-
-	return nil
-}
-
 type RuntimeStateValueJSONMarshaler struct {
 	hint.BaseHinter
 	Engine          RuntimeEngine `json:"engine"`

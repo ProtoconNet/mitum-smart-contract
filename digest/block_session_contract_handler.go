@@ -12,7 +12,6 @@ func (bs *BlockSession) prepareContract() error {
 	}
 
 	var contractModels []mongo.WriteModel
-	var contractDataModels []mongo.WriteModel
 	var contractRuntimeModels []mongo.WriteModel
 	var contractSnapshotModels []mongo.WriteModel
 
@@ -40,13 +39,6 @@ func (bs *BlockSession) prepareContract() error {
 			}
 			contractSnapshotModels = append(contractSnapshotModels, j...)
 
-		case pstate.IsDataStateKey(st.Key()):
-			j, err := bs.handleContractDataState(st)
-			if err != nil {
-				return err
-			}
-			contractDataModels = append(contractDataModels, j...)
-
 		default:
 			continue
 		}
@@ -55,7 +47,6 @@ func (bs *BlockSession) prepareContract() error {
 	bs.contractModels = contractModels
 	bs.contractRuntimeModels = contractRuntimeModels
 	bs.contractSnapshotModels = contractSnapshotModels
-	bs.contractDataModels = contractDataModels
 
 	return nil
 }
@@ -66,16 +57,6 @@ func (bs *BlockSession) handleContractDesignState(st base.State) ([]mongo.WriteM
 	} else {
 		return []mongo.WriteModel{
 			mongo.NewInsertOneModel().SetDocument(designDoc),
-		}, nil
-	}
-}
-
-func (bs *BlockSession) handleContractDataState(st base.State) ([]mongo.WriteModel, error) {
-	if dataDoc, err := NewContractDataDoc(st, bs.st.Encoder()); err != nil {
-		return nil, err
-	} else {
-		return []mongo.WriteModel{
-			mongo.NewInsertOneModel().SetDocument(dataDoc),
 		}, nil
 	}
 }

@@ -10,7 +10,7 @@ require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.6
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
 	github.com/ethereum/go-ethereum v1.14.13
-	github.com/gnolang/gno v0.0.0
+	github.com/gnolang/gno v0.0.0-20260513121932-eb9f51920519
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/json-iterator/go v1.1.12
@@ -18,7 +18,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rainycape/memcache v0.0.0-20150622160815-1031fa0ce2f2
 	github.com/rs/zerolog v1.34.0
-	github.com/traefik/yaegi v0.16.1
 	go.mongodb.org/mongo-driver v1.15.0
 	golang.org/x/crypto v0.48.0
 	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b
@@ -113,5 +112,3 @@ require (
 )
 
 replace github.com/hashicorp/memberlist => github.com/spikeekips/memberlist v0.0.0-20230626195851-39f17fa10d23 // latest fix-data-race branch
-
-replace github.com/gnolang/gno => /Users/soonkukkang/work/dev_work/go_work/gno

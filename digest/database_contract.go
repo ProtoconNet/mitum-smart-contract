@@ -13,7 +13,6 @@ import (
 
 var (
 	DefaultColNameContract         = "digest_sc"
-	DefaultColNameContractData     = "digest_sc_data"
 	DefaultColNameContractRuntime  = "digest_sc_runtime"
 	DefaultColNameContractSnapshot = "digest_sc_snapshot"
 )
@@ -50,45 +49,6 @@ func ContractDesign(st *Database, contract string) (types.Design, base.State, er
 		return de, sta, nil
 	} else {
 		return types.Design{}, nil, errors.Errorf("state is nil")
-	}
-}
-
-func ContractData(db *Database, contract, key string) (map[string]interface{}, base.State, error) {
-	filter := utilc.NewBSONFilter("contract", contract)
-	filter = filter.Add("data_key", key)
-	q := filter.D()
-
-	opt := options.FindOne().SetSort(
-		utilc.NewBSONFilter("height", -1).D(),
-	)
-	var data map[string]interface{}
-	var sta base.State
-	var err error
-	if err := db.MongoClient().GetByFilter(
-		DefaultColNameContractData,
-		q,
-		func(res *mongo.SingleResult) error {
-			sta, err = LoadState(res.Decode, db.Encoders())
-			if err != nil {
-				return err
-			}
-			d, err := state.GetDataFromState(sta)
-			if err != nil {
-				return err
-			}
-			data = d
-			return nil
-		},
-		opt,
-	); err != nil {
-		return nil, nil, utilm.ErrNotFound.WithMessage(
-			err, "Contract data for data key %s in contract account %s", key, contract)
-	}
-
-	if data != nil {
-		return data, sta, nil
-	} else {
-		return nil, nil, errors.Errorf("data is nil")
 	}
 }
 

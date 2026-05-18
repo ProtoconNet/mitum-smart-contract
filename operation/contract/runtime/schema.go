@@ -8,7 +8,6 @@ import (
 type SchemaMode string
 
 const (
-	SchemaModeLegacyMap SchemaMode = "legacy-map-v1"
 	SchemaModeTypedArgs SchemaMode = "typed-snapshot-v1"
 )
 
@@ -383,31 +382,11 @@ func (fn FunctionSchema) IsContextCallable() bool {
 	return isContractContextType(fn.Params[0].Type)
 }
 
-func (fn FunctionSchema) IsLegacyABIShape() bool {
-	if !fn.IsContextCallable() {
-		return false
-	}
-
-	if len(fn.Params) != 1 {
-		return false
-	}
-
-	if len(fn.Results) != 2 {
-		return false
-	}
-
-	return fn.Results[0].Type.NormalizedString() == "map[string]interface{}" &&
-		fn.Results[1].Type.NormalizedString() == "error"
-}
-
 func (fn FunctionSchema) IsTypedABIShape() bool {
 	if !fn.Exported {
 		return false
 	}
 	if !fn.IsContextCallable() {
-		return false
-	}
-	if fn.IsLegacyABIShape() {
 		return false
 	}
 	if len(fn.Params) < 2 {

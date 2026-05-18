@@ -119,39 +119,12 @@ func (opp *CallContractProcessor) Process(
 		return nil, bErr, nil
 	}
 
-	switch execResult.Engine {
-	case pstate.RuntimeEngineYaegi:
-		result := execResult.Data
-
-		if result != nil {
-			key, found := result["key"]
-			if !found {
-				return nil, base.NewBaseOperationProcessReasonError(
-					"key not found from contract result at %v", fact.Contract(),
-				), nil
-			}
-
-			stKey, ok := key.(string)
-			if !ok {
-				return nil, base.NewBaseOperationProcessReasonError(
-					"key type expected string, but %T", key,
-				), nil
-			}
-
-			sts = append(sts, cstate.NewStateMergeValue(
-				pstate.DataStateKey(fact.Contract(), stKey),
-				pstate.NewDataStateValue(result),
-			))
-		}
-
-	case pstate.RuntimeEngineGnoSnapshot:
-		sts = append(sts, execResult.StateMerges...)
-
-	default:
+	if execResult.Engine != pstate.RuntimeEngineGnoSnapshot {
 		return nil, base.NewBaseOperationProcessReasonError(
 			"unsupported runtime engine %q", execResult.Engine,
 		), nil
 	}
+	sts = append(sts, execResult.StateMerges...)
 
 	return sts, nil, nil
 }

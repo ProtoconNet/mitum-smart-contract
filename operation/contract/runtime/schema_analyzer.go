@@ -415,85 +415,61 @@ func finalizeContractSchema(schema *ContractSchema) error {
 		return errors.Errorf("Initialize function not found")
 	}
 
-	switch schema.PackageName {
-	case "main":
-		if !initialize.IsLegacyABIShape() {
-			return errors.Errorf("legacy yaegi contract Initialize must be func Initialize(ctx ContractContext) (map[string]interface{}, error)")
-		}
-
-		for _, fn := range schema.Functions {
-			if fn.Name == "Initialize" {
-				continue
-			}
-			if !fn.Exported || !fn.IsContextCallable() {
-				continue
-			}
-			if !fn.IsLegacyABIShape() {
-				return errors.Errorf("package main contract cannot contain typed ABI function %q", fn.Name)
-			}
-		}
-
-		schema.Mode = SchemaModeLegacyMap
-		return nil
-
-	case "contract":
-		if !initialize.IsTypedInitializeShape() {
-			return errors.Errorf("typed Gno contract Initialize must be func Initialize(ctx ContractContext) error")
-		}
-
-		for _, g := range schema.PersistentGlobals {
-			if !g.HasExplicitType {
-				return errors.Errorf("persistent global %q must declare explicit type", g.Name)
-			}
-			if err := schema.ValidatePersistentGlobalType(g); err != nil {
-				return err
-			}
-		}
-
-		for _, fn := range schema.Functions {
-			if fn.Name == "Initialize" {
-				continue
-			}
-			if !fn.Exported || !fn.IsContextCallable() {
-				continue
-			}
-			if fn.IsLegacyABIShape() {
-				return errors.Errorf("package contract cannot contain legacy ABI function %q", fn.Name)
-			}
-
-			if fn.IsTypedWriteShape() {
-				for i := 1; i < len(fn.Params); i++ {
-					if err := schema.ValidateWriteArgType(fn.Params[i].Type, fmt.Sprintf("function %q parameter %q", fn.Name, fn.Params[i].Name)); err != nil {
-						return errors.Wrap(err, "invalid write parameter type")
-					}
-				}
-				continue
-			}
-
-			if fn.IsTypedQueryShape() {
-				for i := 1; i < len(fn.Params); i++ {
-					if err := schema.ValidateQueryArgType(fn.Params[i].Type, fmt.Sprintf("query function %q parameter %q", fn.Name, fn.Params[i].Name)); err != nil {
-						return errors.Wrap(err, "invalid query parameter type")
-					}
-				}
-
-				if err := schema.ValidateQueryResultType(fn.Results[0].Type, fmt.Sprintf("query function %q result", fn.Name)); err != nil {
-					return errors.Wrap(err, "invalid query result type")
-				}
-				if len(fn.Results) == 2 && fn.Results[1].Type.NormalizedString() != "bool" {
-					return errors.Errorf("query function %q second result must be bool", fn.Name)
-				}
-
-				continue
-			}
-
-			return errors.Errorf("typed contract function %q must be either write(ctx,...scalar) error or query(ctx,...scalar) T[/bool]", fn.Name)
-		}
-
-		schema.Mode = SchemaModeTypedArgs
-		return nil
-
-	default:
-		return errors.Errorf("unsupported contract package %q; use main for legacy or contract for typed Gno", schema.PackageName)
+	if schema.PackageName != "contract" {
+		return errors.Errorf("only package contract typed Gno contracts are supported")
 	}
+
+	if !initialize.IsTypedInitializeShape() {
+		return errors.Errorf("typed Gno contract Initialize must be func Initialize(ctx ContractContext) error")
+	}
+
+	for _, g := range schema.PersistentGlobals {
+		if !g.HasExplicitType {
+			return errors.Errorf("persistent global %q must declare explicit type", g.Name)
+		}
+		if err := schema.ValidatePersistentGlobalType(g); err != nil {
+			return err
+		}
+	}
+
+	for _, fn := range schema.Functions {
+		if fn.Name == "Initialize" {
+			continue
+		}
+		if !fn.Exported || !fn.IsContextCallable() {
+			continue
+		}
+
+		if fn.IsTypedWriteShape() {
+			for i := 1; i < len(fn.Params); i++ {
+				if err := schema.ValidateWriteArgType(fn.Params[i].Type, fmt.Sprintf("function %q parameter %q", fn.Name, fn.Params[i].Name)); err != nil {
+					return errors.Wrap(err, "invalid write parameter type")
+				}
+			}
+			continue
+		}
+
+		if fn.IsTypedQueryShape() {
+			for i := 1; i < len(fn.Params); i++ {
+				if err := schema.ValidateQueryArgType(fn.Params[i].Type, fmt.Sprintf("query function %q parameter %q", fn.Name, fn.Params[i].Name)); err != nil {
+					return errors.Wrap(err, "invalid query parameter type")
+				}
+			}
+
+			if err := schema.ValidateQueryResultType(fn.Results[0].Type, fmt.Sprintf("query function %q result", fn.Name)); err != nil {
+				return errors.Wrap(err, "invalid query result type")
+			}
+			if len(fn.Results) == 2 && fn.Results[1].Type.NormalizedString() != "bool" {
+				return errors.Errorf("query function %q second result must be bool", fn.Name)
+			}
+
+			continue
+		}
+
+		return errors.Errorf("typed contract function %q must be either write(ctx, ...) error or query(ctx, ...) T[/bool]", fn.Name)
+	}
+
+	schema.Mode = SchemaModeTypedArgs
+
+	return nil
 }

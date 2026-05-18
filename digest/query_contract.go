@@ -11,10 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var digestContractQueryEngine = cruntime.NewHybridEngine(
-	cruntime.NewYaegiEngine(),
-	cruntime.NewGnoEngine(),
-)
+var digestContractQueryEngine = cruntime.NewGnoEngine()
 
 type ContractQueryResponse struct {
 	Contract string      `json:"contract"`

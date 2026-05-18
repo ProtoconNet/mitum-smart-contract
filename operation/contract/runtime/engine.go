@@ -25,7 +25,6 @@ type ExecuteRequest struct {
 
 type ExecuteResult struct {
 	Engine      pstate.RuntimeEngine
-	Data        map[string]interface{}
 	StateMerges []base.StateMergeValue
 }
 

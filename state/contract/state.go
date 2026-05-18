@@ -1,18 +1,16 @@
 package contract
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	"github.com/ProtoconNet/mitum2/util/valuehash"
-
 	types "github.com/ProtoconNet/mitum-currency/v3/types/contract"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"github.com/pkg/errors"
 )
 
@@ -83,75 +81,6 @@ func DesignStateKey(addr base.Address) string {
 }
 
 var (
-	DataStateValueHint = hint.MustNewHint("mitum-contract-data-state-value-v0.0.1")
-	DataStateKeySuffix = "data"
-)
-
-type DataStateValue struct {
-	hint.BaseHinter
-	Data map[string]interface{}
-}
-
-func NewDataStateValue(data map[string]interface{}) DataStateValue {
-	return DataStateValue{
-		BaseHinter: hint.NewBaseHinter(DataStateValueHint),
-		Data:       data,
-	}
-}
-
-func (sv DataStateValue) Hint() hint.Hint {
-	return sv.BaseHinter.Hint()
-}
-
-func (sv DataStateValue) IsValid([]byte) error {
-	e := util.ErrInvalid.Errorf("invalid DataStateValue")
-
-	if err := sv.BaseHinter.IsValid(DataStateValueHint.Type().Bytes()); err != nil {
-		return e.Wrap(err)
-	}
-
-	if sv.Data != nil {
-		if _, err := json.Marshal(sv.Data); err != nil {
-			return e.Wrap(errors.Wrap(err, "data is not JSON-serializable"))
-		}
-	}
-
-	return nil
-}
-
-func (sv DataStateValue) HashBytes() []byte {
-	var bs [][]byte
-	if sv.Data != nil {
-		d, _ := json.Marshal(sv.Data)
-		bs = append(bs, valuehash.NewSHA256(d).Bytes())
-	}
-
-	return util.ConcatBytesSlice(bs...)
-}
-
-func GetDataFromState(st base.State) (map[string]interface{}, error) {
-	v := st.Value()
-	if v == nil {
-		return nil, errors.Errorf("State value is nil")
-	}
-
-	ts, ok := v.(DataStateValue)
-	if !ok {
-		return nil, common.ErrTypeMismatch.Wrap(errors.Errorf("expected DataStateValue found, %T", v))
-	}
-
-	return ts.Data, nil
-}
-
-func IsDataStateKey(key string) bool {
-	return strings.HasPrefix(key, ContractStateKeyPrefix) && strings.HasSuffix(key, DataStateKeySuffix)
-}
-
-func DataStateKey(addr base.Address, key string) string {
-	return fmt.Sprintf("%s:%s:%s", ContractStateKey(addr), key, DataStateKeySuffix)
-}
-
-var (
 	RuntimeStateValueHint = hint.MustNewHint("mitum-contract-runtime-state-value-v0.0.1")
 	RuntimeStateKeySuffix = "runtime"
 
@@ -162,7 +91,6 @@ var (
 type RuntimeEngine string
 
 const (
-	RuntimeEngineYaegi       RuntimeEngine = "yaegi-v1"
 	RuntimeEngineGnoSnapshot RuntimeEngine = "gno-snapshot-v1"
 )
 

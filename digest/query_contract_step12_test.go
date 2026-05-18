@@ -105,19 +105,6 @@ func EchoAliases(ctx chain.ContractContext, next []string) []string {
 }
 `
 
-const legacyDigestQueryContractSource = `package main
-
-import sdk "github.com/ProtoconNet/mitum-currency/v3/operation/contract/util"
-
-func Initialize(ctx sdk.ContractContext) (map[string]interface{}, error) {
-	return nil, nil
-}
-
-func QuerySomething(ctx sdk.ContractContext) (map[string]interface{}, error) {
-	return map[string]interface{}{"ok": true}, nil
-}
-`
-
 func TestContractQueryEndpointScalarResult(t *testing.T) {
 	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
 		{
@@ -530,20 +517,6 @@ func TestContractQueryEndpointMissingFunctionRejected(t *testing.T) {
 	}
 }
 
-func TestContractQueryEndpointLegacyYaegiRejected(t *testing.T) {
-	hd, contract := newLegacyQueryTestHandlers(t, legacyDigestQueryContractSource)
-
-	status, body, _ := performContractQueryRequest(t, hd, contract, map[string]string{
-		"function": "QuerySomething",
-	})
-	if status != http.StatusInternalServerError {
-		t.Fatalf("unexpected status: %d body=%s", status, body)
-	}
-	if !strings.Contains(body, "legacy yaegi contract query is not supported") {
-		t.Fatalf("unexpected legacy rejection body: %s", body)
-	}
-}
-
 func newTypedQueryTestHandlers(
 	t *testing.T,
 	source string,
@@ -561,7 +534,7 @@ func newTypedQueryTestHandlers(
 		return st, found, nil
 	}
 
-	engine := cruntime.NewHybridEngine(cruntime.NewYaegiEngine(), cruntime.NewGnoEngine())
+	engine := cruntime.NewGnoEngine()
 
 	for _, req := range requests {
 		req.Contract = contract
@@ -588,24 +561,6 @@ func newTypedQueryTestHandlers(
 
 	snapshotBefore := snapshotBytesFromStates(t, states, contract)
 	return newDigestHandlersForStates(t, encsPtr, enc, states), contract.String(), snapshotBefore
-}
-
-func newLegacyQueryTestHandlers(t *testing.T, source string) (*Handlers, string) {
-	t.Helper()
-
-	encsPtr, enc := newDigestTestEncoders(t)
-	contract := base.NewStringAddress("contractlegacy01")
-	states := map[string]base.State{
-		pstate.DesignStateKey(contract): common.NewBaseState(
-			base.Height(620),
-			pstate.DesignStateKey(contract),
-			pstate.NewDesignStateValue(ptypes.NewDesign(source)),
-			nil,
-			nil,
-		),
-	}
-
-	return newDigestHandlersForStates(t, encsPtr, enc, states), contract.String()
 }
 
 func newDigestHandlersForStates(

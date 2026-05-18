@@ -46,7 +46,6 @@ var AllCollections = []string{
 	defaultColNameOperation,
 	defaultColNameBlock,
 	DefaultColNameContract,
-	DefaultColNameContractData,
 	DefaultColNameContractRuntime,
 	DefaultColNameContractSnapshot,
 }

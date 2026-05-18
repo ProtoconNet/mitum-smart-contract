@@ -45,38 +45,6 @@ func (sv *DesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 	return nil
 }
 
-func (sv DataStateValue) MarshalBSON() ([]byte, error) {
-	return bsonenc.Marshal(
-		bson.M{
-			"_hint": sv.Hint().String(),
-			"data":  sv.Data,
-		},
-	)
-}
-
-type DataStateValueBSONUnmarshaler struct {
-	Hint string                 `bson:"_hint"`
-	Data map[string]interface{} `bson:"data"`
-}
-
-func (sv *DataStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
-	e := util.StringError("decode bson of DataStateValue")
-
-	var u DataStateValueBSONUnmarshaler
-	if err := enc.Unmarshal(b, &u); err != nil {
-		return e.Wrap(err)
-	}
-
-	ht, err := hint.ParseHint(u.Hint)
-	if err != nil {
-		return e.Wrap(err)
-	}
-	sv.BaseHinter = hint.NewBaseHinter(ht)
-	sv.Data = u.Data
-
-	return nil
-}
-
 func (sv RuntimeStateValue) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(bson.M{
 		"_hint":            sv.Hint().String(),
