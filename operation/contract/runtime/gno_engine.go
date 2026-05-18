@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 
 	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
 	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
@@ -292,10 +293,48 @@ func invokeTypedWrite(
 	}
 
 	if !results[0].IsNilInterface() && results[0].IsDefined() {
+		if msg := extractTypedWriteErrorMessage(m, results[0]); msg != "" {
+			return fmt.Errorf("typed write function %q returned error: %s", req.Function, msg)
+		}
+
 		return fmt.Errorf("typed write function %q returned non-nil error", req.Function)
 	}
 
 	return nil
+}
+
+func extractTypedWriteErrorMessage(m *gno.Machine, tv gno.TypedValue) string {
+	msg := strings.TrimSpace(safeTypedValueSprint(m, tv))
+	if msg != "" && msg != "undefined" {
+		return msg
+	}
+
+	msg = strings.TrimSpace(safeTypedValueString(tv))
+	if msg != "" && msg != "(undefined)" {
+		return msg
+	}
+
+	return ""
+}
+
+func safeTypedValueSprint(m *gno.Machine, tv gno.TypedValue) (out string) {
+	defer func() {
+		if recover() != nil {
+			out = ""
+		}
+	}()
+
+	return tv.Sprint(m)
+}
+
+func safeTypedValueString(tv gno.TypedValue) (out string) {
+	defer func() {
+		if recover() != nil {
+			out = ""
+		}
+	}()
+
+	return tv.String()
 }
 
 func contractContextExpr(sender, contract string, height int64, readOnly bool) gno.Expr {

@@ -17,8 +17,8 @@ const (
 	MapGlobalSupportDescription        = "current Gno snapshot v1 supports maps only when keys are string and values are scalar or named struct trees composed of scalar fields, nested named structs, slices of scalar/named-struct, and map[string]scalar/map[string]named-struct fields; map values cannot be slices or maps directly, and anonymous/recursive struct types are not supported"
 	SliceSupportDescription            = "current Gno snapshot v1 supports slices only when elements are scalar or named struct trees composed of scalar fields, nested named structs, slices of scalar/named-struct, and map[string]scalar/map[string]named-struct fields; slice elements cannot be slices, maps, anonymous structs, or recursive named structs"
 	QueryResultSupportDescription      = "current Gno query ABI v1 supports T or (T, bool) where T is scalar, named struct, map[string]scalar, map[string]named-struct, []scalar, or []named-struct; named struct fields may use the current snapshot-supported recursive field policy, and anonymous/recursive or otherwise unsupported types are not allowed"
-	WriteArgSupportDescription         = "current Gno write ABI v1 supports scalar parameters directly and JSON-encoded named struct, map[string]scalar, map[string]named-struct, []scalar, or []named-struct parameters; named struct fields may use the current snapshot-supported recursive field policy, and anonymous/recursive or otherwise unsupported types are not allowed"
-	QueryArgSupportDescription         = "current Gno query ABI v1 supports scalar parameters directly and JSON-encoded named struct, map[string]scalar, map[string]named-struct, []scalar, or []named-struct parameters; named struct fields may use the current snapshot-supported recursive field policy, and anonymous/recursive or otherwise unsupported types are not allowed"
+	WriteArgSupportDescription         = "current Gno write ABI v1 supports only scalar parameters: string, bool, int, int64, uint64"
+	QueryArgSupportDescription         = "current Gno query ABI v1 supports only scalar parameters: string, bool, int, int64, uint64"
 )
 
 type TypeKind string
@@ -466,11 +466,20 @@ func (s ContractSchema) ValidateQueryResultType(typ TypeRef, subject string) err
 }
 
 func (s ContractSchema) ValidateWriteArgType(typ TypeRef, subject string) error {
-	return s.validateCompositeABIType(typ, subject, WriteArgSupportDescription)
+	return s.validateScalarABIType(typ, subject, WriteArgSupportDescription)
 }
 
 func (s ContractSchema) ValidateQueryArgType(typ TypeRef, subject string) error {
-	return s.validateCompositeABIType(typ, subject, QueryArgSupportDescription)
+	return s.validateScalarABIType(typ, subject, QueryArgSupportDescription)
+}
+
+func (s ContractSchema) validateScalarABIType(typ TypeRef, subject string, description string) error {
+	resolved := s.ResolveType(typ)
+	if resolved.IsScalar() && IsSupportedScalarType(resolved) {
+		return nil
+	}
+
+	return fmt.Errorf("%s type %q is not supported; %s", subject, typ.String(), description)
 }
 
 func (s ContractSchema) validateCompositeABIType(typ TypeRef, subject string, description string) error {

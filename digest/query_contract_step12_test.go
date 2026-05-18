@@ -47,11 +47,6 @@ type Config struct {
 	Watchers []User
 }
 
-type UserSelector struct {
-	Name string
-	RequireActive bool
-}
-
 var config Config
 
 func Initialize(ctx chain.ContractContext) error {
@@ -79,29 +74,6 @@ func GetWatchers(ctx chain.ContractContext) []User { return config.Watchers }
 func GetUser(ctx chain.ContractContext, name string) (User, bool) {
 	user, found := config.Users[name]
 	return user, found
-}
-
-func GetSelectedUser(ctx chain.ContractContext, selector UserSelector) (User, bool) {
-	user, found := config.Users[selector.Name]
-	if !found {
-		return User{}, false
-	}
-	if selector.RequireActive && !user.Meta.Flags["active"] {
-		return User{}, false
-	}
-	return user, true
-}
-
-func EchoFlags(ctx chain.ContractContext, next map[string]bool) map[string]bool {
-	return next
-}
-
-func EchoUsers(ctx chain.ContractContext, next map[string]User) map[string]User {
-	return next
-}
-
-func EchoAliases(ctx chain.ContractContext, next []string) []string {
-	return next
 }
 `
 
@@ -363,123 +335,6 @@ func TestContractQueryEndpointOptionalResult(t *testing.T) {
 	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
 }
 
-func TestContractQueryEndpointStructArg(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
-		{
-			Mode:     cruntime.InvocationModeRegister,
-			Height:   base.Height(570),
-			Function: "Initialize",
-			CallData: map[string]string{},
-		},
-	})
-
-	status, body, _ := performContractQueryRequest(t, hd, contract, map[string]string{
-		"function": "GetSelectedUser",
-		"selector": `{"name":"alice","requireactive":true}`,
-	})
-	if status != http.StatusOK {
-		t.Fatalf("unexpected status: %d body=%s", status, body)
-	}
-
-	resp := decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "ok", true)
-	assertEmbeddedField(t, resp, "result", map[string]interface{}{
-		"Balance": float64(10),
-		"Meta": map[string]interface{}{
-			"Limit":   float64(100),
-			"Flags":   map[string]interface{}{"active": true},
-			"Aliases": []interface{}{"a1"},
-		},
-	})
-	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
-}
-
-func TestContractQueryEndpointMapScalarArgAndNilEmptyPolicies(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
-		{
-			Mode:     cruntime.InvocationModeRegister,
-			Height:   base.Height(580),
-			Function: "Initialize",
-			CallData: map[string]string{},
-		},
-	})
-
-	status, body, _ := performContractQueryRequest(t, hd, contract, map[string]string{
-		"function": "EchoFlags",
-		"next":     `{"beta":false,"alpha":true}`,
-	})
-	if status != http.StatusOK {
-		t.Fatalf("unexpected status: %d body=%s", status, body)
-	}
-	resp := decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", map[string]interface{}{"alpha": true, "beta": false})
-
-	status, body, _ = performContractQueryRequest(t, hd, contract, map[string]string{
-		"function": "EchoFlags",
-		"next":     `null`,
-	})
-	if status != http.StatusOK {
-		t.Fatalf("unexpected status: %d body=%s", status, body)
-	}
-	resp = decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", nil)
-
-	status, body, _ = performContractQueryRequest(t, hd, contract, map[string]string{
-		"function": "EchoFlags",
-		"next":     `{}`,
-	})
-	if status != http.StatusOK {
-		t.Fatalf("unexpected status: %d body=%s", status, body)
-	}
-	resp = decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", map[string]interface{}{})
-
-	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
-}
-
-func TestContractQueryEndpointSliceScalarArgAndNilEmptyPolicies(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
-		{
-			Mode:     cruntime.InvocationModeRegister,
-			Height:   base.Height(590),
-			Function: "Initialize",
-			CallData: map[string]string{},
-		},
-	})
-
-	status, body, _ := performContractQueryRequest(t, hd, contract, map[string]string{
-		"function": "EchoAliases",
-		"next":     `["a1","a2"]`,
-	})
-	if status != http.StatusOK {
-		t.Fatalf("unexpected status: %d body=%s", status, body)
-	}
-	resp := decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", []interface{}{"a1", "a2"})
-
-	status, body, _ = performContractQueryRequest(t, hd, contract, map[string]string{
-		"function": "EchoAliases",
-		"next":     `null`,
-	})
-	if status != http.StatusOK {
-		t.Fatalf("unexpected status: %d body=%s", status, body)
-	}
-	resp = decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", nil)
-
-	status, body, _ = performContractQueryRequest(t, hd, contract, map[string]string{
-		"function": "EchoAliases",
-		"next":     `[]`,
-	})
-	if status != http.StatusOK {
-		t.Fatalf("unexpected status: %d body=%s", status, body)
-	}
-	resp = decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", []interface{}{})
-
-	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
-}
-
 func TestContractQueryEndpointMalformedJSONBodyRejected(t *testing.T) {
 	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
 		{
@@ -490,7 +345,7 @@ func TestContractQueryEndpointMalformedJSONBodyRejected(t *testing.T) {
 		},
 	})
 
-	status, body, headers := performRawContractQueryRequest(t, hd, contract, `{"function":"EchoAliases","next":"["a1",}"}`)
+	status, body, headers := performRawContractQueryRequest(t, hd, contract, `{"function":"GetUser","name":"alice"`)
 	if status != http.StatusBadRequest {
 		t.Fatalf("unexpected status: %d body=%s", status, body)
 	}
