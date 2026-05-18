@@ -152,7 +152,7 @@ func invokeTypedQuery(
 			return QueryResult{}, fmt.Errorf("missing callData[%q]", param.Name)
 		}
 
-		arg, err := scalarArgLiteral(param.Type, raw)
+		arg, err := buildQueryCallArgExpr(schema, param.Type, raw)
 		if err != nil {
 			return QueryResult{}, fmt.Errorf("invalid arg %q: %w", param.Name, err)
 		}
@@ -168,7 +168,11 @@ func invokeTypedQuery(
 			return QueryResult{}, fmt.Errorf("query function %q must return exactly 1 value", req.Function)
 		}
 
-		v, err := scalarResultValue(fn.Results[0].Type, results[0])
+		qv, err := ExtractQueryValue(schema, fn.Results[0].Type, results[0], m.Store)
+		if err != nil {
+			return QueryResult{}, err
+		}
+		v, err := QueryValueToJSONCompatible(schema, fn.Results[0].Type, qv)
 		if err != nil {
 			return QueryResult{}, err
 		}
@@ -180,7 +184,11 @@ func invokeTypedQuery(
 			return QueryResult{}, fmt.Errorf("query function %q must return exactly 2 values", req.Function)
 		}
 
-		v, err := scalarResultValue(fn.Results[0].Type, results[0])
+		qv, err := ExtractQueryValue(schema, fn.Results[0].Type, results[0], m.Store)
+		if err != nil {
+			return QueryResult{}, err
+		}
+		v, err := QueryValueToJSONCompatible(schema, fn.Results[0].Type, qv)
 		if err != nil {
 			return QueryResult{}, err
 		}
@@ -193,23 +201,6 @@ func invokeTypedQuery(
 
 	default:
 		return QueryResult{}, fmt.Errorf("unsupported query result count for %q", req.Function)
-	}
-}
-
-func scalarResultValue(typ TypeRef, tv gno.TypedValue) (interface{}, error) {
-	switch typ.NormalizedString() {
-	case "string":
-		return tv.GetString(), nil
-	case "bool":
-		return tv.GetBool(), nil
-	case "int":
-		return tv.GetInt(), nil
-	case "int64":
-		return tv.GetInt64(), nil
-	case "uint64":
-		return tv.GetUint64(), nil
-	default:
-		return nil, fmt.Errorf("unsupported query result type %q; %s", typ.String(), ScalarOnlySupportDescription)
 	}
 }
 

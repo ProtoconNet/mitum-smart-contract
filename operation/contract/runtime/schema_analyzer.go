@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -462,8 +463,8 @@ func finalizeContractSchema(schema *ContractSchema) error {
 
 			if fn.IsTypedWriteShape() {
 				for i := 1; i < len(fn.Params); i++ {
-					if !schema.SupportsScalarOnlyType(fn.Params[i].Type) {
-						return errors.Errorf("function %q parameter %q type %q is not supported; %s", fn.Name, fn.Params[i].Name, fn.Params[i].Type.String(), ScalarOnlySupportDescription)
+					if err := schema.ValidateWriteArgType(fn.Params[i].Type, fmt.Sprintf("function %q parameter %q", fn.Name, fn.Params[i].Name)); err != nil {
+						return errors.Wrap(err, "invalid write parameter type")
 					}
 				}
 				continue
@@ -471,13 +472,13 @@ func finalizeContractSchema(schema *ContractSchema) error {
 
 			if fn.IsTypedQueryShape() {
 				for i := 1; i < len(fn.Params); i++ {
-					if !schema.SupportsScalarOnlyType(fn.Params[i].Type) {
-						return errors.Errorf("query function %q parameter %q type %q is not supported; %s", fn.Name, fn.Params[i].Name, fn.Params[i].Type.String(), ScalarOnlySupportDescription)
+					if err := schema.ValidateQueryArgType(fn.Params[i].Type, fmt.Sprintf("query function %q parameter %q", fn.Name, fn.Params[i].Name)); err != nil {
+						return errors.Wrap(err, "invalid query parameter type")
 					}
 				}
 
-				if !schema.SupportsScalarOnlyType(fn.Results[0].Type) {
-					return errors.Errorf("query function %q result type %q is not supported; %s", fn.Name, fn.Results[0].Type.String(), ScalarOnlySupportDescription)
+				if err := schema.ValidateQueryResultType(fn.Results[0].Type, fmt.Sprintf("query function %q result", fn.Name)); err != nil {
+					return errors.Wrap(err, "invalid query result type")
 				}
 				if len(fn.Results) == 2 && fn.Results[1].Type.NormalizedString() != "bool" {
 					return errors.Errorf("query function %q second result must be bool", fn.Name)
@@ -486,7 +487,7 @@ func finalizeContractSchema(schema *ContractSchema) error {
 				continue
 			}
 
-			return errors.Errorf("typed contract function %q must be either write(ctx,...scalar) error or query(ctx,...scalar) scalar[/bool]", fn.Name)
+			return errors.Errorf("typed contract function %q must be either write(ctx,...scalar) error or query(ctx,...scalar) T[/bool]", fn.Name)
 		}
 
 		schema.Mode = SchemaModeTypedArgs

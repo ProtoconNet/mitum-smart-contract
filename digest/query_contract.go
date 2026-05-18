@@ -93,7 +93,7 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 
 	qr, qerr := digestContractQueryEngine.QueryContract(
 		*hd.encs,
-		hd.database.mitumDB.State,
+		hd.database.State,
 		cruntime.QueryRequest{
 			Contract:     contractAddr,
 			Sender:       sender,

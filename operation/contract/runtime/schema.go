@@ -14,8 +14,12 @@ const (
 
 const (
 	ScalarOnlySupportDescription       = "current Gno typed ABI v1 supports only scalar types: string, bool, int, int64, uint64"
-	FlatStructGlobalSupportDescription = "current Gno snapshot v1 supports scalar globals and top-level named struct globals with scalar fields only"
-	MapGlobalSupportDescription        = "current Gno snapshot v1 supports top-level map[string]scalar globals and top-level map[string]flat-struct globals only; map keys must be string and map values must be scalar or named struct with scalar fields only"
+	FlatStructGlobalSupportDescription = "current Gno snapshot v1 supports top-level named struct globals when every field is scalar, []scalar, []named-struct, map[string]scalar, map[string]named-struct, or another named struct; non-string map keys, slice/map elements of unsupported types, anonymous struct fields/elements, pointer/interface fields, and recursive struct types are not supported"
+	MapGlobalSupportDescription        = "current Gno snapshot v1 supports maps only when keys are string and values are scalar or named struct trees composed of scalar fields, nested named structs, slices of scalar/named-struct, and map[string]scalar/map[string]named-struct fields; map values cannot be slices or maps directly, and anonymous/recursive struct types are not supported"
+	SliceSupportDescription            = "current Gno snapshot v1 supports slices only when elements are scalar or named struct trees composed of scalar fields, nested named structs, slices of scalar/named-struct, and map[string]scalar/map[string]named-struct fields; slice elements cannot be slices, maps, anonymous structs, or recursive named structs"
+	QueryResultSupportDescription      = "current Gno query ABI v1 supports T or (T, bool) where T is scalar, named struct, map[string]scalar, map[string]named-struct, []scalar, or []named-struct; named struct fields may use the current snapshot-supported recursive field policy, and anonymous/recursive or otherwise unsupported types are not allowed"
+	WriteArgSupportDescription         = "current Gno write ABI v1 supports scalar parameters directly and JSON-encoded named struct, map[string]scalar, map[string]named-struct, []scalar, or []named-struct parameters; named struct fields may use the current snapshot-supported recursive field policy, and anonymous/recursive or otherwise unsupported types are not allowed"
+	QueryArgSupportDescription         = "current Gno query ABI v1 supports scalar parameters directly and JSON-encoded named struct, map[string]scalar, map[string]named-struct, []scalar, or []named-struct parameters; named struct fields may use the current snapshot-supported recursive field policy, and anonymous/recursive or otherwise unsupported types are not allowed"
 )
 
 type TypeKind string
@@ -178,7 +182,11 @@ func (s ContractSchema) ValidatePersistentGlobalType(binding PersistentBindingSc
 		return s.validateTopLevelMapGlobalType(binding)
 	}
 
-	if _, err := s.validateFlatNamedStructType(binding.Type, fmt.Sprintf("persistent global %q", binding.Name)); err != nil {
+	if binding.Type.Kind == TypeSlice {
+		return s.validateTopLevelSliceGlobalType(binding)
+	}
+
+	if _, err := s.validateNamedStructType(binding.Type, fmt.Sprintf("persistent global %q", binding.Name)); err != nil {
 		return fmt.Errorf(
 			"%w; %s",
 			err,
@@ -190,31 +198,7 @@ func (s ContractSchema) ValidatePersistentGlobalType(binding PersistentBindingSc
 }
 
 func (s ContractSchema) validateTopLevelMapGlobalType(binding PersistentBindingSchema) error {
-	if binding.Type.Key == nil || binding.Type.Elem == nil {
-		return fmt.Errorf(
-			"persistent global %q type %q is not supported; %s",
-			binding.Name,
-			binding.Type.String(),
-			MapGlobalSupportDescription,
-		)
-	}
-
-	keyType := s.ResolveType(*binding.Type.Key)
-	if !keyType.IsScalar() || keyType.NormalizedString() != "string" {
-		return fmt.Errorf(
-			"persistent global %q map key type %q is not supported; %s",
-			binding.Name,
-			binding.Type.Key.String(),
-			MapGlobalSupportDescription,
-		)
-	}
-
-	elemType := s.ResolveType(*binding.Type.Elem)
-	if elemType.IsScalar() && IsSupportedScalarType(elemType) {
-		return nil
-	}
-
-	if _, err := s.validateFlatNamedStructType(*binding.Type.Elem, fmt.Sprintf("persistent global %q map value", binding.Name)); err != nil {
+	if err := s.validateMapTypeRecursive(binding.Type, fmt.Sprintf("persistent global %q", binding.Name), map[string]bool{}); err != nil {
 		return fmt.Errorf(
 			"%w; %s",
 			err,
@@ -225,7 +209,23 @@ func (s ContractSchema) validateTopLevelMapGlobalType(binding PersistentBindingS
 	return nil
 }
 
-func (s ContractSchema) validateFlatNamedStructType(typ TypeRef, subject string) (TypeRef, error) {
+func (s ContractSchema) validateTopLevelSliceGlobalType(binding PersistentBindingSchema) error {
+	if err := s.validateSliceTypeRecursive(binding.Type, fmt.Sprintf("persistent global %q", binding.Name), map[string]bool{}); err != nil {
+		return fmt.Errorf(
+			"%w; %s",
+			err,
+			SliceSupportDescription,
+		)
+	}
+
+	return nil
+}
+
+func (s ContractSchema) validateNamedStructType(typ TypeRef, subject string) (TypeRef, error) {
+	return s.validateNamedStructTypeRecursive(typ, subject, map[string]bool{})
+}
+
+func (s ContractSchema) validateNamedStructTypeRecursive(typ TypeRef, subject string, resolving map[string]bool) (TypeRef, error) {
 	if typ.Kind != TypeNamed {
 		return TypeRef{}, fmt.Errorf("%s type %q is not supported", subject, typ.String())
 	}
@@ -235,11 +235,69 @@ func (s ContractSchema) validateFlatNamedStructType(typ TypeRef, subject string)
 		return TypeRef{}, fmt.Errorf("%s type %q is not supported", subject, typ.String())
 	}
 
+	if resolving[typ.Name] {
+		return TypeRef{}, fmt.Errorf(
+			"%s type %q is not supported; recursive named struct types are not supported",
+			subject,
+			typ.String(),
+		)
+	}
+
+	resolving[typ.Name] = true
+	defer delete(resolving, typ.Name)
+
 	for _, field := range resolved.Fields {
 		fieldType := s.ResolveType(field.Type)
-		if !fieldType.IsScalar() || !IsSupportedScalarType(fieldType) {
+		switch {
+		case fieldType.IsScalar():
+			if IsSupportedScalarType(fieldType) {
+				continue
+			}
 			return TypeRef{}, fmt.Errorf(
-				"%s field %q type %q is not supported; flat struct globals require scalar fields only",
+				"%s field %q type %q is not supported",
+				subject,
+				field.Name,
+				field.Type.String(),
+			)
+
+		case field.Type.Kind == TypeNamed:
+			if _, err := s.validateNamedStructTypeRecursive(
+				field.Type,
+				fmt.Sprintf("%s field %q", subject, field.Name),
+				resolving,
+			); err != nil {
+				return TypeRef{}, err
+			}
+
+		case field.Type.Kind == TypeStruct:
+			return TypeRef{}, fmt.Errorf(
+				"%s field %q type %q is not supported; anonymous nested struct fields are not supported",
+				subject,
+				field.Name,
+				field.Type.String(),
+			)
+
+		case fieldType.Kind == TypeMap:
+			if err := s.validateMapTypeRecursive(
+				field.Type,
+				fmt.Sprintf("%s field %q", subject, field.Name),
+				resolving,
+			); err != nil {
+				return TypeRef{}, err
+			}
+
+		case fieldType.Kind == TypeSlice:
+			if err := s.validateSliceTypeRecursive(
+				field.Type,
+				fmt.Sprintf("%s field %q", subject, field.Name),
+				resolving,
+			); err != nil {
+				return TypeRef{}, err
+			}
+
+		default:
+			return TypeRef{}, fmt.Errorf(
+				"%s field %q type %q is not supported",
 				subject,
 				field.Name,
 				field.Type.String(),
@@ -248,6 +306,73 @@ func (s ContractSchema) validateFlatNamedStructType(typ TypeRef, subject string)
 	}
 
 	return resolved, nil
+}
+
+func (s ContractSchema) validateSliceTypeRecursive(typ TypeRef, subject string, resolving map[string]bool) error {
+	if typ.Kind != TypeSlice || typ.Elem == nil {
+		return fmt.Errorf("%s type %q is not supported", subject, typ.String())
+	}
+
+	elemType := s.ResolveType(*typ.Elem)
+	switch {
+	case elemType.IsScalar():
+		if IsSupportedScalarType(elemType) {
+			return nil
+		}
+		return fmt.Errorf("%s slice element type %q is not supported", subject, typ.Elem.String())
+
+	case typ.Elem.Kind == TypeNamed:
+		_, err := s.validateNamedStructTypeRecursive(*typ.Elem, fmt.Sprintf("%s slice element", subject), resolving)
+		return err
+
+	case typ.Elem.Kind == TypeStruct:
+		return fmt.Errorf("%s slice element type %q is not supported; anonymous struct slice elements are not supported", subject, typ.Elem.String())
+
+	case elemType.Kind == TypeMap:
+		return fmt.Errorf("%s slice element type %q is not supported; slice elements cannot be maps", subject, typ.Elem.String())
+
+	case elemType.Kind == TypeSlice:
+		return fmt.Errorf("%s slice element type %q is not supported; slice elements cannot be slices", subject, typ.Elem.String())
+
+	default:
+		return fmt.Errorf("%s slice element type %q is not supported", subject, typ.Elem.String())
+	}
+}
+
+func (s ContractSchema) validateMapTypeRecursive(typ TypeRef, subject string, resolving map[string]bool) error {
+	if typ.Kind != TypeMap || typ.Key == nil || typ.Elem == nil {
+		return fmt.Errorf("%s type %q is not supported", subject, typ.String())
+	}
+
+	keyType := s.ResolveType(*typ.Key)
+	if !keyType.IsScalar() || keyType.NormalizedString() != "string" {
+		return fmt.Errorf("%s map key type %q is not supported", subject, typ.Key.String())
+	}
+
+	elemType := s.ResolveType(*typ.Elem)
+	switch {
+	case elemType.IsScalar():
+		if IsSupportedScalarType(elemType) {
+			return nil
+		}
+		return fmt.Errorf("%s map value type %q is not supported", subject, typ.Elem.String())
+
+	case typ.Elem.Kind == TypeNamed:
+		_, err := s.validateNamedStructTypeRecursive(*typ.Elem, fmt.Sprintf("%s map value", subject), resolving)
+		return err
+
+	case typ.Elem.Kind == TypeStruct:
+		return fmt.Errorf("%s map value type %q is not supported; anonymous struct map values are not supported", subject, typ.Elem.String())
+
+	case elemType.Kind == TypeMap:
+		return fmt.Errorf("%s map value type %q is not supported; map values cannot be maps", subject, typ.Elem.String())
+
+	case elemType.Kind == TypeSlice:
+		return fmt.Errorf("%s map value type %q is not supported; map values cannot be slices", subject, typ.Elem.String())
+
+	default:
+		return fmt.Errorf("%s map value type %q is not supported", subject, typ.Elem.String())
+	}
 }
 
 func (fn FunctionSchema) IsContextCallable() bool {
@@ -340,10 +465,6 @@ func IsSupportedScalarType(typ TypeRef) bool {
 	}
 }
 
-func IsSupportedScalarResultType(typ TypeRef) bool {
-	return IsSupportedScalarType(typ)
-}
-
 func (fn FunctionSchema) IsTypedQueryShape() bool {
 	if !fn.Exported {
 		return false
@@ -357,10 +478,51 @@ func (fn FunctionSchema) IsTypedQueryShape() bool {
 	if len(fn.Results) < 1 || len(fn.Results) > 2 {
 		return false
 	}
-	if len(fn.Results) == 1 {
-		return IsSupportedScalarResultType(fn.Results[0].Type)
-	}
-
-	return IsSupportedScalarResultType(fn.Results[0].Type) &&
+	return len(fn.Results) == 1 ||
 		fn.Results[1].Type.NormalizedString() == "bool"
+}
+
+func (s ContractSchema) ValidateQueryResultType(typ TypeRef, subject string) error {
+	return s.validateCompositeABIType(typ, subject, QueryResultSupportDescription)
+}
+
+func (s ContractSchema) ValidateWriteArgType(typ TypeRef, subject string) error {
+	return s.validateCompositeABIType(typ, subject, WriteArgSupportDescription)
+}
+
+func (s ContractSchema) ValidateQueryArgType(typ TypeRef, subject string) error {
+	return s.validateCompositeABIType(typ, subject, QueryArgSupportDescription)
+}
+
+func (s ContractSchema) validateCompositeABIType(typ TypeRef, subject string, description string) error {
+	resolved := s.ResolveType(typ)
+
+	switch {
+	case resolved.IsScalar():
+		if IsSupportedScalarType(resolved) {
+			return nil
+		}
+		return fmt.Errorf("%s type %q is not supported; %s", subject, typ.String(), description)
+
+	case typ.Kind == TypeNamed:
+		if _, err := s.validateNamedStructType(typ, subject); err != nil {
+			return fmt.Errorf("%w; %s", err, description)
+		}
+		return nil
+
+	case typ.Kind == TypeMap:
+		if err := s.validateMapTypeRecursive(typ, subject, map[string]bool{}); err != nil {
+			return fmt.Errorf("%w; %s", err, description)
+		}
+		return nil
+
+	case typ.Kind == TypeSlice:
+		if err := s.validateSliceTypeRecursive(typ, subject, map[string]bool{}); err != nil {
+			return fmt.Errorf("%w; %s", err, description)
+		}
+		return nil
+
+	default:
+		return fmt.Errorf("%s type %q is not supported; %s", subject, typ.String(), description)
+	}
 }

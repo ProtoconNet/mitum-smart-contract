@@ -103,37 +103,7 @@ func TestExtractSnapshotValueMapStringStructNilAndEmptyMapPolicy(t *testing.T) {
 	}
 }
 
-func TestExtractSnapshotValueMapStringStructWithNestedStructUnsupported(t *testing.T) {
-	schema := ContractSchema{
-		Types: TypeRegistry{
-			Structs: map[string]TypeRef{
-				"Meta": {
-					Kind: TypeStruct,
-					Name: "Meta",
-					Raw:  "Meta",
-					Fields: []StructField{
-						{Name: "Count", Type: TypeRef{Kind: TypeScalar, Raw: "int64", Scalar: "int64"}},
-					},
-				},
-				"User": {
-					Kind: TypeStruct,
-					Name: "User",
-					Raw:  "User",
-					Fields: []StructField{
-						{Name: "Meta", Type: TypeRef{Kind: TypeNamed, Raw: "Meta", Name: "Meta"}},
-					},
-				},
-			},
-		},
-	}
-
-	_, err := ExtractSnapshotValue(schema, mapStringNamedType("User"), emptyMapTypedValue())
-	if err == nil {
-		t.Fatalf("expected nested struct map value unsupported error")
-	}
-}
-
-func TestExtractSnapshotValueMapStringStructWithMapFieldUnsupported(t *testing.T) {
+func TestExtractSnapshotValueMapStringStructWithMapFieldSupported(t *testing.T) {
 	schema := ContractSchema{
 		Types: TypeRegistry{
 			Structs: map[string]TypeRef{
@@ -154,13 +124,16 @@ func TestExtractSnapshotValueMapStringStructWithMapFieldUnsupported(t *testing.T
 		},
 	}
 
-	_, err := ExtractSnapshotValue(schema, mapStringNamedType("User"), emptyMapTypedValue())
-	if err == nil {
-		t.Fatalf("expected map field inside map value struct unsupported error")
+	value, err := ExtractSnapshotValue(schema, mapStringNamedType("User"), emptyMapTypedValue())
+	if err != nil {
+		t.Fatalf("ExtractSnapshotValue returned error: %v", err)
+	}
+	if value.Kind != string(TypeMap) {
+		t.Fatalf("expected map snapshot value, got %#v", value)
 	}
 }
 
-func TestExtractSnapshotValueMapStringStructWithSliceFieldUnsupported(t *testing.T) {
+func TestExtractSnapshotValueMapStringStructWithSliceFieldSupported(t *testing.T) {
 	schema := ContractSchema{
 		Types: TypeRegistry{
 			Structs: map[string]TypeRef{
@@ -180,9 +153,12 @@ func TestExtractSnapshotValueMapStringStructWithSliceFieldUnsupported(t *testing
 		},
 	}
 
-	_, err := ExtractSnapshotValue(schema, mapStringNamedType("User"), emptyMapTypedValue())
-	if err == nil {
-		t.Fatalf("expected slice field inside map value struct unsupported error")
+	value, err := ExtractSnapshotValue(schema, mapStringNamedType("User"), emptyMapTypedValue())
+	if err != nil {
+		t.Fatalf("ExtractSnapshotValue returned error: %v", err)
+	}
+	if value.Kind != string(TypeMap) {
+		t.Fatalf("expected map snapshot value, got %#v", value)
 	}
 }
 

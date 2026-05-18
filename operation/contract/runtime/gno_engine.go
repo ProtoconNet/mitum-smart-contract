@@ -278,7 +278,7 @@ func invokeTypedWrite(
 			return fmt.Errorf("missing callData[%q]", param.Name)
 		}
 
-		arg, err := scalarArgLiteral(param.Type, raw)
+		arg, err := buildWriteCallArgExpr(schema, param.Type, raw)
 		if err != nil {
 			return fmt.Errorf("invalid arg %q: %w", param.Name, err)
 		}
@@ -307,29 +307,5 @@ func contractContextExpr(sender, contract string, height int64, readOnly bool) g
 			gno.Kv("Height", gno.Num(strconv.FormatInt(height, 10))),
 			gno.Kv("ReadOnly", gno.X(strconv.FormatBool(readOnly))),
 		},
-	}
-}
-
-func scalarArgLiteral(typ TypeRef, raw string) (any, error) {
-	switch typ.NormalizedString() {
-	case "string":
-		return strconv.Quote(raw), nil
-	case "bool":
-		if raw != "true" && raw != "false" {
-			return nil, fmt.Errorf("expected bool string")
-		}
-		return raw, nil
-	case "int", "int64":
-		if _, err := strconv.ParseInt(raw, 10, 64); err != nil {
-			return nil, err
-		}
-		return raw, nil
-	case "uint64":
-		if _, err := strconv.ParseUint(raw, 10, 64); err != nil {
-			return nil, err
-		}
-		return raw, nil
-	default:
-		return nil, fmt.Errorf("unsupported arg type %q; %s", typ.String(), ScalarOnlySupportDescription)
 	}
 }

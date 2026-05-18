@@ -56,10 +56,11 @@ var DigestStorageLastBlockKey = "digest_last_block"
 type Database struct {
 	sync.RWMutex
 	*logging.Logging
-	mitumDB   *isaacdatabase.Center
-	digestDB  *digestmongo.Database
-	readonly  bool
-	lastBlock base.Height
+	mitumDB     *isaacdatabase.Center
+	digestDB    *digestmongo.Database
+	stateGetter base.GetStateFunc
+	readonly    bool
+	lastBlock   base.Height
 }
 
 func NewDatabase(mitumDB *isaacdatabase.Center, digestDB *digestmongo.Database) (*Database, error) {
@@ -71,7 +72,9 @@ func NewDatabase(mitumDB *isaacdatabase.Center, digestDB *digestmongo.Database) 
 		digestDB:  digestDB,
 		lastBlock: base.NilHeight,
 	}
-	_ = nst.SetLogging(mitumDB.Logging)
+	if mitumDB != nil && mitumDB.Logging != nil {
+		_ = nst.SetLogging(mitumDB.Logging)
+	}
 
 	return nst, nil
 }
@@ -116,6 +119,18 @@ func (db *Database) Encoder() encoder.Encoder {
 
 func (db *Database) Encoders() *encoder.Encoders {
 	return db.digestDB.Encoders()
+}
+
+func (db *Database) State(key string) (base.State, bool, error) {
+	if db.stateGetter != nil {
+		return db.stateGetter(key)
+	}
+
+	if db.mitumDB == nil {
+		return nil, false, errors.Errorf("chain state getter is not configured")
+	}
+
+	return db.mitumDB.State(key)
 }
 
 func (db *Database) Initialize(dIndexes map[string][]mongo.IndexModel) error {

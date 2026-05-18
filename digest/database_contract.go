@@ -98,7 +98,7 @@ func ContractDesignFromChainState(db *Database, contract string) (base.Address, 
 		return nil, types.Design{}, nil, errors.Wrap(err, "invalid contract address")
 	}
 
-	st, found, err := db.mitumDB.State(state.DesignStateKey(address))
+	st, found, err := db.State(state.DesignStateKey(address))
 	if err != nil {
 		return nil, types.Design{}, nil, errors.Wrap(err, "failed to read design state from chain")
 	}
@@ -123,7 +123,7 @@ func ContractRuntimeFromChainState(
 		return nil, state.RuntimeStateValue{}, nil, false, errors.Wrap(err, "invalid contract address")
 	}
 
-	st, found, err := db.mitumDB.State(state.RuntimeStateKey(address))
+	st, found, err := db.State(state.RuntimeStateKey(address))
 	if err != nil {
 		return nil, state.RuntimeStateValue{}, nil, false, errors.Wrap(err, "failed to read runtime state from chain")
 	}
@@ -148,7 +148,7 @@ func ContractSnapshotFromChainState(
 		return nil, state.SnapshotStateValue{}, nil, false, errors.Wrap(err, "invalid contract address")
 	}
 
-	st, found, err := db.mitumDB.State(state.SnapshotStateKey(address))
+	st, found, err := db.State(state.SnapshotStateKey(address))
 	if err != nil {
 		return nil, state.SnapshotStateValue{}, nil, false, errors.Wrap(err, "failed to read snapshot state from chain")
 	}

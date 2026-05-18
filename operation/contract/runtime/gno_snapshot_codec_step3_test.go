@@ -2,7 +2,6 @@ package runtime
 
 import (
 	"encoding/json"
-	"strings"
 	"testing"
 
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
@@ -103,46 +102,6 @@ func TestFlatStructSnapshotRoundTrip(t *testing.T) {
 	}
 	if lit != `Config{Owner:"alice",Paused:false,Limit:10}` {
 		t.Fatalf("unexpected round-trip literal: %s", lit)
-	}
-}
-
-func TestExtractSnapshotValueNestedStructUnsupported(t *testing.T) {
-	schema := ContractSchema{
-		Types: TypeRegistry{
-			Structs: map[string]TypeRef{
-				"Config": {
-					Kind: TypeStruct,
-					Name: "Config",
-					Raw:  "Config",
-					Fields: []StructField{
-						{Name: "Limits", Type: TypeRef{Kind: TypeNamed, Name: "Limits", Raw: "Limits"}},
-					},
-				},
-				"Limits": {
-					Kind: TypeStruct,
-					Name: "Limits",
-					Raw:  "Limits",
-					Fields: []StructField{
-						{Name: "Daily", Type: TypeRef{Kind: TypeScalar, Scalar: "int64", Raw: "int64"}},
-					},
-				},
-			},
-		},
-	}
-
-	_, err := ExtractSnapshotValue(schema, TypeRef{Kind: TypeNamed, Name: "Config", Raw: "Config"}, gno.TypedValue{
-		V: &gno.StructValue{
-			Fields: []gno.TypedValue{
-				{V: &gno.StructValue{Fields: []gno.TypedValue{int64TypedValue(1)}}},
-			},
-		},
-	})
-	if err == nil {
-		t.Fatalf("expected nested struct unsupported error")
-	}
-
-	if got := err.Error(); !strings.Contains(got, "flat struct globals require scalar fields only") {
-		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

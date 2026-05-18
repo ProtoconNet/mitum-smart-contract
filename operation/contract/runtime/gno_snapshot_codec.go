@@ -137,7 +137,7 @@ func ExtractSnapshotValue(schema ContractSchema, typ TypeRef, tv gno.TypedValue)
 		return extractMapSnapshotValue(schema, typ, resolved, tv)
 
 	case TypeSlice:
-		return SnapshotValue{}, fmt.Errorf("unsupported snapshot type %q; %s", typ.String(), MapGlobalSupportDescription)
+		return extractSliceSnapshotValue(schema, typ, resolved, tv)
 
 	default:
 		return SnapshotValue{}, fmt.Errorf("unsupported snapshot type %q; %s", typ.String(), MapGlobalSupportDescription)
@@ -162,7 +162,7 @@ func BuildLiteral(schema ContractSchema, typ TypeRef, sv SnapshotValue) (string,
 		return buildMapLiteral(schema, typ, resolved, sv)
 
 	case TypeSlice:
-		return "", fmt.Errorf("unsupported restore type %q; %s", typ.String(), MapGlobalSupportDescription)
+		return buildSliceLiteral(schema, typ, resolved, sv)
 
 	default:
 		return "", fmt.Errorf("unsupported restore type %q; %s", typ.String(), MapGlobalSupportDescription)
@@ -187,7 +187,7 @@ func BuildExpr(schema ContractSchema, typ TypeRef, sv SnapshotValue) (gno.Expr, 
 		return buildMapExpr(schema, typ, resolved, sv)
 
 	case TypeSlice:
-		return nil, fmt.Errorf("unsupported restore type %q; %s", typ.String(), MapGlobalSupportDescription)
+		return buildSliceExpr(schema, typ, resolved, sv)
 
 	default:
 		return nil, fmt.Errorf("unsupported restore type %q; %s", typ.String(), MapGlobalSupportDescription)
@@ -211,7 +211,35 @@ func deepFillSnapshotTypedValue(schema ContractSchema, typ TypeRef, tv *gno.Type
 		}
 		for item := mv.List.Head; item != nil; item = item.Next {
 			item.Key.DeepFill(store)
-			item.Value.DeepFill(store)
+			deepFillSnapshotTypedValue(schema, *resolved.Elem, &item.Value, store)
+		}
+	case TypeSlice:
+		if tv.V == nil {
+			return
+		}
+		sv, ok := tv.V.(*gno.SliceValue)
+		if !ok || sv == nil {
+			tv.DeepFill(store)
+			return
+		}
+		base := sv.GetBase(store)
+		if base == nil {
+			return
+		}
+		for i := 0; i < sv.Length; i++ {
+			deepFillSnapshotTypedValue(schema, *resolved.Elem, &base.List[sv.Offset+i], store)
+		}
+	case TypeStruct:
+		structValue, ok := tv.V.(*gno.StructValue)
+		if !ok || structValue == nil {
+			tv.DeepFill(store)
+			return
+		}
+		for i := range resolved.Fields {
+			if i >= len(structValue.Fields) {
+				break
+			}
+			deepFillSnapshotTypedValue(schema, resolved.Fields[i].Type, &structValue.Fields[i], store)
 		}
 	default:
 		tv.DeepFill(store)
@@ -239,14 +267,8 @@ func extractStructSnapshotValue(
 
 	fields := make([]SnapshotField, 0, len(resolved.Fields))
 	for i, field := range resolved.Fields {
-		fieldType := schema.ResolveType(field.Type)
-		if !fieldType.IsScalar() || !IsSupportedScalarType(fieldType) {
-			return SnapshotValue{}, fmt.Errorf(
-				"struct field %q of %q type %q is not supported; flat struct globals require scalar fields only",
-				field.Name,
-				typ.String(),
-				field.Type.String(),
-			)
+		if err := validateStructFieldSnapshotType(schema, field.Type, typ.String(), field.Name); err != nil {
+			return SnapshotValue{}, err
 		}
 
 		value, err := ExtractSnapshotValue(schema, field.Type, structValue.Fields[i])
@@ -305,14 +327,8 @@ func buildStructLiteral(
 			)
 		}
 
-		fieldType := schema.ResolveType(field.Type)
-		if !fieldType.IsScalar() || !IsSupportedScalarType(fieldType) {
-			return "", fmt.Errorf(
-				"struct field %q of %q type %q is not supported; flat struct globals require scalar fields only",
-				field.Name,
-				typ.String(),
-				field.Type.String(),
-			)
+		if err := validateStructFieldSnapshotType(schema, field.Type, typ.String(), field.Name); err != nil {
+			return "", err
 		}
 
 		lit, err := BuildLiteral(schema, field.Type, snapshotField.Value)
@@ -365,14 +381,8 @@ func buildStructExpr(
 			)
 		}
 
-		fieldType := schema.ResolveType(field.Type)
-		if !fieldType.IsScalar() || !IsSupportedScalarType(fieldType) {
-			return nil, fmt.Errorf(
-				"struct field %q of %q type %q is not supported; flat struct globals require scalar fields only",
-				field.Name,
-				typ.String(),
-				field.Type.String(),
-			)
+		if err := validateStructFieldSnapshotType(schema, field.Type, typ.String(), field.Name); err != nil {
+			return nil, err
 		}
 
 		expr, err := BuildExpr(schema, field.Type, snapshotField.Value)
@@ -542,14 +552,259 @@ func buildMapExpr(
 	}, nil
 }
 
+func extractSliceSnapshotValue(
+	schema ContractSchema,
+	typ TypeRef,
+	resolved TypeRef,
+	tv gno.TypedValue,
+) (SnapshotValue, error) {
+	if resolved.Elem == nil {
+		return SnapshotValue{}, fmt.Errorf("unsupported snapshot type %q; %s", typ.String(), SliceSupportDescription)
+	}
+	if !isSupportedSnapshotSliceElemType(schema, *resolved.Elem) {
+		return SnapshotValue{}, fmt.Errorf("unsupported snapshot type %q; %s", typ.String(), SliceSupportDescription)
+	}
+	if tv.V == nil {
+		return SnapshotValue{
+			Kind:  string(TypeSlice),
+			IsNil: true,
+		}, nil
+	}
+
+	sv, ok := tv.V.(*gno.SliceValue)
+	if !ok || sv == nil {
+		return SnapshotValue{}, fmt.Errorf("expected slice value for %q", typ.String())
+	}
+	base := sv.GetBase(nil)
+	if base == nil {
+		return SnapshotValue{}, fmt.Errorf("expected slice base for %q", typ.String())
+	}
+
+	items := make([]SnapshotValue, 0, sv.Length)
+	for i := 0; i < sv.Length; i++ {
+		value, err := ExtractSnapshotValue(schema, *resolved.Elem, base.List[sv.Offset+i])
+		if err != nil {
+			return SnapshotValue{}, err
+		}
+		items = append(items, value)
+	}
+
+	return SnapshotValue{
+		Kind:  string(TypeSlice),
+		Items: items,
+	}, nil
+}
+
+func buildSliceLiteral(
+	schema ContractSchema,
+	typ TypeRef,
+	resolved TypeRef,
+	sv SnapshotValue,
+) (string, error) {
+	if sv.Kind != string(TypeSlice) {
+		return "", fmt.Errorf("expected slice snapshot value for type %q", typ.String())
+	}
+	if resolved.Elem == nil {
+		return "", fmt.Errorf("unsupported restore type %q; %s", typ.String(), SliceSupportDescription)
+	}
+	if !isSupportedSnapshotSliceElemType(schema, *resolved.Elem) {
+		return "", fmt.Errorf("unsupported restore type %q; %s", typ.String(), SliceSupportDescription)
+	}
+	if sv.IsNil {
+		return "nil", nil
+	}
+	if len(sv.Items) == 0 {
+		return typ.String() + "{}", nil
+	}
+
+	parts := make([]string, 0, len(sv.Items))
+	for _, item := range sv.Items {
+		lit, err := BuildLiteral(schema, *resolved.Elem, item)
+		if err != nil {
+			return "", err
+		}
+		parts = append(parts, lit)
+	}
+
+	return typ.String() + "{" + joinWithComma(parts) + "}", nil
+}
+
+func buildSliceExpr(
+	schema ContractSchema,
+	typ TypeRef,
+	resolved TypeRef,
+	sv SnapshotValue,
+) (gno.Expr, error) {
+	if sv.Kind != string(TypeSlice) {
+		return nil, fmt.Errorf("expected slice snapshot value for type %q", typ.String())
+	}
+	if resolved.Elem == nil {
+		return nil, fmt.Errorf("unsupported restore type %q; %s", typ.String(), SliceSupportDescription)
+	}
+	if !isSupportedSnapshotSliceElemType(schema, *resolved.Elem) {
+		return nil, fmt.Errorf("unsupported restore type %q; %s", typ.String(), SliceSupportDescription)
+	}
+	if sv.IsNil {
+		return gno.Nx("nil"), nil
+	}
+
+	elts := make(gno.KeyValueExprs, 0, len(sv.Items))
+	for _, item := range sv.Items {
+		expr, err := BuildExpr(schema, *resolved.Elem, item)
+		if err != nil {
+			return nil, err
+		}
+		elts = append(elts, gno.KeyValueExpr{Value: expr})
+	}
+
+	return &gno.CompositeLitExpr{
+		Type: gno.SliceT(buildTypeExpr(*resolved.Elem)),
+		Elts: elts,
+	}, nil
+}
+
 func isSupportedSnapshotMapElemType(schema ContractSchema, typ TypeRef) bool {
 	resolved := schema.ResolveType(typ)
 	if resolved.IsScalar() && IsSupportedScalarType(resolved) {
 		return true
 	}
 
-	_, err := schema.validateFlatNamedStructType(typ, "map value")
+	_, err := schema.validateNamedStructType(typ, "map value")
 	return err == nil
+}
+
+func isSupportedSnapshotSliceElemType(schema ContractSchema, typ TypeRef) bool {
+	resolved := schema.ResolveType(typ)
+	if resolved.IsScalar() && IsSupportedScalarType(resolved) {
+		return true
+	}
+
+	_, err := schema.validateNamedStructType(typ, "slice element")
+	return err == nil
+}
+
+func validateStructFieldSnapshotType(schema ContractSchema, fieldType TypeRef, structName string, fieldName string) error {
+	resolved := schema.ResolveType(fieldType)
+
+	switch {
+	case resolved.IsScalar():
+		if IsSupportedScalarType(resolved) {
+			return nil
+		}
+		return fmt.Errorf(
+			"struct field %q of %q type %q is not supported",
+			fieldName,
+			structName,
+			fieldType.String(),
+		)
+
+	case fieldType.Kind == TypeNamed:
+		if _, err := schema.validateNamedStructType(fieldType, fmt.Sprintf("struct field %q of %q", fieldName, structName)); err != nil {
+			return err
+		}
+		return nil
+
+	case resolved.Kind == TypeMap:
+		if err := validateMapSnapshotType(schema, fieldType, fmt.Sprintf("struct field %q of %q", fieldName, structName)); err != nil {
+			return err
+		}
+		return nil
+
+	case resolved.Kind == TypeSlice:
+		if err := validateSliceSnapshotType(schema, fieldType, fmt.Sprintf("struct field %q of %q", fieldName, structName)); err != nil {
+			return err
+		}
+		return nil
+
+	case fieldType.Kind == TypeStruct:
+		return fmt.Errorf(
+			"struct field %q of %q type %q is not supported; anonymous nested struct fields are not supported",
+			fieldName,
+			structName,
+			fieldType.String(),
+		)
+
+	default:
+		return fmt.Errorf(
+			"struct field %q of %q type %q is not supported",
+			fieldName,
+			structName,
+			fieldType.String(),
+		)
+	}
+}
+
+func validateSliceSnapshotType(schema ContractSchema, typ TypeRef, subject string) error {
+	resolved := schema.ResolveType(typ)
+	if resolved.Kind != TypeSlice || resolved.Elem == nil {
+		return fmt.Errorf("%s type %q is not supported", subject, typ.String())
+	}
+
+	elemType := schema.ResolveType(*resolved.Elem)
+	switch {
+	case elemType.IsScalar():
+		if IsSupportedScalarType(elemType) {
+			return nil
+		}
+		return fmt.Errorf("%s slice element type %q is not supported", subject, resolved.Elem.String())
+
+	case resolved.Elem.Kind == TypeNamed:
+		if _, err := schema.validateNamedStructType(*resolved.Elem, fmt.Sprintf("%s slice element", subject)); err != nil {
+			return err
+		}
+		return nil
+
+	case resolved.Elem.Kind == TypeStruct:
+		return fmt.Errorf("%s slice element type %q is not supported; anonymous struct slice elements are not supported", subject, resolved.Elem.String())
+
+	case elemType.Kind == TypeMap:
+		return fmt.Errorf("%s slice element type %q is not supported; slice elements cannot be maps", subject, resolved.Elem.String())
+
+	case elemType.Kind == TypeSlice:
+		return fmt.Errorf("%s slice element type %q is not supported; slice elements cannot be slices", subject, resolved.Elem.String())
+
+	default:
+		return fmt.Errorf("%s slice element type %q is not supported", subject, resolved.Elem.String())
+	}
+}
+
+func validateMapSnapshotType(schema ContractSchema, typ TypeRef, subject string) error {
+	resolved := schema.ResolveType(typ)
+	if resolved.Kind != TypeMap || resolved.Key == nil || resolved.Elem == nil {
+		return fmt.Errorf("%s type %q is not supported", subject, typ.String())
+	}
+
+	keyType := schema.ResolveType(*resolved.Key)
+	if !keyType.IsScalar() || keyType.NormalizedString() != "string" {
+		return fmt.Errorf("%s map key type %q is not supported", subject, resolved.Key.String())
+	}
+
+	elemType := schema.ResolveType(*resolved.Elem)
+	switch {
+	case elemType.IsScalar():
+		if IsSupportedScalarType(elemType) {
+			return nil
+		}
+		return fmt.Errorf("%s map value type %q is not supported", subject, resolved.Elem.String())
+
+	case resolved.Elem.Kind == TypeNamed:
+		if _, err := schema.validateNamedStructType(*resolved.Elem, fmt.Sprintf("%s map value", subject)); err != nil {
+			return err
+		}
+		return nil
+
+	case resolved.Elem.Kind == TypeStruct:
+		return fmt.Errorf("%s map value type %q is not supported; anonymous struct map values are not supported", subject, resolved.Elem.String())
+
+	case elemType.Kind == TypeMap:
+		return fmt.Errorf("%s map value type %q is not supported; map values cannot be maps", subject, resolved.Elem.String())
+
+	case elemType.Kind == TypeSlice:
+		return fmt.Errorf("%s map value type %q is not supported; map values cannot be slices", subject, resolved.Elem.String())
+
+	default:
+		return fmt.Errorf("%s map value type %q is not supported", subject, resolved.Elem.String())
+	}
 }
 
 func scalarExpr(typ TypeRef, sv SnapshotValue) (gno.Expr, error) {
