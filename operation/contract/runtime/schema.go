@@ -21,6 +21,35 @@ const (
 	QueryArgSupportDescription         = "current Gno query ABI v1 supports only scalar parameters: string, bool, int, int64, uint64"
 )
 
+var AllowedTypedContractImports = []string{
+	MitumChainPackagePath,
+	"strconv",
+	"strings",
+	"errors",
+	"bytes",
+	"encoding/hex",
+	"encoding/base64",
+	"unicode/utf8",
+}
+
+var allowedTypedContractImportSet = func() map[string]struct{} {
+	out := make(map[string]struct{}, len(AllowedTypedContractImports))
+	for _, path := range AllowedTypedContractImports {
+		out[path] = struct{}{}
+	}
+
+	return out
+}()
+
+func IsAllowedTypedContractImport(path string) bool {
+	_, found := allowedTypedContractImportSet[path]
+	return found
+}
+
+func AllowedTypedContractImportsDescription() string {
+	return strings.Join(AllowedTypedContractImports, ", ")
+}
+
 type TypeKind string
 
 const (

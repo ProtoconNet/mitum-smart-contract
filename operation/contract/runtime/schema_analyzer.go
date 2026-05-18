@@ -7,6 +7,7 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -58,6 +59,10 @@ func AnalyzeContractSchema(sourceCode string) (ContractSchema, error) {
 		Types:       NewTypeRegistry(),
 	}
 
+	if err := validateContractImports(node); err != nil {
+		return ContractSchema{}, err
+	}
+
 	if err := schema.Types.populateFromResolver(resolver); err != nil {
 		return ContractSchema{}, err
 	}
@@ -95,6 +100,27 @@ func AnalyzeContractSchema(sourceCode string) (ContractSchema, error) {
 	}
 
 	return schema, nil
+}
+
+func validateContractImports(node *ast.File) error {
+	for _, imp := range node.Imports {
+		path, err := strconv.Unquote(imp.Path.Value)
+		if err != nil {
+			return errors.Wrap(err, "failed to decode import path")
+		}
+
+		if IsAllowedTypedContractImport(path) {
+			continue
+		}
+
+		return errors.Errorf(
+			`import %q is not allowed in typed Gno contracts; allowed imports are: %s`,
+			path,
+			AllowedTypedContractImportsDescription(),
+		)
+	}
+
+	return nil
 }
 
 func (r *TypeRegistry) populateFromResolver(resolver *typeResolver) error {
