@@ -446,7 +446,13 @@ func finalizeContractSchema(schema *ContractSchema) error {
 	}
 
 	if !initialize.IsTypedInitializeShape() {
-		return errors.Errorf("typed Gno contract Initialize must be func Initialize(ctx ContractContext) error")
+		return errors.Errorf("typed Gno contract Initialize must be func Initialize(ctx ContractContext, ...scalar) error")
+	}
+
+	for i := 1; i < len(initialize.Params); i++ {
+		if err := schema.ValidateWriteArgType(initialize.Params[i].Type, fmt.Sprintf(`Initialize parameter %q`, initialize.Params[i].Name)); err != nil {
+			return errors.Wrap(err, "invalid initialize parameter type")
+		}
 	}
 
 	for _, g := range schema.PersistentGlobals {

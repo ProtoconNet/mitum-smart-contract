@@ -272,19 +272,28 @@ func invokeTypedWrite(
 		contractContextExpr(req.Sender.String(), req.Contract.String(), int64(req.Height), false),
 	}
 
-	for i := 1; i < len(fn.Params); i++ {
-		param := fn.Params[i]
-		raw, found := req.CallData[param.Name]
-		if !found {
-			return fmt.Errorf("missing callData[%q]", param.Name)
-		}
-
-		arg, err := buildWriteCallArgExpr(schema, param.Type, raw)
+	if req.Mode == InvocationModeRegister && fn.Name == "Initialize" {
+		initArgs, err := buildInitializeCallArgs(schema, fn, req.CallData)
 		if err != nil {
-			return fmt.Errorf("invalid arg %q: %w", param.Name, err)
+			return err
 		}
 
-		args = append(args, arg)
+		args = append(args, initArgs...)
+	} else {
+		for i := 1; i < len(fn.Params); i++ {
+			param := fn.Params[i]
+			raw, found := req.CallData[param.Name]
+			if !found {
+				return fmt.Errorf("missing callData[%q]", param.Name)
+			}
+
+			arg, err := buildWriteCallArgExpr(schema, param.Type, raw)
+			if err != nil {
+				return fmt.Errorf("invalid arg %q: %w", param.Name, err)
+			}
+
+			args = append(args, arg)
+		}
 	}
 
 	results := m.Eval(gno.Call(req.Function, args...))
@@ -301,6 +310,37 @@ func invokeTypedWrite(
 	}
 
 	return nil
+}
+
+func buildInitializeCallArgs(schema ContractSchema, fn FunctionSchema, callData map[string]string) ([]any, error) {
+	expected := map[string]ParamSchema{}
+	for i := 1; i < len(fn.Params); i++ {
+		expected[fn.Params[i].Name] = fn.Params[i]
+	}
+
+	for key := range callData {
+		if _, found := expected[key]; !found {
+			return nil, fmt.Errorf(`unknown initialize arg %q`, key)
+		}
+	}
+
+	args := make([]any, 0, len(fn.Params)-1)
+	for i := 1; i < len(fn.Params); i++ {
+		param := fn.Params[i]
+		raw, found := callData[param.Name]
+		if !found {
+			return nil, fmt.Errorf(`missing required initialize arg %q`, param.Name)
+		}
+
+		arg, err := buildInitializeCallArgExpr(schema, param, raw)
+		if err != nil {
+			return nil, err
+		}
+
+		args = append(args, arg)
+	}
+
+	return args, nil
 }
 
 func extractTypedWriteErrorMessage(m *gno.Machine, tv gno.TypedValue) string {

@@ -447,7 +447,7 @@ func (fn FunctionSchema) IsSingleErrorResult() bool {
 func (fn FunctionSchema) IsTypedInitializeShape() bool {
 	return fn.Name == "Initialize" &&
 		fn.IsContextCallable() &&
-		len(fn.Params) == 1 &&
+		len(fn.Params) >= 1 &&
 		fn.IsSingleErrorResult()
 }
 

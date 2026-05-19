@@ -21,7 +21,7 @@
 컨트랙트는 최소한 아래 구조를 따라야 한다.
 
 - `package contract`
-- `Initialize(ctx chain.ContractContext) error`
+- `Initialize(ctx chain.ContractContext, ...scalar) error`
 
 `Initialize`는 필수이며, typed Gno contract의 진입 함수다.
 
@@ -107,16 +107,49 @@ func X(ctx chain.ContractContext, ...scalar) (T, bool)
 형태:
 
 ```go
-func Initialize(ctx chain.ContractContext) error
+func Initialize(ctx chain.ContractContext, ...scalar) error
 ```
 
 이 함수는 컨트랙트 초기화 전용 entrypoint이며, 일반 write 함수와는 별개로 처리된다.
+
+중요:
+
+- `Initialize`는 scalar arg를 받을 수 있다
+- 전달은 순서 기반이 아니라 **이름 기반**이다
+- register payload의 `init_data` key가 `Initialize` 파라미터 이름과 일치해야 한다
+
+예:
+
+```go
+func Initialize(ctx chain.ContractContext, owner string, label string, limit int64) error
+```
+
+register payload:
+
+```json
+{
+  "init_data": {
+    "owner": "alice",
+    "label": "demo",
+    "limit": "10"
+  }
+}
+```
+
+정책:
+
+- `init_data["owner"]` -> `owner`
+- `init_data["label"]` -> `label`
+- `init_data["limit"]` -> `limit`
+- required key 누락 시 실패
+- unknown key 존재 시 실패
+- scalar parse 실패 시 실패
 
 ### 요약
 
 - `... -> error` 이면 write
 - `... -> T` 또는 `... -> (T, bool)` 이면 query
-- `Initialize(ctx) error` 는 별도 special case
+- `Initialize(ctx, ...scalar) error` 는 별도 special case
 
 ---
 

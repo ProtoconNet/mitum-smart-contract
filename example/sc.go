@@ -35,22 +35,27 @@ var flags map[string]bool
 var users map[string]Record
 var watchers []Record
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.ContractContext, initialValue string, initialLimit int64) error {
 	if initialized {
 		return nil
 	}
 
 	owner = ctx.GetSender()
-	value = ""
+	value = initialValue
 	revision = 0
-	record = buildRecord("empty", "", 0, false)
+	record = buildRecord("initial", initialValue, initialLimit, false)
 	flags = map[string]bool{
-		"initialized": true,
-		"created":     false,
-		"updated":     false,
+		"initialized":  true,
+		"created":      false,
+		"updated":      false,
+		"owner_exists": chain.AccountExists(owner),
 	}
-	users = map[string]Record{}
-	watchers = []Record{}
+	users = map[string]Record{
+		"owner": buildRecord(owner, initialValue, initialLimit, true),
+	}
+	watchers = []Record{
+		buildRecord("watcher-seed", initialValue, initialLimit, false),
+	}
 	initialized = true
 
 	return nil
@@ -63,7 +68,7 @@ func CreateData(ctx chain.ContractContext, data string) error {
 	if ctx.GetSender() != owner {
 		return contractError("only owner can create data")
 	}
-	if value != "" {
+	if flags["created"] {
 		return contractError("data already exists")
 	}
 
@@ -80,7 +85,7 @@ func UpdateData(ctx chain.ContractContext, data string) error {
 	if ctx.GetSender() != owner {
 		return contractError("only owner can update data")
 	}
-	if value == "" {
+	if !flags["created"] {
 		return contractError("data does not exist")
 	}
 

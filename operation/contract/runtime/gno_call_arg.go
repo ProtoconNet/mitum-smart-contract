@@ -7,6 +7,20 @@ import (
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
 )
 
+func buildInitializeCallArgExpr(schema ContractSchema, param ParamSchema, raw string) (gno.Expr, error) {
+	resolved := schema.ResolveType(param.Type)
+	if !resolved.IsScalar() || !IsSupportedScalarType(resolved) {
+		return nil, fmt.Errorf("unsupported initialize arg type %q; %s", param.Type.String(), WriteArgSupportDescription)
+	}
+
+	arg, err := scalarArgExpr(resolved, raw, WriteArgSupportDescription)
+	if err != nil {
+		return nil, fmt.Errorf(`failed to parse initialize arg %q as %s: %w`, param.Name, resolved.NormalizedString(), err)
+	}
+
+	return arg, nil
+}
+
 func buildWriteCallArgExpr(schema ContractSchema, typ TypeRef, raw string) (gno.Expr, error) {
 	return buildScalarCallArgExpr(schema, typ, raw, WriteArgSupportDescription)
 }
