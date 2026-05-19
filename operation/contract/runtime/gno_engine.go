@@ -22,20 +22,19 @@ import (
 
 type gnoEngine struct{}
 
+var analyzeContractSchemaFunc = AnalyzeContractSchema
+
 func NewGnoEngine() ContractEngine {
 	return gnoEngine{}
 }
 
-func (gnoEngine) ValidateContract(sourceCode string) base.OperationProcessReasonError {
-	schema, err := AnalyzeContractSchema(sourceCode)
+func (gnoEngine) ValidateContract(sourceCode string) (ContractSchema, base.OperationProcessReasonError) {
+	schema, err := resolveContractSchemaForExecution(nil, sourceCode)
 	if err != nil {
-		return base.NewBaseOperationProcessReasonError("failed to analyze contract schema: %v", err)
-	}
-	if schema.Mode != SchemaModeTypedArgs {
-		return base.NewBaseOperationProcessReasonError("Gno engine requires typed contract schema")
+		return ContractSchema{}, base.NewBaseOperationProcessReasonError("failed to analyze contract schema: %v", err)
 	}
 
-	return nil
+	return schema, nil
 }
 
 func (gnoEngine) ExecuteContract(
@@ -51,7 +50,7 @@ func (gnoEngine) ExecuteContract(
 		}
 	}()
 
-	schema, err := AnalyzeContractSchema(req.ContractCode)
+	schema, err := resolveContractSchemaForExecution(req.Schema, req.ContractCode)
 	if err != nil {
 		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to analyze contract schema: %v", err)
 	}
@@ -194,6 +193,36 @@ func deriveRuntimeState(contract base.Address, source string) pstate.RuntimeStat
 		path,
 		GnoSnapshotVersion,
 	)
+}
+
+func resolveContractSchemaForExecution(preAnalyzed *ContractSchema, sourceCode string) (ContractSchema, error) {
+	if preAnalyzed != nil {
+		if preAnalyzed.Mode != SchemaModeTypedArgs {
+			return ContractSchema{}, fmt.Errorf("Gno engine requires typed contract schema")
+		}
+
+		return *preAnalyzed, nil
+	}
+
+	if schema, found := loadContractSchemaFromCache(sourceCode); found {
+		if schema.Mode != SchemaModeTypedArgs {
+			return ContractSchema{}, fmt.Errorf("Gno engine requires typed contract schema")
+		}
+
+		return schema, nil
+	}
+
+	schema, err := analyzeContractSchemaFunc(sourceCode)
+	if err != nil {
+		return ContractSchema{}, err
+	}
+	if schema.Mode != SchemaModeTypedArgs {
+		return ContractSchema{}, fmt.Errorf("Gno engine requires typed contract schema")
+	}
+
+	storeContractSchemaInCache(sourceCode, schema)
+
+	return schema, nil
 }
 
 func newGnoMachineAndPackage(

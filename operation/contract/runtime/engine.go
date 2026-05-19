@@ -19,6 +19,7 @@ type ExecuteRequest struct {
 	Sender       base.Address
 	Height       base.Height
 	ContractCode string
+	Schema       *ContractSchema
 	Function     string
 	CallData     map[string]string
 }
@@ -33,6 +34,7 @@ type QueryRequest struct {
 	Sender       base.Address
 	Height       base.Height
 	ContractCode string
+	Schema       *ContractSchema
 	Function     string
 	CallData     map[string]string
 }
@@ -44,7 +46,7 @@ type QueryResult struct {
 }
 
 type ContractEngine interface {
-	ValidateContract(sourceCode string) base.OperationProcessReasonError
+	ValidateContract(sourceCode string) (ContractSchema, base.OperationProcessReasonError)
 	ExecuteContract(
 		encs encoder.Encoders,
 		getStateFunc base.GetStateFunc,

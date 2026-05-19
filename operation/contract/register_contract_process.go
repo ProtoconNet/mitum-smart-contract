@@ -128,7 +128,8 @@ func (opp *RegisterContractProcessor) Process(
 	fact, _ := op.Fact().(RegisterContractFact)
 	var sts []base.StateMergeValue
 
-	if err := contractEngine.ValidateContract(fact.ContractCode()); err != nil {
+	schema, err := contractEngine.ValidateContract(fact.ContractCode())
+	if err != nil {
 		return nil, err, nil
 	}
 
@@ -141,6 +142,7 @@ func (opp *RegisterContractProcessor) Process(
 			Sender:       fact.Sender(),
 			Height:       opp.Height(),
 			ContractCode: fact.ContractCode(),
+			Schema:       &schema,
 			Function:     initializeFuncName,
 			CallData:     fact.callData,
 		},

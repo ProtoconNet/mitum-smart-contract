@@ -24,7 +24,7 @@ func (gnoEngine) QueryContract(
 		}
 	}()
 
-	schema, err := AnalyzeContractSchema(req.ContractCode)
+	schema, err := resolveContractSchemaForExecution(req.Schema, req.ContractCode)
 	if err != nil {
 		return QueryResult{}, base.NewBaseOperationProcessReasonError("failed to analyze contract schema: %v", err)
 	}

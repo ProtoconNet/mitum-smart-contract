@@ -17,6 +17,8 @@ var (
 	RegisterContractHint     = hint.MustNewHint("mitum-contract-register-operation-v0.0.1")
 )
 
+const MaxContractSourceBytes = 256 * 1024
+
 type RegisterContractFact struct {
 	base.BaseFact
 	sender   base.Address
@@ -44,6 +46,18 @@ func NewRegisterContractFact(token []byte, sender, contract base.Address, code s
 func (fact RegisterContractFact) IsValid(b []byte) error {
 	if err := fact.BaseHinter.IsValid(nil); err != nil {
 		return common.ErrFactInvalid.Wrap(err)
+	}
+
+	if len(fact.code) > MaxContractSourceBytes {
+		return common.ErrFactInvalid.Wrap(
+			common.ErrValueInvalid.Wrap(
+				errors.Errorf(
+					"contract source exceeds max size: got %d bytes, max %d bytes",
+					len(fact.code),
+					MaxContractSourceBytes,
+				),
+			),
+		)
 	}
 
 	if fact.sender.Equal(fact.contract) {
