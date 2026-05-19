@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -354,6 +355,25 @@ func TestContractQueryEndpointMalformedJSONBodyRejected(t *testing.T) {
 	}
 }
 
+func TestContractQueryEndpointRawBodyLimitRejectedBeforeJSONDecode(t *testing.T) {
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+		{
+			Mode:     cruntime.InvocationModeRegister,
+			Height:   base.Height(605),
+			Function: "Initialize",
+			CallData: map[string]string{},
+		},
+	})
+
+	status, body, _ := performRawContractQueryRequest(t, hd, contract, strings.Repeat("{", MaxContractQueryBodyBytes+1))
+	if status != http.StatusRequestEntityTooLarge {
+		t.Fatalf("unexpected status: %d body=%s", status, body)
+	}
+	if !strings.Contains(body, "query body exceeds max size") {
+		t.Fatalf("expected raw body size error, got: %s", body)
+	}
+}
+
 func TestContractQueryEndpointMissingFunctionRejected(t *testing.T) {
 	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
 		{
@@ -369,6 +389,81 @@ func TestContractQueryEndpointMissingFunctionRejected(t *testing.T) {
 	})
 	if status != http.StatusBadRequest {
 		t.Fatalf("unexpected status: %d body=%s", status, body)
+	}
+}
+
+func TestContractQueryEndpointCallDataPayloadWithinLimit(t *testing.T) {
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+		{
+			Mode:     cruntime.InvocationModeRegister,
+			Height:   base.Height(620),
+			Function: "Initialize",
+			CallData: map[string]string{},
+		},
+	})
+
+	status, body, _ := performContractQueryRequest(t, hd, contract, map[string]string{
+		"function": "GetOwner",
+		"padding":  strings.Repeat("v", cruntime.MaxContractCallDataValueBytes),
+	})
+	if status != http.StatusOK {
+		t.Fatalf("unexpected status: %d body=%s", status, body)
+	}
+}
+
+func TestContractQueryEndpointCallDataPayloadLimitsRejected(t *testing.T) {
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+		{
+			Mode:     cruntime.InvocationModeRegister,
+			Height:   base.Height(630),
+			Function: "Initialize",
+			CallData: map[string]string{},
+		},
+	})
+
+	tests := []struct {
+		name      string
+		callData  map[string]string
+		wantError string
+	}{
+		{
+			name:      "entry count exceeded",
+			callData:  digestQueryPayloadEntries(cruntime.MaxContractCallDataEntries + 1),
+			wantError: "max entries",
+		},
+		{
+			name: "key size exceeded",
+			callData: map[string]string{
+				"function": "GetOwner",
+				strings.Repeat("k", cruntime.MaxContractCallDataKeyBytes+1): "v",
+			},
+			wantError: "key exceeds max size",
+		},
+		{
+			name: "value size exceeded",
+			callData: map[string]string{
+				"function": "GetOwner",
+				"padding":  strings.Repeat("v", cruntime.MaxContractCallDataValueBytes+1),
+			},
+			wantError: "value for key",
+		},
+		{
+			name:      "total size exceeded",
+			callData:  digestQueryPayloadTotalBytesExceeded(),
+			wantError: "max total key+value size",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			status, body, _ := performContractQueryRequest(t, hd, contract, tt.callData)
+			if status != http.StatusBadRequest {
+				t.Fatalf("unexpected status: %d body=%s", status, body)
+			}
+			if !strings.Contains(body, tt.wantError) {
+				t.Fatalf("expected body containing %q, got: %s", tt.wantError, body)
+			}
+		})
 	}
 }
 
@@ -492,6 +587,26 @@ func performRawContractQueryRequest(t *testing.T, hd *Handlers, contract string,
 
 	hd.Router().ServeHTTP(rec, req)
 	return rec.Code, rec.Body.String(), rec.Header()
+}
+
+func digestQueryPayloadEntries(count int) map[string]string {
+	out := make(map[string]string, count)
+	out["function"] = "GetOwner"
+	for i := 1; i < count; i++ {
+		out[fmt.Sprintf("k%02d", i)] = "v"
+	}
+
+	return out
+}
+
+func digestQueryPayloadTotalBytesExceeded() map[string]string {
+	out := make(map[string]string, cruntime.MaxContractCallDataEntries)
+	out["function"] = "GetOwner"
+	for i := 1; i < cruntime.MaxContractCallDataEntries; i++ {
+		out[fmt.Sprintf("k%02d", i)] = strings.Repeat("v", 1040)
+	}
+
+	return out
 }
 
 func decodeHALResponse(t *testing.T, body string) map[string]interface{} {

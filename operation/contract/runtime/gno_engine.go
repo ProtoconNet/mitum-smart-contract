@@ -50,6 +50,10 @@ func (gnoEngine) ExecuteContract(
 		}
 	}()
 
+	if err := ValidateContractCallDataLimits("execute callData", req.CallData); err != nil {
+		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("invalid call data: %v", err)
+	}
+
 	schema, err := resolveContractSchemaForExecution(req.Schema, req.ContractCode)
 	if err != nil {
 		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to analyze contract schema: %v", err)

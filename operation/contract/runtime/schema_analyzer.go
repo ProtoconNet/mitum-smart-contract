@@ -95,6 +95,10 @@ func AnalyzeContractSchema(sourceCode string) (ContractSchema, error) {
 		}
 	}
 
+	if err := validateContractSchemaComplexity(schema, len(node.Imports)); err != nil {
+		return ContractSchema{}, err
+	}
+
 	if err := finalizeContractSchema(&schema); err != nil {
 		return ContractSchema{}, err
 	}

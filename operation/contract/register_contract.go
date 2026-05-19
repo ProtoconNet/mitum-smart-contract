@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
+	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
 	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
@@ -67,6 +68,9 @@ func (fact RegisterContractFact) IsValid(b []byte) error {
 	if fact.callData == nil {
 		return common.ErrFactInvalid.Wrap(
 			common.ErrValueInvalid.Wrap(errors.Errorf("callData map not initialized")))
+	}
+	if err := cruntime.ValidateContractCallDataLimits("register init_data", fact.callData); err != nil {
+		return common.ErrFactInvalid.Wrap(common.ErrValueInvalid.Wrap(err))
 	}
 
 	if err := util.CheckIsValiders(nil, false,

@@ -3,15 +3,18 @@ package digest
 import (
 	"bytes"
 	"encoding/json"
+	stderrors "errors"
 	"net/http"
 
 	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
 	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 var digestContractQueryEngine = cruntime.NewGnoEngine()
+
+const MaxContractQueryBodyBytes = 128 * 1024
 
 type ContractQueryResponse struct {
 	Contract string      `json:"contract"`
@@ -29,8 +32,19 @@ func (hd *Handlers) handleContractQuery(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, MaxContractQueryBodyBytes)
 	body := &bytes.Buffer{}
 	if _, err := body.ReadFrom(r.Body); err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if stderrors.As(err, &maxBytesErr) {
+			HTTP2ProblemWithError(
+				w,
+				pkgerrors.Errorf("query body exceeds max size: max %d bytes", MaxContractQueryBodyBytes),
+				http.StatusRequestEntityTooLarge,
+			)
+			return
+		}
+
 		HTTP2ProblemWithError(w, err, http.StatusInternalServerError)
 		return
 	}
@@ -40,10 +54,14 @@ func (hd *Handlers) handleContractQuery(w http.ResponseWriter, r *http.Request) 
 		HTTP2ProblemWithError(w, err, http.StatusBadRequest)
 		return
 	}
+	if err := cruntime.ValidateContractCallDataLimits("query callData", callData); err != nil {
+		HTTP2ProblemWithError(w, err, http.StatusBadRequest)
+		return
+	}
 
 	fName, found := callData["function"]
 	if !found || fName == "" {
-		HTTP2ProblemWithError(w, errors.Errorf("missing function in query body"), http.StatusBadRequest)
+		HTTP2ProblemWithError(w, pkgerrors.Errorf("missing function in query body"), http.StatusBadRequest)
 		return
 	}
 
@@ -75,7 +93,7 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 			return nil, err
 		}
 		if !snapshotFound {
-			return nil, errors.Errorf("snapshot state not found for typed contract %s", contract)
+			return nil, pkgerrors.Errorf("snapshot state not found for typed contract %s", contract)
 		}
 
 		// For snapshot-backed Gno contracts, snapshot state height is the canonical query height.
@@ -101,7 +119,7 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 		},
 	)
 	if qerr != nil {
-		return nil, errors.Errorf("%v", qerr)
+		return nil, pkgerrors.Errorf("%v", qerr)
 	}
 
 	i, err := hd.buildContractQuery(contract, callData["function"], qr, responseState)

@@ -145,6 +145,13 @@ register payload:
 - unknown key 존재 시 실패
 - scalar parse 실패 시 실패
 
+추가로 `init_data` 자체에도 payload limit이 있다.
+
+- 최대 entry 수: `64`
+- key 최대 길이: `128 bytes`
+- value 최대 길이: `16 KiB`
+- 전체 key+value 총합: `64 KiB`
+
 ### 요약
 
 - `... -> error` 이면 write
@@ -201,6 +208,35 @@ query result는 scalar보다 넓은 범위를 지원한다.
 
 ---
 
+## 입력 payload limit
+
+현재 프로젝트는 scalar-only 입력 ABI를 유지하면서, `map[string]string` 입력 payload가 과도하게 커지는 것도 제한한다.
+
+적용 대상:
+
+- register `init_data`
+- call operation `call_data`
+- runtime direct execute request `CallData`
+- runtime direct query request `CallData`
+- digest query HTTP body에서 decode된 `callData`
+
+현재 limit 값:
+
+- 최대 entry 수: `64`
+- key 최대 길이: `128 bytes`
+- value 최대 길이: `16 KiB`
+- 전체 key+value 총합: `64 KiB`
+
+중요한 점:
+
+- reserved key인 `function`, `_sender`도 일반 entry와 동일하게 계산된다
+- 길이는 문자 수가 아니라 **byte length** 기준이다
+- composite input을 여는 기능이 아니라, 현재의 scalar string map 입력을 제한하는 정책이다
+
+즉 아래처럼 key/value 수가 너무 많거나, key/value 하나가 너무 길거나, 전체 합이 너무 크면 contract 실행 전 단계에서 거부된다.
+
+---
+
 ## 지원되지 않는 타입/형태
 
 현재 명시적으로 지원하지 않는 것들은 아래와 같다.
@@ -226,6 +262,22 @@ query result는 scalar보다 넓은 범위를 지원한다.
 - write arg로 struct/map/slice 입력
 - query arg로 struct/map/slice 입력
 - query result 3개 이상 반환
+
+### schema complexity 관련 비지원
+
+typed Gno contract source가 문법적으로 맞더라도, schema가 너무 크거나 깊으면 admission 단계에서 거부된다.
+
+현재 complexity limit:
+
+- import 개수 최대: `16`
+- 함수 개수 최대: `128`
+- persistent global 개수 최대: `128`
+- named struct 개수 최대: `64`
+- struct field 개수 최대: `64` per struct
+- 타입 nesting depth 최대: `16`
+- 전체 schema node 수 최대: `4096`
+
+이 제한은 "지원되는 타입이지만 너무 복잡한 contract"를 막기 위한 것이며, 기존 unsupported type 정책을 대체하는 것이 아니다.
 
 ---
 
@@ -273,6 +325,23 @@ query result는 scalar보다 넓은 범위를 지원한다.
 
 ---
 
+## Query HTTP body limit
+
+digest query HTTP endpoint는 decoded `callData` limit과 별도로 **raw HTTP body size limit**도 적용한다.
+
+현재 query body 최대 크기:
+
+- `128 KiB`
+
+즉 query 요청은 아래 두 단계를 모두 통과해야 한다.
+
+1. raw HTTP body size limit
+2. decode 후 `map[string]string` payload limit
+
+그래서 큰 JSON body는 `json.Unmarshal` 전에 먼저 거부될 수 있다.
+
+---
+
 ## ReadOnly의 의미
 
 `ctx.IsReadOnly()`는 "이 컨트랙트가 read-only contract로 배포되었다"는 뜻이 아니다.
@@ -303,6 +372,8 @@ query result는 scalar보다 넓은 범위를 지원한다.
 
 - stdlib를 일반 Go처럼 자유롭게 import하려고 시도하기
 - anonymous struct를 상태/반환 타입으로 사용하기
+- `init_data` / `call_data`에 매우 큰 string이나 과도한 수의 entry를 넣기
+- 함수/struct/global을 불필요하게 많이 선언해 큰 schema를 만들기
 - map 안에 map/slice를 직접 넣기
 - slice 안에 map/slice를 직접 넣기
 - 복합 타입을 write/query 입력으로 받으려 하기
@@ -319,8 +390,10 @@ query result는 scalar보다 넓은 범위를 지원한다.
 
 - write args: scalar only
 - query args: scalar only
+- input payload: size-limited string map
 - state: struct/map/slice 지원
 - query result: struct/map/slice 지원
+- schema: complexity limit 적용
 - host ABI: `mitum/chain` 중심으로 사용 가능
 
 이 문서를 기준으로 컨트랙트를 작성하면 현재 runtime/ABI 정책과 가장 잘 맞는다.
