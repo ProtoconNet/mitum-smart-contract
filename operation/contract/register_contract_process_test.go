@@ -10,6 +10,7 @@ import (
 	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
 	cestate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	types "github.com/ProtoconNet/mitum-currency/v3/types"
+	contracttypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
@@ -72,9 +73,9 @@ func TestRegisterContractProcessorPassesValidatedSchemaToExecute(t *testing.T) {
 	originalEngine := contractEngine
 	defer func() { contractEngine = originalEngine }()
 
-	expectedSchema := cruntime.ContractSchema{
-		PackageName: "contract",
-		Mode:        cruntime.SchemaModeTypedArgs,
+	expectedSchema, err := cruntime.AnalyzeContractSchema(registerProcessSchemaReuseContractSource)
+	if err != nil {
+		t.Fatalf("AnalyzeContractSchema returned error: %v", err)
 	}
 	fakeEngine := &registerProcessSchemaReuseEngine{
 		t:        t,
@@ -133,10 +134,54 @@ func TestRegisterContractProcessorPassesValidatedSchemaToExecute(t *testing.T) {
 	if len(merges) != 2 {
 		t.Fatalf("expected design + contract account merges, got %d", len(merges))
 	}
+	designValue := designStateValueFromMerges(t, merges, pstate.DesignStateKey(contractAddr))
+	if designValue.Schema == nil {
+		t.Fatal("expected register to store persisted schema metadata")
+	}
+	if designValue.Schema.SchemaFormatVersion != contracttypes.CurrentSchemaFormatVersion {
+		t.Fatalf("unexpected schema format version: %q", designValue.Schema.SchemaFormatVersion)
+	}
+	if designValue.Schema.SchemaRulesetVersion != cruntime.CurrentSchemaRulesetVersion {
+		t.Fatalf("unexpected schema ruleset version: %q", designValue.Schema.SchemaRulesetVersion)
+	}
+	if designValue.Schema.SourceHash != contracttypes.ContractSourceHash(registerProcessSchemaReuseContractSource) {
+		t.Fatalf("unexpected source hash: %q", designValue.Schema.SourceHash)
+	}
+	storedSchema, ok := cruntime.RuntimeSchemaFromPersisted(registerProcessSchemaReuseContractSource, designValue.Schema)
+	if !ok {
+		t.Fatal("stored persisted schema was not reusable")
+	}
+	if !reflect.DeepEqual(storedSchema, expectedSchema) {
+		t.Fatalf("stored schema mismatch\ngot:  %#v\nwant: %#v", storedSchema, expectedSchema)
+	}
 	if fakeEngine.validateCalls != 1 {
 		t.Fatalf("expected ValidateContract to be called once, got %d", fakeEngine.validateCalls)
 	}
 	if fakeEngine.executeCalls != 1 {
 		t.Fatalf("expected ExecuteContract to be called once, got %d", fakeEngine.executeCalls)
 	}
+}
+
+func designStateValueFromMerges(
+	t *testing.T,
+	merges []base.StateMergeValue,
+	key string,
+) pstate.DesignStateValue {
+	t.Helper()
+
+	for _, merge := range merges {
+		if merge.Key() != key {
+			continue
+		}
+
+		value, ok := merge.Value().(pstate.DesignStateValue)
+		if !ok {
+			t.Fatalf("expected DesignStateValue merge, got %T", merge.Value())
+		}
+
+		return value
+	}
+
+	t.Fatalf("design state merge %q not found", key)
+	return pstate.DesignStateValue{}
 }

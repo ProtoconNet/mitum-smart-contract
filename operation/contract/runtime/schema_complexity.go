@@ -13,63 +13,65 @@ const (
 )
 
 func validateContractSchemaComplexity(schema ContractSchema, importCount int) error {
-	if importCount > MaxContractSchemaImports {
+	rules := currentSchemaRuleset.ComplexityRules
+
+	if importCount > rules.MaxImports {
 		return fmt.Errorf(
 			"contract schema complexity exceeds max import count: got %d, max %d",
 			importCount,
-			MaxContractSchemaImports,
+			rules.MaxImports,
 		)
 	}
 
-	if len(schema.Functions) > MaxContractSchemaFunctions {
+	if len(schema.Functions) > rules.MaxFunctions {
 		return fmt.Errorf(
 			"contract schema complexity exceeds max function count: got %d, max %d",
 			len(schema.Functions),
-			MaxContractSchemaFunctions,
+			rules.MaxFunctions,
 		)
 	}
 
-	if len(schema.PersistentGlobals) > MaxContractSchemaPersistentGlobals {
+	if len(schema.PersistentGlobals) > rules.MaxPersistentGlobals {
 		return fmt.Errorf(
 			"contract schema complexity exceeds max persistent global count: got %d, max %d",
 			len(schema.PersistentGlobals),
-			MaxContractSchemaPersistentGlobals,
+			rules.MaxPersistentGlobals,
 		)
 	}
 
-	if len(schema.Types.Structs) > MaxContractSchemaStructs {
+	if len(schema.Types.Structs) > rules.MaxStructs {
 		return fmt.Errorf(
 			"contract schema complexity exceeds max struct count: got %d, max %d",
 			len(schema.Types.Structs),
-			MaxContractSchemaStructs,
+			rules.MaxStructs,
 		)
 	}
 
 	for name, typ := range schema.Types.Structs {
-		if len(typ.Fields) > MaxContractSchemaStructFields {
+		if len(typ.Fields) > rules.MaxStructFields {
 			return fmt.Errorf(
 				"contract schema complexity exceeds max struct field count for %q: got %d, max %d",
 				name,
 				len(typ.Fields),
-				MaxContractSchemaStructFields,
+				rules.MaxStructFields,
 			)
 		}
 	}
 
-	if depth := maxContractSchemaTypeDepth(schema); depth > MaxContractSchemaTypeNestingDepth {
+	if depth := maxContractSchemaTypeDepth(schema); depth > rules.MaxTypeNestingDepth {
 		return fmt.Errorf(
 			"contract schema complexity exceeds max type nesting depth: got %d, max %d",
 			depth,
-			MaxContractSchemaTypeNestingDepth,
+			rules.MaxTypeNestingDepth,
 		)
 	}
 
 	nodes := contractSchemaNodeCount(schema, importCount)
-	if nodes > MaxContractSchemaNodes {
+	if nodes > rules.MaxSchemaNodes {
 		return fmt.Errorf(
 			"contract schema complexity exceeds max total node count: got %d, max %d",
 			nodes,
-			MaxContractSchemaNodes,
+			rules.MaxSchemaNodes,
 		)
 	}
 

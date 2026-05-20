@@ -163,9 +163,10 @@ func (opp *RegisterContractProcessor) Process(
 		return nil, base.NewBaseOperationProcessReasonError("invalid contract design, %q; %w", fact.Contract(), err), nil
 	}
 
+	persistedSchema := cruntime.NewPersistedContractSchema(fact.ContractCode(), schema)
 	sts = append(sts, cstate.NewStateMergeValue(
 		pstate.DesignStateKey(fact.Contract()),
-		pstate.NewDesignStateValue(design),
+		pstate.NewDesignStateValueWithSchema(design, &persistedSchema),
 	))
 
 	st, _ := cstate.ExistsState(cestate.StateKeyContractAccount(fact.Contract()), "contract account", getStateFunc)

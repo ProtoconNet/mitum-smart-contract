@@ -11,7 +11,8 @@ import (
 
 type DesignStateValueJSONMarshaler struct {
 	hint.BaseHinter
-	Design types.Design `json:"design"`
+	Design types.Design                   `json:"design"`
+	Schema *types.PersistedContractSchema `json:"schema,omitempty"`
 }
 
 func (sv DesignStateValue) MarshalJSON() ([]byte, error) {
@@ -21,8 +22,9 @@ func (sv DesignStateValue) MarshalJSON() ([]byte, error) {
 }
 
 type DesignStateValueJSONUnmarshaler struct {
-	Hint   hint.Hint       `json:"_hint"`
-	Design json.RawMessage `json:"design"`
+	Hint   hint.Hint                      `json:"_hint"`
+	Design json.RawMessage                `json:"design"`
+	Schema *types.PersistedContractSchema `json:"schema"`
 }
 
 func (sv *DesignStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
@@ -40,6 +42,7 @@ func (sv *DesignStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
 		return e.Wrap(err)
 	}
 	sv.Design = sd
+	sv.Schema = u.Schema
 
 	return nil
 }

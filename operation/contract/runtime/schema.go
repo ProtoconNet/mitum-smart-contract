@@ -21,16 +21,7 @@ const (
 	QueryArgSupportDescription         = "current Gno query ABI v1 supports only scalar parameters: string, bool, int, int64, uint64"
 )
 
-var AllowedTypedContractImports = []string{
-	MitumChainPackagePath,
-	"strconv",
-	"strings",
-	"errors",
-	"bytes",
-	"encoding/hex",
-	"encoding/base64",
-	"unicode/utf8",
-}
+var AllowedTypedContractImports = cloneStringSlice(currentSchemaRuleset.ImportRules.AllowedImports)
 
 var allowedTypedContractImportSet = func() map[string]struct{} {
 	out := make(map[string]struct{}, len(AllowedTypedContractImports))
@@ -462,18 +453,21 @@ func (fn FunctionSchema) IsTypedWriteShape() bool {
 func IsSupportedScalarType(typ TypeRef) bool {
 	switch typ.Kind {
 	case TypeScalar:
-		switch typ.NormalizedString() {
-		case "string", "bool", "int", "int64", "uint64":
-			return true
-		default:
-			return false
+		normalized := typ.NormalizedString()
+		for _, kind := range currentSchemaRuleset.ScalarRules.AllowedKinds {
+			if normalized == kind {
+				return true
+			}
 		}
+		return false
 	default:
 		return false
 	}
 }
 
 func (fn FunctionSchema) IsTypedQueryShape() bool {
+	queryRules := currentSchemaRuleset.QueryRules
+
 	if !fn.Exported {
 		return false
 	}
@@ -486,8 +480,9 @@ func (fn FunctionSchema) IsTypedQueryShape() bool {
 	if len(fn.Results) < 1 || len(fn.Results) > 2 {
 		return false
 	}
-	return len(fn.Results) == 1 ||
-		fn.Results[1].Type.NormalizedString() == "bool"
+	return (len(fn.Results) == 1 && queryRules.SingleResultAllowed) ||
+		(queryRules.BoolPresenceResultAllowed &&
+			fn.Results[1].Type.NormalizedString() == queryRules.BoolPresenceSecondResultScalarKind)
 }
 
 func (s ContractSchema) ValidateQueryResultType(typ TypeRef, subject string) error {

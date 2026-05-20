@@ -9,17 +9,21 @@ import (
 )
 
 func (sv DesignStateValue) MarshalBSON() ([]byte, error) {
-	return bsonenc.Marshal(
-		bson.M{
-			"_hint":  sv.Hint().String(),
-			"design": sv.Design,
-		},
-	)
+	m := bson.M{
+		"_hint":  sv.Hint().String(),
+		"design": sv.Design,
+	}
+	if sv.Schema != nil {
+		m["schema"] = sv.Schema
+	}
+
+	return bsonenc.Marshal(m)
 }
 
 type DesignStateValueBSONUnmarshaler struct {
-	Hint   string   `bson:"_hint"`
-	Design bson.Raw `bson:"design"`
+	Hint   string                         `bson:"_hint"`
+	Design bson.Raw                       `bson:"design"`
+	Schema *types.PersistedContractSchema `bson:"schema"`
 }
 
 func (sv *DesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -41,6 +45,7 @@ func (sv *DesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 		return e.Wrap(err)
 	}
 	sv.Design = sd
+	sv.Schema = u.Schema
 
 	return nil
 }

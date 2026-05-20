@@ -27,12 +27,21 @@ func ContractStateKey(addr base.Address) string {
 type DesignStateValue struct {
 	hint.BaseHinter
 	Design types.Design
+	Schema *types.PersistedContractSchema
 }
 
 func NewDesignStateValue(design types.Design) DesignStateValue {
+	return NewDesignStateValueWithSchema(design, nil)
+}
+
+func NewDesignStateValueWithSchema(
+	design types.Design,
+	schema *types.PersistedContractSchema,
+) DesignStateValue {
 	return DesignStateValue{
 		BaseHinter: hint.NewBaseHinter(DesignStateValueHint),
 		Design:     design,
+		Schema:     schema,
 	}
 }
 
@@ -50,26 +59,44 @@ func (sv DesignStateValue) IsValid([]byte) error {
 	if err := sv.Design.IsValid(nil); err != nil {
 		return e.Wrap(err)
 	}
+	if sv.Schema != nil {
+		if err := sv.Schema.IsValid(nil); err != nil {
+			return e.Wrap(err)
+		}
+	}
 
 	return nil
 }
 
 func (sv DesignStateValue) HashBytes() []byte {
+	if sv.Schema != nil {
+		return util.ConcatBytesSlice(sv.Design.Bytes(), sv.Schema.Bytes())
+	}
+
 	return sv.Design.Bytes()
 }
 
 func GetDesignFromState(st base.State) (types.Design, error) {
+	d, err := GetDesignStateValueFromState(st)
+	if err != nil {
+		return types.Design{}, err
+	}
+
+	return d.Design, nil
+}
+
+func GetDesignStateValueFromState(st base.State) (DesignStateValue, error) {
 	v := st.Value()
 	if v == nil {
-		return types.Design{}, errors.Errorf("state value is nil")
+		return DesignStateValue{}, errors.Errorf("state value is nil")
 	}
 
 	d, ok := v.(DesignStateValue)
 	if !ok {
-		return types.Design{}, errors.Errorf("expected DesignStateValue but %T", v)
+		return DesignStateValue{}, errors.Errorf("expected DesignStateValue but %T", v)
 	}
 
-	return d.Design, nil
+	return d, nil
 }
 
 func IsDesignStateKey(key string) bool {

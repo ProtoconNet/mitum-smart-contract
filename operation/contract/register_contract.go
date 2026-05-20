@@ -18,7 +18,7 @@ var (
 	RegisterContractHint     = hint.MustNewHint("mitum-contract-register-operation-v0.0.1")
 )
 
-const MaxContractSourceBytes = 256 * 1024
+const MaxContractSourceBytes = cruntime.MaxTypedContractSourceBytes
 
 type RegisterContractFact struct {
 	base.BaseFact

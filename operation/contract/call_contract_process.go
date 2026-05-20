@@ -96,10 +96,16 @@ func (opp *CallContractProcessor) Process(
 		return nil, base.NewBaseOperationProcessReasonError(
 			"%v", err), nil
 	}
-	cd, err := pstate.GetDesignFromState(st)
+	dsv, err := pstate.GetDesignStateValueFromState(st)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			"%v", err), nil
+	}
+	cd := dsv.Design
+
+	var schema *cruntime.ContractSchema
+	if persistedSchema, ok := cruntime.RuntimeSchemaFromPersisted(cd.ContractCode(), dsv.Schema); ok {
+		schema = &persistedSchema
 	}
 
 	execResult, bErr := contractEngine.ExecuteContract(
@@ -111,6 +117,7 @@ func (opp *CallContractProcessor) Process(
 			Sender:       fact.Sender(),
 			Height:       opp.Height(),
 			ContractCode: cd.ContractCode(),
+			Schema:       schema,
 			Function:     fName,
 			CallData:     fact.callData,
 		},

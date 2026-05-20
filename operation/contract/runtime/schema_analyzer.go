@@ -415,7 +415,9 @@ func (r *typeResolver) resolveStructFields(fields *ast.FieldList) ([]StructField
 		}
 
 		if len(field.Names) == 0 {
-			return nil, errors.Errorf("embedded struct fields are not supported yet")
+			if !currentSchemaRuleset.StateRules.EmbeddedFieldsAllowed {
+				return nil, errors.Errorf("embedded struct fields are not supported yet")
+			}
 		}
 
 		for _, name := range field.Names {
@@ -440,12 +442,14 @@ func exprString(fset *token.FileSet, expr ast.Expr) (string, error) {
 }
 
 func finalizeContractSchema(schema *ContractSchema) error {
+	ruleset := currentSchemaRuleset
+
 	initialize, found := schema.FindFunction("Initialize")
 	if !found {
 		return errors.Errorf("Initialize function not found")
 	}
 
-	if schema.PackageName != "contract" {
+	if schema.PackageName != ruleset.SourceRules.RequiredPackageName {
 		return errors.Errorf("only package contract typed Gno contracts are supported")
 	}
 
@@ -460,7 +464,7 @@ func finalizeContractSchema(schema *ContractSchema) error {
 	}
 
 	for _, g := range schema.PersistentGlobals {
-		if !g.HasExplicitType {
+		if ruleset.StateRules.ExplicitPersistentGlobalTypeRequired && !g.HasExplicitType {
 			return errors.Errorf("persistent global %q must declare explicit type", g.Name)
 		}
 		if err := schema.ValidatePersistentGlobalType(g); err != nil {

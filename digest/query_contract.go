@@ -79,6 +79,10 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 	if err != nil {
 		return nil, err
 	}
+	designStateValue, err := pstate.GetDesignStateValueFromState(designState)
+	if err != nil {
+		return nil, err
+	}
 
 	queryHeight := designState.Height()
 	responseState := designState
@@ -106,6 +110,11 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 		return nil, err
 	}
 
+	var schema *cruntime.ContractSchema
+	if persistedSchema, ok := cruntime.RuntimeSchemaFromPersisted(design.ContractCode(), designStateValue.Schema); ok {
+		schema = &persistedSchema
+	}
+
 	qr, qerr := digestContractQueryEngine.QueryContract(
 		*hd.encs,
 		hd.database.State,
@@ -114,6 +123,7 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 			Sender:       sender,
 			Height:       queryHeight,
 			ContractCode: design.ContractCode(),
+			Schema:       schema,
 			Function:     callData["function"],
 			CallData:     callData,
 		},
