@@ -12,7 +12,7 @@ import (
 	pkgerrors "github.com/pkg/errors"
 )
 
-var digestContractQueryEngine = cruntime.NewGnoEngine()
+var digestContractQueryEngine cruntime.ContractEngine = cruntime.NewGnoEngine()
 
 const MaxContractQueryBodyBytes = 128 * 1024
 

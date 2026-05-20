@@ -28,8 +28,8 @@ func TestGnoEngineExecuteRejectsOversizedCallDataBeforeSchemaAnalysis(t *testing
 	if err == nil {
 		t.Fatal("expected ExecuteContract to reject oversized call data")
 	}
-	if !strings.Contains(err.Error(), "invalid call data") {
-		t.Fatalf("expected invalid call data error, got: %v", err)
+	if !containsAll(err.Error(), "invalid call data", "value for key", "exceeds max size") {
+		t.Fatalf("expected invalid call data error with core wording, got: %v", err)
 	}
 	if count != 0 {
 		t.Fatalf("expected schema analyzer not to run, got %d calls", count)
@@ -59,8 +59,8 @@ func TestGnoEngineQueryRejectsOversizedCallDataBeforeSchemaAnalysis(t *testing.T
 	if err == nil {
 		t.Fatal("expected QueryContract to reject oversized call data")
 	}
-	if !strings.Contains(err.Error(), "invalid call data") {
-		t.Fatalf("expected invalid call data error, got: %v", err)
+	if !containsAll(err.Error(), "invalid call data", "value for key", "exceeds max size") {
+		t.Fatalf("expected invalid call data error with core wording, got: %v", err)
 	}
 	if count != 0 {
 		t.Fatalf("expected schema analyzer not to run, got %d calls", count)

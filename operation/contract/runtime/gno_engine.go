@@ -23,6 +23,7 @@ import (
 type gnoEngine struct{}
 
 var analyzeContractSchemaFunc = AnalyzeContractSchema
+var newGnoMachineAndPackageFunc = newGnoMachineAndPackage
 
 func NewGnoEngine() ContractEngine {
 	return gnoEngine{}
@@ -136,7 +137,7 @@ func (gnoEngine) ExecuteContract(
 	limits := WriteGnoExecutionLimits()
 	gasMeter = NewGnoGasMeter(limits.GasLimit)
 
-	m, pkg, err := newGnoMachineAndPackage(
+	m, pkg, err := newGnoMachineAndPackageFunc(
 		execCtx,
 		runtimeValue.PackagePath,
 		req.ContractCode,

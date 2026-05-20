@@ -91,7 +91,7 @@ func (gnoEngine) QueryContract(
 	limits := QueryGnoExecutionLimits()
 	gasMeter = NewGnoGasMeter(limits.GasLimit)
 
-	m, pkg, err := newGnoMachineAndPackage(
+	m, pkg, err := newGnoMachineAndPackageFunc(
 		execCtx,
 		runtimeValue.PackagePath,
 		req.ContractCode,
