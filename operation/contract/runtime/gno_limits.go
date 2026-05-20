@@ -54,11 +54,11 @@ func ClassifyGnoExecutionPanic(
 
 	if strings.Contains(lmsg, "alloc") || strings.Contains(lmsg, "allocation") {
 		return base.NewBaseOperationProcessReasonError(
-			"%s exceeded allocation limit: %v", scope, r,
+			"%s exceeded allocation limit", scope,
 		)
 	}
 
 	return base.NewBaseOperationProcessReasonError(
-		"%s panicked: %v", scope, r,
+		"%s panicked", scope,
 	)
 }
