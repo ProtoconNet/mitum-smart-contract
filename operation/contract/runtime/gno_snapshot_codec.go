@@ -67,16 +67,30 @@ func CaptureSnapshot(pkg *gno.PackageValue, store gno.Store, schema ContractSche
 		})
 	}
 
-	return json.Marshal(doc)
+	snapshotBytes, err := json.Marshal(doc)
+	if err != nil {
+		return nil, err
+	}
+	if err := ValidateSnapshotLimits(doc, snapshotBytes); err != nil {
+		return nil, err
+	}
+
+	return snapshotBytes, nil
 }
 
 func RestoreSnapshot(m *gno.Machine, pkg *gno.PackageValue, snapshot []byte, schema ContractSchema) error {
 	if len(snapshot) == 0 {
 		return nil
 	}
+	if err := validateSnapshotSizeLimit(snapshot); err != nil {
+		return err
+	}
 
 	var doc SnapshotDoc
 	if err := json.Unmarshal(snapshot, &doc); err != nil {
+		return err
+	}
+	if err := ValidateSnapshotLimits(doc, snapshot); err != nil {
 		return err
 	}
 
