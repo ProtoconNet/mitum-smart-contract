@@ -406,14 +406,8 @@ func (fn FunctionSchema) IsTypedABIShape() bool {
 	if !fn.Exported {
 		return false
 	}
-	if !fn.IsContextCallable() {
-		return false
-	}
-	if len(fn.Params) < 2 {
-		return false
-	}
 
-	return true
+	return fn.IsContextCallable()
 }
 
 func isContractContextType(typ TypeRef) bool {
@@ -446,7 +440,6 @@ func (fn FunctionSchema) IsTypedWriteShape() bool {
 	return fn.Exported &&
 		fn.Name != "Initialize" &&
 		fn.IsContextCallable() &&
-		len(fn.Params) >= 2 &&
 		fn.IsSingleErrorResult()
 }
 
@@ -477,12 +470,18 @@ func (fn FunctionSchema) IsTypedQueryShape() bool {
 	if !fn.IsContextCallable() {
 		return false
 	}
-	if len(fn.Results) < 1 || len(fn.Results) > 2 {
+	switch len(fn.Results) {
+	case 1:
+		if fn.IsSingleErrorResult() {
+			return false
+		}
+		return queryRules.SingleResultAllowed
+	case 2:
+		return queryRules.BoolPresenceResultAllowed &&
+			fn.Results[1].Type.NormalizedString() == queryRules.BoolPresenceSecondResultScalarKind
+	default:
 		return false
 	}
-	return (len(fn.Results) == 1 && queryRules.SingleResultAllowed) ||
-		(queryRules.BoolPresenceResultAllowed &&
-			fn.Results[1].Type.NormalizedString() == queryRules.BoolPresenceSecondResultScalarKind)
 }
 
 func (s ContractSchema) ValidateQueryResultType(typ TypeRef, subject string) error {

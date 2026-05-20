@@ -42,6 +42,7 @@
 즉, 현재는 아래와 같은 함수 형태가 지원된다.
 
 - write 함수
+  - `func Claim(ctx chain.ContractContext) error`
   - `func X(ctx chain.ContractContext, a string, b int64) error`
 - query 함수
   - `func X(ctx chain.ContractContext, name string) bool`
@@ -80,6 +81,12 @@ func X(ctx chain.ContractContext, ...scalar) error
 
 즉 반환형이 `error` 하나이면 write 함수로 분류된다.
 
+중요:
+
+- scalar 인자는 0개여도 된다
+- 즉 `func Claim(ctx chain.ContractContext) error` 같은 함수도 유효한 write 함수다
+- 이전에는 일부 구현이 `ctx` 외 인자 1개 이상을 요구했지만, 현재 정책과 구현은 zero-arg write를 허용한다
+
 ### query 함수
 
 query 함수는 아래 형태를 따른다.
@@ -99,6 +106,12 @@ func X(ctx chain.ContractContext, ...scalar) (T, bool)
   - 2개인데 두 번째가 `bool`
 
 즉 반환형이 `T` 또는 `(T, bool)`이면 query 함수로 분류된다.
+
+중요:
+
+- 반환값이 `error` 하나인 함수는 query가 아니다
+- 즉 `func Claim(ctx chain.ContractContext) error`는 query로 해석되면 안 되고 write로 분류되어야 한다
+- `(T, bool)`의 두 번째 반환값은 반드시 `bool`이어야 한다
 
 ### Initialize는 예외
 
@@ -155,6 +168,7 @@ register payload:
 ### 요약
 
 - `... -> error` 이면 write
+- `ctx`만 받고 `error`를 반환하는 함수도 write
 - `... -> T` 또는 `... -> (T, bool)` 이면 query
 - `Initialize(ctx, ...scalar) error` 는 별도 special case
 
