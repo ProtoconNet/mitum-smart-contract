@@ -27,7 +27,7 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	config.Users = map[string]User{
 		"alice": User{Name: "alice", Balance: 10, Meta: Meta{Active: true, Limit: 100}},
 		"bob": User{Name: "bob", Balance: 20, Meta: Meta{Active: false, Limit: 200}},
@@ -36,7 +36,7 @@ func Initialize(ctx chain.ContractContext) error {
 	return nil
 }
 
-func GetSelectedUser(ctx chain.ContractContext, name string, requireActive bool) (User, bool) {
+func GetSelectedUser(ctx chain.QueryContext, name string, requireActive bool) (User, bool) {
 	user, found := config.Users[name]
 	if !found {
 		return User{}, false
@@ -47,7 +47,7 @@ func GetSelectedUser(ctx chain.ContractContext, name string, requireActive bool)
 	return user, true
 }
 
-func HasAlias(ctx chain.ContractContext, name string) bool {
+func HasAlias(ctx chain.QueryContext, name string) bool {
 	for _, alias := range config.Aliases {
 		if alias == name {
 			return true

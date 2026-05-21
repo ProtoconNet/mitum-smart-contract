@@ -23,12 +23,12 @@ import "mitum/chain"
 
 var value string
 
-func Initialize(ctx chain.ContractContext, seed string) error {
+func Initialize(ctx chain.WriteContext, seed string) error {
 	value = seed
 	return nil
 }
 
-func GetValue(ctx chain.ContractContext) string { return value }
+func GetValue(ctx chain.QueryContext) string { return value }
 `
 
 func TestDesignStateValueDecodeOldJSONWithoutSchema(t *testing.T) {

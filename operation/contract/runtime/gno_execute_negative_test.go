@@ -13,16 +13,16 @@ import "mitum/chain"
 var value string
 var limit int64
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	return nil
 }
 
-func SetValue(ctx chain.ContractContext, next string) error {
+func SetValue(ctx chain.WriteContext, next string) error {
 	value = next
 	return nil
 }
 
-func SetLimit(ctx chain.ContractContext, next int64) error {
+func SetLimit(ctx chain.WriteContext, next int64) error {
 	limit = next
 	return nil
 }

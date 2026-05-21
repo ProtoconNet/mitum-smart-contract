@@ -50,7 +50,31 @@ decode 후 `map[string]string` payload에도 size limit이 적용된다.
 - max value bytes: `16 KiB`
 - max total key+value bytes: `64 KiB`
 
-reserved key인 `function` 과 `_sender` 도 일반 entry와 동일하게 계산된다.
+reserved key인 `function` 도 일반 entry와 동일하게 계산된다.
+
+`_sender` 는 더 이상 query execution context sender 로 해석되지 않는다. 요청에 들어와도 일반 unused key처럼 payload limit 계산에 포함될 뿐이며, query contract는 `chain.QueryContext`에서 sender에 접근할 수 없다.
+
+### Query Height Semantics
+
+query contract에서 `ctx.GetHeight()`는 현재 query가 읽는 state/view height다. snapshot-backed typed Gno contract에서는 snapshot state height를 반환한다.
+
+현재 chain head height가 필요하면 query 함수에서 `ctx.GetCurrentHeight()`를 사용한다. digest query path는 database의 current last block height를 runtime에 전달하며, 이 값은 state/view height와 다를 수 있다. write/register/call path에서는 current head height ABI가 없으며, write execution/block height는 `ctx.GetHeight()`로 읽는다. `chain.CurrentHeight()`는 더 이상 canonical contract surface가 아니다.
+
+### Balance Lookup Native
+
+contract query/write 함수는 `mitum/chain` host native로 현재 balance state를 조회할 수 있다.
+
+```go
+amount, ok := chain.BalanceOf(addr, currency)
+```
+
+Semantics:
+
+- `amount`는 decimal amount string이다.
+- account, currency design, balance state가 모두 있으면 `ok == true`.
+- account 없음, currency 없음, 해당 currency balance state 없음, malformed address, malformed currency는 `("", false)`로 반환된다.
+- zero balance는 `"0", true`로 반환되어 not found와 구분된다.
+- state decode/type mismatch는 state corruption 성격의 host native failure이며, raw internal detail은 panic sanitization 정책에 따라 HTTP response에 직접 노출되지 않는다.
 
 ## Query Result Shape
 

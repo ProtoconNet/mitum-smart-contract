@@ -32,7 +32,7 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	config.Owner = ctx.GetSender()
 	config.FeatureFlags = map[string]bool{"alpha":true}
 	config.Users = map[string]User{
@@ -45,7 +45,7 @@ func Initialize(ctx chain.ContractContext) error {
 	return nil
 }
 
-func UpsertUser(ctx chain.ContractContext, name string, balance int64, limit int64, beta bool, alias string, watcherAlias string) error {
+func UpsertUser(ctx chain.WriteContext, name string, balance int64, limit int64, beta bool, alias string, watcherAlias string) error {
 	if config.FeatureFlags == nil {
 		config.FeatureFlags = map[string]bool{}
 	}
@@ -59,13 +59,13 @@ func UpsertUser(ctx chain.ContractContext, name string, balance int64, limit int
 	return nil
 }
 
-func GetConfig(ctx chain.ContractContext) Config { return config }
-func GetFeatureFlags(ctx chain.ContractContext) map[string]bool { return config.FeatureFlags }
-func GetUsers(ctx chain.ContractContext) map[string]User { return config.Users }
-func GetAliases(ctx chain.ContractContext) []string { return config.Aliases }
-func GetWatchers(ctx chain.ContractContext) []User { return config.Watchers }
+func GetConfig(ctx chain.QueryContext) Config { return config }
+func GetFeatureFlags(ctx chain.QueryContext) map[string]bool { return config.FeatureFlags }
+func GetUsers(ctx chain.QueryContext) map[string]User { return config.Users }
+func GetAliases(ctx chain.QueryContext) []string { return config.Aliases }
+func GetWatchers(ctx chain.QueryContext) []User { return config.Watchers }
 
-func GetUser(ctx chain.ContractContext, name string) (User, bool) {
+func GetUser(ctx chain.QueryContext, name string) (User, bool) {
 	user, found := config.Users[name]
 	return user, found
 }

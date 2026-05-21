@@ -24,11 +24,11 @@ type User struct {
 
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	return nil
 }
 
-func GetUsers(ctx chain.ContractContext) map[string]User {
+func GetUsers(ctx chain.QueryContext) map[string]User {
 	return users
 }
 `
@@ -153,7 +153,7 @@ func schemaComplexityFunctionCountSource(count int) string {
 	b.WriteString(schemaComplexityHeader())
 	b.WriteString(schemaComplexityInitializeOnly())
 	for i := 1; i < count; i++ {
-		fmt.Fprintf(&b, "func Query%03d(ctx chain.ContractContext) string { return \"\" }\n", i)
+		fmt.Fprintf(&b, "func Query%03d(ctx chain.QueryContext) string { return \"\" }\n", i)
 	}
 
 	return b.String()
@@ -217,7 +217,7 @@ func schemaComplexityNestedStructSource(depth int) string {
 func schemaComplexityTotalNodeCountExceededSource() string {
 	var b strings.Builder
 	b.WriteString(schemaComplexityHeader())
-	b.WriteString("func Initialize(ctx chain.ContractContext")
+	b.WriteString("func Initialize(ctx chain.WriteContext")
 	for i := 0; i < MaxContractSchemaNodes; i++ {
 		fmt.Fprintf(&b, ", p%04d string", i)
 	}
@@ -231,5 +231,5 @@ func schemaComplexityHeader() string {
 }
 
 func schemaComplexityInitializeOnly() string {
-	return "func Initialize(ctx chain.ContractContext) error { return nil }\n"
+	return "func Initialize(ctx chain.WriteContext) error { return nil }\n"
 }

@@ -16,9 +16,9 @@ var initialized bool
 var owner string
 var revision int64
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value string) error { return nil }
-func GetRevision(ctx chain.ContractContext) int64 { return revision }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value string) error { return nil }
+func GetRevision(ctx chain.QueryContext) int64 { return revision }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -111,8 +111,8 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value string) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)

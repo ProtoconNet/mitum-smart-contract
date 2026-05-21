@@ -19,7 +19,7 @@ const registerProcessSchemaReuseContractSource = `package contract
 
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `
 
 type registerProcessSchemaReuseEngine struct {

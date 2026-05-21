@@ -50,7 +50,7 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	config.Owner = ctx.GetSender()
 	config.FeatureFlags = map[string]bool{"alpha": true, "beta": false}
 	config.Users = map[string]User{
@@ -65,14 +65,16 @@ func Initialize(ctx chain.ContractContext) error {
 	return nil
 }
 
-func GetOwner(ctx chain.ContractContext) string { return config.Owner }
-func GetConfig(ctx chain.ContractContext) Config { return config }
-func GetFeatureFlags(ctx chain.ContractContext) map[string]bool { return config.FeatureFlags }
-func GetUsers(ctx chain.ContractContext) map[string]User { return config.Users }
-func GetAliases(ctx chain.ContractContext) []string { return config.Aliases }
-func GetWatchers(ctx chain.ContractContext) []User { return config.Watchers }
+func GetOwner(ctx chain.QueryContext) string { return config.Owner }
+func GetConfig(ctx chain.QueryContext) Config { return config }
+func GetFeatureFlags(ctx chain.QueryContext) map[string]bool { return config.FeatureFlags }
+func GetUsers(ctx chain.QueryContext) map[string]User { return config.Users }
+func GetAliases(ctx chain.QueryContext) []string { return config.Aliases }
+func GetWatchers(ctx chain.QueryContext) []User { return config.Watchers }
+func GetViewHeight(ctx chain.QueryContext) int64 { return ctx.GetHeight() }
+func GetCurrentHeight(ctx chain.QueryContext) int64 { return ctx.GetCurrentHeight() }
 
-func GetUser(ctx chain.ContractContext, name string) (User, bool) {
+func GetUser(ctx chain.QueryContext, name string) (User, bool) {
 	user, found := config.Users[name]
 	return user, found
 }
@@ -104,6 +106,63 @@ func TestContractQueryEndpointScalarResult(t *testing.T) {
 	assertEmbeddedField(t, resp, "result", "senderd0001sas")
 	assertHasHALLink(t, resp, "design")
 	assertHasHALLink(t, resp, "block")
+
+	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
+}
+
+func TestContractQueryEndpointIgnoresSenderParameter(t *testing.T) {
+	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+		{
+			Mode:     cruntime.InvocationModeRegister,
+			Height:   base.Height(501),
+			Function: "Initialize",
+			CallData: map[string]string{},
+		},
+	})
+
+	status, body, _ := performContractQueryRequest(t, hd, contract, map[string]string{
+		"function": "GetOwner",
+		"_sender":  "not-a-decodable-address",
+	})
+	if status != http.StatusOK {
+		t.Fatalf("unexpected status: %d body=%s", status, body)
+	}
+
+	resp := decodeHALResponse(t, body)
+	assertEmbeddedField(t, resp, "result", "senderd0001sas")
+	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
+}
+
+func TestContractQueryEndpointSeparatesViewAndCurrentHeight(t *testing.T) {
+	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+		{
+			Mode:     cruntime.InvocationModeRegister,
+			Height:   base.Height(502),
+			Function: "Initialize",
+			CallData: map[string]string{},
+		},
+	})
+	hd.database.Lock()
+	hd.database.lastBlock = base.Height(777)
+	hd.database.Unlock()
+
+	status, body, _ := performContractQueryRequest(t, hd, contract, map[string]string{
+		"function": "GetViewHeight",
+	})
+	if status != http.StatusOK {
+		t.Fatalf("unexpected view-height status: %d body=%s", status, body)
+	}
+	resp := decodeHALResponse(t, body)
+	assertEmbeddedField(t, resp, "result", float64(502))
+
+	status, body, _ = performContractQueryRequest(t, hd, contract, map[string]string{
+		"function": "GetCurrentHeight",
+	})
+	if status != http.StatusOK {
+		t.Fatalf("unexpected current-height status: %d body=%s", status, body)
+	}
+	resp = decodeHALResponse(t, body)
+	assertEmbeddedField(t, resp, "result", float64(777))
 
 	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
 }

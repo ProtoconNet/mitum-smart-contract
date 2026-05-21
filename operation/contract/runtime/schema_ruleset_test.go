@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -36,6 +37,17 @@ func TestCurrentSchemaRulesetMatchesCurrentTypedGnoPolicy(t *testing.T) {
 	expectedScalarKinds := []string{"string", "bool", "int", "int64", "uint64"}
 	if !reflect.DeepEqual(rules.ScalarRules.AllowedKinds, expectedScalarKinds) {
 		t.Fatalf("unexpected scalar kinds: %#v", rules.ScalarRules.AllowedKinds)
+	}
+	if rules.ContextRules.WriteContextType != "WriteContext" ||
+		rules.ContextRules.QueryContextType != "QueryContext" ||
+		rules.ContextRules.LegacyContractContextType != "ContractContext" ||
+		rules.ContextRules.LegacyContractContextAllowed ||
+		rules.ContextRules.QueryContextSenderAllowed ||
+		rules.ContextRules.QuerySenderCallDataKeyParsed ||
+		!rules.ContextRules.QueryContextCurrentHeightAllowed ||
+		rules.ContextRules.WriteContextCurrentHeightAllowed ||
+		rules.ContextRules.ChainCurrentHeightNativeAllowed {
+		t.Fatalf("unexpected context rules: %#v", rules.ContextRules)
 	}
 	if rules.InputRules.CompositeInputAllowed {
 		t.Fatal("expected composite input to remain disabled")
@@ -209,6 +221,77 @@ func TestSchemaRulesetScalarRulesAreCanonicalValidatorSource(t *testing.T) {
 	}
 }
 
+func TestSchemaRulesetContextRulesAreCanonicalValidatorSource(t *testing.T) {
+	original := currentSchemaRuleset
+	t.Cleanup(func() {
+		currentSchemaRuleset = original
+	})
+
+	currentSchemaRuleset = CurrentSchemaRuleset()
+	currentSchemaRuleset.ContextRules.WriteContextType = "MutatingContext"
+	currentSchemaRuleset.ContextRules.QueryContextType = "ReadContext"
+	currentSchemaRuleset.ContextRules.LegacyContractContextAllowed = false
+
+	writeFn := FunctionSchema{
+		Name:     "Claim",
+		Exported: true,
+		Params: []ParamSchema{
+			{Name: "ctx", Type: TypeRef{Kind: TypeOpaque, Raw: "chain.MutatingContext"}},
+		},
+		Results: []ResultSchema{
+			{Type: TypeRef{Kind: TypeOpaque, Raw: "error"}},
+		},
+	}
+	if !writeFn.IsTypedWriteShape() {
+		t.Fatal("expected write shape to follow ContextRules.WriteContextType")
+	}
+
+	queryFn := FunctionSchema{
+		Name:     "Get",
+		Exported: true,
+		Params: []ParamSchema{
+			{Name: "ctx", Type: TypeRef{Kind: TypeOpaque, Raw: "chain.ReadContext"}},
+		},
+		Results: []ResultSchema{
+			{Type: TypeRef{Kind: TypeScalar, Raw: "string", Scalar: "string"}},
+		},
+	}
+	if !queryFn.IsTypedQueryShape() {
+		t.Fatal("expected query shape to follow ContextRules.QueryContextType")
+	}
+
+	legacyFn := FunctionSchema{
+		Name:     "Old",
+		Exported: true,
+		Params: []ParamSchema{
+			{Name: "ctx", Type: TypeRef{Kind: TypeOpaque, Raw: "chain.ContractContext"}},
+		},
+	}
+	if !legacyFn.UsesLegacyContractContext() {
+		t.Fatal("expected legacy context detection to follow ContextRules")
+	}
+}
+
+func TestSchemaRulesetCurrentHeightContextRulesAreValidatorSource(t *testing.T) {
+	original := currentSchemaRuleset
+	t.Cleanup(func() {
+		currentSchemaRuleset = original
+	})
+
+	currentSchemaRuleset = CurrentSchemaRuleset()
+	currentSchemaRuleset.ContextRules.QueryContextCurrentHeightAllowed = false
+
+	_, err := AnalyzeContractSchema(`package contract
+import "mitum/chain"
+
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetCurrentHeight(ctx chain.QueryContext) int64 { return ctx.GetCurrentHeight() }
+`)
+	if err == nil || !strings.Contains(err.Error(), "QueryContext.GetCurrentHeight") {
+		t.Fatalf("expected query current height rule rejection, got %v", err)
+	}
+}
+
 func TestCurrentSchemaRulesetShapeFlagsMatchShapeKindSets(t *testing.T) {
 	rules := CurrentSchemaRuleset()
 
@@ -230,7 +313,7 @@ type User struct { Meta }
 
 var user User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `, "embedded struct fields are not supported")
 
 	if rules.StateRules.AnonymousNestedStructFieldsAllowed {
@@ -245,7 +328,7 @@ type User struct {
 
 var user User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `, "anonymous nested struct fields are not supported")
 
 	if rules.StateRules.RecursiveNamedStructsAllowed {
@@ -258,7 +341,7 @@ type Node struct { Children []Node }
 
 var root Node
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `, "recursive named struct types are not supported")
 
 	if rules.StateRules.AnonymousStructSliceElementsAllowed ||
@@ -275,21 +358,21 @@ type User struct {
 
 var user User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `, "anonymous struct slice elements are not supported")
 	assertAnalyzeContractSchemaRejected(t, `package contract
 import "mitum/chain"
 
 var groups [][]string
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `, "slice elements cannot be slices")
 	assertAnalyzeContractSchemaRejected(t, `package contract
 import "mitum/chain"
 
 var matrix []map[string]int64
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `, "slice elements cannot be maps")
 
 	if rules.StateRules.AnonymousStructMapValuesAllowed ||
@@ -306,7 +389,7 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `, "anonymous struct map values are not supported")
 	assertAnalyzeContractSchemaRejected(t, `package contract
 import "mitum/chain"
@@ -317,7 +400,7 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `, "map values cannot be slices")
 	assertAnalyzeContractSchemaRejected(t, `package contract
 import "mitum/chain"
@@ -328,7 +411,7 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `, "map values cannot be maps")
 }
 
@@ -347,8 +430,8 @@ import "mitum/chain"
 type User struct { Balance int64 }
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetUsers(ctx chain.ContractContext) (map[string]User, bool) { return users, true }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetUsers(ctx chain.QueryContext) (map[string]User, bool) { return users, true }
 `); err != nil {
 		t.Fatalf("expected (T, bool) query result to be supported by current ruleset, got: %v", err)
 	}
@@ -359,8 +442,8 @@ func GetUsers(ctx chain.ContractContext) (map[string]User, bool) { return users,
 	assertAnalyzeContractSchemaRejected(t, `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetInline(ctx chain.ContractContext) (struct { Count int64 }, bool) {
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetInline(ctx chain.QueryContext) (struct { Count int64 }, bool) {
 	return struct { Count int64 }{Count: 1}, true
 }
 `, "query result", "not supported")
@@ -368,9 +451,9 @@ func GetInline(ctx chain.ContractContext) (struct { Count int64 }, bool) {
 	assertAnalyzeContractSchemaRejected(t, `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetValue(ctx chain.ContractContext) (string, string) { return "", "" }
-`, "must be either write")
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetValue(ctx chain.QueryContext) (string, string) { return "", "" }
+`, `query function "GetValue" second result must be bool`)
 }
 
 func assertAnalyzeContractSchemaRejected(t *testing.T, source string, parts ...string) {

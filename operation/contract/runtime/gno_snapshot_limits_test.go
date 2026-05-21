@@ -15,12 +15,12 @@ import "mitum/chain"
 
 var values map[string]string
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	values = map[string]string{}
 	return nil
 }
 
-func Fill(ctx chain.ContractContext) error {
+func Fill(ctx chain.WriteContext) error {
 	values = map[string]string{}
 	for i := 0; i < 257; i++ {
 		values[string(i)] = "v"
@@ -28,7 +28,7 @@ func Fill(ctx chain.ContractContext) error {
 	return nil
 }
 
-func Count(ctx chain.ContractContext) int { return len(values) }
+func Count(ctx chain.QueryContext) int { return len(values) }
 `
 
 const snapshotLimitSliceContractSource = `package contract
@@ -36,12 +36,12 @@ import "mitum/chain"
 
 var values []string
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	values = []string{}
 	return nil
 }
 
-func Fill(ctx chain.ContractContext) error {
+func Fill(ctx chain.WriteContext) error {
 	values = []string{}
 	for i := 0; i < 257; i++ {
 		values = append(values, "v")
@@ -49,7 +49,7 @@ func Fill(ctx chain.ContractContext) error {
 	return nil
 }
 
-func Count(ctx chain.ContractContext) int { return len(values) }
+func Count(ctx chain.QueryContext) int { return len(values) }
 `
 
 const snapshotLimitBytesContractSource = `package contract
@@ -57,9 +57,9 @@ import "mitum/chain"
 
 var blob string
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 
-func Grow(ctx chain.ContractContext) error {
+func Grow(ctx chain.WriteContext) error {
 	blob = "x"
 	for i := 0; i < 18; i++ {
 		blob += blob
@@ -67,7 +67,7 @@ func Grow(ctx chain.ContractContext) error {
 	return nil
 }
 
-func Size(ctx chain.ContractContext) int { return len(blob) }
+func Size(ctx chain.QueryContext) int { return len(blob) }
 `
 
 func TestSnapshotLimitsAllowNormalState(t *testing.T) {

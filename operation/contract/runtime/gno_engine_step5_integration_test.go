@@ -11,12 +11,12 @@ import "mitum/chain"
 
 var balances map[string]int64
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	balances = map[string]int64{"alice":1}
 	return nil
 }
 
-func AddBalance(ctx chain.ContractContext, owner string, amount int64) error {
+func AddBalance(ctx chain.WriteContext, owner string, amount int64) error {
 	if balances == nil {
 		balances = map[string]int64{}
 	}
@@ -35,14 +35,14 @@ type User struct {
 
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	users = map[string]User{
 		"alice": User{Balance:1, Active:true},
 	}
 	return nil
 }
 
-func UpdateUser(ctx chain.ContractContext, owner string, balance int64, active bool) error {
+func UpdateUser(ctx chain.WriteContext, owner string, balance int64, active bool) error {
 	if users == nil {
 		users = map[string]User{}
 	}

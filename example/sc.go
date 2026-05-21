@@ -35,7 +35,7 @@ var flags map[string]bool
 var users map[string]Record
 var watchers []Record
 
-func Initialize(ctx chain.ContractContext, initialValue string, initialLimit int64) error {
+func Initialize(ctx chain.WriteContext, initialValue string, initialLimit int64) error {
 	if initialized {
 		return nil
 	}
@@ -45,10 +45,9 @@ func Initialize(ctx chain.ContractContext, initialValue string, initialLimit int
 	revision = 0
 	record = buildRecord("initial", initialValue, initialLimit, false)
 	flags = map[string]bool{
-		"initialized":  true,
-		"created":      false,
-		"updated":      false,
-		"owner_exists": chain.AccountExists(owner),
+		"initialized": true,
+		"created":     false,
+		"updated":     false,
 	}
 	users = map[string]Record{
 		"owner": buildRecord(owner, initialValue, initialLimit, true),
@@ -61,7 +60,7 @@ func Initialize(ctx chain.ContractContext, initialValue string, initialLimit int
 	return nil
 }
 
-func CreateData(ctx chain.ContractContext, data string) error {
+func CreateData(ctx chain.WriteContext, data string) error {
 	if !initialized {
 		return contractError("contract is not initialized")
 	}
@@ -78,7 +77,7 @@ func CreateData(ctx chain.ContractContext, data string) error {
 	return nil
 }
 
-func UpdateData(ctx chain.ContractContext, data string) error {
+func UpdateData(ctx chain.WriteContext, data string) error {
 	if !initialized {
 		return contractError("contract is not initialized")
 	}
@@ -95,7 +94,7 @@ func UpdateData(ctx chain.ContractContext, data string) error {
 	return nil
 }
 
-func applyDataUpdate(ctx chain.ContractContext, data string, created bool) {
+func applyDataUpdate(ctx chain.WriteContext, data string, created bool) {
 	value = data
 	record = buildRecord("record", data, revision, true)
 
@@ -138,35 +137,35 @@ func buildRecord(name string, data string, limit int64, active bool) Record {
 	}
 }
 
-func IsInitialized(ctx chain.ContractContext) bool {
+func IsInitialized(ctx chain.QueryContext) bool {
 	return initialized
 }
 
-func GetOwner(ctx chain.ContractContext) string {
+func GetOwner(ctx chain.QueryContext) string {
 	return owner
 }
 
-func GetValue(ctx chain.ContractContext) string {
+func GetValue(ctx chain.QueryContext) string {
 	return value
 }
 
-func GetRevision(ctx chain.ContractContext) int64 {
+func GetRevision(ctx chain.QueryContext) int64 {
 	return revision
 }
 
-func GetRecord(ctx chain.ContractContext) Record {
+func GetRecord(ctx chain.QueryContext) Record {
 	return record
 }
 
-func GetRecordName(ctx chain.ContractContext) string {
+func GetRecordName(ctx chain.QueryContext) string {
 	return record.Name
 }
 
-func GetRecordLimit(ctx chain.ContractContext) int64 {
+func GetRecordLimit(ctx chain.QueryContext) int64 {
 	return record.Meta.Limit
 }
 
-func GetRecordTagAt(ctx chain.ContractContext, index int) (string, bool) {
+func GetRecordTagAt(ctx chain.QueryContext, index int) (string, bool) {
 	if index < 0 || index >= len(record.Meta.Tags) {
 		return "", false
 	}
@@ -174,30 +173,30 @@ func GetRecordTagAt(ctx chain.ContractContext, index int) (string, bool) {
 	return record.Meta.Tags[index], true
 }
 
-func GetRecordFlag(ctx chain.ContractContext, name string) (bool, bool) {
+func GetRecordFlag(ctx chain.QueryContext, name string) (bool, bool) {
 	v, found := record.Meta.Flags[name]
 	return v, found
 }
 
-func GetFlags(ctx chain.ContractContext) map[string]bool {
+func GetFlags(ctx chain.QueryContext) map[string]bool {
 	return flags
 }
 
-func GetFlag(ctx chain.ContractContext, name string) (bool, bool) {
+func GetFlag(ctx chain.QueryContext, name string) (bool, bool) {
 	v, found := flags[name]
 	return v, found
 }
 
-func GetUsers(ctx chain.ContractContext) map[string]Record {
+func GetUsers(ctx chain.QueryContext) map[string]Record {
 	return users
 }
 
-func GetUser(ctx chain.ContractContext, name string) (Record, bool) {
+func GetUser(ctx chain.QueryContext, name string) (Record, bool) {
 	user, found := users[name]
 	return user, found
 }
 
-func GetUserLimit(ctx chain.ContractContext, name string) (int64, bool) {
+func GetUserLimit(ctx chain.QueryContext, name string) (int64, bool) {
 	user, found := users[name]
 	if !found {
 		return 0, false
@@ -206,7 +205,7 @@ func GetUserLimit(ctx chain.ContractContext, name string) (int64, bool) {
 	return user.Meta.Limit, true
 }
 
-func GetUserTagAt(ctx chain.ContractContext, name string, index int) (string, bool) {
+func GetUserTagAt(ctx chain.QueryContext, name string, index int) (string, bool) {
 	user, found := users[name]
 	if !found {
 		return "", false
@@ -218,11 +217,11 @@ func GetUserTagAt(ctx chain.ContractContext, name string, index int) (string, bo
 	return user.Meta.Tags[index], true
 }
 
-func GetWatchers(ctx chain.ContractContext) []Record {
+func GetWatchers(ctx chain.QueryContext) []Record {
 	return watchers
 }
 
-func GetWatcherAt(ctx chain.ContractContext, index int) (Record, bool) {
+func GetWatcherAt(ctx chain.QueryContext, index int) (Record, bool) {
 	if index < 0 || index >= len(watchers) {
 		return Record{}, false
 	}
@@ -230,7 +229,7 @@ func GetWatcherAt(ctx chain.ContractContext, index int) (Record, bool) {
 	return watchers[index], true
 }
 
-func GetWatcherLimitAt(ctx chain.ContractContext, index int) (int64, bool) {
+func GetWatcherLimitAt(ctx chain.QueryContext, index int) (int64, bool) {
 	if index < 0 || index >= len(watchers) {
 		return 0, false
 	}
@@ -238,23 +237,31 @@ func GetWatcherLimitAt(ctx chain.ContractContext, index int) (int64, bool) {
 	return watchers[index].Meta.Limit, true
 }
 
-func GetCurrentContract(ctx chain.ContractContext) string {
+func GetCurrentContract(ctx chain.QueryContext) string {
 	return ctx.GetContract()
 }
 
-func GetCurrentHeight(ctx chain.ContractContext) int64 {
+func GetHeight(ctx chain.QueryContext) int64 {
 	return ctx.GetHeight()
 }
 
-func DoesAccountExist(ctx chain.ContractContext, addr string) bool {
+func GetCurrentHeight(ctx chain.QueryContext) int64 {
+	return ctx.GetCurrentHeight()
+}
+
+func DoesAccountExist(ctx chain.QueryContext, addr string) bool {
 	return chain.AccountExists(addr)
 }
 
-func IsNamedContractAccount(ctx chain.ContractContext, addr string) bool {
+func IsNamedContractAccount(ctx chain.QueryContext, addr string) bool {
 	return chain.IsContractAccount(addr)
 }
 
-func GetValueIfPresent(ctx chain.ContractContext) (string, bool) {
+func GetBalanceOf(ctx chain.QueryContext, addr string, currency string) (string, bool) {
+	return chain.BalanceOf(addr, currency)
+}
+
+func GetValueIfPresent(ctx chain.QueryContext) (string, bool) {
 	if value == "" {
 		return "", false
 	}

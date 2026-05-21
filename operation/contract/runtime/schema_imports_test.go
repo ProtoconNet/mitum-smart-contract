@@ -17,7 +17,7 @@ import (
 
 var text string
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	buf := bytes.NewBufferString(ctx.GetSender())
 	text = strings.ToUpper(buf.String())
 	text = text + ":" + strconv.FormatInt(ctx.GetHeight(), 10)
@@ -42,7 +42,7 @@ import (
 	"mitum/chain"
 )
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	_ = rand.Int()
 	return nil
 }
@@ -64,7 +64,7 @@ import (
 	"mitum/chain"
 )
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	_ = fmt.Sprintf("%s", ctx.GetSender())
 	return nil
 }
@@ -96,7 +96,7 @@ import (
 	"mitum/chain"
 )
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	return nil
 }
 `

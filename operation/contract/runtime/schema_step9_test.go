@@ -13,8 +13,8 @@ type User struct {
 
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetUsers(ctx chain.ContractContext) map[string]User { return users }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetUsers(ctx chain.QueryContext) map[string]User { return users }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -37,8 +37,8 @@ type User struct {
 
 var watchers []User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetWatchers(ctx chain.ContractContext) []User { return watchers }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetWatchers(ctx chain.QueryContext) []User { return watchers }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -54,8 +54,8 @@ func TestAnalyzeContractSchemaAnonymousStructQueryResultUnsupported(t *testing.T
 	source := `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetInline(ctx chain.ContractContext) struct { Count int64 } { return struct { Count int64 }{Count:1} }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetInline(ctx chain.QueryContext) struct { Count int64 } { return struct { Count int64 }{Count:1} }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -71,8 +71,8 @@ func TestAnalyzeContractSchemaSliceMapQueryResultUnsupported(t *testing.T) {
 	source := `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetMatrix(ctx chain.ContractContext) []map[string]int64 { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetMatrix(ctx chain.QueryContext) []map[string]int64 { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -88,8 +88,8 @@ func TestAnalyzeContractSchemaMapSliceQueryResultUnsupported(t *testing.T) {
 	source := `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetNames(ctx chain.ContractContext) map[string][]string { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetNames(ctx chain.QueryContext) map[string][]string { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -111,8 +111,8 @@ type Node struct {
 
 var root Node
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetRoot(ctx chain.ContractContext) Node { return root }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetRoot(ctx chain.QueryContext) Node { return root }
 `
 
 	_, err := AnalyzeContractSchema(source)

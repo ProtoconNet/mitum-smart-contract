@@ -13,8 +13,8 @@ type User struct {
 
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetUser(ctx chain.ContractContext, owner string) User { return users[owner] }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetUser(ctx chain.QueryContext, owner string) User { return users[owner] }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -32,8 +32,8 @@ import "mitum/chain"
 
 var balances map[string]int64
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetBalances(ctx chain.ContractContext) map[string]int64 { return balances }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetBalances(ctx chain.QueryContext) map[string]int64 { return balances }
 `
 
 	schema, err := AnalyzeContractSchema(source)

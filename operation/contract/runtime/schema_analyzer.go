@@ -62,6 +62,7 @@ func AnalyzeContractSchema(sourceCode string) (ContractSchema, error) {
 	if err := validateContractImports(node); err != nil {
 		return ContractSchema{}, err
 	}
+	chainImportNames := mitumChainImportNames(node)
 
 	if err := schema.Types.populateFromResolver(resolver); err != nil {
 		return ContractSchema{}, err
@@ -88,6 +89,9 @@ func AnalyzeContractSchema(sourceCode string) (ContractSchema, error) {
 
 			fn, err := parseFunctionSchema(resolver, d)
 			if err != nil {
+				return ContractSchema{}, err
+			}
+			if err := validateHeightABIUsage(d, fn, chainImportNames); err != nil {
 				return ContractSchema{}, err
 			}
 
@@ -125,6 +129,85 @@ func validateContractImports(node *ast.File) error {
 	}
 
 	return nil
+}
+
+func mitumChainImportNames(node *ast.File) map[string]struct{} {
+	names := map[string]struct{}{}
+
+	for _, imp := range node.Imports {
+		path, err := strconv.Unquote(imp.Path.Value)
+		if err != nil || path != MitumChainPackagePath {
+			continue
+		}
+
+		name := MitumChainPackageName
+		if imp.Name != nil {
+			switch imp.Name.Name {
+			case ".", "_":
+				continue
+			default:
+				name = imp.Name.Name
+			}
+		}
+		names[name] = struct{}{}
+	}
+
+	return names
+}
+
+func validateHeightABIUsage(
+	decl *ast.FuncDecl,
+	fn FunctionSchema,
+	chainImportNames map[string]struct{},
+) error {
+	if decl.Body == nil {
+		return nil
+	}
+
+	rules := currentSchemaRuleset.ContextRules
+	var err error
+	ast.Inspect(decl.Body, func(n ast.Node) bool {
+		if err != nil {
+			return false
+		}
+
+		sel, ok := n.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+
+		receiver, ok := sel.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+
+		if sel.Sel.Name == "CurrentHeight" {
+			if _, found := chainImportNames[receiver.Name]; found {
+				if !rules.ChainCurrentHeightNativeAllowed {
+					err = errors.Errorf("chain.CurrentHeight is not supported; use QueryContext.GetCurrentHeight in query functions")
+					return false
+				}
+				return true
+			}
+		}
+
+		if sel.Sel.Name != "GetCurrentHeight" || len(fn.Params) == 0 || receiver.Name != fn.Params[0].Name {
+			return true
+		}
+
+		switch {
+		case fn.IsWriteContextCallable() && !rules.WriteContextCurrentHeightAllowed:
+			err = errors.Errorf("WriteContext.GetCurrentHeight is not supported; use ctx.GetHeight in write functions")
+			return false
+		case fn.IsQueryContextCallable() && !rules.QueryContextCurrentHeightAllowed:
+			err = errors.Errorf("QueryContext.GetCurrentHeight is not supported")
+			return false
+		default:
+			return true
+		}
+	})
+
+	return err
 }
 
 func (r *TypeRegistry) populateFromResolver(resolver *typeResolver) error {
@@ -454,7 +537,7 @@ func finalizeContractSchema(schema *ContractSchema) error {
 	}
 
 	if !initialize.IsTypedInitializeShape() {
-		return errors.Errorf("typed Gno contract Initialize must be func Initialize(ctx ContractContext, ...scalar) error")
+		return errors.Errorf("typed Gno contract Initialize must be func Initialize(ctx WriteContext, ...scalar) error")
 	}
 
 	for i := 1; i < len(initialize.Params); i++ {
@@ -476,7 +559,16 @@ func finalizeContractSchema(schema *ContractSchema) error {
 		if fn.Name == "Initialize" {
 			continue
 		}
-		if !fn.Exported || !fn.IsContextCallable() {
+		if !fn.Exported {
+			continue
+		}
+		if fn.UsesLegacyContractContext() {
+			return errors.Errorf(
+				"typed contract function %q must use WriteContext for writes or QueryContext for queries; ContractContext is not supported",
+				fn.Name,
+			)
+		}
+		if !fn.IsContextCallable() {
 			continue
 		}
 
@@ -487,6 +579,10 @@ func finalizeContractSchema(schema *ContractSchema) error {
 				}
 			}
 			continue
+		}
+
+		if fn.IsQueryContextCallable() && len(fn.Results) == 2 && fn.Results[1].Type.NormalizedString() != "bool" {
+			return errors.Errorf("query function %q second result must be bool", fn.Name)
 		}
 
 		if fn.IsTypedQueryShape() {
@@ -506,7 +602,7 @@ func finalizeContractSchema(schema *ContractSchema) error {
 			continue
 		}
 
-		return errors.Errorf("typed contract function %q must be either write(ctx, ...) error or query(ctx, ...) T[/bool]", fn.Name)
+		return errors.Errorf("typed contract function %q must be either write(ctx WriteContext, ...) error or query(ctx QueryContext, ...) T[/bool]", fn.Name)
 	}
 
 	schema.Mode = SchemaModeTypedArgs

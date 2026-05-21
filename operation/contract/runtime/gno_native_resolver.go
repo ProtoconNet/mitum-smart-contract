@@ -33,6 +33,8 @@ func MitumNativeResolver(pkgPath string, name gno.Name) func(m *gno.Machine) {
 		return nativeAccountExists
 	case "IsContractAccount":
 		return nativeIsContractAccount
+	case "BalanceOf":
+		return nativeBalanceOf
 	default:
 		return nil
 	}
@@ -74,6 +76,16 @@ func pushBoolResult(m *gno.Machine, v bool) {
 	)
 }
 
+func pushStringResult(m *gno.Machine, v string) {
+	m.PushValue(
+		gno.Go2GnoValue(
+			m.Alloc,
+			m.Store,
+			reflect.ValueOf(&v).Elem(),
+		),
+	)
+}
+
 func nativeAccountExists(m *gno.Machine) {
 	ctx := mustExecutionContext(m)
 	addr := machineStringArg(m, 0)
@@ -83,6 +95,20 @@ func nativeAccountExists(m *gno.Machine) {
 		panic(errors.Wrap(err, "AccountExists native call failed"))
 	}
 
+	pushBoolResult(m, ok)
+}
+
+func nativeBalanceOf(m *gno.Machine) {
+	ctx := mustExecutionContext(m)
+	addr := machineStringArg(m, 0)
+	currency := machineStringArg(m, 1)
+
+	value, ok, err := ctx.BalanceReader.BalanceOf(addr, currency)
+	if err != nil {
+		panic(errors.Wrap(err, "BalanceOf native call failed"))
+	}
+
+	pushStringResult(m, value)
 	pushBoolResult(m, ok)
 }
 

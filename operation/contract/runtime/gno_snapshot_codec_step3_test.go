@@ -18,7 +18,7 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `
 
 func TestExtractSnapshotValueFlatStruct(t *testing.T) {

@@ -9,31 +9,55 @@ const (
 
 const mitumChainPackageSource = `package chain
 
-type ContractContext struct {
+type WriteContext struct {
 	Sender   string
 	Contract string
 	Height   int64
 	ReadOnly bool
 }
 
-func (ctx ContractContext) GetSender() string {
+func (ctx WriteContext) GetSender() string {
 	return ctx.Sender
 }
 
-func (ctx ContractContext) GetContract() string {
+func (ctx WriteContext) GetContract() string {
 	return ctx.Contract
 }
 
-func (ctx ContractContext) GetHeight() int64 {
+func (ctx WriteContext) GetHeight() int64 {
 	return ctx.Height
 }
 
-func (ctx ContractContext) IsReadOnly() bool {
+func (ctx WriteContext) IsReadOnly() bool {
+	return ctx.ReadOnly
+}
+
+type QueryContext struct {
+	Contract      string
+	Height        int64
+	CurrentHeight int64
+	ReadOnly      bool
+}
+
+func (ctx QueryContext) GetContract() string {
+	return ctx.Contract
+}
+
+func (ctx QueryContext) GetHeight() int64 {
+	return ctx.Height
+}
+
+func (ctx QueryContext) GetCurrentHeight() int64 {
+	return ctx.CurrentHeight
+}
+
+func (ctx QueryContext) IsReadOnly() bool {
 	return ctx.ReadOnly
 }
 
 func AccountExists(addr string) bool
 func IsContractAccount(addr string) bool
+func BalanceOf(addr string, currency string) (string, bool)
 `
 
 func MitumChainMemPackage() *gnostd.MemPackage {

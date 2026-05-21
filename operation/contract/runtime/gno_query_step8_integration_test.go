@@ -25,33 +25,33 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	config.Names = []string{"alice"}
 	config.Users = []User{User{Meta:Meta{Limit:10}}}
 	return nil
 }
 
-func AppendState(ctx chain.ContractContext, name string, limit int64) error {
+func AppendState(ctx chain.WriteContext, name string, limit int64) error {
 	config.Names = append(config.Names, name)
 	config.Users = append(config.Users, User{Meta:Meta{Limit:limit}})
 	return nil
 }
 
-func GetNameAt(ctx chain.ContractContext, i int) (string, bool) {
+func GetNameAt(ctx chain.QueryContext, i int) (string, bool) {
 	if i < 0 || i >= len(config.Names) {
 		return "", false
 	}
 	return config.Names[i], true
 }
 
-func GetUserLimitAt(ctx chain.ContractContext, i int) (int64, bool) {
+func GetUserLimitAt(ctx chain.QueryContext, i int) (int64, bool) {
 	if i < 0 || i >= len(config.Users) {
 		return 0, false
 	}
 	return config.Users[i].Meta.Limit, true
 }
 
-func GetCount(ctx chain.ContractContext) int64 {
+func GetCount(ctx chain.QueryContext) int64 {
 	return int64(len(config.Names))
 }
 `

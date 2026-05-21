@@ -8,8 +8,8 @@ import "mitum/chain"
 
 var label string
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func SetLabel(ctx chain.ContractContext, next string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func SetLabel(ctx chain.WriteContext, next string) error { return nil }
 `
 
 	if _, err := AnalyzeContractSchema(source); err != nil {
@@ -23,8 +23,8 @@ import "mitum/chain"
 
 type Config struct { Owner string }
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func SetConfig(ctx chain.ContractContext, cfg Config) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func SetConfig(ctx chain.WriteContext, cfg Config) error { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -40,8 +40,8 @@ func TestAnalyzeContractSchemaMapWriteArgRejected(t *testing.T) {
 	source := `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func SetFlags(ctx chain.ContractContext, flags map[string]bool) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func SetFlags(ctx chain.WriteContext, flags map[string]bool) error { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -57,8 +57,8 @@ func TestAnalyzeContractSchemaSliceWriteArgRejected(t *testing.T) {
 	source := `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func SetAliases(ctx chain.ContractContext, aliases []string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func SetAliases(ctx chain.WriteContext, aliases []string) error { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)

@@ -26,7 +26,7 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	config.Flags = map[string]bool{"alpha":true}
 	config.Users = map[string]User{
 		"alice": User{Balance:1, Meta:Meta{Active:true, Limit:10}},
@@ -34,7 +34,7 @@ func Initialize(ctx chain.ContractContext) error {
 	return nil
 }
 
-func UpdateState(ctx chain.ContractContext, flag string, active bool, owner string, balance int64, userActive bool, limit int64) error {
+func UpdateState(ctx chain.WriteContext, flag string, active bool, owner string, balance int64, userActive bool, limit int64) error {
 	if config.Flags == nil {
 		config.Flags = map[string]bool{}
 	}

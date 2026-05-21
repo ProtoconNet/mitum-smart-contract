@@ -76,12 +76,13 @@ func (gnoEngine) QueryContract(
 		return QueryResult{}, base.NewBaseOperationProcessReasonError("unsupported snapshot codec %q", snapshotValue.Codec)
 	}
 
-	execCtx, err := NewExecutionContext(
+	execCtx, err := NewExecutionContextWithCurrentHeight(
 		encs,
 		getStateFunc,
 		req.Contract,
-		req.Sender,
+		req.Contract,
 		req.Height,
+		queryCurrentHeight(req),
 		true,
 	)
 	if err != nil {
@@ -131,6 +132,14 @@ func (gnoEngine) QueryContract(
 	return qr, nil
 }
 
+func queryCurrentHeight(req QueryRequest) base.Height {
+	if req.CurrentHeight > req.Height {
+		return req.CurrentHeight
+	}
+
+	return req.Height
+}
+
 func invokeTypedQuery(
 	m *gno.Machine,
 	pkg *gno.PackageValue,
@@ -146,7 +155,7 @@ func invokeTypedQuery(
 	m.RunDeclaration(gno.ImportD("chain", MitumChainPackagePath))
 
 	args := []any{
-		contractContextExpr(req.Sender.String(), req.Contract.String(), int64(req.Height), true),
+		queryContextExpr(req.Contract.String(), int64(req.Height), int64(queryCurrentHeight(req)), true),
 	}
 
 	for i := 1; i < len(fn.Params); i++ {
@@ -206,22 +215,4 @@ func invokeTypedQuery(
 	default:
 		return QueryResult{}, fmt.Errorf("unsupported query result count for %q", req.Function)
 	}
-}
-
-func ParseOptionalQuerySender(
-	encs encoder.Encoders,
-	contract base.Address,
-	callData map[string]string,
-) (base.Address, error) {
-	raw, found := callData["_sender"]
-	if !found || raw == "" {
-		return contract, nil
-	}
-
-	sender, err := base.DecodeAddress(raw, encs.JSON())
-	if err != nil {
-		return nil, fmt.Errorf("invalid _sender: %w", err)
-	}
-
-	return sender, nil
 }

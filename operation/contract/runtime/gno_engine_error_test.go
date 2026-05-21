@@ -19,12 +19,12 @@ func (e contractError) Error() string { return string(e) }
 var owner string
 var value string
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	owner = ctx.GetSender()
 	return nil
 }
 
-func CreateData(ctx chain.ContractContext, data string) error {
+func CreateData(ctx chain.WriteContext, data string) error {
 	if ctx.GetSender() != owner {
 		return contractError("only owner can create data")
 	}
@@ -35,7 +35,7 @@ func CreateData(ctx chain.ContractContext, data string) error {
 	return nil
 }
 
-func UpdateData(ctx chain.ContractContext, data string) error {
+func UpdateData(ctx chain.WriteContext, data string) error {
 	if ctx.GetSender() != owner {
 		return contractError("only owner can update data")
 	}
@@ -133,8 +133,8 @@ func TestInvokeTypedWriteKeepsResultCountMismatchError(t *testing.T) {
 	source := `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Bad(ctx chain.ContractContext) {}
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Bad(ctx chain.WriteContext) {}
 `
 
 	execCtx, err := NewExecutionContext(encs, func(string) (base.State, bool, error) {
@@ -152,7 +152,7 @@ func Bad(ctx chain.ContractContext) {}
 				Name:     "Bad",
 				Exported: true,
 				Params: []ParamSchema{
-					{Name: "ctx", Type: TypeRef{Kind: TypeOpaque, Raw: "chain.ContractContext"}},
+					{Name: "ctx", Type: TypeRef{Kind: TypeOpaque, Raw: "chain.WriteContext"}},
 				},
 			},
 		},

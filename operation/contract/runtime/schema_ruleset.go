@@ -1,6 +1,11 @@
 package runtime
 
 const (
+	// CurrentSchemaRulesetVersion names the current context-split typed Gno
+	// ABI as the canonical baseline. The earlier ContractContext draft was
+	// internal design-convergence work, not a durable external compatibility
+	// line, so this baseline intentionally remains v1 instead of preserving a
+	// legacy-style v2 name.
 	CurrentSchemaRulesetVersion = "typed-gno-ruleset-v1"
 	MaxTypedContractSourceBytes = 256 * 1024
 )
@@ -15,11 +20,14 @@ type SchemaRuleset struct {
 	// shapes, lifecycle semantics, complexity limits, or struct/map/slice
 	// constraints. Do not bump for support text wording, error wording,
 	// test-only hooks, or implementation refactors that preserve the same
-	// schema acceptance policy.
+	// schema acceptance policy. During pre-external design convergence, prefer
+	// redefining the canonical baseline over carrying legacy-preserving version
+	// increments without a concrete compatibility reason.
 	Version         string
 	SourceRules     SourceRules
 	ImportRules     ImportRules
 	ScalarRules     ScalarRules
+	ContextRules    ContextRules
 	InputRules      InputRules
 	StateRules      StateRules
 	QueryRules      QueryRules
@@ -38,6 +46,18 @@ type ImportRules struct {
 
 type ScalarRules struct {
 	AllowedKinds []string
+}
+
+type ContextRules struct {
+	WriteContextType                 string
+	QueryContextType                 string
+	LegacyContractContextType        string
+	LegacyContractContextAllowed     bool
+	QueryContextSenderAllowed        bool
+	QuerySenderCallDataKeyParsed     bool
+	QueryContextCurrentHeightAllowed bool
+	WriteContextCurrentHeightAllowed bool
+	ChainCurrentHeightNativeAllowed  bool
 }
 
 type InputRules struct {
@@ -155,6 +175,17 @@ var currentSchemaRuleset = SchemaRuleset{
 			"int64",
 			"uint64",
 		},
+	},
+	ContextRules: ContextRules{
+		WriteContextType:                 "WriteContext",
+		QueryContextType:                 "QueryContext",
+		LegacyContractContextType:        "ContractContext",
+		LegacyContractContextAllowed:     false,
+		QueryContextSenderAllowed:        false,
+		QuerySenderCallDataKeyParsed:     false,
+		QueryContextCurrentHeightAllowed: true,
+		WriteContextCurrentHeightAllowed: false,
+		ChainCurrentHeightNativeAllowed:  false,
 	},
 	InputRules: InputRules{
 		CompositeInputAllowed: false,
@@ -281,6 +312,7 @@ func (r SchemaRuleset) clone() SchemaRuleset {
 	r.SourceRules = r.SourceRules
 	r.ImportRules = r.ImportRules.clone()
 	r.ScalarRules = r.ScalarRules.clone()
+	r.ContextRules = r.ContextRules
 	r.InputRules = r.InputRules.clone()
 	r.StateRules = r.StateRules.clone()
 	r.QueryRules = r.QueryRules.clone()

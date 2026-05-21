@@ -85,6 +85,7 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 	}
 
 	queryHeight := designState.Height()
+	currentHeight := hd.database.LastBlock()
 	responseState := designState
 
 	_, runtimeValue, _, runtimeFound, err := ContractRuntimeFromChainState(hd.database, contract)
@@ -104,10 +105,8 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 		queryHeight = snapshotState.Height()
 		responseState = snapshotState
 	}
-
-	sender, err := cruntime.ParseOptionalQuerySender(*hd.encs, contractAddr, callData)
-	if err != nil {
-		return nil, err
+	if currentHeight < queryHeight {
+		currentHeight = queryHeight
 	}
 
 	var schema *cruntime.ContractSchema
@@ -119,13 +118,14 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 		*hd.encs,
 		hd.database.State,
 		cruntime.QueryRequest{
-			Contract:     contractAddr,
-			Sender:       sender,
-			Height:       queryHeight,
-			ContractCode: design.ContractCode(),
-			Schema:       schema,
-			Function:     callData["function"],
-			CallData:     callData,
+			Contract:      contractAddr,
+			Sender:        contractAddr,
+			Height:        queryHeight,
+			CurrentHeight: currentHeight,
+			ContractCode:  design.ContractCode(),
+			Schema:        schema,
+			Function:      callData["function"],
+			CallData:      callData,
 		},
 	)
 	if qerr != nil {

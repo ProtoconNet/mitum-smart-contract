@@ -15,13 +15,19 @@ type ContractReader interface {
 	IsContractAccount(addr string) (bool, error)
 }
 
+type BalanceReader interface {
+	BalanceOf(addr string, currency string) (string, bool, error)
+}
+
 type ExecutionContext struct {
 	Sender         base.Address
 	Contract       base.Address
 	Height         base.Height
+	CurrentHeight  base.Height
 	ReadOnly       bool
 	AccountReader  AccountReader
 	ContractReader ContractReader
+	BalanceReader  BalanceReader
 }
 
 func (ctx *ExecutionContext) Validate() error {
@@ -34,11 +40,17 @@ func (ctx *ExecutionContext) Validate() error {
 	if ctx.Contract == nil {
 		return errors.Errorf("execution context contract is nil")
 	}
+	if ctx.CurrentHeight < ctx.Height {
+		return errors.Errorf("execution context current height %d is below view height %d", ctx.CurrentHeight, ctx.Height)
+	}
 	if ctx.AccountReader == nil {
 		return errors.Errorf("execution context account reader is nil")
 	}
 	if ctx.ContractReader == nil {
 		return errors.Errorf("execution context contract reader is nil")
+	}
+	if ctx.BalanceReader == nil {
+		return errors.Errorf("execution context balance reader is nil")
 	}
 
 	return nil
@@ -52,13 +64,35 @@ func NewExecutionContext(
 	height base.Height,
 	readOnly bool,
 ) (*ExecutionContext, error) {
+	return NewExecutionContextWithCurrentHeight(
+		encs,
+		getStateFunc,
+		contract,
+		sender,
+		height,
+		height,
+		readOnly,
+	)
+}
+
+func NewExecutionContextWithCurrentHeight(
+	encs encoder.Encoders,
+	getStateFunc base.GetStateFunc,
+	contract base.Address,
+	sender base.Address,
+	height base.Height,
+	currentHeight base.Height,
+	readOnly bool,
+) (*ExecutionContext, error) {
 	ctx := &ExecutionContext{
 		Sender:         sender,
 		Contract:       contract,
 		Height:         height,
+		CurrentHeight:  currentHeight,
 		ReadOnly:       readOnly,
 		AccountReader:  NewStateAccountReader(encs, getStateFunc),
 		ContractReader: NewStateContractReader(encs, getStateFunc),
+		BalanceReader:  NewStateBalanceReader(encs, getStateFunc),
 	}
 
 	if err := ctx.Validate(); err != nil {

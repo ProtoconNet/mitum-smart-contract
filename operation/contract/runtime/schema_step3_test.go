@@ -12,8 +12,8 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value string) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -35,8 +35,8 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value string) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)

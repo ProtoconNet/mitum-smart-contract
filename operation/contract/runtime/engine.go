@@ -30,13 +30,14 @@ type ExecuteResult struct {
 }
 
 type QueryRequest struct {
-	Contract     base.Address
-	Sender       base.Address
-	Height       base.Height
-	ContractCode string
-	Schema       *ContractSchema
-	Function     string
-	CallData     map[string]string
+	Contract      base.Address
+	Sender        base.Address
+	Height        base.Height
+	CurrentHeight base.Height
+	ContractCode  string
+	Schema        *ContractSchema
+	Function      string
+	CallData      map[string]string
 }
 
 type QueryResult struct {

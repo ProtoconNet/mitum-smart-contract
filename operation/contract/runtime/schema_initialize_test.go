@@ -6,8 +6,8 @@ func TestAnalyzeContractSchemaInitializeScalarArgsSupported(t *testing.T) {
 	source := `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext, owner string, label string, limit int64) error { return nil }
-func GetLabel(ctx chain.ContractContext) string { return "" }
+func Initialize(ctx chain.WriteContext, owner string, label string, limit int64) error { return nil }
+func GetLabel(ctx chain.QueryContext) string { return "" }
 `
 
 	if _, err := AnalyzeContractSchema(source); err != nil {
@@ -21,7 +21,7 @@ import "mitum/chain"
 
 type Config struct { Owner string }
 
-func Initialize(ctx chain.ContractContext, cfg Config) error { return nil }
+func Initialize(ctx chain.WriteContext, cfg Config) error { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -37,7 +37,7 @@ func TestAnalyzeContractSchemaInitializeNoArgsStillSupported(t *testing.T) {
 	source := `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
 `
 
 	if _, err := AnalyzeContractSchema(source); err != nil {

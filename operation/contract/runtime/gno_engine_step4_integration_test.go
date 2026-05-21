@@ -20,14 +20,14 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	config.Owner = ctx.GetSender()
 	config.Paused = false
 	config.Limit = 1
 	return nil
 }
 
-func UpdateConfig(ctx chain.ContractContext, paused bool, limit int64) error {
+func UpdateConfig(ctx chain.WriteContext, paused bool, limit int64) error {
 	config.Paused = paused
 	config.Limit = limit
 	return nil

@@ -20,17 +20,17 @@ import "mitum/chain"
 
 var value string
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	value = "initial"
 	return nil
 }
 
-func Store(ctx chain.ContractContext, next string) error {
+func Store(ctx chain.WriteContext, next string) error {
 	value = next
 	return nil
 }
 
-func GetValue(ctx chain.ContractContext) string { return value }
+func GetValue(ctx chain.QueryContext) string { return value }
 `
 
 type callProcessSchemaCaptureEngine struct {

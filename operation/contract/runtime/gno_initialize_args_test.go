@@ -25,7 +25,7 @@ var seedLabel string
 var seedLimit int64
 var record Record
 
-func Initialize(ctx chain.ContractContext, owner string, label string, limit int64) error {
+func Initialize(ctx chain.WriteContext, owner string, label string, limit int64) error {
 	seedOwner = owner
 	seedLabel = label
 	seedLimit = limit
@@ -38,10 +38,10 @@ func Initialize(ctx chain.ContractContext, owner string, label string, limit int
 	return nil
 }
 
-func GetOwner(ctx chain.ContractContext) string { return seedOwner }
-func GetLabel(ctx chain.ContractContext) string { return seedLabel }
-func GetLimit(ctx chain.ContractContext) int64 { return seedLimit }
-func GetRecord(ctx chain.ContractContext) Record { return record }
+func GetOwner(ctx chain.QueryContext) string { return seedOwner }
+func GetLabel(ctx chain.QueryContext) string { return seedLabel }
+func GetLimit(ctx chain.QueryContext) int64 { return seedLimit }
+func GetRecord(ctx chain.QueryContext) Record { return record }
 `
 
 const initializeNoArgsContractSource = `package contract
@@ -49,12 +49,12 @@ import "mitum/chain"
 
 var initialized bool
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	initialized = true
 	return nil
 }
 
-func IsInitialized(ctx chain.ContractContext) bool { return initialized }
+func IsInitialized(ctx chain.QueryContext) bool { return initialized }
 `
 
 func TestInitializeArgsRegisterSuccess(t *testing.T) {

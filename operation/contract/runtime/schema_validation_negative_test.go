@@ -44,7 +44,7 @@ import (
 	"mitum/chain"
 )
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	return nil
 }
 `)

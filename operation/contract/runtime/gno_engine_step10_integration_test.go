@@ -29,7 +29,7 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	config.Label = "init"
 	config.Flags = map[string]bool{"alpha": true}
 	config.Users = map[string]User{
@@ -39,12 +39,12 @@ func Initialize(ctx chain.ContractContext) error {
 	return nil
 }
 
-func SetLabel(ctx chain.ContractContext, next string) error {
+func SetLabel(ctx chain.WriteContext, next string) error {
 	config.Label = next
 	return nil
 }
 
-func SetFlag(ctx chain.ContractContext, name string, enabled bool) error {
+func SetFlag(ctx chain.WriteContext, name string, enabled bool) error {
 	if config.Flags == nil {
 		config.Flags = map[string]bool{}
 	}
@@ -52,12 +52,12 @@ func SetFlag(ctx chain.ContractContext, name string, enabled bool) error {
 	return nil
 }
 
-func AddAlias(ctx chain.ContractContext, alias string) error {
+func AddAlias(ctx chain.WriteContext, alias string) error {
 	config.Aliases = append(config.Aliases, alias)
 	return nil
 }
 
-func SetUserLimit(ctx chain.ContractContext, name string, limit int64) error {
+func SetUserLimit(ctx chain.WriteContext, name string, limit int64) error {
 	user, found := config.Users[name]
 	if !found {
 		return nil
@@ -67,8 +67,8 @@ func SetUserLimit(ctx chain.ContractContext, name string, limit int64) error {
 	return nil
 }
 
-func GetConfig(ctx chain.ContractContext) Config { return config }
-func GetLabel(ctx chain.ContractContext) string { return config.Label }
+func GetConfig(ctx chain.QueryContext) Config { return config }
+func GetLabel(ctx chain.QueryContext) string { return config.Label }
 `
 
 func TestGnoWritePathScalarArgsStillMutateCompositeState(t *testing.T) {

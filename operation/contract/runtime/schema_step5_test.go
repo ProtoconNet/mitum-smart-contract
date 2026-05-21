@@ -13,8 +13,8 @@ type User struct {
 
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, owner string, amount int64) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, owner string, amount int64) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -45,8 +45,8 @@ type User struct {
 
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, owner string, amount int64) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, owner string, amount int64) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -69,8 +69,8 @@ type User struct {
 
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, owner string, amount int64) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, owner string, amount int64) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)

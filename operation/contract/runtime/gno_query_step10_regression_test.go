@@ -12,17 +12,17 @@ import "mitum/chain"
 
 var count int
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	count = 1
 	return nil
 }
 
-func Add(ctx chain.ContractContext, delta int) error {
+func Add(ctx chain.WriteContext, delta int) error {
 	count = count + delta
 	return nil
 }
 
-func GetCount(ctx chain.ContractContext) int {
+func GetCount(ctx chain.QueryContext) int {
 	return count
 }
 `

@@ -17,28 +17,59 @@ import "mitum/chain"
 var senderExists bool
 var contractIsAccount bool
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	senderExists = chain.AccountExists(ctx.GetSender())
 	contractIsAccount = chain.IsContractAccount(ctx.GetContract())
 	return nil
 }
 
-func GetSenderExists(ctx chain.ContractContext) bool {
+func GetSenderExists(ctx chain.QueryContext) bool {
 	return senderExists
 }
 
-func GetContractIsAccount(ctx chain.ContractContext) bool {
+func GetContractIsAccount(ctx chain.QueryContext) bool {
 	return contractIsAccount
 }
 
-func DoesAccountExist(ctx chain.ContractContext, addr string) bool {
+func DoesAccountExist(ctx chain.QueryContext, addr string) bool {
 	return chain.AccountExists(addr)
 }
 
-func IsNamedContractAccount(ctx chain.ContractContext, addr string) bool {
+func IsNamedContractAccount(ctx chain.QueryContext, addr string) bool {
 	return chain.IsContractAccount(addr)
 }
 `
+
+func TestMitumNativeGasCalibrationTiers(t *testing.T) {
+	expected := map[string]int64{
+		"AccountExists":     3000,
+		"IsContractAccount": 3000,
+		"BalanceOf":         9000,
+	}
+
+	got := map[string]int64{
+		"AccountExists":     mitumNativeSingleLookupGasBase,
+		"IsContractAccount": mitumNativeSingleLookupGasBase,
+		"BalanceOf":         mitumNativeTripleLookupGasBase,
+	}
+
+	for name, want := range expected {
+		if got[name] != want {
+			t.Fatalf("unexpected %s gas: got %d, want %d", name, got[name], want)
+		}
+	}
+
+	accountExistsGas := got["AccountExists"]
+	isContractAccountGas := got["IsContractAccount"]
+	balanceOfGas := got["BalanceOf"]
+
+	if !(balanceOfGas > accountExistsGas) {
+		t.Fatalf("expected BalanceOf gas > AccountExists gas")
+	}
+	if !(balanceOfGas > isContractAccountGas) {
+		t.Fatalf("expected BalanceOf gas > IsContractAccount gas")
+	}
+}
 
 func TestMitumNativeGasRegistrationAllowsAccountExists(t *testing.T) {
 	engine := NewGnoEngine()

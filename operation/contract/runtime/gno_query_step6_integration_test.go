@@ -33,7 +33,7 @@ type User struct {
 var config Config
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	config.Owner = ctx.GetSender()
 	config.Limits.Daily = 1
 	config.Limits.Max = 2
@@ -43,7 +43,7 @@ func Initialize(ctx chain.ContractContext) error {
 	return nil
 }
 
-func UpdateState(ctx chain.ContractContext, daily int64, max int64, owner string, balance int64, active bool, limit int64) error {
+func UpdateState(ctx chain.WriteContext, daily int64, max int64, owner string, balance int64, active bool, limit int64) error {
 	config.Limits.Daily = daily
 	config.Limits.Max = max
 	if users == nil {
@@ -53,11 +53,11 @@ func UpdateState(ctx chain.ContractContext, daily int64, max int64, owner string
 	return nil
 }
 
-func GetDailyLimit(ctx chain.ContractContext) int64 {
+func GetDailyLimit(ctx chain.QueryContext) int64 {
 	return config.Limits.Daily
 }
 
-func GetUserMetaLimit(ctx chain.ContractContext, owner string) (int64, bool) {
+func GetUserMetaLimit(ctx chain.QueryContext, owner string) (int64, bool) {
 	user, found := users[owner]
 	if !found {
 		return 0, false

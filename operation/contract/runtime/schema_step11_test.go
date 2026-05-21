@@ -6,8 +6,8 @@ func TestAnalyzeContractSchemaScalarQueryArgSupported(t *testing.T) {
 	source := `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func HasAlias(ctx chain.ContractContext, name string) bool { return true }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func HasAlias(ctx chain.QueryContext, name string) bool { return true }
 `
 
 	if _, err := AnalyzeContractSchema(source); err != nil {
@@ -22,8 +22,8 @@ import "mitum/chain"
 type Selector struct { Name string }
 type User struct { Balance int64 }
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetUser(ctx chain.ContractContext, selector Selector) (User, bool) { return User{}, false }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetUser(ctx chain.QueryContext, selector Selector) (User, bool) { return User{}, false }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -39,8 +39,8 @@ func TestAnalyzeContractSchemaMapQueryArgRejected(t *testing.T) {
 	source := `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func EchoFlags(ctx chain.ContractContext, flags map[string]bool) map[string]bool { return flags }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func EchoFlags(ctx chain.QueryContext, flags map[string]bool) map[string]bool { return flags }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -56,8 +56,8 @@ func TestAnalyzeContractSchemaSliceQueryArgRejected(t *testing.T) {
 	source := `package contract
 import "mitum/chain"
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func EchoAliases(ctx chain.ContractContext, aliases []string) []string { return aliases }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func EchoAliases(ctx chain.QueryContext, aliases []string) []string { return aliases }
 `
 
 	_, err := AnalyzeContractSchema(source)

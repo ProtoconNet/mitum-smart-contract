@@ -13,12 +13,12 @@ import "mitum/chain"
 
 var value string
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	value = "hello"
 	return nil
 }
 
-func GetValue(ctx chain.ContractContext) string {
+func GetValue(ctx chain.QueryContext) string {
 	return value
 }
 `
@@ -29,12 +29,12 @@ import "mitum/chain"
 
 var value string
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	value = "different"
 	return nil
 }
 
-func GetValue(ctx chain.ContractContext) string {
+func GetValue(ctx chain.QueryContext) string {
 	return value
 }
 `

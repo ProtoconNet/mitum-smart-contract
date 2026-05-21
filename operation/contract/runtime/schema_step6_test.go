@@ -18,8 +18,8 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, owner string, daily int64, max int64) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, owner string, daily int64, max int64) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -48,8 +48,8 @@ type User struct {
 
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, owner string, balance int64, active bool, limit int64) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, owner string, balance int64, active bool, limit int64) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -72,8 +72,8 @@ type Node struct {
 
 var node Node
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value int64) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value int64) error { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -100,8 +100,8 @@ type B struct {
 
 var root A
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value int64) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value int64) error { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -126,8 +126,8 @@ type User struct {
 
 var user User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value int64) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value int64) error { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -154,8 +154,8 @@ type User struct {
 
 var user User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value int64) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value int64) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -182,8 +182,8 @@ type User struct {
 
 var user User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value int64) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value int64) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)

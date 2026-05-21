@@ -11,12 +11,12 @@ import "mitum/chain"
 
 var names []string
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	names = []string{"alice"}
 	return nil
 }
 
-func AddName(ctx chain.ContractContext, name string) error {
+func AddName(ctx chain.WriteContext, name string) error {
 	names = append(names, name)
 	return nil
 }
@@ -32,12 +32,12 @@ type User struct {
 
 var users []User
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	users = []User{User{Balance:1, Active:true}}
 	return nil
 }
 
-func AppendUser(ctx chain.ContractContext, balance int64, active bool) error {
+func AppendUser(ctx chain.WriteContext, balance int64, active bool) error {
 	users = append(users, User{Balance:balance, Active:active})
 	return nil
 }
@@ -61,13 +61,13 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	config.Names = []string{"alice"}
 	config.Users = []User{User{Meta:Meta{Limit:10}}}
 	return nil
 }
 
-func AppendState(ctx chain.ContractContext, name string, limit int64) error {
+func AppendState(ctx chain.WriteContext, name string, limit int64) error {
 	config.Names = append(config.Names, name)
 	config.Users = append(config.Users, User{Meta:Meta{Limit:limit}})
 	return nil

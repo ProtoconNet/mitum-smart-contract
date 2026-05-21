@@ -12,23 +12,49 @@ const scalarQueryContractSource = `package contract
 import "mitum/chain"
 
 var revision int64
+var writeHeight int64
+var writeReadOnly bool
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	revision = 1
+	writeHeight = ctx.GetHeight()
+	writeReadOnly = ctx.IsReadOnly()
 	return nil
 }
 
-func Bump(ctx chain.ContractContext, amount int64) error {
+func Bump(ctx chain.WriteContext, amount int64) error {
 	revision = revision + amount
+	writeHeight = ctx.GetHeight()
+	writeReadOnly = ctx.IsReadOnly()
 	return nil
 }
 
-func GetRevision(ctx chain.ContractContext) int64 {
+func GetRevision(ctx chain.QueryContext) int64 {
 	return revision
 }
 
-func IsReadOnlyQuery(ctx chain.ContractContext) bool {
+func IsReadOnlyQuery(ctx chain.QueryContext) bool {
 	return ctx.IsReadOnly()
+}
+
+func GetQueryHeight(ctx chain.QueryContext) int64 {
+	return ctx.GetHeight()
+}
+
+func GetContractAddress(ctx chain.QueryContext) string {
+	return ctx.GetContract()
+}
+
+func GetWriteHeight(ctx chain.QueryContext) int64 {
+	return writeHeight
+}
+
+func GetCurrentHeight(ctx chain.QueryContext) int64 {
+	return ctx.GetCurrentHeight()
+}
+
+func WasWriteReadOnly(ctx chain.QueryContext) bool {
+	return writeReadOnly
 }
 `
 
@@ -43,24 +69,24 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	config.Owner = ctx.GetSender()
 	config.Paused = false
 	config.Limit = 1
 	return nil
 }
 
-func UpdateConfig(ctx chain.ContractContext, paused bool, limit int64) error {
+func UpdateConfig(ctx chain.WriteContext, paused bool, limit int64) error {
 	config.Paused = paused
 	config.Limit = limit
 	return nil
 }
 
-func GetLimit(ctx chain.ContractContext) int64 {
+func GetLimit(ctx chain.QueryContext) int64 {
 	return config.Limit
 }
 
-func GetOwner(ctx chain.ContractContext) string {
+func GetOwner(ctx chain.QueryContext) string {
 	return config.Owner
 }
 `
@@ -70,12 +96,12 @@ import "mitum/chain"
 
 var balances map[string]int64
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	balances = map[string]int64{"alice":1}
 	return nil
 }
 
-func AddBalance(ctx chain.ContractContext, owner string, amount int64) error {
+func AddBalance(ctx chain.WriteContext, owner string, amount int64) error {
 	if balances == nil {
 		balances = map[string]int64{}
 	}
@@ -83,7 +109,7 @@ func AddBalance(ctx chain.ContractContext, owner string, amount int64) error {
 	return nil
 }
 
-func GetBalance(ctx chain.ContractContext, owner string) (int64, bool) {
+func GetBalance(ctx chain.QueryContext, owner string) (int64, bool) {
 	v, found := balances[owner]
 	return v, found
 }
@@ -99,14 +125,14 @@ type User struct {
 
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	users = map[string]User{
 		"alice": User{Balance:1, Active:true},
 	}
 	return nil
 }
 
-func UpdateUser(ctx chain.ContractContext, owner string, balance int64, active bool) error {
+func UpdateUser(ctx chain.WriteContext, owner string, balance int64, active bool) error {
 	if users == nil {
 		users = map[string]User{}
 	}
@@ -114,7 +140,7 @@ func UpdateUser(ctx chain.ContractContext, owner string, balance int64, active b
 	return nil
 }
 
-func GetUserBalance(ctx chain.ContractContext, owner string) (int64, bool) {
+func GetUserBalance(ctx chain.QueryContext, owner string) (int64, bool) {
 	user, found := users[owner]
 	if !found {
 		return 0, false
@@ -122,7 +148,7 @@ func GetUserBalance(ctx chain.ContractContext, owner string) (int64, bool) {
 	return user.Balance, true
 }
 
-func IsUserActive(ctx chain.ContractContext, owner string) (bool, bool) {
+func IsUserActive(ctx chain.QueryContext, owner string) (bool, bool) {
 	user, found := users[owner]
 	if !found {
 		return false, false
@@ -136,12 +162,12 @@ import "mitum/chain"
 
 var revision int64
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	revision = 1
 	return nil
 }
 
-func GetAndBump(ctx chain.ContractContext) int64 {
+func GetAndBump(ctx chain.QueryContext) int64 {
 	revision = revision + 1
 	return revision
 }
@@ -199,6 +225,81 @@ func TestGnoQueryPathScalarRoundTrip(t *testing.T) {
 	}
 	if got := qr.Result.(bool); !got {
 		t.Fatalf("expected read-only query context")
+	}
+
+	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
+		Contract:     contract,
+		Sender:       sender,
+		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		ContractCode: scalarQueryContractSource,
+		Function:     "GetQueryHeight",
+		CallData:     map[string]string{},
+	})
+	if err != nil {
+		t.Fatalf("QueryContract(GetQueryHeight) returned error: %v", err)
+	}
+	if got := qr.Result.(int64); got != int64(states[pstate.SnapshotStateKey(contract)].Height()) {
+		t.Fatalf("unexpected query context height: %d", got)
+	}
+
+	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
+		Contract:      contract,
+		Sender:        sender,
+		Height:        states[pstate.SnapshotStateKey(contract)].Height(),
+		CurrentHeight: base.Height(77),
+		ContractCode:  scalarQueryContractSource,
+		Function:      "GetCurrentHeight",
+		CallData:      map[string]string{},
+	})
+	if err != nil {
+		t.Fatalf("QueryContract(GetCurrentHeight) returned error: %v", err)
+	}
+	if got := qr.Result.(int64); got != 77 {
+		t.Fatalf("unexpected current chain height: %d", got)
+	}
+
+	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
+		Contract:     contract,
+		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		ContractCode: scalarQueryContractSource,
+		Function:     "GetContractAddress",
+		CallData:     map[string]string{},
+	})
+	if err != nil {
+		t.Fatalf("QueryContract(GetContractAddress) returned error: %v", err)
+	}
+	if got := qr.Result.(string); got != contract.String() {
+		t.Fatalf("unexpected query context contract: %q", got)
+	}
+
+	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
+		Contract:     contract,
+		Sender:       sender,
+		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		ContractCode: scalarQueryContractSource,
+		Function:     "GetWriteHeight",
+		CallData:     map[string]string{},
+	})
+	if err != nil {
+		t.Fatalf("QueryContract(GetWriteHeight) returned error: %v", err)
+	}
+	if got := qr.Result.(int64); got != 41 {
+		t.Fatalf("unexpected write context height: %d", got)
+	}
+
+	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
+		Contract:     contract,
+		Sender:       sender,
+		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		ContractCode: scalarQueryContractSource,
+		Function:     "WasWriteReadOnly",
+		CallData:     map[string]string{},
+	})
+	if err != nil {
+		t.Fatalf("QueryContract(WasWriteReadOnly) returned error: %v", err)
+	}
+	if got := qr.Result.(bool); got {
+		t.Fatalf("expected write context to be non-read-only")
 	}
 
 	assertSnapshotStateUnchanged(t, states, contract, snapshotBefore)

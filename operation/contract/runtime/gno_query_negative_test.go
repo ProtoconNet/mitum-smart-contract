@@ -15,16 +15,16 @@ import "mitum/chain"
 
 var value string
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	value = "hello"
 	return nil
 }
 
-func GetValue(ctx chain.ContractContext) string {
+func GetValue(ctx chain.QueryContext) string {
 	return value
 }
 
-func GetByIndex(ctx chain.ContractContext, index int64) string {
+func GetByIndex(ctx chain.QueryContext, index int64) string {
 	return value
 }
 `

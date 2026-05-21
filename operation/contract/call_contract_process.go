@@ -74,7 +74,44 @@ func (opp *CallContractProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
+	if reason := opp.preProcessStateGate(fact, getStateFunc); reason != nil {
+		return ctx, reason, nil
+	}
+
 	return ctx, nil, nil
+}
+
+func (opp *CallContractProcessor) preProcessStateGate(
+	fact CallContractFact,
+	getStateFunc base.GetStateFunc,
+) base.OperationProcessReasonError {
+	designState, found, err := getStateFunc(pstate.DesignStateKey(fact.Contract()))
+	switch {
+	case err != nil:
+		return base.NewBaseOperationProcessReasonError("failed to read design state: %v", err)
+	case !found:
+		return base.NewBaseOperationProcessReasonError("contract design not found for typed contract %v", fact.Contract())
+	}
+	if _, err := pstate.GetDesignStateValueFromState(designState); err != nil {
+		return base.NewBaseOperationProcessReasonError("failed to decode design state: %v", err)
+	}
+
+	runtimeState, found, err := getStateFunc(pstate.RuntimeStateKey(fact.Contract()))
+	switch {
+	case err != nil:
+		return base.NewBaseOperationProcessReasonError("failed to read runtime state: %v", err)
+	case !found:
+		return base.NewBaseOperationProcessReasonError("runtime state not found for typed contract %v", fact.Contract())
+	}
+	runtimeValue, err := pstate.GetRuntimeFromState(runtimeState)
+	if err != nil {
+		return base.NewBaseOperationProcessReasonError("failed to decode runtime state: %v", err)
+	}
+	if runtimeValue.Engine != pstate.RuntimeEngineGnoSnapshot {
+		return base.NewBaseOperationProcessReasonError("unsupported runtime engine %q", runtimeValue.Engine)
+	}
+
+	return nil
 }
 
 func (opp *CallContractProcessor) Process(

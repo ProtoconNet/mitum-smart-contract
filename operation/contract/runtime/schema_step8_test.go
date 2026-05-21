@@ -8,8 +8,8 @@ import "mitum/chain"
 
 var flags []bool
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value string) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -32,8 +32,8 @@ type User struct {
 
 var users []User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value string) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -64,8 +64,8 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value string) error { return nil }
 `
 
 	schema, err := AnalyzeContractSchema(source)
@@ -83,8 +83,8 @@ import "mitum/chain"
 
 var groups [][]string
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value string) error { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -103,8 +103,8 @@ import "mitum/chain"
 
 var matrix []map[string]int64
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value string) error { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -129,8 +129,8 @@ type User struct {
 
 var user User
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value string) error { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -153,8 +153,8 @@ type Node struct {
 
 var root Node
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func Update(ctx chain.ContractContext, value string) error { return nil }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func Update(ctx chain.WriteContext, value string) error { return nil }
 `
 
 	_, err := AnalyzeContractSchema(source)
@@ -173,8 +173,8 @@ import "mitum/chain"
 
 var names []string
 
-func Initialize(ctx chain.ContractContext) error { return nil }
-func GetNames(ctx chain.ContractContext) []string { return names }
+func Initialize(ctx chain.WriteContext) error { return nil }
+func GetNames(ctx chain.QueryContext) []string { return names }
 `
 
 	schema, err := AnalyzeContractSchema(source)

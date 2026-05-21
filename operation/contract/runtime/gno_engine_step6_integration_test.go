@@ -21,14 +21,14 @@ type Config struct {
 
 var config Config
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	config.Owner = ctx.GetSender()
 	config.Limits.Daily = 1
 	config.Limits.Max = 2
 	return nil
 }
 
-func UpdateLimits(ctx chain.ContractContext, daily int64, max int64) error {
+func UpdateLimits(ctx chain.WriteContext, daily int64, max int64) error {
 	config.Limits.Daily = daily
 	config.Limits.Max = max
 	return nil
@@ -50,14 +50,14 @@ type User struct {
 
 var users map[string]User
 
-func Initialize(ctx chain.ContractContext) error {
+func Initialize(ctx chain.WriteContext) error {
 	users = map[string]User{
 		"alice": User{Balance:1, Meta:Meta{Active:true, Limit:10}},
 	}
 	return nil
 }
 
-func UpdateUser(ctx chain.ContractContext, owner string, balance int64, active bool, limit int64) error {
+func UpdateUser(ctx chain.WriteContext, owner string, balance int64, active bool, limit int64) error {
 	if users == nil {
 		users = map[string]User{}
 	}

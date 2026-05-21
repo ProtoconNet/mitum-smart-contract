@@ -395,11 +395,23 @@ func (s ContractSchema) validateMapTypeRecursive(typ TypeRef, subject string, re
 }
 
 func (fn FunctionSchema) IsContextCallable() bool {
+	return fn.IsWriteContextCallable() || fn.IsQueryContextCallable()
+}
+
+func (fn FunctionSchema) IsWriteContextCallable() bool {
 	if len(fn.Params) < 1 {
 		return false
 	}
 
-	return isContractContextType(fn.Params[0].Type)
+	return isWriteContextType(fn.Params[0].Type)
+}
+
+func (fn FunctionSchema) IsQueryContextCallable() bool {
+	if len(fn.Params) < 1 {
+		return false
+	}
+
+	return isQueryContextType(fn.Params[0].Type)
 }
 
 func (fn FunctionSchema) IsTypedABIShape() bool {
@@ -410,10 +422,38 @@ func (fn FunctionSchema) IsTypedABIShape() bool {
 	return fn.IsContextCallable()
 }
 
-func isContractContextType(typ TypeRef) bool {
+func (fn FunctionSchema) UsesLegacyContractContext() bool {
+	if len(fn.Params) < 1 {
+		return false
+	}
+
+	if currentSchemaRuleset.ContextRules.LegacyContractContextAllowed {
+		return false
+	}
+
+	return isLegacyContractContextType(fn.Params[0].Type)
+}
+
+func isWriteContextType(typ TypeRef) bool {
+	return isContextTypeNamed(typ, currentSchemaRuleset.ContextRules.WriteContextType)
+}
+
+func isQueryContextType(typ TypeRef) bool {
+	return isContextTypeNamed(typ, currentSchemaRuleset.ContextRules.QueryContextType)
+}
+
+func isLegacyContractContextType(typ TypeRef) bool {
+	return isContextTypeNamed(typ, currentSchemaRuleset.ContextRules.LegacyContractContextType)
+}
+
+func isContextTypeNamed(typ TypeRef, name string) bool {
+	if name == "" {
+		return false
+	}
+
 	t := typ.NormalizedString()
 
-	return t == "ContractContext" || strings.HasSuffix(t, ".ContractContext")
+	return t == name || strings.HasSuffix(t, "."+name)
 }
 
 func normalizeTypeString(s string) string {
@@ -431,7 +471,7 @@ func (fn FunctionSchema) IsSingleErrorResult() bool {
 
 func (fn FunctionSchema) IsTypedInitializeShape() bool {
 	return fn.Name == "Initialize" &&
-		fn.IsContextCallable() &&
+		fn.IsWriteContextCallable() &&
 		len(fn.Params) >= 1 &&
 		fn.IsSingleErrorResult()
 }
@@ -439,7 +479,7 @@ func (fn FunctionSchema) IsTypedInitializeShape() bool {
 func (fn FunctionSchema) IsTypedWriteShape() bool {
 	return fn.Exported &&
 		fn.Name != "Initialize" &&
-		fn.IsContextCallable() &&
+		fn.IsWriteContextCallable() &&
 		fn.IsSingleErrorResult()
 }
 
@@ -467,7 +507,7 @@ func (fn FunctionSchema) IsTypedQueryShape() bool {
 	if fn.Name == "Initialize" {
 		return false
 	}
-	if !fn.IsContextCallable() {
+	if !fn.IsQueryContextCallable() {
 		return false
 	}
 	switch len(fn.Results) {
