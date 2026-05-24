@@ -3,7 +3,6 @@ package runtime
 import gnostd "github.com/gnolang/gno/tm2/pkg/std"
 
 const (
-	MitumChainPackagePath = "mitum/chain"
 	MitumChainPackageName = "chain"
 )
 
@@ -74,7 +73,15 @@ func MitumChainMemPackage() *gnostd.MemPackage {
 }
 
 func HostABIMemPackages() []*gnostd.MemPackage {
-	return []*gnostd.MemPackage{
-		MitumChainMemPackage(),
+	paths := allowedTypedContractImportPathsByKind(AllowedImportHostABI)
+	packages := make([]*gnostd.MemPackage, 0, len(paths))
+	for _, importPath := range paths {
+		switch importPath {
+		case MitumChainPackagePath:
+			packages = append(packages, MitumChainMemPackage())
+		default:
+			panic("canonical host ABI import has no MemPackage implementation: " + importPath)
+		}
 	}
+	return packages
 }

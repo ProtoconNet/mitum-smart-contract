@@ -156,16 +156,7 @@ var currentSchemaRuleset = SchemaRuleset{
 		MaxContractSourceBytes: MaxTypedContractSourceBytes,
 	},
 	ImportRules: ImportRules{
-		AllowedImports: []string{
-			MitumChainPackagePath,
-			"strconv",
-			"strings",
-			"errors",
-			"bytes",
-			"encoding/hex",
-			"encoding/base64",
-			"unicode/utf8",
-		},
+		AllowedImports: allowedTypedContractImportPaths(),
 	},
 	ScalarRules: ScalarRules{
 		AllowedKinds: []string{

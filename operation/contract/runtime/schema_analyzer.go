@@ -122,9 +122,8 @@ func validateContractImports(node *ast.File) error {
 		}
 
 		return errors.Errorf(
-			`import %q is not allowed in typed Gno contracts; allowed imports are: %s`,
+			`import %q is not allowed in typed Gno contracts`,
 			path,
-			AllowedTypedContractImportsDescription(),
 		)
 	}
 

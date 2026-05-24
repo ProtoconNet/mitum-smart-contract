@@ -21,16 +21,11 @@ const (
 	QueryArgSupportDescription         = "current Gno query ABI v1 supports only scalar parameters: string, bool, int, int64, uint64"
 )
 
-var AllowedTypedContractImports = cloneStringSlice(currentSchemaRuleset.ImportRules.AllowedImports)
+// AllowedTypedContractImports is a compatibility snapshot of the current
+// policy. Validation reads the canonical import specs directly.
+var AllowedTypedContractImports = allowedTypedContractImportPaths()
 
-var allowedTypedContractImportSet = func() map[string]struct{} {
-	out := make(map[string]struct{}, len(AllowedTypedContractImports))
-	for _, path := range AllowedTypedContractImports {
-		out[path] = struct{}{}
-	}
-
-	return out
-}()
+var allowedTypedContractImportSet = allowedTypedContractImportPathSet()
 
 func IsAllowedTypedContractImport(path string) bool {
 	_, found := allowedTypedContractImportSet[path]
@@ -38,7 +33,7 @@ func IsAllowedTypedContractImport(path string) bool {
 }
 
 func AllowedTypedContractImportsDescription() string {
-	return strings.Join(AllowedTypedContractImports, ", ")
+	return strings.Join(allowedTypedContractImportPaths(), ", ")
 }
 
 type TypeKind string

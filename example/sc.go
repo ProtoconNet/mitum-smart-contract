@@ -4,7 +4,16 @@
 // Runtime-only Gno contract example. This file is not part of the normal Go build.
 package contract
 
-import "mitum/chain"
+import (
+	"bytes"
+	"encoding/base64"
+	"encoding/hex"
+	"errors"
+	"mitum/chain"
+	"strconv"
+	"strings"
+	"unicode/utf8"
+)
 
 type contractError string
 
@@ -259,6 +268,31 @@ func IsNamedContractAccount(ctx chain.QueryContext, addr string) bool {
 
 func GetBalanceOf(ctx chain.QueryContext, addr string, currency string) (string, bool) {
 	return chain.BalanceOf(addr, currency)
+}
+
+func GetStdlibSummary(ctx chain.QueryContext) map[string]string {
+	buf := bytes.NewBufferString(value)
+	upper := strings.ToUpper(buf.String())
+	hexValue := hex.EncodeToString([]byte(value))
+	base64Value := base64.StdEncoding.EncodeToString([]byte(value))
+	revisionText := strconv.FormatInt(revision, 10)
+	utf8State := strconv.FormatBool(utf8.ValidString(value))
+
+	return map[string]string{
+		"upper":    upper,
+		"hex":      hexValue,
+		"base64":   base64Value,
+		"revision": revisionText,
+		"utf8":     utf8State,
+	}
+}
+
+func ValidateUtf8Value(ctx chain.QueryContext) error {
+	if utf8.ValidString(value) {
+		return nil
+	}
+
+	return errors.New("value is not valid utf8")
 }
 
 func GetValueIfPresent(ctx chain.QueryContext) (string, bool) {

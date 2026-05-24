@@ -13,6 +13,7 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
+	gnostdlibs "github.com/gnolang/gno/gnovm/stdlibs"
 	"github.com/gnolang/gno/tm2/pkg/db/memdb"
 	gnostd "github.com/gnolang/gno/tm2/pkg/std"
 	gstore "github.com/gnolang/gno/tm2/pkg/store"
@@ -240,12 +241,36 @@ func newGnoMachineAndPackage(
 	alloc := gno.NewAllocator(limits.MaxAllocBytes)
 	db := memdb.NewMemDB()
 	baseStore := dbadapter.StoreConstructor(db, storetypes.StoreOptions{})
-	wrappedStore := baseStore.CacheWrap()
 
 	store := gno.NewStore(alloc, baseStore, baseStore)
-	store.SetNativeResolver(CombineNativeResolvers(MitumNativeResolver))
-	txStore := store.BeginTransaction(wrappedStore, wrappedStore, nil, gasMeter)
+	store.SetNativeResolver(CombineNativeResolvers(MitumNativeResolver, gnostdlibs.NativeResolver))
 
+	stdlibPackages, err := GnoStdlibMemPackagesForContract(contractSource)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load Gno stdlib packages: %w", err)
+	}
+	if len(stdlibPackages) > 0 {
+		// Loaded stdlib code is runtime environment setup, not contract work.
+		// Persist it to the backing store before opening the metered execution
+		// transaction so a permitted import does not spend invocation gas just
+		// constructing fixed runtime library packages.
+		setupMachine := gno.NewMachineWithOptions(gno.MachineOptions{
+			Alloc:              alloc,
+			Store:              store,
+			Output:             io.Discard,
+			Context:            execCtx,
+			MaxAllocBytes:      limits.MaxAllocBytes,
+			BoundedPanicRender: true,
+		})
+		for _, spkg := range stdlibPackages {
+			if _, _, err := runMemPackage(setupMachine, spkg, gasMeter); err != nil {
+				return nil, nil, fmt.Errorf("failed to load stdlib package %q: %w", spkg.Path, err)
+			}
+		}
+	}
+
+	wrappedStore := baseStore.CacheWrap()
+	txStore := store.BeginTransaction(wrappedStore, wrappedStore, nil, gasMeter)
 	m := gno.NewMachineWithOptions(gno.MachineOptions{
 		Alloc:              alloc,
 		Store:              txStore,
@@ -258,8 +283,8 @@ func newGnoMachineAndPackage(
 
 	for _, hpkg := range HostABIMemPackages() {
 		hpkg.Type = gno.MPStdlibProd
-		if _, _, err := runMemPackage(m, hpkg); err != nil {
-			return nil, nil, err
+		if _, _, err := runMemPackage(m, hpkg, gasMeter); err != nil {
+			return nil, nil, fmt.Errorf("failed to load host ABI package %q: %w", hpkg.Path, err)
 		}
 	}
 
@@ -272,16 +297,27 @@ func newGnoMachineAndPackage(
 		},
 	}
 
-	_, pv, err := runMemPackage(m, cpkg)
+	_, pv, err := runMemPackage(m, cpkg, gasMeter)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to load typed contract package: %w", err)
 	}
 
 	return m, pv, nil
 }
 
-func runMemPackage(m *gno.Machine, pkg *gnostd.MemPackage) (*gno.PackageNode, *gno.PackageValue, error) {
-	pn, pv := m.RunMemPackage(pkg, true)
+func runMemPackage(m *gno.Machine, pkg *gnostd.MemPackage, gasMeter gstore.GasMeter) (pn *gno.PackageNode, pv *gno.PackageValue, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if isGnoPackageLoadResourceLimitPanic(r, gasMeter) {
+				panic(r)
+			}
+			pn = nil
+			pv = nil
+			err = newGnoPackageLoadPanicError(r)
+		}
+	}()
+
+	pn, pv = m.RunMemPackage(pkg, true)
 	if pn == nil || pv == nil {
 		return nil, nil, fmt.Errorf("failed to run mem package %q", pkg.Path)
 	}
