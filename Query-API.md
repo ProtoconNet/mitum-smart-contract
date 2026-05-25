@@ -99,7 +99,12 @@ JSON/HAL 응답에서의 shape:
 - map -> JSON object
 - slice -> JSON array
 
-`(T, bool)` query는 기존처럼 `result`와 `ok`를 함께 반환한다.
+HTTP 응답에서는 query 함수의 반환값을 항상 `_embedded.output` 아래에 둔다.
+
+- single-result query: `output.result`만 포함
+- `(T, bool)` query: `output.result`와 `output.ok` 포함
+
+`_embedded.result`와 `_embedded.ok` 형태는 더 이상 제공하지 않는다. 이는 메타데이터와 함수 output을 분리하기 위한 즉시 적용 API cleanup이며 compatibility shim은 없다.
 
 ## HAL Response
 
@@ -113,10 +118,12 @@ JSON/HAL 응답에서의 shape:
     "contract": "mitum....",
     "function": "GetConfig",
     "engine": "gno-snapshot-v1",
-    "result": {
-      "Owner": "alice"
-    },
-    "read_only": true
+    "read_only": true,
+    "output": {
+      "result": {
+        "Owner": "alice"
+      }
+    }
   },
   "_links": {
     "self": { "href": "/contract/mitum..../query" },
@@ -128,10 +135,27 @@ JSON/HAL 응답에서의 shape:
 
 ## `(T, bool)` Semantics
 
-- `ok == true`
-    - `result`는 실제 조회된 값을 담는다.
-- `ok == false`
-    - `result`는 해당 타입의 zero-like JSON shape를 담을 수 있다.
+예:
+
+```json
+{
+  "_embedded": {
+    "contract": "mitum....",
+    "function": "GetValueIfPresent",
+    "engine": "gno-snapshot-v1",
+    "read_only": true,
+    "output": {
+      "result": "5",
+      "ok": true
+    }
+  }
+}
+```
+
+- `output.ok == true`
+    - `output.result`는 실제 조회된 값을 담는다.
+- `output.ok == false`
+    - `output.result`는 해당 타입의 zero-like JSON shape를 담을 수 있다.
     - 예:
         - struct -> field별 zero value / nil map / nil slice
         - scalar -> zero scalar

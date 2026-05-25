@@ -17,12 +17,16 @@ var digestContractQueryEngine cruntime.ContractEngine = cruntime.NewGnoEngine()
 const MaxContractQueryBodyBytes = 128 * 1024
 
 type ContractQueryResponse struct {
-	Contract string      `json:"contract"`
-	Function string      `json:"function"`
-	Engine   string      `json:"engine"`
-	Result   interface{} `json:"result"`
-	Ok       *bool       `json:"ok,omitempty"`
-	ReadOnly bool        `json:"read_only"`
+	Contract string              `json:"contract"`
+	Function string              `json:"function"`
+	Engine   string              `json:"engine"`
+	ReadOnly bool                `json:"read_only"`
+	Output   ContractQueryOutput `json:"output"`
+}
+
+type ContractQueryOutput struct {
+	Result interface{} `json:"result"`
+	Ok     *bool       `json:"ok,omitempty"`
 }
 
 func (hd *Handlers) handleContractQuery(w http.ResponseWriter, r *http.Request) {
@@ -155,9 +159,11 @@ func (hd *Handlers) buildContractQuery(
 		Contract: contract,
 		Function: function,
 		Engine:   string(qr.Engine),
-		Result:   qr.Result,
-		Ok:       qr.Ok,
 		ReadOnly: true,
+		Output: ContractQueryOutput{
+			Result: qr.Result,
+			Ok:     qr.Ok,
+		},
 	}
 
 	var hal Hal

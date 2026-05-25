@@ -101,9 +101,14 @@ func TestContractQueryEndpointScalarResult(t *testing.T) {
 	}
 
 	resp := decodeHALResponse(t, body)
+	assertEmbeddedField(t, resp, "contract", contract)
+	assertEmbeddedField(t, resp, "function", "GetOwner")
 	assertEmbeddedField(t, resp, "engine", "gno-snapshot-v1")
 	assertEmbeddedField(t, resp, "read_only", true)
-	assertEmbeddedField(t, resp, "result", "senderd0001sas")
+	assertOutputField(t, resp, "result", "senderd0001sas")
+	assertNoEmbeddedField(t, resp, "result")
+	assertNoEmbeddedField(t, resp, "ok")
+	assertNoOutputField(t, resp, "ok")
 	assertHasHALLink(t, resp, "design")
 	assertHasHALLink(t, resp, "block")
 
@@ -129,7 +134,7 @@ func TestContractQueryEndpointIgnoresSenderParameter(t *testing.T) {
 	}
 
 	resp := decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", "senderd0001sas")
+	assertOutputField(t, resp, "result", "senderd0001sas")
 	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
 }
 
@@ -153,7 +158,7 @@ func TestContractQueryEndpointSeparatesViewAndCurrentHeight(t *testing.T) {
 		t.Fatalf("unexpected view-height status: %d body=%s", status, body)
 	}
 	resp := decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", float64(502))
+	assertOutputField(t, resp, "result", float64(502))
 
 	status, body, _ = performContractQueryRequest(t, hd, contract, map[string]string{
 		"function": "GetCurrentHeight",
@@ -162,7 +167,7 @@ func TestContractQueryEndpointSeparatesViewAndCurrentHeight(t *testing.T) {
 		t.Fatalf("unexpected current-height status: %d body=%s", status, body)
 	}
 	resp = decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", float64(777))
+	assertOutputField(t, resp, "result", float64(777))
 
 	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
 }
@@ -185,7 +190,7 @@ func TestContractQueryEndpointStructResult(t *testing.T) {
 	}
 
 	resp := decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", map[string]interface{}{
+	assertOutputField(t, resp, "result", map[string]interface{}{
 		"Owner": "senderd0001sas",
 		"FeatureFlags": map[string]interface{}{
 			"alpha": true,
@@ -251,7 +256,7 @@ func TestContractQueryEndpointMapScalarResult(t *testing.T) {
 	}
 
 	resp := decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", map[string]interface{}{"alpha": true, "beta": false})
+	assertOutputField(t, resp, "result", map[string]interface{}{"alpha": true, "beta": false})
 	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
 }
 
@@ -273,7 +278,7 @@ func TestContractQueryEndpointMapStructResult(t *testing.T) {
 	}
 
 	resp := decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", map[string]interface{}{
+	assertOutputField(t, resp, "result", map[string]interface{}{
 		"alice": map[string]interface{}{
 			"Balance": float64(10),
 			"Meta": map[string]interface{}{
@@ -312,7 +317,7 @@ func TestContractQueryEndpointSliceScalarResult(t *testing.T) {
 	}
 
 	resp := decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", []interface{}{"root", "child"})
+	assertOutputField(t, resp, "result", []interface{}{"root", "child"})
 	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
 }
 
@@ -334,7 +339,7 @@ func TestContractQueryEndpointSliceStructResult(t *testing.T) {
 	}
 
 	resp := decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "result", []interface{}{
+	assertOutputField(t, resp, "result", []interface{}{
 		map[string]interface{}{
 			"Balance": float64(30),
 			"Meta": map[string]interface{}{
@@ -373,8 +378,8 @@ func TestContractQueryEndpointOptionalResult(t *testing.T) {
 		t.Fatalf("unexpected status: %d body=%s", status, body)
 	}
 	resp := decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "ok", true)
-	assertEmbeddedField(t, resp, "result", map[string]interface{}{
+	assertOutputField(t, resp, "ok", true)
+	assertOutputField(t, resp, "result", map[string]interface{}{
 		"Balance": float64(10),
 		"Meta": map[string]interface{}{
 			"Limit":   float64(100),
@@ -382,6 +387,8 @@ func TestContractQueryEndpointOptionalResult(t *testing.T) {
 			"Aliases": []interface{}{"a1"},
 		},
 	})
+	assertNoEmbeddedField(t, resp, "result")
+	assertNoEmbeddedField(t, resp, "ok")
 
 	status, body, _ = performContractQueryRequest(t, hd, contract, map[string]string{
 		"function": "GetUser",
@@ -391,7 +398,9 @@ func TestContractQueryEndpointOptionalResult(t *testing.T) {
 		t.Fatalf("unexpected status: %d body=%s", status, body)
 	}
 	resp = decodeHALResponse(t, body)
-	assertEmbeddedField(t, resp, "ok", false)
+	assertOutputField(t, resp, "ok", false)
+	assertNoEmbeddedField(t, resp, "result")
+	assertNoEmbeddedField(t, resp, "ok")
 	assertDigestSnapshotStateUnchanged(t, hd.database, contract, snapshotBefore)
 }
 
@@ -692,6 +701,54 @@ func assertEmbeddedField(t *testing.T, resp map[string]interface{}, key string, 
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("unexpected _embedded.%s\nwant: %#v\ngot:  %#v", key, want, got)
+	}
+}
+
+func assertOutputField(t *testing.T, resp map[string]interface{}, key string, want interface{}) {
+	t.Helper()
+
+	embedded, ok := resp["_embedded"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("missing _embedded in response: %#v", resp)
+	}
+	output, ok := embedded["output"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("missing _embedded.output in response: %#v", embedded)
+	}
+	got, found := output[key]
+	if !found {
+		t.Fatalf("missing _embedded.output.%s in response: %#v", key, output)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("unexpected _embedded.output.%s\nwant: %#v\ngot:  %#v", key, want, got)
+	}
+}
+
+func assertNoEmbeddedField(t *testing.T, resp map[string]interface{}, key string) {
+	t.Helper()
+
+	embedded, ok := resp["_embedded"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("missing _embedded in response: %#v", resp)
+	}
+	if _, found := embedded[key]; found {
+		t.Fatalf("unexpected legacy _embedded.%s in response: %#v", key, embedded)
+	}
+}
+
+func assertNoOutputField(t *testing.T, resp map[string]interface{}, key string) {
+	t.Helper()
+
+	embedded, ok := resp["_embedded"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("missing _embedded in response: %#v", resp)
+	}
+	output, ok := embedded["output"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("missing _embedded.output in response: %#v", embedded)
+	}
+	if _, found := output[key]; found {
+		t.Fatalf("unexpected _embedded.output.%s in response: %#v", key, output)
 	}
 }
 

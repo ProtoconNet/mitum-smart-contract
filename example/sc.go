@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"mitum/chain"
 	"strconv"
 	"strings"
@@ -287,12 +286,12 @@ func GetStdlibSummary(ctx chain.QueryContext) map[string]string {
 	}
 }
 
-func ValidateUtf8Value(ctx chain.QueryContext) error {
+func ValidateUtf8Value(ctx chain.QueryContext) (string, bool) {
 	if utf8.ValidString(value) {
-		return nil
+		return value, true
 	}
 
-	return errors.New("value is not valid utf8")
+	return value, false
 }
 
 func GetValueIfPresent(ctx chain.QueryContext) (string, bool) {
