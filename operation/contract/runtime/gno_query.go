@@ -89,6 +89,7 @@ func (gnoEngine) QueryContract(
 		return QueryResult{}, base.NewBaseOperationProcessReasonError("failed to build execution context: %v", err)
 	}
 
+	// Query gas is a resource cap only; it is not transaction billing.
 	limits := QueryGnoExecutionLimits()
 	gasMeter = NewGnoGasMeter(limits.GasLimit)
 

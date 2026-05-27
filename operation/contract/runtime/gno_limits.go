@@ -9,7 +9,9 @@ import (
 )
 
 const (
-	GnoWriteGasLimit      = int64(5_000_000)
+	GnoWriteGasLimit = int64(5_000_000)
+	// Query gas is a read-only resource cap, not a transaction billing budget.
+	// It is intentionally smaller than write/register/call execution gas.
 	GnoQueryGasLimit      = int64(1_000_000)
 	GnoWriteMaxAllocBytes = int64(8 << 20)
 	GnoQueryMaxAllocBytes = int64(4 << 20)

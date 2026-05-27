@@ -62,6 +62,15 @@ query contract에서 `ctx.GetHeight()`는 현재 query가 읽는 state/view heig
 
 write-only `ctx.GetBlockTime()`은 proposal inclusion timestamp를 위한 API이며 query context에는 제공되지 않는다.
 
+### Query Execution Gas Cap
+
+query execution도 VM resource cap으로 gas meter를 사용한다. 이 gas는 transaction fee/billing 의미가 아니라 read-only query가 CPU/step/native call을 과도하게 쓰지 못하게 막는 실행 제한이다.
+
+- write/register/call gas limit: `5,000,000`
+- query gas limit: `1,000,000`
+
+query limit은 write limit의 1/5이며, host native gas table도 query execution에서 동일하게 적용된다. 예를 들어 `BalanceOf`, `AccountExists`, `IsContractAccount`, `SHA3Sum256` 호출은 query budget을 소비한다. query gas exhaustion은 generic panic이 아니라 `gno query out of gas` 계열 failure로 드러난다.
+
 ### Balance Lookup Native
 
 contract query/write 함수는 `mitum/chain` host native로 현재 balance state를 조회할 수 있다.

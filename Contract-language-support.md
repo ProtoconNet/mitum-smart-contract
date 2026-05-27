@@ -389,6 +389,15 @@ digest := chain.SHA3Sum256(data)
 - `"ff"`는 hex byte `0xff`가 아니라 bytes `{0x66, 0x66}`로 해시된다
 - invalid UTF-8 byte sequence를 담은 string도 raw bytes 기준으로 deterministic하게 해시된다
 
+현재 SHA3 gas는 `1000 + 2 * len([]byte(data))` defensive baseline이다. 짧은 입력에도 base cost를 부여하고, 긴 입력은 byte 길이에 비례해 비용이 증가한다. 정밀 benchmark calibration은 후속 작업이다.
+
+query 실행에도 gas 기반 resource cap이 적용된다. 이는 transaction billing이 아니라 read-only query의 VM step/CPU/native call 남용을 제한하기 위한 실행 예산이다.
+
+- write/register/call execution gas limit: `5,000,000`
+- query execution gas limit: `1,000,000`
+
+query gas limit은 write limit의 1/5이고, 같은 host native gas table을 공유한다. 따라서 `SHA3Sum256`, `BalanceOf`, `AccountExists`, `IsContractAccount` 호출도 query budget을 소비한다. query budget 초과는 generic panic이 아니라 out-of-gas category failure로 처리된다.
+
 즉, 현재 컨트랙트는 일반 Go 프로그램이라기보다 **제한된 typed Gno runtime 안에서 동작하는 코드**로 보는 것이 맞다.
 
 ---
