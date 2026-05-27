@@ -397,6 +397,7 @@ query 실행에도 gas 기반 resource cap이 적용된다. 이는 transaction b
 - query execution gas limit: `1,000,000`
 
 query gas limit은 write limit의 1/5이고, 같은 host native gas table을 공유한다. 따라서 `SHA3Sum256`, `BalanceOf`, `AccountExists`, `IsContractAccount` 호출도 query budget을 소비한다. query budget 초과는 generic panic이 아니라 out-of-gas category failure로 처리된다.
+Out-of-gas 실패는 알려줄 수 있지만, 성공까지 총 얼마가 더 필요했는지는 일반적으로 계산할 수 없다. 실행은 전체 비용을 미리 아는 방식이 아니라 진행 중 gas를 차감하다가 limit에 도달하면 중단되는 방식이기 때문이다.
 
 즉, 현재 컨트랙트는 일반 Go 프로그램이라기보다 **제한된 typed Gno runtime 안에서 동작하는 코드**로 보는 것이 맞다.
 
