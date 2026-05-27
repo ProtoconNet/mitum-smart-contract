@@ -78,6 +78,22 @@ Semantics:
 - zero balance는 `"0", true`로 반환되어 not found와 구분된다.
 - state decode/type mismatch는 state corruption 성격의 host native failure이며, raw internal detail은 panic sanitization 정책에 따라 HTTP response에 직접 노출되지 않는다.
 
+### SHA3-256 Native
+
+contract query/write 함수는 deterministic pure host native로 SHA3-256 digest를 계산할 수 있다.
+
+```go
+digest := chain.SHA3Sum256(data)
+```
+
+Semantics:
+
+- input은 `[]byte(data)` raw byte sequence다.
+- hex decode, numeric parse, UTF-8 text normalization은 하지 않는다.
+- output은 lowercase hex digest string이다.
+- failure result는 없다.
+- `"ff"`는 bytes `{0x66, 0x66}`로 해시된다.
+
 ## Query Result Shape
 
 현재 query result는 다음 형태를 지원한다.

@@ -45,12 +45,16 @@ func TestMitumNativeGasCalibrationTiers(t *testing.T) {
 		"AccountExists":     3000,
 		"IsContractAccount": 3000,
 		"BalanceOf":         9000,
+		"SHA3Sum256Base":    1000,
+		"SHA3Sum256PerByte": 2,
 	}
 
 	got := map[string]int64{
 		"AccountExists":     mitumNativeSingleLookupGasBase,
 		"IsContractAccount": mitumNativeSingleLookupGasBase,
 		"BalanceOf":         mitumNativeTripleLookupGasBase,
+		"SHA3Sum256Base":    mitumNativeSHA3Sum256GasBase,
+		"SHA3Sum256PerByte": mitumNativeSHA3Sum256GasPerByte,
 	}
 
 	for name, want := range expected {
@@ -68,6 +72,21 @@ func TestMitumNativeGasCalibrationTiers(t *testing.T) {
 	}
 	if !(balanceOfGas > isContractAccountGas) {
 		t.Fatalf("expected BalanceOf gas > IsContractAccount gas")
+	}
+}
+
+func TestMitumNativeSHA3GasScalesWithInputLength(t *testing.T) {
+	if got := mitumNativeSHA3Sum256Gas(0); got != mitumNativeSHA3Sum256GasBase {
+		t.Fatalf("expected SHA3 base gas for empty input, got %d", got)
+	}
+	if got, want := mitumNativeSHA3Sum256Gas(3), int64(1006); got != want {
+		t.Fatalf("unexpected SHA3 gas for 3 bytes: got %d, want %d", got, want)
+	}
+
+	short := mitumNativeSHA3Sum256Gas(32)
+	long := mitumNativeSHA3Sum256Gas(4096)
+	if long <= short {
+		t.Fatalf("expected SHA3 gas to increase with input length: short=%d long=%d", short, long)
 	}
 }
 

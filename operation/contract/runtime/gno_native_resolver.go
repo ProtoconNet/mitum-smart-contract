@@ -1,10 +1,12 @@
 package runtime
 
 import (
+	"encoding/hex"
 	"reflect"
 
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/sha3"
 )
 
 func CombineNativeResolvers(resolvers ...gno.NativeResolver) gno.NativeResolver {
@@ -35,9 +37,17 @@ func MitumNativeResolver(pkgPath string, name gno.Name) func(m *gno.Machine) {
 		return nativeIsContractAccount
 	case "BalanceOf":
 		return nativeBalanceOf
+	case "SHA3Sum256":
+		return nativeSHA3Sum256
 	default:
 		return nil
 	}
+}
+
+func sha3Sum256HexString(data string) string {
+	sum := sha3.Sum256([]byte(data))
+
+	return hex.EncodeToString(sum[:])
 }
 
 func mustExecutionContext(m *gno.Machine) *ExecutionContext {
@@ -122,4 +132,10 @@ func nativeIsContractAccount(m *gno.Machine) {
 	}
 
 	pushBoolResult(m, ok)
+}
+
+func nativeSHA3Sum256(m *gno.Machine) {
+	data := machineStringArg(m, 0)
+
+	pushStringResult(m, sha3Sum256HexString(data))
 }

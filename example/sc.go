@@ -159,6 +159,10 @@ func GetValue(ctx chain.QueryContext) string {
 	return value
 }
 
+func GetValueSHA3(ctx chain.QueryContext) string {
+	return chain.SHA3Sum256(value)
+}
+
 func GetRevision(ctx chain.QueryContext) int64 {
 	return revision
 }
