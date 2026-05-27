@@ -23,12 +23,14 @@ var callContractProcessorPool = sync.Pool{
 
 type CallContractProcessor struct {
 	*base.BaseOperationProcessor
-	encs *encoder.Encoders
+	proposal *base.ProposalSignFact
+	encs     *encoder.Encoders
 }
 
-func NewCallContractProcessor(encs encoder.Encoders) currencytypes.GetNewProcessor {
+func NewCallContractProcessor(encs encoder.Encoders) currencytypes.GetNewProcessorWithProposal {
 	return func(
 		height base.Height,
+		proposal *base.ProposalSignFact,
 		getStateFunc base.GetStateFunc,
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
@@ -52,6 +54,7 @@ func NewCallContractProcessor(encs encoder.Encoders) currencytypes.GetNewProcess
 		}
 
 		opp.BaseOperationProcessor = b
+		opp.proposal = proposal
 
 		return opp, nil
 	}
@@ -122,6 +125,13 @@ func (opp *CallContractProcessor) Process(
 
 	var sts []base.StateMergeValue
 
+	blockTime, err := proposalBlockTime(opp.proposal)
+	if err != nil {
+		return nil, base.NewBaseOperationProcessReasonError(
+			"failed to resolve contract write block time: %v", err,
+		), nil
+	}
+
 	fName, found := fact.callData["function"]
 	if !found {
 		return nil, base.NewBaseOperationProcessReasonError(
@@ -153,6 +163,7 @@ func (opp *CallContractProcessor) Process(
 			Contract:     fact.Contract(),
 			Sender:       fact.Sender(),
 			Height:       opp.Height(),
+			BlockTime:    blockTime,
 			ContractCode: cd.ContractCode(),
 			Schema:       schema,
 			Function:     fName,
@@ -174,6 +185,7 @@ func (opp *CallContractProcessor) Process(
 }
 
 func (opp *CallContractProcessor) Close() error {
+	opp.proposal = nil
 	callContractProcessorPool.Put(opp)
 
 	return nil

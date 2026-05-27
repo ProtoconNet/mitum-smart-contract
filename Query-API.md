@@ -60,6 +60,8 @@ query contract에서 `ctx.GetHeight()`는 현재 query가 읽는 state/view heig
 
 현재 chain head height가 필요하면 query 함수에서 `ctx.GetCurrentHeight()`를 사용한다. digest query path는 database의 current last block height를 runtime에 전달하며, 이 값은 state/view height와 다를 수 있다. write/register/call path에서는 current head height ABI가 없으며, write execution/block height는 `ctx.GetHeight()`로 읽는다. `chain.CurrentHeight()`는 더 이상 canonical contract surface가 아니다.
 
+write-only `ctx.GetBlockTime()`은 proposal inclusion timestamp를 위한 API이며 query context에는 제공되지 않는다.
+
 ### Balance Lookup Native
 
 contract query/write 함수는 `mitum/chain` host native로 현재 balance state를 조회할 수 있다.

@@ -18,6 +18,7 @@ type ExecuteRequest struct {
 	Contract     base.Address
 	Sender       base.Address
 	Height       base.Height
+	BlockTime    int64
 	ContractCode string
 	Schema       *ContractSchema
 	Function     string

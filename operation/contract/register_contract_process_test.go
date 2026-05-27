@@ -12,6 +12,7 @@ import (
 	types "github.com/ProtoconNet/mitum-currency/v3/types"
 	contracttypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
 	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
@@ -25,6 +26,7 @@ func Initialize(ctx chain.WriteContext) error { return nil }
 type registerProcessSchemaReuseEngine struct {
 	t             *testing.T
 	expected      cruntime.ContractSchema
+	expectedTime  int64
 	validateCalls int
 	executeCalls  int
 }
@@ -53,6 +55,9 @@ func (e *registerProcessSchemaReuseEngine) ExecuteContract(
 	if req.ContractCode != registerProcessSchemaReuseContractSource {
 		e.t.Fatal("expected ExecuteRequest.ContractCode to be preserved")
 	}
+	if req.BlockTime != e.expectedTime {
+		e.t.Fatalf("unexpected block time passed to ExecuteContract: %d", req.BlockTime)
+	}
 
 	return cruntime.ExecuteResult{
 		Engine:      pstate.RuntimeEngineGnoSnapshot,
@@ -77,14 +82,16 @@ func TestRegisterContractProcessorPassesValidatedSchemaToExecute(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AnalyzeContractSchema returned error: %v", err)
 	}
-	fakeEngine := &registerProcessSchemaReuseEngine{
-		t:        t,
-		expected: expectedSchema,
-	}
-	contractEngine = fakeEngine
-
 	contractAddr := base.NewStringAddress("contractreg0001")
 	sender := base.NewStringAddress("senderreg0001")
+	proposalFact := isaac.NewProposalFact(base.GenesisPoint, sender, nil, nil)
+	var proposal base.ProposalSignFact = isaac.NewProposalSignFact(proposalFact)
+	fakeEngine := &registerProcessSchemaReuseEngine{
+		t:            t,
+		expected:     expectedSchema,
+		expectedTime: proposal.ProposalFact().ProposedAt().Unix(),
+	}
+	contractEngine = fakeEngine
 
 	states := map[string]base.State{
 		cestate.StateKeyContractAccount(contractAddr): common.NewBaseState(
@@ -100,15 +107,14 @@ func TestRegisterContractProcessorPassesValidatedSchemaToExecute(t *testing.T) {
 		return st, found, nil
 	}
 
-	baseProcessor, err := base.NewBaseOperationProcessor(base.Height(33), getStateFunc, nil, nil)
-	if err != nil {
-		t.Fatalf("NewBaseOperationProcessor returned error: %v", err)
-	}
-
 	var encs encoder.Encoders
-	opp := &RegisterContractProcessor{
-		BaseOperationProcessor: baseProcessor,
-		encs:                   &encs,
+	processor, err := NewRegisterContractProcessor(encs)(base.Height(33), &proposal, getStateFunc, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRegisterContractProcessor returned error: %v", err)
+	}
+	opp, ok := processor.(*RegisterContractProcessor)
+	if !ok {
+		t.Fatalf("expected RegisterContractProcessor, got %T", processor)
 	}
 
 	fact := NewRegisterContractFact(

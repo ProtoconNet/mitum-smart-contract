@@ -339,7 +339,7 @@ func invokeTypedWrite(
 	m.RunDeclaration(gno.ImportD("chain", MitumChainPackagePath))
 
 	args := []any{
-		writeContextExpr(req.Sender.String(), req.Contract.String(), int64(req.Height), false),
+		writeContextExpr(req.Sender.String(), req.Contract.String(), int64(req.Height), req.BlockTime, false),
 	}
 
 	if req.Mode == InvocationModeRegister && fn.Name == "Initialize" {
@@ -447,13 +447,14 @@ func safeTypedValueString(tv gno.TypedValue) (out string) {
 	return tv.String()
 }
 
-func writeContextExpr(sender, contract string, height int64, readOnly bool) gno.Expr {
+func writeContextExpr(sender, contract string, height int64, blockTime int64, readOnly bool) gno.Expr {
 	return &gno.CompositeLitExpr{
 		Type: gno.Sel(gno.Nx("chain"), "WriteContext"),
 		Elts: gno.KeyValueExprs{
 			gno.Kv("Sender", gno.Str(sender)),
 			gno.Kv("Contract", gno.Str(contract)),
 			gno.Kv("Height", gno.Num(strconv.FormatInt(height, 10))),
+			gno.Kv("BlockTime", gno.Num(strconv.FormatInt(blockTime, 10))),
 			gno.Kv("ReadOnly", gno.X(strconv.FormatBool(readOnly))),
 		},
 	}

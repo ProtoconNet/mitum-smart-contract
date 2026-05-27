@@ -11,6 +11,7 @@ import (
 	types "github.com/ProtoconNet/mitum-currency/v3/types"
 	ptypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
 	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
@@ -36,6 +37,7 @@ func GetValue(ctx chain.QueryContext) string { return value }
 type callProcessSchemaCaptureEngine struct {
 	t            *testing.T
 	expected     *cruntime.ContractSchema
+	expectedTime int64
 	executeCalls int
 }
 
@@ -68,6 +70,9 @@ func (e *callProcessSchemaCaptureEngine) ExecuteContract(
 	}
 	if req.Function != "Store" {
 		e.t.Fatalf("unexpected function: %q", req.Function)
+	}
+	if req.BlockTime != e.expectedTime {
+		e.t.Fatalf("unexpected block time passed to ExecuteContract: %d", req.BlockTime)
 	}
 
 	return cruntime.ExecuteResult{
@@ -147,6 +152,9 @@ func runCallProcessSchemaTest(
 
 	contractAddr := base.NewStringAddress("contractcallmeta1")
 	sender := base.NewStringAddress("sendercallmeta01")
+	proposalFact := isaac.NewProposalFact(base.GenesisPoint, sender, nil, nil)
+	var proposal base.ProposalSignFact = isaac.NewProposalSignFact(proposalFact)
+	fakeEngine.expectedTime = proposal.ProposalFact().ProposedAt().Unix()
 	states := map[string]base.State{
 		pstate.DesignStateKey(contractAddr): common.NewBaseState(
 			base.Height(1),
@@ -164,15 +172,14 @@ func runCallProcessSchemaTest(
 		return st, found, nil
 	}
 
-	baseProcessor, err := base.NewBaseOperationProcessor(base.Height(44), getStateFunc, nil, nil)
-	if err != nil {
-		t.Fatalf("NewBaseOperationProcessor returned error: %v", err)
-	}
-
 	var encs encoder.Encoders
-	opp := &CallContractProcessor{
-		BaseOperationProcessor: baseProcessor,
-		encs:                   &encs,
+	processor, err := NewCallContractProcessor(encs)(base.Height(44), &proposal, getStateFunc, nil, nil)
+	if err != nil {
+		t.Fatalf("NewCallContractProcessor returned error: %v", err)
+	}
+	opp, ok := processor.(*CallContractProcessor)
+	if !ok {
+		t.Fatalf("expected CallContractProcessor, got %T", processor)
 	}
 
 	fact := NewCallContractFact(

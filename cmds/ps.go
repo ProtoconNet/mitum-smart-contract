@@ -109,12 +109,12 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 		extension.NewWithdrawProcessor(),
 	); err != nil {
 		return pctx, err
-	} else if err := opr.SetProcessor(
+	} else if err := opr.SetProcessorWithProposal(
 		contract.RegisterContractHint,
 		contract.NewRegisterContractProcessor(*encs),
 	); err != nil {
 		return pctx, err
-	} else if err := opr.SetProcessor(
+	} else if err := opr.SetProcessorWithProposal(
 		contract.CallContractHint,
 		contract.NewCallContractProcessor(*encs),
 	); err != nil {
@@ -279,8 +279,11 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = setA.Add(contract.RegisterContractHint,
-		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+	_ = setB.Add(contract.RegisterContractHint,
+		func(height base.Height, proposal base.ProposalSignFact, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			if err := opr.SetProposal(&proposal); err != nil {
+				return nil, err
+			}
 			return opr.New(
 				height,
 				getStatef,
@@ -289,8 +292,11 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 			)
 		})
 
-	_ = setA.Add(contract.CallContractHint,
-		func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+	_ = setB.Add(contract.CallContractHint,
+		func(height base.Height, proposal base.ProposalSignFact, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+			if err := opr.SetProposal(&proposal); err != nil {
+				return nil, err
+			}
 			return opr.New(
 				height,
 				getStatef,

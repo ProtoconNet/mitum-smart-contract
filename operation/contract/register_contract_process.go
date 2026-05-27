@@ -27,12 +27,14 @@ var initializeFuncName = "Initialize"
 
 type RegisterContractProcessor struct {
 	*base.BaseOperationProcessor
-	encs *encoder.Encoders
+	proposal *base.ProposalSignFact
+	encs     *encoder.Encoders
 }
 
-func NewRegisterContractProcessor(encs encoder.Encoders) currencytypes.GetNewProcessor {
+func NewRegisterContractProcessor(encs encoder.Encoders) currencytypes.GetNewProcessorWithProposal {
 	return func(
 		height base.Height,
+		proposal *base.ProposalSignFact,
 		getStateFunc base.GetStateFunc,
 		newPreProcessConstraintFunc base.NewOperationProcessorProcessFunc,
 		newProcessConstraintFunc base.NewOperationProcessorProcessFunc,
@@ -56,6 +58,7 @@ func NewRegisterContractProcessor(encs encoder.Encoders) currencytypes.GetNewPro
 		}
 
 		opp.BaseOperationProcessor = b
+		opp.proposal = proposal
 
 		return opp, nil
 	}
@@ -128,6 +131,13 @@ func (opp *RegisterContractProcessor) Process(
 	fact, _ := op.Fact().(RegisterContractFact)
 	var sts []base.StateMergeValue
 
+	blockTime, blockTimeErr := proposalBlockTime(opp.proposal)
+	if blockTimeErr != nil {
+		return nil, base.NewBaseOperationProcessReasonError(
+			"failed to resolve contract write block time: %v", blockTimeErr,
+		), nil
+	}
+
 	schema, err := contractEngine.ValidateContract(fact.ContractCode())
 	if err != nil {
 		return nil, err, nil
@@ -141,6 +151,7 @@ func (opp *RegisterContractProcessor) Process(
 			Contract:     fact.Contract(),
 			Sender:       fact.Sender(),
 			Height:       opp.Height(),
+			BlockTime:    blockTime,
 			ContractCode: fact.ContractCode(),
 			Schema:       &schema,
 			Function:     initializeFuncName,
@@ -182,6 +193,7 @@ func (opp *RegisterContractProcessor) Process(
 }
 
 func (opp *RegisterContractProcessor) Close() error {
+	opp.proposal = nil
 	registerContractProcessorPool.Put(opp)
 
 	return nil

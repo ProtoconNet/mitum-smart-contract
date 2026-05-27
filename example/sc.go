@@ -37,6 +37,7 @@ var initialized bool
 var owner string
 var value string
 var revision int64
+var blockTime int64
 
 var record Record
 var flags map[string]bool
@@ -51,6 +52,7 @@ func Initialize(ctx chain.WriteContext, initialValue string, initialLimit int64)
 	owner = ctx.GetSender()
 	value = initialValue
 	revision = 0
+	blockTime = ctx.GetBlockTime()
 	record = buildRecord("initial", initialValue, initialLimit, false)
 	flags = map[string]bool{
 		"initialized": true,
@@ -255,6 +257,10 @@ func GetHeight(ctx chain.QueryContext) int64 {
 
 func GetCurrentHeight(ctx chain.QueryContext) int64 {
 	return ctx.GetCurrentHeight()
+}
+
+func GetBlockTime(ctx chain.QueryContext) int64 {
+	return blockTime
 }
 
 func DoesAccountExist(ctx chain.QueryContext, addr string) bool {

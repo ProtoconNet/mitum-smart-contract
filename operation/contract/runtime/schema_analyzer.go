@@ -8,6 +8,7 @@ import (
 	"go/parser"
 	"go/token"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -91,7 +92,7 @@ func AnalyzeContractSchema(sourceCode string) (ContractSchema, error) {
 			if err != nil {
 				return ContractSchema{}, err
 			}
-			if err := validateHeightABIUsage(d, fn, chainImportNames); err != nil {
+			if err := validateContextABIUsage(d, fn, chainImportNames); err != nil {
 				return ContractSchema{}, err
 			}
 
@@ -122,8 +123,9 @@ func validateContractImports(node *ast.File) error {
 		}
 
 		return errors.Errorf(
-			`import %q is not allowed in typed Gno contracts`,
+			`import %q is not allowed in typed Gno contracts; allowed imports are %s`,
 			path,
+			strings.Join(currentSchemaRuleset.ImportRules.AllowedImports, ", "),
 		)
 	}
 
@@ -154,7 +156,7 @@ func mitumChainImportNames(node *ast.File) map[string]struct{} {
 	return names
 }
 
-func validateHeightABIUsage(
+func validateContextABIUsage(
 	decl *ast.FuncDecl,
 	fn FunctionSchema,
 	chainImportNames map[string]struct{},
@@ -190,20 +192,32 @@ func validateHeightABIUsage(
 			}
 		}
 
-		if sel.Sel.Name != "GetCurrentHeight" || len(fn.Params) == 0 || receiver.Name != fn.Params[0].Name {
+		if len(fn.Params) == 0 || receiver.Name != fn.Params[0].Name {
 			return true
 		}
 
-		switch {
-		case fn.IsWriteContextCallable() && !rules.WriteContextCurrentHeightAllowed:
-			err = errors.Errorf("WriteContext.GetCurrentHeight is not supported; use ctx.GetHeight in write functions")
-			return false
-		case fn.IsQueryContextCallable() && !rules.QueryContextCurrentHeightAllowed:
-			err = errors.Errorf("QueryContext.GetCurrentHeight is not supported")
-			return false
-		default:
-			return true
+		switch sel.Sel.Name {
+		case "GetCurrentHeight":
+			switch {
+			case fn.IsWriteContextCallable() && !rules.WriteContextCurrentHeightAllowed:
+				err = errors.Errorf("WriteContext.GetCurrentHeight is not supported; use ctx.GetHeight in write functions")
+				return false
+			case fn.IsQueryContextCallable() && !rules.QueryContextCurrentHeightAllowed:
+				err = errors.Errorf("QueryContext.GetCurrentHeight is not supported")
+				return false
+			}
+		case "GetBlockTime":
+			switch {
+			case fn.IsWriteContextCallable() && !rules.WriteContextBlockTimeAllowed:
+				err = errors.Errorf("WriteContext.GetBlockTime is not supported")
+				return false
+			case fn.IsQueryContextCallable() && !rules.QueryContextBlockTimeAllowed:
+				err = errors.Errorf("QueryContext.GetBlockTime is not supported; block time is available only in write functions")
+				return false
+			}
 		}
+
+		return true
 	})
 
 	return err

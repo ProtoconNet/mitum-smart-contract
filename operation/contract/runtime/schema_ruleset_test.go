@@ -46,7 +46,9 @@ func TestCurrentSchemaRulesetMatchesCurrentTypedGnoPolicy(t *testing.T) {
 		rules.ContextRules.QuerySenderCallDataKeyParsed ||
 		!rules.ContextRules.QueryContextCurrentHeightAllowed ||
 		rules.ContextRules.WriteContextCurrentHeightAllowed ||
-		rules.ContextRules.ChainCurrentHeightNativeAllowed {
+		rules.ContextRules.ChainCurrentHeightNativeAllowed ||
+		!rules.ContextRules.WriteContextBlockTimeAllowed ||
+		rules.ContextRules.QueryContextBlockTimeAllowed {
 		t.Fatalf("unexpected context rules: %#v", rules.ContextRules)
 	}
 	if rules.InputRules.CompositeInputAllowed {
@@ -289,6 +291,28 @@ func GetCurrentHeight(ctx chain.QueryContext) int64 { return ctx.GetCurrentHeigh
 `)
 	if err == nil || !strings.Contains(err.Error(), "QueryContext.GetCurrentHeight") {
 		t.Fatalf("expected query current height rule rejection, got %v", err)
+	}
+}
+
+func TestSchemaRulesetBlockTimeContextRulesAreValidatorSource(t *testing.T) {
+	original := currentSchemaRuleset
+	t.Cleanup(func() {
+		currentSchemaRuleset = original
+	})
+
+	currentSchemaRuleset = CurrentSchemaRuleset()
+	currentSchemaRuleset.ContextRules.WriteContextBlockTimeAllowed = false
+
+	_, err := AnalyzeContractSchema(`package contract
+import "mitum/chain"
+
+func Initialize(ctx chain.WriteContext) error {
+	_ = ctx.GetBlockTime()
+	return nil
+}
+`)
+	if err == nil || !strings.Contains(err.Error(), "WriteContext.GetBlockTime") {
+		t.Fatalf("expected write block time rule rejection, got %v", err)
 	}
 }
 

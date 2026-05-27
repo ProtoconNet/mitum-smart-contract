@@ -9,10 +9,11 @@ const (
 const mitumChainPackageSource = `package chain
 
 type WriteContext struct {
-	Sender   string
-	Contract string
-	Height   int64
-	ReadOnly bool
+	Sender    string
+	Contract  string
+	Height    int64
+	BlockTime int64
+	ReadOnly  bool
 }
 
 func (ctx WriteContext) GetSender() string {
@@ -25,6 +26,10 @@ func (ctx WriteContext) GetContract() string {
 
 func (ctx WriteContext) GetHeight() int64 {
 	return ctx.Height
+}
+
+func (ctx WriteContext) GetBlockTime() int64 {
+	return ctx.BlockTime
 }
 
 func (ctx WriteContext) IsReadOnly() bool {

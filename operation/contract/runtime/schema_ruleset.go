@@ -58,6 +58,8 @@ type ContextRules struct {
 	QueryContextCurrentHeightAllowed bool
 	WriteContextCurrentHeightAllowed bool
 	ChainCurrentHeightNativeAllowed  bool
+	WriteContextBlockTimeAllowed     bool
+	QueryContextBlockTimeAllowed     bool
 }
 
 type InputRules struct {
@@ -177,6 +179,8 @@ var currentSchemaRuleset = SchemaRuleset{
 		QueryContextCurrentHeightAllowed: true,
 		WriteContextCurrentHeightAllowed: false,
 		ChainCurrentHeightNativeAllowed:  false,
+		WriteContextBlockTimeAllowed:     true,
+		QueryContextBlockTimeAllowed:     false,
 	},
 	InputRules: InputRules{
 		CompositeInputAllowed: false,
