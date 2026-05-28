@@ -6,9 +6,10 @@ import (
 	"sync"
 	"time"
 
+	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
 	"github.com/ProtoconNet/mitum-currency/v3/digest/isaac"
-	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	stateextension "github.com/ProtoconNet/mitum-currency/v3/state/extension"
+	cstate "github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	cestate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
 	"github.com/ProtoconNet/mitum2/base"
 	mitumutil "github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/fixedtree"
@@ -19,32 +20,22 @@ import (
 
 var bulkWriteLimit = 500
 
-type WriteModelPrepareFunc func(BlockSession, base.State) ([]mongo.WriteModel, error)
-
-type BlockSessioner interface {
-	Prepare() error
-	Commit(context.Context) error
-	Close() error
-}
-
 type BlockSession struct {
 	sync.RWMutex
 	block                  base.BlockMap
 	ops                    []base.Operation
 	opsTree                fixedtree.Tree
 	sts                    []base.State
-	st                     *Database
+	st                     *cdigest.Database
 	proposal               base.ProposalSignFact
 	opsTreeNodes           map[string]base.OperationFixedtreeNode
-	WriteModels            map[string][]mongo.WriteModel
-	WriteModelsFunc        map[string][]mongo.WriteModel
 	blockModels            []mongo.WriteModel
 	operationModels        []mongo.WriteModel
 	accountModels          []mongo.WriteModel
-	contractAccountModels  []mongo.WriteModel
 	balanceModels          []mongo.WriteModel
 	currencyModels         []mongo.WriteModel
-	contractModels         []mongo.WriteModel
+	contractAccountModels  []mongo.WriteModel
+	smartContractModels    []mongo.WriteModel
 	contractRuntimeModels  []mongo.WriteModel
 	contractSnapshotModels []mongo.WriteModel
 	statesValue            *sync.Map
@@ -52,7 +43,15 @@ type BlockSession struct {
 	buildinfo              string
 }
 
-func NewBlockSession(st *Database, blk base.BlockMap, ops []base.Operation, opsTree fixedtree.Tree, sts []base.State, proposal base.ProposalSignFact, vs string) (*BlockSession, error) {
+func NewBlockSession(
+	st *cdigest.Database,
+	blk base.BlockMap,
+	ops []base.Operation,
+	opsTree fixedtree.Tree,
+	sts []base.State,
+	proposal base.ProposalSignFact,
+	vs string,
+) (*BlockSession, error) {
 	if st.Readonly() {
 		return nil, errors.Errorf("Readonly mode")
 	}
@@ -111,7 +110,7 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 		_ = bs.close()
 	}()
 
-	_, err := bs.st.digestDB.Client().WithSession(func(txnCtx mongo.SessionContext, collection func(string) *mongo.Collection) (interface{}, error) {
+	_, err := bs.st.MongoClient().WithSession(func(txnCtx mongo.SessionContext, collection func(string) *mongo.Collection) (interface{}, error) {
 		if err := bs.writeModels(txnCtx, defaultColNameBlock, bs.blockModels); err != nil {
 			return nil, err
 		}
@@ -146,8 +145,8 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 			}
 		}
 
-		if len(bs.contractModels) > 0 {
-			if err := bs.writeModels(txnCtx, DefaultColNameContract, bs.contractModels); err != nil {
+		if len(bs.smartContractModels) > 0 {
+			if err := bs.writeModels(txnCtx, DefaultColNameContract, bs.smartContractModels); err != nil {
 				return nil, err
 			}
 		}
@@ -215,7 +214,7 @@ func (bs *BlockSession) prepareBlock() error {
 		bs.block.Manifest().ProposedAt(),
 	)
 
-	doc, err := NewManifestDoc(manifest, bs.st.digestDB.Encoder(), bs.block.Manifest().Height(), bs.ops, bs.block.SignedAt(), bs.proposal.ProposalFact().Proposer(), bs.proposal.ProposalFact().Point().Round(), bs.buildinfo)
+	doc, err := cdigest.NewManifestDoc(manifest, bs.st.Encoder(), bs.block.Manifest().Height(), bs.ops, bs.block.SignedAt(), bs.proposal.ProposalFact().Proposer(), bs.proposal.ProposalFact().Point().Round(), bs.buildinfo)
 	if err != nil {
 		return err
 	}
@@ -243,7 +242,7 @@ func (bs *BlockSession) prepareOperations() error {
 	for i := range bs.ops {
 		op := bs.ops[i]
 
-		var doc OperationDoc
+		var doc cdigest.OperationDoc
 		switch found, inState, reason := node(op.Fact().Hash()); {
 		case !found:
 			return mitumutil.ErrNotFound.Errorf("Operation, %v in operations tree", op.Fact().Hash().String())
@@ -255,9 +254,9 @@ func (bs *BlockSession) prepareOperations() error {
 			default:
 				reasonMsg = reason.Msg()
 			}
-			d, err := NewOperationDoc(
+			d, err := cdigest.NewOperationDoc(
 				op,
-				bs.st.digestDB.Encoder(),
+				bs.st.Encoder(),
 				bs.block.Manifest().Height(),
 				bs.block.SignedAt(),
 				inState,
@@ -288,20 +287,20 @@ func (bs *BlockSession) prepareAccounts() error {
 		st := bs.sts[i]
 
 		switch {
-		case statecurrency.IsAccountStateKey(st.Key()):
+		case cstate.IsAccountStateKey(st.Key()):
 			j, err := bs.handleAccountState(st)
 			if err != nil {
 				return err
 			}
 			accountModels = append(accountModels, j...)
-		case statecurrency.IsBalanceStateKey(st.Key()):
+		case cstate.IsBalanceStateKey(st.Key()):
 			j, address, err := bs.handleBalanceState(st)
 			if err != nil {
 				return err
 			}
 			balanceModels = append(balanceModels, j...)
 			bs.balanceAddressList = append(bs.balanceAddressList, address)
-		case stateextension.IsStateContractAccountKey(st.Key()):
+		case cestate.IsStateContractAccountKey(st.Key()):
 			j, err := bs.handleContractAccountState(st)
 			if err != nil {
 				return err
@@ -327,7 +326,7 @@ func (bs *BlockSession) prepareCurrencies() error {
 	for i := range bs.sts {
 		st := bs.sts[i]
 		switch {
-		case statecurrency.IsDesignStateKey(st.Key()):
+		case cstate.IsDesignStateKey(st.Key()):
 			j, err := bs.handleCurrencyState(st)
 			if err != nil {
 				return err
@@ -341,40 +340,6 @@ func (bs *BlockSession) prepareCurrencies() error {
 	bs.currencyModels = currencyModels
 
 	return nil
-}
-
-func (bs *BlockSession) handleAccountState(st base.State) ([]mongo.WriteModel, error) {
-	if rs, err := NewAccountValue(st); err != nil {
-		return nil, err
-	} else if doc, err := NewAccountDoc(rs, bs.st.digestDB.Encoder()); err != nil {
-		return nil, err
-	} else {
-		return []mongo.WriteModel{mongo.NewInsertOneModel().SetDocument(doc)}, nil
-	}
-}
-
-func (bs *BlockSession) handleBalanceState(st base.State) ([]mongo.WriteModel, string, error) {
-	doc, address, err := NewBalanceDoc(st, bs.st.digestDB.Encoder())
-	if err != nil {
-		return nil, "", err
-	}
-	return []mongo.WriteModel{mongo.NewInsertOneModel().SetDocument(doc)}, address, nil
-}
-
-func (bs *BlockSession) handleContractAccountState(st base.State) ([]mongo.WriteModel, error) {
-	doc, err := NewContractAccountStatusDoc(st, bs.st.digestDB.Encoder())
-	if err != nil {
-		return nil, err
-	}
-	return []mongo.WriteModel{mongo.NewInsertOneModel().SetDocument(doc)}, nil
-}
-
-func (bs *BlockSession) handleCurrencyState(st base.State) ([]mongo.WriteModel, error) {
-	doc, err := NewCurrencyDoc(st, bs.st.digestDB.Encoder())
-	if err != nil {
-		return nil, err
-	}
-	return []mongo.WriteModel{mongo.NewInsertOneModel().SetDocument(doc)}, nil
 }
 
 func (bs *BlockSession) writeModels(ctx context.Context, col string, models []mongo.WriteModel) error {
@@ -412,7 +377,7 @@ func (bs *BlockSession) writeModels(ctx context.Context, col string, models []mo
 
 func (bs *BlockSession) writeModelsChunk(ctx context.Context, col string, models []mongo.WriteModel) error {
 	opts := options.BulkWrite().SetOrdered(false)
-	if res, err := bs.st.digestDB.Client().Collection(col).BulkWrite(ctx, models, opts); err != nil {
+	if res, err := bs.st.MongoClient().Collection(col).BulkWrite(ctx, models, opts); err != nil {
 		return err
 	} else if res != nil && res.InsertedCount < 1 {
 		return errors.Errorf("Not inserted to %s", col)

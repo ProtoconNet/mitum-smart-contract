@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 	gnostd "github.com/gnolang/gno/tm2/pkg/std"
 )
@@ -168,7 +168,7 @@ func assertStdlibQueryResult(
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: allowedStdlibRuntimeContractSource,
 		Function:     function,
 		CallData:     callData,

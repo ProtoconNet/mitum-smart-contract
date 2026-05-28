@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
-	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	cstate "github.com/ProtoconNet/mitum-currency/v3/state/currency"
 	cestate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
-	"github.com/ProtoconNet/mitum-currency/v3/types"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -113,7 +113,7 @@ func TestMitumNativeGasRegistrationAllowsAccountExists(t *testing.T) {
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: hostABINativeGasContractSource,
 		Function:     "GetSenderExists",
 		CallData:     map[string]string{},
@@ -128,7 +128,7 @@ func TestMitumNativeGasRegistrationAllowsAccountExists(t *testing.T) {
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: hostABINativeGasContractSource,
 		Function:     "DoesAccountExist",
 		CallData: map[string]string{
@@ -166,7 +166,7 @@ func TestMitumNativeGasRegistrationAllowsIsContractAccount(t *testing.T) {
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: hostABINativeGasContractSource,
 		Function:     "GetContractIsAccount",
 		CallData:     map[string]string{},
@@ -181,7 +181,7 @@ func TestMitumNativeGasRegistrationAllowsIsContractAccount(t *testing.T) {
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: hostABINativeGasContractSource,
 		Function:     "IsNamedContractAccount",
 		CallData: map[string]string{
@@ -199,34 +199,34 @@ func TestMitumNativeGasRegistrationAllowsIsContractAccount(t *testing.T) {
 func hostABINativeStates(t *testing.T, contract, sender base.Address) map[string]base.State {
 	t.Helper()
 
-	senderAccount, err := types.NewAccount(sender, nil)
+	senderAccount, err := ctypes.NewAccount(sender, nil)
 	if err != nil {
 		t.Fatalf("NewAccount(sender) returned error: %v", err)
 	}
-	contractAccount, err := types.NewAccount(contract, nil)
+	contractAccount, err := ctypes.NewAccount(contract, nil)
 	if err != nil {
 		t.Fatalf("NewAccount(contract) returned error: %v", err)
 	}
 
 	return map[string]base.State{
-		statecurrency.AccountStateKey(sender): common.NewBaseState(
+		cstate.AccountStateKey(sender): common.NewBaseState(
 			base.Height(1),
-			statecurrency.AccountStateKey(sender),
-			statecurrency.NewAccountStateValue(senderAccount),
+			cstate.AccountStateKey(sender),
+			cstate.NewAccountStateValue(senderAccount),
 			nil,
 			nil,
 		),
-		statecurrency.AccountStateKey(contract): common.NewBaseState(
+		cstate.AccountStateKey(contract): common.NewBaseState(
 			base.Height(1),
-			statecurrency.AccountStateKey(contract),
-			statecurrency.NewAccountStateValue(contractAccount),
+			cstate.AccountStateKey(contract),
+			cstate.NewAccountStateValue(contractAccount),
 			nil,
 			nil,
 		),
 		cestate.StateKeyContractAccount(contract): common.NewBaseState(
 			base.Height(1),
 			cestate.StateKeyContractAccount(contract),
-			cestate.NewContractAccountStateValue(types.NewContractAccountStatus(sender, []base.Address{})),
+			cestate.NewContractAccountStateValue(ctypes.NewContractAccountStatus(sender, []base.Address{})),
 			nil,
 			nil,
 		),

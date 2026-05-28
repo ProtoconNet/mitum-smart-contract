@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
 	cestate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
-	types "github.com/ProtoconNet/mitum-currency/v3/types"
-	contracttypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
+	"github.com/ProtoconNet/mitum-smart-contract/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -25,13 +25,13 @@ func Initialize(ctx chain.WriteContext) error { return nil }
 
 type registerProcessSchemaReuseEngine struct {
 	t             *testing.T
-	expected      cruntime.ContractSchema
+	expected      runtime.ContractSchema
 	expectedTime  int64
 	validateCalls int
 	executeCalls  int
 }
 
-func (e *registerProcessSchemaReuseEngine) ValidateContract(sourceCode string) (cruntime.ContractSchema, base.OperationProcessReasonError) {
+func (e *registerProcessSchemaReuseEngine) ValidateContract(sourceCode string) (runtime.ContractSchema, base.OperationProcessReasonError) {
 	e.validateCalls++
 	return e.expected, nil
 }
@@ -39,8 +39,8 @@ func (e *registerProcessSchemaReuseEngine) ValidateContract(sourceCode string) (
 func (e *registerProcessSchemaReuseEngine) ExecuteContract(
 	_ encoder.Encoders,
 	_ base.GetStateFunc,
-	req cruntime.ExecuteRequest,
-) (cruntime.ExecuteResult, base.OperationProcessReasonError) {
+	req runtime.ExecuteRequest,
+) (runtime.ExecuteResult, base.OperationProcessReasonError) {
 	e.executeCalls++
 
 	if e.validateCalls != 1 {
@@ -59,8 +59,8 @@ func (e *registerProcessSchemaReuseEngine) ExecuteContract(
 		e.t.Fatalf("unexpected block time passed to ExecuteContract: %d", req.BlockTime)
 	}
 
-	return cruntime.ExecuteResult{
-		Engine:      pstate.RuntimeEngineGnoSnapshot,
+	return runtime.ExecuteResult{
+		Engine:      state.RuntimeEngineGnoSnapshot,
 		StateMerges: nil,
 	}, nil
 }
@@ -68,17 +68,17 @@ func (e *registerProcessSchemaReuseEngine) ExecuteContract(
 func (e *registerProcessSchemaReuseEngine) QueryContract(
 	encoder.Encoders,
 	base.GetStateFunc,
-	cruntime.QueryRequest,
-) (cruntime.QueryResult, base.OperationProcessReasonError) {
+	runtime.QueryRequest,
+) (runtime.QueryResult, base.OperationProcessReasonError) {
 	e.t.Fatal("QueryContract should not be called in register processor test")
-	return cruntime.QueryResult{}, nil
+	return runtime.QueryResult{}, nil
 }
 
 func TestRegisterContractProcessorPassesValidatedSchemaToExecute(t *testing.T) {
 	originalEngine := contractEngine
 	defer func() { contractEngine = originalEngine }()
 
-	expectedSchema, err := cruntime.AnalyzeContractSchema(registerProcessSchemaReuseContractSource)
+	expectedSchema, err := runtime.AnalyzeContractSchema(registerProcessSchemaReuseContractSource)
 	if err != nil {
 		t.Fatalf("AnalyzeContractSchema returned error: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestRegisterContractProcessorPassesValidatedSchemaToExecute(t *testing.T) {
 		cestate.StateKeyContractAccount(contractAddr): common.NewBaseState(
 			base.Height(1),
 			cestate.StateKeyContractAccount(contractAddr),
-			cestate.NewContractAccountStateValue(types.NewContractAccountStatus(sender, nil)),
+			cestate.NewContractAccountStateValue(ctypes.NewContractAccountStatus(sender, nil)),
 			nil,
 			nil,
 		),
@@ -123,7 +123,7 @@ func TestRegisterContractProcessorPassesValidatedSchemaToExecute(t *testing.T) {
 		contractAddr,
 		registerProcessSchemaReuseContractSource,
 		map[string]string{},
-		types.CurrencyID("ABC"),
+		ctypes.CurrencyID("ABC"),
 	)
 	op, err := NewRegisterContract(fact)
 	if err != nil {
@@ -140,20 +140,20 @@ func TestRegisterContractProcessorPassesValidatedSchemaToExecute(t *testing.T) {
 	if len(merges) != 2 {
 		t.Fatalf("expected design + contract account merges, got %d", len(merges))
 	}
-	designValue := designStateValueFromMerges(t, merges, pstate.DesignStateKey(contractAddr))
+	designValue := designStateValueFromMerges(t, merges, state.DesignStateKey(contractAddr))
 	if designValue.Schema == nil {
 		t.Fatal("expected register to store persisted schema metadata")
 	}
-	if designValue.Schema.SchemaFormatVersion != contracttypes.CurrentSchemaFormatVersion {
+	if designValue.Schema.SchemaFormatVersion != types.CurrentSchemaFormatVersion {
 		t.Fatalf("unexpected schema format version: %q", designValue.Schema.SchemaFormatVersion)
 	}
-	if designValue.Schema.SchemaRulesetVersion != cruntime.CurrentSchemaRulesetVersion {
+	if designValue.Schema.SchemaRulesetVersion != runtime.CurrentSchemaRulesetVersion {
 		t.Fatalf("unexpected schema ruleset version: %q", designValue.Schema.SchemaRulesetVersion)
 	}
-	if designValue.Schema.SourceHash != contracttypes.ContractSourceHash(registerProcessSchemaReuseContractSource) {
+	if designValue.Schema.SourceHash != types.ContractSourceHash(registerProcessSchemaReuseContractSource) {
 		t.Fatalf("unexpected source hash: %q", designValue.Schema.SourceHash)
 	}
-	storedSchema, ok := cruntime.RuntimeSchemaFromPersisted(registerProcessSchemaReuseContractSource, designValue.Schema)
+	storedSchema, ok := runtime.RuntimeSchemaFromPersisted(registerProcessSchemaReuseContractSource, designValue.Schema)
 	if !ok {
 		t.Fatal("stored persisted schema was not reusable")
 	}
@@ -172,7 +172,7 @@ func designStateValueFromMerges(
 	t *testing.T,
 	merges []base.StateMergeValue,
 	key string,
-) pstate.DesignStateValue {
+) state.DesignStateValue {
 	t.Helper()
 
 	for _, merge := range merges {
@@ -180,7 +180,7 @@ func designStateValueFromMerges(
 			continue
 		}
 
-		value, ok := merge.Value().(pstate.DesignStateValue)
+		value, ok := merge.Value().(state.DesignStateValue)
 		if !ok {
 			t.Fatalf("expected DesignStateValue merge, got %T", merge.Value())
 		}
@@ -189,5 +189,5 @@ func designStateValueFromMerges(
 	}
 
 	t.Fatalf("design state merge %q not found", key)
-	return pstate.DesignStateValue{}
+	return state.DesignStateValue{}
 }

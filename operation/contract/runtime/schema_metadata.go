@@ -3,7 +3,7 @@ package runtime
 import (
 	"fmt"
 
-	contracttypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
+	contracttypes "github.com/ProtoconNet/mitum-smart-contract/types"
 )
 
 func NewPersistedContractSchema(

@@ -7,8 +7,8 @@ import (
 	mongodb "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
 	bsonutil "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
 	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
-	types "github.com/ProtoconNet/mitum-currency/v3/types/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
+	"github.com/ProtoconNet/mitum-smart-contract/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
@@ -20,7 +20,7 @@ type ContractDesignDoc struct {
 }
 
 func NewContractDesignDoc(st base.State, enc encoder.Encoder) (ContractDesignDoc, error) {
-	design, err := pstate.GetDesignFromState(st)
+	design, err := state.GetDesignFromState(st)
 
 	if err != nil {
 		return ContractDesignDoc{}, err
@@ -44,7 +44,7 @@ func (doc ContractDesignDoc) MarshalBSON() ([]byte, error) {
 		return nil, err
 	}
 
-	parsedKey, err := cstate.ParseStateKey(doc.st.Key(), pstate.ContractStateKeyPrefix, 3)
+	parsedKey, err := cstate.ParseStateKey(doc.st.Key(), state.ContractStateKeyPrefix, 3)
 	if err != nil {
 		return nil, err
 	}
@@ -58,11 +58,11 @@ func (doc ContractDesignDoc) MarshalBSON() ([]byte, error) {
 type ContractRuntimeDoc struct {
 	mongodb.BaseDoc
 	st      base.State
-	runtime pstate.RuntimeStateValue
+	runtime state.RuntimeStateValue
 }
 
 func NewContractRuntimeDoc(st base.State, enc encoder.Encoder) (ContractRuntimeDoc, error) {
-	runtimeValue, err := pstate.GetRuntimeFromState(st)
+	runtimeValue, err := state.GetRuntimeFromState(st)
 	if err != nil {
 		return ContractRuntimeDoc{}, err
 	}
@@ -85,7 +85,7 @@ func (doc ContractRuntimeDoc) MarshalBSON() ([]byte, error) {
 		return nil, err
 	}
 
-	parsedKey, err := cstate.ParseStateKey(doc.st.Key(), pstate.ContractStateKeyPrefix, 3)
+	parsedKey, err := cstate.ParseStateKey(doc.st.Key(), state.ContractStateKeyPrefix, 3)
 	if err != nil {
 		return nil, err
 	}
@@ -104,11 +104,11 @@ func (doc ContractRuntimeDoc) MarshalBSON() ([]byte, error) {
 type ContractSnapshotDoc struct {
 	mongodb.BaseDoc
 	st       base.State
-	snapshot pstate.SnapshotStateValue
+	snapshot state.SnapshotStateValue
 }
 
 func NewContractSnapshotDoc(st base.State, enc encoder.Encoder) (ContractSnapshotDoc, error) {
-	snapshotValue, err := pstate.GetSnapshotFromState(st)
+	snapshotValue, err := state.GetSnapshotFromState(st)
 	if err != nil {
 		return ContractSnapshotDoc{}, err
 	}
@@ -131,7 +131,7 @@ func (doc ContractSnapshotDoc) MarshalBSON() ([]byte, error) {
 		return nil, err
 	}
 
-	parsedKey, err := cstate.ParseStateKey(doc.st.Key(), pstate.ContractStateKeyPrefix, 3)
+	parsedKey, err := cstate.ParseStateKey(doc.st.Key(), state.ContractStateKeyPrefix, 3)
 	if err != nil {
 		return nil, err
 	}

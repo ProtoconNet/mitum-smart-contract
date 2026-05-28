@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
-	ptypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
+	"github.com/ProtoconNet/mitum-smart-contract/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
@@ -28,29 +28,29 @@ func GetValue(ctx chain.QueryContext) string { return value }
 
 type digestQuerySchemaCaptureEngine struct {
 	t          *testing.T
-	expected   *cruntime.ContractSchema
+	expected   *runtime.ContractSchema
 	queryCalls int
 }
 
-func (e *digestQuerySchemaCaptureEngine) ValidateContract(string) (cruntime.ContractSchema, base.OperationProcessReasonError) {
+func (e *digestQuerySchemaCaptureEngine) ValidateContract(string) (runtime.ContractSchema, base.OperationProcessReasonError) {
 	e.t.Fatal("ValidateContract should not be called in digest query schema wiring test")
-	return cruntime.ContractSchema{}, nil
+	return runtime.ContractSchema{}, nil
 }
 
 func (e *digestQuerySchemaCaptureEngine) ExecuteContract(
 	encoder.Encoders,
 	base.GetStateFunc,
-	cruntime.ExecuteRequest,
-) (cruntime.ExecuteResult, base.OperationProcessReasonError) {
+	runtime.ExecuteRequest,
+) (runtime.ExecuteResult, base.OperationProcessReasonError) {
 	e.t.Fatal("ExecuteContract should not be called in digest query schema wiring test")
-	return cruntime.ExecuteResult{}, nil
+	return runtime.ExecuteResult{}, nil
 }
 
 func (e *digestQuerySchemaCaptureEngine) QueryContract(
 	_ encoder.Encoders,
 	_ base.GetStateFunc,
-	req cruntime.QueryRequest,
-) (cruntime.QueryResult, base.OperationProcessReasonError) {
+	req runtime.QueryRequest,
+) (runtime.QueryResult, base.OperationProcessReasonError) {
 	e.queryCalls++
 
 	if e.expected == nil {
@@ -72,16 +72,16 @@ func (e *digestQuerySchemaCaptureEngine) QueryContract(
 		e.t.Fatalf("unexpected function: %q", req.Function)
 	}
 
-	return cruntime.QueryResult{
-		Engine: pstate.RuntimeEngineGnoSnapshot,
+	return runtime.QueryResult{
+		Engine: state.RuntimeEngineGnoSnapshot,
 		Result: "ok",
 	}, nil
 }
 
 func TestDigestQueryPassesPersistedSchemaToRuntime(t *testing.T) {
 	schema := mustAnalyzeDigestPersistedSchema(t)
-	persisted := cruntime.NewPersistedContractSchema(digestPersistedSchemaSource, schema)
-	expected, ok := cruntime.RuntimeSchemaFromPersisted(digestPersistedSchemaSource, &persisted)
+	persisted := runtime.NewPersistedContractSchema(digestPersistedSchemaSource, schema)
+	expected, ok := runtime.RuntimeSchemaFromPersisted(digestPersistedSchemaSource, &persisted)
 	if !ok {
 		t.Fatal("expected persisted schema to be reusable")
 	}
@@ -110,7 +110,7 @@ func TestDigestQueryPassesPersistedSchemaToRuntime(t *testing.T) {
 
 func TestDigestQueryFallsBackWhenPersistedSchemaMismatches(t *testing.T) {
 	schema := mustAnalyzeDigestPersistedSchema(t)
-	persisted := cruntime.NewPersistedContractSchema(digestPersistedSchemaSource, schema)
+	persisted := runtime.NewPersistedContractSchema(digestPersistedSchemaSource, schema)
 	persisted.SchemaFormatVersion = "contract-schema-format-v0"
 
 	fakeEngine := &digestQuerySchemaCaptureEngine{t: t, expected: nil}
@@ -148,10 +148,10 @@ func TestDigestQueryFallsBackWhenPersistedSchemaMissing(t *testing.T) {
 	}
 }
 
-func mustAnalyzeDigestPersistedSchema(t *testing.T) cruntime.ContractSchema {
+func mustAnalyzeDigestPersistedSchema(t *testing.T) runtime.ContractSchema {
 	t.Helper()
 
-	schema, err := cruntime.AnalyzeContractSchema(digestPersistedSchemaSource)
+	schema, err := runtime.AnalyzeContractSchema(digestPersistedSchemaSource)
 	if err != nil {
 		t.Fatalf("AnalyzeContractSchema returned error: %v", err)
 	}
@@ -159,7 +159,7 @@ func mustAnalyzeDigestPersistedSchema(t *testing.T) cruntime.ContractSchema {
 	return schema
 }
 
-func withDigestQueryEngine(t *testing.T, engine cruntime.ContractEngine, fn func()) {
+func withDigestQueryEngine(t *testing.T, engine runtime.ContractEngine, fn func()) {
 	t.Helper()
 
 	originalEngine := digestContractQueryEngine
@@ -171,18 +171,18 @@ func withDigestQueryEngine(t *testing.T, engine cruntime.ContractEngine, fn func
 
 func newDigestPersistedSchemaHandlers(
 	t *testing.T,
-	persisted *ptypes.PersistedContractSchema,
+	persisted *types.PersistedContractSchema,
 ) (*Handlers, base.Address, map[string]base.State) {
 	t.Helper()
 
 	encsPtr, enc := newDigestTestEncoders(t)
 	contract := base.NewStringAddress("contractqmeta001")
 	states := map[string]base.State{
-		pstate.DesignStateKey(contract): common.NewBaseState(
+		state.DesignStateKey(contract): common.NewBaseState(
 			base.Height(1),
-			pstate.DesignStateKey(contract),
-			pstate.NewDesignStateValueWithSchema(
-				ptypes.NewDesign(digestPersistedSchemaSource),
+			state.DesignStateKey(contract),
+			state.NewDesignStateValueWithSchema(
+				types.NewDesign(digestPersistedSchemaSource),
 				persisted,
 			),
 			nil,
@@ -200,7 +200,7 @@ func designSchemaBytesFromStates(
 ) []byte {
 	t.Helper()
 
-	value, err := pstate.GetDesignStateValueFromState(states[pstate.DesignStateKey(contract)])
+	value, err := state.GetDesignStateValueFromState(states[state.DesignStateKey(contract)])
 	if err != nil {
 		t.Fatalf("GetDesignStateValueFromState returned error: %v", err)
 	}

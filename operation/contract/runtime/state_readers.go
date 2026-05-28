@@ -2,7 +2,7 @@ package runtime
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	"github.com/ProtoconNet/mitum-currency/v3/types"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
@@ -53,7 +53,7 @@ func (r StateBalanceReader) BalanceOf(addr string, currencyID string) (string, b
 		return "", false, nil
 	}
 
-	cid := types.CurrencyID(currencyID)
+	cid := ctypes.CurrencyID(currencyID)
 	if err := cid.IsValid(nil); err != nil {
 		return "", false, nil
 	}

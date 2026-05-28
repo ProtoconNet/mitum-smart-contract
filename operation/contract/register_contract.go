@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
-	"github.com/ProtoconNet/mitum-currency/v3/types"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -18,7 +18,7 @@ var (
 	RegisterContractHint     = hint.MustNewHint("mitum-contract-register-operation-v0.0.1")
 )
 
-const MaxContractSourceBytes = cruntime.MaxTypedContractSourceBytes
+const MaxContractSourceBytes = runtime.MaxTypedContractSourceBytes
 
 type RegisterContractFact struct {
 	base.BaseFact
@@ -26,10 +26,10 @@ type RegisterContractFact struct {
 	contract base.Address
 	code     string
 	callData map[string]string
-	currency types.CurrencyID
+	currency ctypes.CurrencyID
 }
 
-func NewRegisterContractFact(token []byte, sender, contract base.Address, code string, callData map[string]string, currency types.CurrencyID) RegisterContractFact {
+func NewRegisterContractFact(token []byte, sender, contract base.Address, code string, callData map[string]string, currency ctypes.CurrencyID) RegisterContractFact {
 	bf := base.NewBaseFact(RegisterContractFactHint, token)
 	fact := RegisterContractFact{
 		BaseFact: bf,
@@ -69,7 +69,7 @@ func (fact RegisterContractFact) IsValid(b []byte) error {
 		return common.ErrFactInvalid.Wrap(
 			common.ErrValueInvalid.Wrap(errors.Errorf("callData map not initialized")))
 	}
-	if err := cruntime.ValidateContractCallDataLimits("register init_data", fact.callData); err != nil {
+	if err := runtime.ValidateContractCallDataLimits("register init_data", fact.callData); err != nil {
 		return common.ErrFactInvalid.Wrap(common.ErrValueInvalid.Wrap(err))
 	}
 

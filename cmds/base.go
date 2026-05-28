@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -27,7 +28,7 @@ func (cmd *BaseCommand) prepare(pctx context.Context) (context.Context, error) {
 	pps := ps.NewPS("cmd")
 
 	_ = pps.
-		AddOK(launch.PNameEncoder, PEncoder, nil)
+		AddOK(launch.PNameEncoder, ccmds.PEncoder, nil)
 
 	_ = pps.POK(launch.PNameEncoder).
 		PostAddOK(launch.PNameAddHinters, PAddHinters)
@@ -62,12 +63,12 @@ func PAddHinters(pctx context.Context) (context.Context, error) {
 	e := util.StringError("add hinters")
 
 	var encs *encoder.Encoders
-	var f ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
+	var f ccmds.ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
 
 	if err := util.LoadFromContextOK(pctx, launch.EncodersContextKey, &encs); err != nil {
 		return pctx, e.Wrap(err)
 	}
-	pctx = context.WithValue(pctx, ProposalOperationFactHintContextKey, f)
+	pctx = context.WithValue(pctx, ccmds.ProposalOperationFactHintContextKey, f)
 
 	if err := LoadHinters(encs); err != nil {
 		return pctx, e.Wrap(err)
@@ -77,10 +78,10 @@ func PAddHinters(pctx context.Context) (context.Context, error) {
 }
 
 type OperationFlags struct {
-	Privatekey PrivatekeyFlag `arg:"" name:"privatekey" help:"privatekey to sign operation" required:"true"`
-	Token      string         `help:"token for operation" optional:""`
-	NetworkID  NetworkIDFlag  `name:"network-id" help:"network-id" required:"true" default:"${network_id}"`
-	Pretty     bool           `name:"pretty" help:"pretty format"`
+	Privatekey ccmds.PrivatekeyFlag `arg:"" name:"privatekey" help:"privatekey to sign operation" required:"true"`
+	Token      string               `help:"token for operation" optional:""`
+	NetworkID  ccmds.NetworkIDFlag  `name:"network-id" help:"network-id" required:"true" default:"${network_id}"`
+	Pretty     bool                 `name:"pretty" help:"pretty format"`
 }
 
 func (op *OperationFlags) IsValid([]byte) error {

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -65,7 +65,7 @@ func TestQueryGasOutOfGasUsesQueryCategory(t *testing.T) {
 	_, err := engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: queryGasLimitContractSource,
 		Function:     "BurnQuery",
 		CallData:     map[string]string{},
@@ -156,7 +156,7 @@ func assertQueryGasStringResult(
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: queryGasLimitContractSource,
 		Function:     function,
 		CallData:     map[string]string{},

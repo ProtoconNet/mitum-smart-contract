@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	contracttypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/types"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -19,13 +19,13 @@ func TestPersistedContractSchemaRoundTrip(t *testing.T) {
 	}
 
 	persisted := NewPersistedContractSchema(schemaReuseContractSource, schema)
-	if persisted.SchemaFormatVersion != contracttypes.CurrentSchemaFormatVersion {
+	if persisted.SchemaFormatVersion != types.CurrentSchemaFormatVersion {
 		t.Fatalf("unexpected format version: %q", persisted.SchemaFormatVersion)
 	}
 	if persisted.SchemaRulesetVersion != CurrentSchemaRulesetVersion {
 		t.Fatalf("unexpected ruleset version: %q", persisted.SchemaRulesetVersion)
 	}
-	if persisted.SourceHash != contracttypes.ContractSourceHash(schemaReuseContractSource) {
+	if persisted.SourceHash != types.ContractSourceHash(schemaReuseContractSource) {
 		t.Fatalf("unexpected source hash: %q", persisted.SourceHash)
 	}
 
@@ -46,32 +46,32 @@ func TestRuntimeSchemaFromPersistedRejectsMismatchesForFallback(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(*contracttypes.PersistedContractSchema)
+		mutate func(*types.PersistedContractSchema)
 		source string
 	}{
 		{
 			name: "format version mismatch",
-			mutate: func(p *contracttypes.PersistedContractSchema) {
+			mutate: func(p *types.PersistedContractSchema) {
 				p.SchemaFormatVersion = "contract-schema-format-v0"
 			},
 			source: schemaReuseContractSource,
 		},
 		{
 			name: "ruleset version mismatch",
-			mutate: func(p *contracttypes.PersistedContractSchema) {
+			mutate: func(p *types.PersistedContractSchema) {
 				p.SchemaRulesetVersion = "typed-gno-ruleset-v0"
 			},
 			source: schemaReuseContractSource,
 		},
 		{
 			name: "source hash mismatch",
-			mutate: func(p *contracttypes.PersistedContractSchema) {
+			mutate: func(p *types.PersistedContractSchema) {
 			},
 			source: schemaReuseContractSource + "\n",
 		},
 		{
 			name: "invalid schema payload",
-			mutate: func(p *contracttypes.PersistedContractSchema) {
+			mutate: func(p *types.PersistedContractSchema) {
 				p.Schema.Functions[0].Params[0].Type.Kind = "unknown"
 			},
 			source: schemaReuseContractSource,
@@ -179,32 +179,32 @@ func TestGnoEnginePersistedSchemaMismatchFallsBackToAnalyzer(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(*contracttypes.PersistedContractSchema)
+		mutate func(*types.PersistedContractSchema)
 		source string
 	}{
 		{
 			name: "format version mismatch",
-			mutate: func(p *contracttypes.PersistedContractSchema) {
+			mutate: func(p *types.PersistedContractSchema) {
 				p.SchemaFormatVersion = "contract-schema-format-v0"
 			},
 			source: source,
 		},
 		{
 			name: "ruleset version mismatch",
-			mutate: func(p *contracttypes.PersistedContractSchema) {
+			mutate: func(p *types.PersistedContractSchema) {
 				p.SchemaRulesetVersion = "typed-gno-ruleset-v0"
 			},
 			source: source,
 		},
 		{
 			name: "source hash mismatch",
-			mutate: func(p *contracttypes.PersistedContractSchema) {
+			mutate: func(p *types.PersistedContractSchema) {
 			},
 			source: source + "\n",
 		},
 		{
 			name: "invalid schema payload",
-			mutate: func(p *contracttypes.PersistedContractSchema) {
+			mutate: func(p *types.PersistedContractSchema) {
 				p.Schema.Functions = nil
 			},
 			source: source,

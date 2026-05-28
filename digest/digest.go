@@ -2,12 +2,13 @@ package digest
 
 import (
 	"context"
-	"github.com/ProtoconNet/mitum2/isaac"
 	"sort"
 	"sync"
 	"time"
 
+	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
 	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
 	isaacblock "github.com/ProtoconNet/mitum2/isaac/block"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/fixedtree"
@@ -16,40 +17,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type DigestError struct {
-	err    error
-	height base.Height
-}
-
-func NewDigestError(err error, height base.Height) DigestError {
-	if err == nil {
-		return DigestError{height: height}
-	}
-
-	return DigestError{err: err, height: height}
-}
-
-func (de DigestError) Error() string {
-	if de.err == nil {
-		return ""
-	}
-
-	return de.err.Error()
-}
-
-func (de DigestError) Height() base.Height {
-	return de.height
-}
-
-func (de DigestError) IsError() bool {
-	return de.err != nil
-}
-
 type Digester struct {
 	sync.RWMutex
 	*util.ContextDaemon
 	*logging.Logging
-	database      *Database
+	database      *cdigest.Database
 	localfsRoot   string
 	blockChan     chan base.BlockMap
 	errChan       chan error
@@ -60,7 +32,7 @@ type Digester struct {
 }
 
 func NewDigester(
-	st *Database,
+	st *cdigest.Database,
 	root string,
 	sourceReaders *isaac.BlockItemReaders,
 	fromRemotes isaac.RemotesBlockItemReadFunc,
@@ -90,7 +62,7 @@ func NewDigester(
 func (di *Digester) start(ctx context.Context) error {
 	e := util.StringError("start Digester")
 
-	errch := func(err DigestError) {
+	errch := func(err cdigest.DigestError) {
 		if di.errChan == nil {
 			return
 		}
@@ -108,7 +80,7 @@ end:
 		case blk := <-di.blockChan:
 			err := util.Retry(ctx, func() (bool, error) {
 				if err := di.digest(ctx, blk); err != nil {
-					go errch(NewDigestError(err, blk.Manifest().Height()))
+					go errch(cdigest.NewDigestError(err, blk.Manifest().Height()))
 					if errors.Is(err, context.Canceled) {
 						return false, e.Wrap(err)
 					}
@@ -124,7 +96,7 @@ end:
 				di.Log().Info().Int64("block", blk.Manifest().Height().Int64()).Msg("block digested")
 			}
 
-			go errch(NewDigestError(err, blk.Manifest().Height()))
+			go errch(cdigest.NewDigestError(err, blk.Manifest().Height()))
 		}
 	}
 
@@ -179,7 +151,7 @@ func (di *Digester) digest(ctx context.Context, blk base.BlockMap) error {
 
 func DigestBlock(
 	ctx context.Context,
-	st *Database,
+	st *cdigest.Database,
 	blk base.BlockMap,
 	ops []base.Operation,
 	opsTree fixedtree.Tree,

@@ -3,7 +3,7 @@ package contract
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
-	"github.com/ProtoconNet/mitum-currency/v3/types"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -15,7 +15,7 @@ type RegisterContractFactJSONMarshaler struct {
 	Contract base.Address      `json:"contract"`
 	Code     string            `json:"code"`
 	CallData map[string]string `json:"init_data"`
-	Currency types.CurrencyID  `json:"currency"`
+	Currency ctypes.CurrencyID `json:"currency"`
 }
 
 func (fact RegisterContractFact) MarshalJSON() ([]byte, error) {

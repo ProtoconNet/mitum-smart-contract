@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
-	ptypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
+	"github.com/ProtoconNet/mitum-smart-contract/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
@@ -17,32 +17,32 @@ type digestQuerySpyEngine struct {
 	queryCalls int
 }
 
-func (e *digestQuerySpyEngine) ValidateContract(string) (cruntime.ContractSchema, base.OperationProcessReasonError) {
-	return cruntime.ContractSchema{}, nil
+func (e *digestQuerySpyEngine) ValidateContract(string) (runtime.ContractSchema, base.OperationProcessReasonError) {
+	return runtime.ContractSchema{}, nil
 }
 
 func (e *digestQuerySpyEngine) ExecuteContract(
 	encoder.Encoders,
 	base.GetStateFunc,
-	cruntime.ExecuteRequest,
-) (cruntime.ExecuteResult, base.OperationProcessReasonError) {
-	return cruntime.ExecuteResult{}, nil
+	runtime.ExecuteRequest,
+) (runtime.ExecuteResult, base.OperationProcessReasonError) {
+	return runtime.ExecuteResult{}, nil
 }
 
 func (e *digestQuerySpyEngine) QueryContract(
 	encoder.Encoders,
 	base.GetStateFunc,
-	cruntime.QueryRequest,
-) (cruntime.QueryResult, base.OperationProcessReasonError) {
+	runtime.QueryRequest,
+) (runtime.QueryResult, base.OperationProcessReasonError) {
 	e.queryCalls++
-	return cruntime.QueryResult{}, nil
+	return runtime.QueryResult{}, nil
 }
 
 func TestContractQueryEndpointMalformedJSONStopsBeforeRuntimeQuery(t *testing.T) {
 	spy := useDigestQuerySpyEngine(t)
 
-	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
-		{Mode: cruntime.InvocationModeRegister, Height: base.Height(700), Function: "Initialize", CallData: map[string]string{}},
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
+		{Mode: runtime.InvocationModeRegister, Height: base.Height(700), Function: "Initialize", CallData: map[string]string{}},
 	})
 
 	status, body, _ := performRawContractQueryRequest(t, hd, contract, `{"function":"GetOwner"`)
@@ -57,8 +57,8 @@ func TestContractQueryEndpointMalformedJSONStopsBeforeRuntimeQuery(t *testing.T)
 func TestContractQueryEndpointRawBodyLimitStopsBeforeRuntimeQuery(t *testing.T) {
 	spy := useDigestQuerySpyEngine(t)
 
-	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
-		{Mode: cruntime.InvocationModeRegister, Height: base.Height(701), Function: "Initialize", CallData: map[string]string{}},
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
+		{Mode: runtime.InvocationModeRegister, Height: base.Height(701), Function: "Initialize", CallData: map[string]string{}},
 	})
 
 	status, body, _ := performRawContractQueryRequest(t, hd, contract, strings.Repeat("{", MaxContractQueryBodyBytes+1))
@@ -76,11 +76,11 @@ func TestContractQueryEndpointRawBodyLimitStopsBeforeRuntimeQuery(t *testing.T) 
 func TestContractQueryEndpointDecodedCallDataLimitStopsBeforeRuntimeQuery(t *testing.T) {
 	spy := useDigestQuerySpyEngine(t)
 
-	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
-		{Mode: cruntime.InvocationModeRegister, Height: base.Height(702), Function: "Initialize", CallData: map[string]string{}},
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
+		{Mode: runtime.InvocationModeRegister, Height: base.Height(702), Function: "Initialize", CallData: map[string]string{}},
 	})
 
-	status, body, _ := performContractQueryRequest(t, hd, contract, digestQueryPayloadEntries(cruntime.MaxContractCallDataEntries+1))
+	status, body, _ := performContractQueryRequest(t, hd, contract, digestQueryPayloadEntries(runtime.MaxContractCallDataEntries+1))
 	if status != http.StatusBadRequest {
 		t.Fatalf("unexpected status: %d body=%s", status, body)
 	}
@@ -95,8 +95,8 @@ func TestContractQueryEndpointDecodedCallDataLimitStopsBeforeRuntimeQuery(t *tes
 func TestContractQueryEndpointMissingFunctionStopsBeforeRuntimeQuery(t *testing.T) {
 	spy := useDigestQuerySpyEngine(t)
 
-	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
-		{Mode: cruntime.InvocationModeRegister, Height: base.Height(703), Function: "Initialize", CallData: map[string]string{}},
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
+		{Mode: runtime.InvocationModeRegister, Height: base.Height(703), Function: "Initialize", CallData: map[string]string{}},
 	})
 
 	status, body, _ := performContractQueryRequest(t, hd, contract, map[string]string{"name": "alice"})
@@ -137,22 +137,22 @@ func TestContractQueryEndpointSnapshotStateMissingStopsBeforeRuntimeQuery(t *tes
 	encs, enc := newDigestTestEncoders(t)
 	contract := base.NewStringAddress("contractsnp0001")
 	states := map[string]base.State{
-		pstate.DesignStateKey(contract): common.NewBaseState(
+		state.DesignStateKey(contract): common.NewBaseState(
 			base.Height(710),
-			pstate.DesignStateKey(contract),
-			pstate.NewDesignStateValue(ptypes.NewDesign(typedDigestQueryContractSource)),
+			state.DesignStateKey(contract),
+			state.NewDesignStateValue(types.NewDesign(typedDigestQueryContractSource)),
 			nil,
 			nil,
 		),
-		pstate.RuntimeStateKey(contract): common.NewBaseState(
+		state.RuntimeStateKey(contract): common.NewBaseState(
 			base.Height(710),
-			pstate.RuntimeStateKey(contract),
-			pstate.NewRuntimeStateValue(
-				pstate.RuntimeEngineGnoSnapshot,
-				string(cruntime.SchemaModeTypedArgs),
+			state.RuntimeStateKey(contract),
+			state.NewRuntimeStateValue(
+				state.RuntimeEngineGnoSnapshot,
+				string(runtime.SchemaModeTypedArgs),
 				"contract",
 				"mitum.local/r/csnapshot",
-				cruntime.GnoSnapshotVersion,
+				runtime.GnoSnapshotVersion,
 			),
 			nil,
 			nil,
@@ -178,10 +178,10 @@ func TestContractQueryEndpointRuntimeStateMissingReturnsConsistentSignal(t *test
 	encs, enc := newDigestTestEncoders(t)
 	contract := base.NewStringAddress("contractrtm0001")
 	states := map[string]base.State{
-		pstate.DesignStateKey(contract): common.NewBaseState(
+		state.DesignStateKey(contract): common.NewBaseState(
 			base.Height(711),
-			pstate.DesignStateKey(contract),
-			pstate.NewDesignStateValue(ptypes.NewDesign(typedDigestQueryContractSource)),
+			state.DesignStateKey(contract),
+			state.NewDesignStateValue(types.NewDesign(typedDigestQueryContractSource)),
 			nil,
 			nil,
 		),

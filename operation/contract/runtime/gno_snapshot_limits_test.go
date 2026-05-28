@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -399,17 +399,17 @@ func oversizedSnapshotStates(
 	t.Helper()
 
 	return map[string]base.State{
-		pstate.RuntimeStateKey(contract): common.NewBaseState(
+		state.RuntimeStateKey(contract): common.NewBaseState(
 			base.Height(930),
-			pstate.RuntimeStateKey(contract),
+			state.RuntimeStateKey(contract),
 			deriveRuntimeState(contract, source),
 			nil,
 			nil,
 		),
-		pstate.SnapshotStateKey(contract): common.NewBaseState(
+		state.SnapshotStateKey(contract): common.NewBaseState(
 			base.Height(930),
-			pstate.SnapshotStateKey(contract),
-			pstate.NewSnapshotStateValue(GnoSnapshotVersion, GnoSnapshotCodecName, mustMarshalSnapshotDoc(t, doc)),
+			state.SnapshotStateKey(contract),
+			state.NewSnapshotStateValue(GnoSnapshotVersion, GnoSnapshotCodecName, mustMarshalSnapshotDoc(t, doc)),
 			nil,
 			nil,
 		),

@@ -5,12 +5,12 @@ import (
 	"sync"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
 	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
 	cestate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	ptypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
+	"github.com/ProtoconNet/mitum-smart-contract/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -31,7 +31,7 @@ type RegisterContractProcessor struct {
 	encs     *encoder.Encoders
 }
 
-func NewRegisterContractProcessor(encs encoder.Encoders) currencytypes.GetNewProcessorWithProposal {
+func NewRegisterContractProcessor(encs encoder.Encoders) ctypes.GetNewProcessorWithProposal {
 	return func(
 		height base.Height,
 		proposal *base.ProposalSignFact,
@@ -113,7 +113,7 @@ func (opp *RegisterContractProcessor) PreProcess(
 				"contract account %v has already been activated", fact.Contract())), nil
 	}
 
-	if found, _ := cstate.CheckNotExistsState(pstate.DesignStateKey(fact.Contract()), getStateFunc); found {
+	if found, _ := cstate.CheckNotExistsState(state.DesignStateKey(fact.Contract()), getStateFunc); found {
 		return ctx, base.NewBaseOperationProcessReasonError("%s",
 			common.ErrMPreProcess.
 				Wrap(common.ErrMServiceE).Errorf("wasm service for contract account %v",
@@ -146,8 +146,8 @@ func (opp *RegisterContractProcessor) Process(
 	execResult, bErr := contractEngine.ExecuteContract(
 		*opp.encs,
 		getStateFunc,
-		cruntime.ExecuteRequest{
-			Mode:         cruntime.InvocationModeRegister,
+		runtime.ExecuteRequest{
+			Mode:         runtime.InvocationModeRegister,
 			Contract:     fact.Contract(),
 			Sender:       fact.Sender(),
 			Height:       opp.Height(),
@@ -162,22 +162,22 @@ func (opp *RegisterContractProcessor) Process(
 		return nil, bErr, nil
 	}
 
-	if execResult.Engine != pstate.RuntimeEngineGnoSnapshot {
+	if execResult.Engine != state.RuntimeEngineGnoSnapshot {
 		return nil, base.NewBaseOperationProcessReasonError(
 			"unsupported runtime engine %q", execResult.Engine,
 		), nil
 	}
 	sts = append(sts, execResult.StateMerges...)
 
-	design := ptypes.NewDesign(fact.ContractCode())
+	design := types.NewDesign(fact.ContractCode())
 	if err := design.IsValid(nil); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("invalid contract design, %q; %w", fact.Contract(), err), nil
 	}
 
-	persistedSchema := cruntime.NewPersistedContractSchema(fact.ContractCode(), schema)
+	persistedSchema := runtime.NewPersistedContractSchema(fact.ContractCode(), schema)
 	sts = append(sts, cstate.NewStateMergeValue(
-		pstate.DesignStateKey(fact.Contract()),
-		pstate.NewDesignStateValueWithSchema(design, &persistedSchema),
+		state.DesignStateKey(fact.Contract()),
+		state.NewDesignStateValueWithSchema(design, &persistedSchema),
 	))
 
 	st, _ := cstate.ExistsState(cestate.StateKeyContractAccount(fact.Contract()), "contract account", getStateFunc)

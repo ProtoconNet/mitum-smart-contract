@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
-	statecurrency "github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	"github.com/ProtoconNet/mitum-currency/v3/types"
+	cstate "github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 )
@@ -172,7 +172,7 @@ func TestBalanceOfNativeIndependentFromHeightSemantics(t *testing.T) {
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:      contract,
 		Sender:        sender,
-		Height:        states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:        states[state.SnapshotStateKey(contract)].Height(),
 		CurrentHeight: base.Height(999),
 		ContractCode:  balanceNativeContractSource,
 		Function:      "QueryHeight",
@@ -188,7 +188,7 @@ func TestBalanceOfNativeIndependentFromHeightSemantics(t *testing.T) {
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:      contract,
 		Sender:        sender,
-		Height:        states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:        states[state.SnapshotStateKey(contract)].Height(),
 		CurrentHeight: base.Height(999),
 		ContractCode:  balanceNativeContractSource,
 		Function:      "CurrentHeight",
@@ -229,10 +229,10 @@ func TestBalanceOfNativeDecodeFailureIsSanitized(t *testing.T) {
 	}
 	applyStateMerges(states, base.Height(100), result.StateMerges)
 
-	states[statecurrency.BalanceStateKey(sender, types.CurrencyID("MCC"))] = common.NewBaseState(
+	states[cstate.BalanceStateKey(sender, ctypes.CurrencyID("MCC"))] = common.NewBaseState(
 		base.Height(101),
-		statecurrency.BalanceStateKey(sender, types.CurrencyID("MCC")),
-		statecurrency.NewAccountStateValue(mustTestAccount(t, sender)),
+		cstate.BalanceStateKey(sender, ctypes.CurrencyID("MCC")),
+		cstate.NewAccountStateValue(mustTestAccount(t, sender)),
 		nil,
 		nil,
 	)
@@ -240,7 +240,7 @@ func TestBalanceOfNativeDecodeFailureIsSanitized(t *testing.T) {
 	_, err = engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: balanceNativeContractSource,
 		Function:     "LookupBalance",
 		CallData: map[string]string{
@@ -254,7 +254,7 @@ func TestBalanceOfNativeDecodeFailureIsSanitized(t *testing.T) {
 	if !strings.Contains(err.Error(), "gno query panicked") {
 		t.Fatalf("expected sanitized panic surface, got %q", err.Error())
 	}
-	for _, raw := range []string{"BalanceOf native call failed", "balance state decode failed", statecurrency.BalanceStateKey(sender, types.CurrencyID("MCC"))} {
+	for _, raw := range []string{"BalanceOf native call failed", "balance state decode failed", cstate.BalanceStateKey(sender, ctypes.CurrencyID("MCC"))} {
 		if strings.Contains(err.Error(), raw) {
 			t.Fatalf("expected raw internal detail %q to be hidden, got %q", raw, err.Error())
 		}
@@ -281,7 +281,7 @@ func assertBalanceQuery(
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:      contract,
 		Sender:        sender,
-		Height:        states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:        states[state.SnapshotStateKey(contract)].Height(),
 		CurrentHeight: base.Height(999),
 		ContractCode:  balanceNativeContractSource,
 		Function:      function,
@@ -319,10 +319,10 @@ func addAccountState(t *testing.T, states map[string]base.State, addr base.Addre
 	t.Helper()
 
 	account := mustTestAccount(t, addr)
-	states[statecurrency.AccountStateKey(addr)] = common.NewBaseState(
+	states[cstate.AccountStateKey(addr)] = common.NewBaseState(
 		base.Height(1),
-		statecurrency.AccountStateKey(addr),
-		statecurrency.NewAccountStateValue(account),
+		cstate.AccountStateKey(addr),
+		cstate.NewAccountStateValue(account),
 		nil,
 		[]util.Hash{},
 	)
@@ -331,18 +331,18 @@ func addAccountState(t *testing.T, states map[string]base.State, addr base.Addre
 func addCurrencyState(t *testing.T, states map[string]base.State, cid string, genesis base.Address) {
 	t.Helper()
 
-	currencyID := types.CurrencyID(cid)
-	design := types.NewCurrencyDesign(
+	currencyID := ctypes.CurrencyID(cid)
+	design := ctypes.NewCurrencyDesign(
 		common.ZeroBig,
 		currencyID,
 		common.NewBig(9),
 		genesis,
-		types.NewCurrencyPolicy(common.ZeroBig, types.NewNilFeeer()),
+		ctypes.NewCurrencyPolicy(common.ZeroBig, ctypes.NewNilFeeer()),
 	)
-	states[statecurrency.DesignStateKey(currencyID)] = common.NewBaseState(
+	states[cstate.DesignStateKey(currencyID)] = common.NewBaseState(
 		base.Height(1),
-		statecurrency.DesignStateKey(currencyID),
-		statecurrency.NewCurrencyDesignStateValue(design),
+		cstate.DesignStateKey(currencyID),
+		cstate.NewCurrencyDesignStateValue(design),
 		nil,
 		[]util.Hash{},
 	)
@@ -351,20 +351,20 @@ func addCurrencyState(t *testing.T, states map[string]base.State, cid string, ge
 func addBalanceState(t *testing.T, states map[string]base.State, addr base.Address, cid string, amount int64) {
 	t.Helper()
 
-	currencyID := types.CurrencyID(cid)
-	states[statecurrency.BalanceStateKey(addr, currencyID)] = common.NewBaseState(
+	currencyID := ctypes.CurrencyID(cid)
+	states[cstate.BalanceStateKey(addr, currencyID)] = common.NewBaseState(
 		base.Height(1),
-		statecurrency.BalanceStateKey(addr, currencyID),
-		statecurrency.NewBalanceStateValue(types.NewAmount(common.NewBig(amount), currencyID)),
+		cstate.BalanceStateKey(addr, currencyID),
+		cstate.NewBalanceStateValue(ctypes.NewAmount(common.NewBig(amount), currencyID)),
 		nil,
 		[]util.Hash{},
 	)
 }
 
-func mustTestAccount(t *testing.T, addr base.Address) types.Account {
+func mustTestAccount(t *testing.T, addr base.Address) ctypes.Account {
 	t.Helper()
 
-	account, err := types.NewAccount(addr, nil)
+	account, err := ctypes.NewAccount(addr, nil)
 	if err != nil {
 		t.Fatalf("NewAccount(%v) returned error: %v", addr, err)
 	}

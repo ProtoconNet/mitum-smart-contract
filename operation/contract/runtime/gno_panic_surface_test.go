@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	pstate "github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
 	gstore "github.com/gnolang/gno/tm2/pkg/store"

@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
@@ -61,17 +61,17 @@ func (gnoEngine) ExecuteContract(
 		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to analyze contract schema: %v", err)
 	}
 
-	var runtimeValue pstate.RuntimeStateValue
+	var runtimeValue state.RuntimeStateValue
 	isNewRuntime := false
 
-	if st, found, err := getStateFunc(pstate.RuntimeStateKey(req.Contract)); err != nil {
+	if st, found, err := getStateFunc(state.RuntimeStateKey(req.Contract)); err != nil {
 		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to read runtime state: %v", err)
 	} else if found {
-		runtimeValue, err = pstate.GetRuntimeFromState(st)
+		runtimeValue, err = state.GetRuntimeFromState(st)
 		if err != nil {
 			return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to decode runtime state: %v", err)
 		}
-		if runtimeValue.Engine != pstate.RuntimeEngineGnoSnapshot {
+		if runtimeValue.Engine != state.RuntimeEngineGnoSnapshot {
 			return ExecuteResult{}, base.NewBaseOperationProcessReasonError(
 				"runtime engine mismatch: %q", runtimeValue.Engine,
 			)
@@ -88,12 +88,12 @@ func (gnoEngine) ExecuteContract(
 		isNewRuntime = true
 	}
 
-	var snapshotValue pstate.SnapshotStateValue
+	var snapshotValue state.SnapshotStateValue
 
-	if st, found, err := getStateFunc(pstate.SnapshotStateKey(req.Contract)); err != nil {
+	if st, found, err := getStateFunc(state.SnapshotStateKey(req.Contract)); err != nil {
 		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to read snapshot state: %v", err)
 	} else if found {
-		snapshotValue, err = pstate.GetSnapshotFromState(st)
+		snapshotValue, err = state.GetSnapshotFromState(st)
 		if err != nil {
 			return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to decode snapshot state: %v", err)
 		}
@@ -105,7 +105,7 @@ func (gnoEngine) ExecuteContract(
 			)
 		}
 
-		snapshotValue = pstate.NewSnapshotStateValue(
+		snapshotValue = state.NewSnapshotStateValue(
 			GnoSnapshotVersion,
 			GnoSnapshotCodecName,
 			nil,
@@ -170,30 +170,30 @@ func (gnoEngine) ExecuteContract(
 
 	merges := []base.StateMergeValue{
 		cstate.NewStateMergeValue(
-			pstate.SnapshotStateKey(req.Contract),
-			pstate.NewSnapshotStateValue(GnoSnapshotVersion, GnoSnapshotCodecName, snapshotBytes),
+			state.SnapshotStateKey(req.Contract),
+			state.NewSnapshotStateValue(GnoSnapshotVersion, GnoSnapshotCodecName, snapshotBytes),
 		),
 	}
 
 	if isNewRuntime {
 		merges = append(merges, cstate.NewStateMergeValue(
-			pstate.RuntimeStateKey(req.Contract),
+			state.RuntimeStateKey(req.Contract),
 			runtimeValue,
 		))
 	}
 
 	return ExecuteResult{
-		Engine:      pstate.RuntimeEngineGnoSnapshot,
+		Engine:      state.RuntimeEngineGnoSnapshot,
 		StateMerges: merges,
 	}, nil
 }
 
-func deriveRuntimeState(contract base.Address, source string) pstate.RuntimeStateValue {
+func deriveRuntimeState(contract base.Address, source string) state.RuntimeStateValue {
 	sum := sha256.Sum256([]byte(contract.String() + ":" + source))
 	path := "mitum.local/r/c" + hex.EncodeToString(sum[:8])
 
-	return pstate.NewRuntimeStateValue(
-		pstate.RuntimeEngineGnoSnapshot,
+	return state.NewRuntimeStateValue(
+		state.RuntimeEngineGnoSnapshot,
 		string(SchemaModeTypedArgs),
 		"contract",
 		path,
@@ -204,7 +204,7 @@ func deriveRuntimeState(contract base.Address, source string) pstate.RuntimeStat
 func resolveContractSchemaForExecution(preAnalyzed *ContractSchema, sourceCode string) (ContractSchema, error) {
 	if preAnalyzed != nil {
 		if preAnalyzed.Mode != SchemaModeTypedArgs {
-			return ContractSchema{}, fmt.Errorf("Gno engine requires typed contract schema")
+			return ContractSchema{}, fmt.Errorf("gno engine requires typed contract schema")
 		}
 
 		return *preAnalyzed, nil
@@ -212,7 +212,7 @@ func resolveContractSchemaForExecution(preAnalyzed *ContractSchema, sourceCode s
 
 	if schema, found := loadContractSchemaFromCache(sourceCode); found {
 		if schema.Mode != SchemaModeTypedArgs {
-			return ContractSchema{}, fmt.Errorf("Gno engine requires typed contract schema")
+			return ContractSchema{}, fmt.Errorf("gno engine requires typed contract schema")
 		}
 
 		return schema, nil

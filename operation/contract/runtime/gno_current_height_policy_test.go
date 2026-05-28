@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -91,7 +91,7 @@ func TestQueryContextGetCurrentHeightAndViewHeight(t *testing.T) {
 	}
 	applyStateMerges(states, base.Height(11), result.StateMerges)
 
-	viewHeight := states[pstate.SnapshotStateKey(contract)].Height()
+	viewHeight := states[state.SnapshotStateKey(contract)].Height()
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:      contract,
 		Sender:        sender,

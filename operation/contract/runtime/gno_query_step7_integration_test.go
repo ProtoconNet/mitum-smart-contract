@@ -3,7 +3,7 @@ package runtime
 import (
 	"testing"
 
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -96,7 +96,7 @@ func TestGnoQueryPathStructWithMapRoundTrip(t *testing.T) {
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: structFieldMapQueryContractSource,
 		Function:     "GetFlag",
 		CallData:     map[string]string{"name": "beta"},
@@ -114,7 +114,7 @@ func TestGnoQueryPathStructWithMapRoundTrip(t *testing.T) {
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: structFieldMapQueryContractSource,
 		Function:     "GetUserLimit",
 		CallData:     map[string]string{"name": "bob"},

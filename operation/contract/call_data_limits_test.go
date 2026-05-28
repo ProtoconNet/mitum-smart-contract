@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
-	types "github.com/ProtoconNet/mitum-currency/v3/types"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -22,17 +22,17 @@ func TestRegisterContractFactInitDataPayloadLimits(t *testing.T) {
 		},
 		{
 			name:      "entry count exceeded",
-			callData:  contractPayloadEntries(cruntime.MaxContractCallDataEntries + 1),
+			callData:  contractPayloadEntries(runtime.MaxContractCallDataEntries + 1),
 			wantError: "max entries",
 		},
 		{
 			name:      "key size exceeded",
-			callData:  map[string]string{strings.Repeat("k", cruntime.MaxContractCallDataKeyBytes+1): "v"},
+			callData:  map[string]string{strings.Repeat("k", runtime.MaxContractCallDataKeyBytes+1): "v"},
 			wantError: "key exceeds max size",
 		},
 		{
 			name:      "value size exceeded",
-			callData:  map[string]string{"value": strings.Repeat("v", cruntime.MaxContractCallDataValueBytes+1)},
+			callData:  map[string]string{"value": strings.Repeat("v", runtime.MaxContractCallDataValueBytes+1)},
 			wantError: "value for key",
 		},
 		{
@@ -63,17 +63,17 @@ func TestCallContractFactCallDataPayloadLimits(t *testing.T) {
 		},
 		{
 			name:      "entry count exceeded",
-			callData:  contractPayloadEntries(cruntime.MaxContractCallDataEntries + 1),
+			callData:  contractPayloadEntries(runtime.MaxContractCallDataEntries + 1),
 			wantError: "max entries",
 		},
 		{
 			name:      "key size exceeded",
-			callData:  map[string]string{strings.Repeat("k", cruntime.MaxContractCallDataKeyBytes+1): "v"},
+			callData:  map[string]string{strings.Repeat("k", runtime.MaxContractCallDataKeyBytes+1): "v"},
 			wantError: "key exceeds max size",
 		},
 		{
 			name:      "value size exceeded",
-			callData:  map[string]string{"value": strings.Repeat("v", cruntime.MaxContractCallDataValueBytes+1)},
+			callData:  map[string]string{"value": strings.Repeat("v", runtime.MaxContractCallDataValueBytes+1)},
 			wantError: "value for key",
 		},
 		{
@@ -99,7 +99,7 @@ func newRegisterPayloadLimitFact(i int, callData map[string]string) RegisterCont
 		base.NewStringAddress(fmt.Sprintf("contractpayload%04d", i)),
 		"package contract\n",
 		callData,
-		types.CurrencyID("ABC"),
+		ctypes.CurrencyID("ABC"),
 	)
 }
 
@@ -109,7 +109,7 @@ func newCallPayloadLimitFact(i int, callData map[string]string) CallContractFact
 		base.NewStringAddress(fmt.Sprintf("sendercall%04d", i)),
 		base.NewStringAddress(fmt.Sprintf("contractcall%04d", i)),
 		callData,
-		types.CurrencyID("ABC"),
+		ctypes.CurrencyID("ABC"),
 	)
 }
 
@@ -123,8 +123,8 @@ func contractPayloadEntries(count int) map[string]string {
 }
 
 func contractPayloadTotalBytesExceeded() map[string]string {
-	out := make(map[string]string, cruntime.MaxContractCallDataEntries)
-	for i := 0; i < cruntime.MaxContractCallDataEntries; i++ {
+	out := make(map[string]string, runtime.MaxContractCallDataEntries)
+	for i := 0; i < runtime.MaxContractCallDataEntries; i++ {
 		out[fmt.Sprintf("k%02d", i)] = strings.Repeat("v", 1030)
 	}
 

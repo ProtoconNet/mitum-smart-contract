@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
 	launchcmd "github.com/ProtoconNet/mitum2/launch/cmd"
 
-	"github.com/ProtoconNet/mitum-currency/v3/cmds"
+	"github.com/ProtoconNet/mitum-smart-contract/cmds"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/launch"
 	"github.com/ProtoconNet/mitum2/util"
@@ -26,22 +27,22 @@ var (
 //revive:disable:nested-structs
 var CLI struct { //nolint:govet //...
 	launch.BaseFlags
-	Init      cmds.INITCommand `cmd:"" help:"init node"`
-	Run       cmds.RunCommand  `cmd:"" help:"run node"`
-	Storage   cmds.Storage     `cmd:""`
+	Init      ccmds.INITCommand `cmd:"" help:"init node"`
+	Run       cmds.RunCommand   `cmd:"" help:"run node"`
+	Storage   cmds.Storage      `cmd:""`
 	Operation struct {
-		Currency      cmds.CurrencyCommand `cmd:"" help:"currency operation"`
-		Suffrage      cmds.SuffrageCommand `cmd:"" help:"suffrage operation"`
-		SmartContract cmds.PluginCommand   `cmd:"" help:"smart-contract operation"`
+		Currency      ccmds.CurrencyCommand     `cmd:"" help:"currency operation"`
+		Suffrage      ccmds.SuffrageCommand     `cmd:"" help:"suffrage operation"`
+		SmartContract cmds.SmartContractCommand `cmd:"" help:"smart-contract operation"`
 	} `cmd:"" help:"create operation"`
 	Network struct {
 		Client cmds.NetworkClientCommand `cmd:"" help:"network client"`
 	} `cmd:"" help:"network"`
 	Key struct {
-		New     cmds.KeyNewCommand     `cmd:"" help:"generate new key"`
-		Address cmds.KeyAddressCommand `cmd:"" help:"generate address from key"`
-		Load    cmds.KeyLoadCommand    `cmd:"" help:"load key"`
-		Sign    cmds.KeySignCommand    `cmd:"" help:"sign"`
+		New     ccmds.KeyNewCommand      `cmd:"" help:"generate new key"`
+		Address ccmds.KeyAddressCommand  `cmd:"" help:"generate address from key"`
+		Load    ccmds.KeyLoadCommand     `cmd:"" help:"load key"`
+		Sign    launchcmd.KeySignCommand `cmd:"" help:"sign"`
 	} `cmd:"" help:"key"`
 	Handover launchcmd.HandoverCommands `cmd:""`
 	Version  struct{}                   `cmd:"" help:"version"`

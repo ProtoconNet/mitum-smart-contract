@@ -5,10 +5,10 @@ import (
 	"sync"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
 	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -27,7 +27,7 @@ type CallContractProcessor struct {
 	encs     *encoder.Encoders
 }
 
-func NewCallContractProcessor(encs encoder.Encoders) currencytypes.GetNewProcessorWithProposal {
+func NewCallContractProcessor(encs encoder.Encoders) ctypes.GetNewProcessorWithProposal {
 	return func(
 		height base.Height,
 		proposal *base.ProposalSignFact,
@@ -88,29 +88,29 @@ func (opp *CallContractProcessor) preProcessStateGate(
 	fact CallContractFact,
 	getStateFunc base.GetStateFunc,
 ) base.OperationProcessReasonError {
-	designState, found, err := getStateFunc(pstate.DesignStateKey(fact.Contract()))
+	designState, found, err := getStateFunc(state.DesignStateKey(fact.Contract()))
 	switch {
 	case err != nil:
 		return base.NewBaseOperationProcessReasonError("failed to read design state: %v", err)
 	case !found:
 		return base.NewBaseOperationProcessReasonError("contract design not found for typed contract %v", fact.Contract())
 	}
-	if _, err := pstate.GetDesignStateValueFromState(designState); err != nil {
+	if _, err := state.GetDesignStateValueFromState(designState); err != nil {
 		return base.NewBaseOperationProcessReasonError("failed to decode design state: %v", err)
 	}
 
-	runtimeState, found, err := getStateFunc(pstate.RuntimeStateKey(fact.Contract()))
+	runtimeState, found, err := getStateFunc(state.RuntimeStateKey(fact.Contract()))
 	switch {
 	case err != nil:
 		return base.NewBaseOperationProcessReasonError("failed to read runtime state: %v", err)
 	case !found:
 		return base.NewBaseOperationProcessReasonError("runtime state not found for typed contract %v", fact.Contract())
 	}
-	runtimeValue, err := pstate.GetRuntimeFromState(runtimeState)
+	runtimeValue, err := state.GetRuntimeFromState(runtimeState)
 	if err != nil {
 		return base.NewBaseOperationProcessReasonError("failed to decode runtime state: %v", err)
 	}
-	if runtimeValue.Engine != pstate.RuntimeEngineGnoSnapshot {
+	if runtimeValue.Engine != state.RuntimeEngineGnoSnapshot {
 		return base.NewBaseOperationProcessReasonError("unsupported runtime engine %q", runtimeValue.Engine)
 	}
 
@@ -138,28 +138,28 @@ func (opp *CallContractProcessor) Process(
 			"missing function name in call data"), nil
 	}
 
-	st, err := cstate.ExistsState(pstate.DesignStateKey(fact.Contract()), "contract design", getStateFunc)
+	st, err := cstate.ExistsState(state.DesignStateKey(fact.Contract()), "contract design", getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			"%v", err), nil
 	}
-	dsv, err := pstate.GetDesignStateValueFromState(st)
+	dsv, err := state.GetDesignStateValueFromState(st)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			"%v", err), nil
 	}
 	cd := dsv.Design
 
-	var schema *cruntime.ContractSchema
-	if persistedSchema, ok := cruntime.RuntimeSchemaFromPersisted(cd.ContractCode(), dsv.Schema); ok {
+	var schema *runtime.ContractSchema
+	if persistedSchema, ok := runtime.RuntimeSchemaFromPersisted(cd.ContractCode(), dsv.Schema); ok {
 		schema = &persistedSchema
 	}
 
 	execResult, bErr := contractEngine.ExecuteContract(
 		*opp.encs,
 		getStateFunc,
-		cruntime.ExecuteRequest{
-			Mode:         cruntime.InvocationModeCall,
+		runtime.ExecuteRequest{
+			Mode:         runtime.InvocationModeCall,
 			Contract:     fact.Contract(),
 			Sender:       fact.Sender(),
 			Height:       opp.Height(),
@@ -174,7 +174,7 @@ func (opp *CallContractProcessor) Process(
 		return nil, bErr, nil
 	}
 
-	if execResult.Engine != pstate.RuntimeEngineGnoSnapshot {
+	if execResult.Engine != state.RuntimeEngineGnoSnapshot {
 		return nil, base.NewBaseOperationProcessReasonError(
 			"unsupported runtime engine %q", execResult.Engine,
 		), nil

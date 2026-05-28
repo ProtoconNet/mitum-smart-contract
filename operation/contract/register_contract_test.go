@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	types "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum2/base"
 )
 

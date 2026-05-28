@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	contracttypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
+	"github.com/ProtoconNet/mitum-smart-contract/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
@@ -39,14 +39,14 @@ func TestCallContractPreProcessRejectsMissingDesignState(t *testing.T) {
 func TestCallContractPreProcessRejectsCorruptedDesignState(t *testing.T) {
 	contract := base.NewStringAddress("callprecontract01")
 	states := map[string]base.State{
-		pstate.DesignStateKey(contract): common.NewBaseState(
+		state.DesignStateKey(contract): common.NewBaseState(
 			base.Height(1),
-			pstate.DesignStateKey(contract),
+			state.DesignStateKey(contract),
 			validCallPreProcessRuntimeState(),
 			nil,
 			nil,
 		),
-		pstate.RuntimeStateKey(contract): validCallPreProcessRuntimeBaseState(contract),
+		state.RuntimeStateKey(contract): validCallPreProcessRuntimeBaseState(contract),
 	}
 
 	_, reason := runCallContractPreProcessWithContract(t, contract, states, map[string]string{"function": "Store"})
@@ -56,7 +56,7 @@ func TestCallContractPreProcessRejectsCorruptedDesignState(t *testing.T) {
 func TestCallContractPreProcessRejectsMissingRuntimeState(t *testing.T) {
 	contract := base.NewStringAddress("callprecontract02")
 	states := map[string]base.State{
-		pstate.DesignStateKey(contract): validCallPreProcessDesignBaseState(contract, callPreProcessValidSource),
+		state.DesignStateKey(contract): validCallPreProcessDesignBaseState(contract, callPreProcessValidSource),
 	}
 
 	_, reason := runCallContractPreProcessWithContract(t, contract, states, map[string]string{"function": "Store"})
@@ -66,10 +66,10 @@ func TestCallContractPreProcessRejectsMissingRuntimeState(t *testing.T) {
 func TestCallContractPreProcessRejectsCorruptedRuntimeState(t *testing.T) {
 	contract := base.NewStringAddress("callprecontract03")
 	states := map[string]base.State{
-		pstate.DesignStateKey(contract): validCallPreProcessDesignBaseState(contract, callPreProcessValidSource),
-		pstate.RuntimeStateKey(contract): common.NewBaseState(
+		state.DesignStateKey(contract): validCallPreProcessDesignBaseState(contract, callPreProcessValidSource),
+		state.RuntimeStateKey(contract): common.NewBaseState(
 			base.Height(1),
-			pstate.RuntimeStateKey(contract),
+			state.RuntimeStateKey(contract),
 			validCallPreProcessDesignValue(callPreProcessValidSource),
 			nil,
 			nil,
@@ -83,16 +83,16 @@ func TestCallContractPreProcessRejectsCorruptedRuntimeState(t *testing.T) {
 func TestCallContractPreProcessRejectsUnsupportedRuntimeEngine(t *testing.T) {
 	contract := base.NewStringAddress("callprecontract04")
 	states := map[string]base.State{
-		pstate.DesignStateKey(contract): validCallPreProcessDesignBaseState(contract, callPreProcessValidSource),
-		pstate.RuntimeStateKey(contract): common.NewBaseState(
+		state.DesignStateKey(contract): validCallPreProcessDesignBaseState(contract, callPreProcessValidSource),
+		state.RuntimeStateKey(contract): common.NewBaseState(
 			base.Height(1),
-			pstate.RuntimeStateKey(contract),
-			pstate.NewRuntimeStateValue(
-				pstate.RuntimeEngine("unsupported-engine-v0"),
-				string(cruntime.SchemaModeTypedArgs),
+			state.RuntimeStateKey(contract),
+			state.NewRuntimeStateValue(
+				state.RuntimeEngine("unsupported-engine-v0"),
+				string(runtime.SchemaModeTypedArgs),
 				"contract",
 				"mitum.local/r/callpre",
-				cruntime.GnoSnapshotVersion,
+				runtime.GnoSnapshotVersion,
 			),
 			nil,
 			nil,
@@ -134,27 +134,27 @@ type callPreProcessNoHeavyWorkEngine struct {
 	t *testing.T
 }
 
-func (e callPreProcessNoHeavyWorkEngine) ValidateContract(string) (cruntime.ContractSchema, base.OperationProcessReasonError) {
+func (e callPreProcessNoHeavyWorkEngine) ValidateContract(string) (runtime.ContractSchema, base.OperationProcessReasonError) {
 	e.t.Fatal("PreProcess must not validate or analyze contract schema")
-	return cruntime.ContractSchema{}, nil
+	return runtime.ContractSchema{}, nil
 }
 
 func (e callPreProcessNoHeavyWorkEngine) ExecuteContract(
 	encoder.Encoders,
 	base.GetStateFunc,
-	cruntime.ExecuteRequest,
-) (cruntime.ExecuteResult, base.OperationProcessReasonError) {
+	runtime.ExecuteRequest,
+) (runtime.ExecuteResult, base.OperationProcessReasonError) {
 	e.t.Fatal("PreProcess must not execute contract runtime")
-	return cruntime.ExecuteResult{}, nil
+	return runtime.ExecuteResult{}, nil
 }
 
 func (e callPreProcessNoHeavyWorkEngine) QueryContract(
 	encoder.Encoders,
 	base.GetStateFunc,
-	cruntime.QueryRequest,
-) (cruntime.QueryResult, base.OperationProcessReasonError) {
+	runtime.QueryRequest,
+) (runtime.QueryResult, base.OperationProcessReasonError) {
 	e.t.Fatal("PreProcess must not query contract runtime")
-	return cruntime.QueryResult{}, nil
+	return runtime.QueryResult{}, nil
 }
 
 func runCallContractPreProcess(
@@ -194,7 +194,7 @@ func runCallContractPreProcessWithContract(
 		sender,
 		contract,
 		callData,
-		currencytypes.CurrencyID("ABC"),
+		ctypes.CurrencyID("ABC"),
 	)
 	op, err := NewCallContract(fact)
 	if err != nil {
@@ -215,42 +215,42 @@ func validCallPreProcessStates(t *testing.T, source string) map[string]base.Stat
 
 	contract := base.NewStringAddress("callprecontract00")
 	return map[string]base.State{
-		pstate.DesignStateKey(contract):  validCallPreProcessDesignBaseState(contract, source),
-		pstate.RuntimeStateKey(contract): validCallPreProcessRuntimeBaseState(contract),
+		state.DesignStateKey(contract):  validCallPreProcessDesignBaseState(contract, source),
+		state.RuntimeStateKey(contract): validCallPreProcessRuntimeBaseState(contract),
 	}
 }
 
 func validCallPreProcessDesignBaseState(contract base.Address, source string) base.State {
 	return common.NewBaseState(
 		base.Height(1),
-		pstate.DesignStateKey(contract),
+		state.DesignStateKey(contract),
 		validCallPreProcessDesignValue(source),
 		nil,
 		nil,
 	)
 }
 
-func validCallPreProcessDesignValue(source string) pstate.DesignStateValue {
-	return pstate.NewDesignStateValue(contracttypes.NewDesign(source))
+func validCallPreProcessDesignValue(source string) state.DesignStateValue {
+	return state.NewDesignStateValue(types.NewDesign(source))
 }
 
 func validCallPreProcessRuntimeBaseState(contract base.Address) base.State {
 	return common.NewBaseState(
 		base.Height(1),
-		pstate.RuntimeStateKey(contract),
+		state.RuntimeStateKey(contract),
 		validCallPreProcessRuntimeState(),
 		nil,
 		nil,
 	)
 }
 
-func validCallPreProcessRuntimeState() pstate.RuntimeStateValue {
-	return pstate.NewRuntimeStateValue(
-		pstate.RuntimeEngineGnoSnapshot,
-		string(cruntime.SchemaModeTypedArgs),
+func validCallPreProcessRuntimeState() state.RuntimeStateValue {
+	return state.NewRuntimeStateValue(
+		state.RuntimeEngineGnoSnapshot,
+		string(runtime.SchemaModeTypedArgs),
 		"contract",
 		"mitum.local/r/callpre",
-		cruntime.GnoSnapshotVersion,
+		runtime.GnoSnapshotVersion,
 	)
 }
 

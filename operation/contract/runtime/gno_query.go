@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	pstate "github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"

@@ -1,5 +1,5 @@
 package contract
 
-import cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
+import "github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
 
-var contractEngine cruntime.ContractEngine = cruntime.NewGnoEngine()
+var contractEngine runtime.ContractEngine = runtime.NewGnoEngine()

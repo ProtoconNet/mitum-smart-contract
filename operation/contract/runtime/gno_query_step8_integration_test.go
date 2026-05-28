@@ -3,7 +3,7 @@ package runtime
 import (
 	"testing"
 
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -80,7 +80,7 @@ func TestGnoQueryPathSliceRoundTrip(t *testing.T) {
 
 	engine := NewGnoEngine()
 	getStateFunc := stateGetter(states)
-	height := states[pstate.SnapshotStateKey(contract)].Height()
+	height := states[state.SnapshotStateKey(contract)].Height()
 
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,

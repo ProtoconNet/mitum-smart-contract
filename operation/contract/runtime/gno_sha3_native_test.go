@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"golang.org/x/crypto/sha3"
 )
@@ -121,7 +121,7 @@ func assertSHA3Query(
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: sha3NativeContractSource,
 		Function:     function,
 		CallData:     callData,

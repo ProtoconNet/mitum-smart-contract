@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 )
 
@@ -200,7 +200,7 @@ func TestGnoQueryPathScalarRoundTrip(t *testing.T) {
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: scalarQueryContractSource,
 		Function:     "GetRevision",
 		CallData:     map[string]string{},
@@ -215,7 +215,7 @@ func TestGnoQueryPathScalarRoundTrip(t *testing.T) {
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: scalarQueryContractSource,
 		Function:     "IsReadOnlyQuery",
 		CallData:     map[string]string{},
@@ -230,7 +230,7 @@ func TestGnoQueryPathScalarRoundTrip(t *testing.T) {
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: scalarQueryContractSource,
 		Function:     "GetQueryHeight",
 		CallData:     map[string]string{},
@@ -238,14 +238,14 @@ func TestGnoQueryPathScalarRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("QueryContract(GetQueryHeight) returned error: %v", err)
 	}
-	if got := qr.Result.(int64); got != int64(states[pstate.SnapshotStateKey(contract)].Height()) {
+	if got := qr.Result.(int64); got != int64(states[state.SnapshotStateKey(contract)].Height()) {
 		t.Fatalf("unexpected query context height: %d", got)
 	}
 
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:      contract,
 		Sender:        sender,
-		Height:        states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:        states[state.SnapshotStateKey(contract)].Height(),
 		CurrentHeight: base.Height(77),
 		ContractCode:  scalarQueryContractSource,
 		Function:      "GetCurrentHeight",
@@ -260,7 +260,7 @@ func TestGnoQueryPathScalarRoundTrip(t *testing.T) {
 
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: scalarQueryContractSource,
 		Function:     "GetContractAddress",
 		CallData:     map[string]string{},
@@ -275,7 +275,7 @@ func TestGnoQueryPathScalarRoundTrip(t *testing.T) {
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: scalarQueryContractSource,
 		Function:     "GetWriteHeight",
 		CallData:     map[string]string{},
@@ -290,7 +290,7 @@ func TestGnoQueryPathScalarRoundTrip(t *testing.T) {
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: scalarQueryContractSource,
 		Function:     "WasWriteReadOnly",
 		CallData:     map[string]string{},
@@ -333,7 +333,7 @@ func TestGnoQueryPathFlatStructRoundTrip(t *testing.T) {
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: flatStructQueryContractSource,
 		Function:     "GetLimit",
 		CallData:     map[string]string{},
@@ -348,7 +348,7 @@ func TestGnoQueryPathFlatStructRoundTrip(t *testing.T) {
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: flatStructQueryContractSource,
 		Function:     "GetOwner",
 		CallData:     map[string]string{},
@@ -390,7 +390,7 @@ func TestGnoQueryPathMapStringScalarRoundTrip(t *testing.T) {
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: mapScalarQueryContractSource,
 		Function:     "GetBalance",
 		CallData:     map[string]string{"owner": "bob"},
@@ -436,7 +436,7 @@ func TestGnoQueryPathMapStringStructRoundTrip(t *testing.T) {
 	qr, err := engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: mapStructQueryContractSource,
 		Function:     "GetUserBalance",
 		CallData:     map[string]string{"owner": "bob"},
@@ -454,7 +454,7 @@ func TestGnoQueryPathMapStringStructRoundTrip(t *testing.T) {
 	qr, err = engine.QueryContract(newRuntimeTestEncoders(t), getStateFunc, QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: mapStructQueryContractSource,
 		Function:     "IsUserActive",
 		CallData:     map[string]string{"owner": "bob"},
@@ -491,7 +491,7 @@ func TestGnoQueryPathRejectsMutation(t *testing.T) {
 	_, err := engine.QueryContract(newRuntimeTestEncoders(t), stateGetter(states), QueryRequest{
 		Contract:     contract,
 		Sender:       sender,
-		Height:       states[pstate.SnapshotStateKey(contract)].Height(),
+		Height:       states[state.SnapshotStateKey(contract)].Height(),
 		ContractCode: mutatingQueryContractSource,
 		Function:     "GetAndBump",
 		CallData:     map[string]string{},
@@ -541,17 +541,17 @@ func prepareQueryTestState(
 	}
 
 	states := map[string]base.State{
-		pstate.RuntimeStateKey(contract): common.NewBaseState(
+		state.RuntimeStateKey(contract): common.NewBaseState(
 			requests[0].Height,
-			pstate.RuntimeStateKey(contract),
+			state.RuntimeStateKey(contract),
 			runtimeValue,
 			nil,
 			nil,
 		),
-		pstate.SnapshotStateKey(contract): common.NewBaseState(
+		state.SnapshotStateKey(contract): common.NewBaseState(
 			requests[len(requests)-1].Height,
-			pstate.SnapshotStateKey(contract),
-			pstate.NewSnapshotStateValue(GnoSnapshotVersion, GnoSnapshotCodecName, snapshotBytes),
+			state.SnapshotStateKey(contract),
+			state.NewSnapshotStateValue(GnoSnapshotVersion, GnoSnapshotCodecName, snapshotBytes),
 			nil,
 			nil,
 		),
@@ -570,7 +570,7 @@ func stateGetter(states map[string]base.State) base.GetStateFunc {
 func assertSnapshotStateUnchanged(t *testing.T, states map[string]base.State, contract base.Address, before []byte) {
 	t.Helper()
 
-	snapshotValue, err := pstate.GetSnapshotFromState(states[pstate.SnapshotStateKey(contract)])
+	snapshotValue, err := state.GetSnapshotFromState(states[state.SnapshotStateKey(contract)])
 	if err != nil {
 		t.Fatalf("GetSnapshotFromState returned error: %v", err)
 	}

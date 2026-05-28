@@ -6,13 +6,14 @@ import (
 	stderrors "errors"
 	"net/http"
 
-	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
+	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 	pkgerrors "github.com/pkg/errors"
 )
 
-var digestContractQueryEngine cruntime.ContractEngine = cruntime.NewGnoEngine()
+var digestContractQueryEngine runtime.ContractEngine = runtime.NewGnoEngine()
 
 const MaxContractQueryBodyBytes = 128 * 1024
 
@@ -30,9 +31,9 @@ type ContractQueryOutput struct {
 }
 
 func (hd *Handlers) handleContractQuery(w http.ResponseWriter, r *http.Request) {
-	contract, err, status := ParseRequest(w, r, "contract")
+	contract, err, status := cdigest.ParseRequest(w, r, "contract")
 	if err != nil {
-		HTTP2ProblemWithError(w, err, status)
+		cdigest.HTTP2ProblemWithError(w, err, status)
 		return
 	}
 
@@ -41,7 +42,7 @@ func (hd *Handlers) handleContractQuery(w http.ResponseWriter, r *http.Request) 
 	if _, err := body.ReadFrom(r.Body); err != nil {
 		var maxBytesErr *http.MaxBytesError
 		if stderrors.As(err, &maxBytesErr) {
-			HTTP2ProblemWithError(
+			cdigest.HTTP2ProblemWithError(
 				w,
 				pkgerrors.Errorf("query body exceeds max size: max %d bytes", MaxContractQueryBodyBytes),
 				http.StatusRequestEntityTooLarge,
@@ -49,33 +50,33 @@ func (hd *Handlers) handleContractQuery(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		HTTP2ProblemWithError(w, err, http.StatusInternalServerError)
+		cdigest.HTTP2ProblemWithError(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	var callData map[string]string
 	if err := json.Unmarshal(body.Bytes(), &callData); err != nil {
-		HTTP2ProblemWithError(w, err, http.StatusBadRequest)
+		cdigest.HTTP2ProblemWithError(w, err, http.StatusBadRequest)
 		return
 	}
-	if err := cruntime.ValidateContractCallDataLimits("query callData", callData); err != nil {
-		HTTP2ProblemWithError(w, err, http.StatusBadRequest)
+	if err := runtime.ValidateContractCallDataLimits("query callData", callData); err != nil {
+		cdigest.HTTP2ProblemWithError(w, err, http.StatusBadRequest)
 		return
 	}
 
 	fName, found := callData["function"]
 	if !found || fName == "" {
-		HTTP2ProblemWithError(w, pkgerrors.Errorf("missing function in query body"), http.StatusBadRequest)
+		cdigest.HTTP2ProblemWithError(w, pkgerrors.Errorf("missing function in query body"), http.StatusBadRequest)
 		return
 	}
 
 	b, err := hd.handleContractQueryInGroup(contract, callData)
 	if err != nil {
-		HTTP2HandleError(w, err)
+		cdigest.HTTP2HandleError(w, err)
 		return
 	}
 
-	HTTP2WriteHalBytes(hd.enc, w, b, http.StatusOK)
+	cdigest.HTTP2WriteHalBytes(hd.encoder, w, b, http.StatusOK)
 }
 
 func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[string]string) ([]byte, error) {
@@ -83,7 +84,7 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 	if err != nil {
 		return nil, err
 	}
-	designStateValue, err := pstate.GetDesignStateValueFromState(designState)
+	designStateValue, err := state.GetDesignStateValueFromState(designState)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +97,7 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 	if err != nil {
 		return nil, err
 	}
-	if runtimeFound && runtimeValue.Engine == pstate.RuntimeEngineGnoSnapshot {
+	if runtimeFound && runtimeValue.Engine == state.RuntimeEngineGnoSnapshot {
 		_, _, snapshotState, snapshotFound, err := ContractSnapshotFromChainState(hd.database, contract)
 		if err != nil {
 			return nil, err
@@ -113,15 +114,15 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 		currentHeight = queryHeight
 	}
 
-	var schema *cruntime.ContractSchema
-	if persistedSchema, ok := cruntime.RuntimeSchemaFromPersisted(design.ContractCode(), designStateValue.Schema); ok {
+	var schema *runtime.ContractSchema
+	if persistedSchema, ok := runtime.RuntimeSchemaFromPersisted(design.ContractCode(), designStateValue.Schema); ok {
 		schema = &persistedSchema
 	}
 
 	qr, qerr := digestContractQueryEngine.QueryContract(
-		*hd.encs,
+		*hd.encoders,
 		hd.database.State,
-		cruntime.QueryRequest{
+		runtime.QueryRequest{
 			Contract:      contractAddr,
 			Sender:        contractAddr,
 			Height:        queryHeight,
@@ -141,15 +142,15 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 		return nil, err
 	}
 
-	return hd.enc.Marshal(i)
+	return hd.encoder.Marshal(i)
 }
 
 func (hd *Handlers) buildContractQuery(
 	contract string,
 	function string,
-	qr cruntime.QueryResult,
+	qr runtime.QueryResult,
 	st base.State,
-) (Hal, error) {
+) (cdigest.Hal, error) {
 	h, err := hd.combineURL(HandlerPathContractQuery, "contract", contract)
 	if err != nil {
 		return nil, err
@@ -166,20 +167,20 @@ func (hd *Handlers) buildContractQuery(
 		},
 	}
 
-	var hal Hal
-	hal = NewBaseHal(resp, NewHalLink(h, nil))
+	var hal cdigest.Hal
+	hal = cdigest.NewBaseHal(resp, cdigest.NewHalLink(h, nil))
 
 	h, err = hd.combineURL(HandlerPathContractDesign, "contract", contract)
 	if err != nil {
 		return nil, err
 	}
-	hal = hal.AddLink("design", NewHalLink(h, nil))
+	hal = hal.AddLink("design", cdigest.NewHalLink(h, nil))
 
-	h, err = hd.combineURL(HandlerPathBlockByHeight, "height", st.Height().String())
+	h, err = hd.combineURL(cdigest.HandlerPathBlockByHeight, "height", st.Height().String())
 	if err != nil {
 		return nil, err
 	}
-	hal = hal.AddLink("block", NewHalLink(h, nil))
+	hal = hal.AddLink("block", cdigest.NewHalLink(h, nil))
 
 	return hal, nil
 }

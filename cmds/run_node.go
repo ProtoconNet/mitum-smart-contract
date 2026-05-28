@@ -8,7 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ProtoconNet/mitum-currency/v3/digest"
+	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
+	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
+	"github.com/ProtoconNet/mitum-smart-contract/digest"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
@@ -71,21 +73,22 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		launch.ACLFlagsContextKey:      cmd.ACLFlags,
 	})
 
-	pps := DefaultRunPS()
+	pps := ccmds.DefaultRunPS()
 
-	_ = pps.AddOK(PNameDigester, ProcessDigester, nil, PNameMongoDBsDataBase).
-		AddOK(PNameStartDigester, ProcessStartDigester, nil, PNameDigestStart)
+	_ = pps.AddOK(PNameDigester, ProcessDigester, nil, ccmds.PNameMongoDBsDataBase).
+		AddOK(PNameStartDigester, ProcessStartDigester, nil, ccmds.PNameDigestStart)
 	_ = pps.POK(launch.PNameStorage).PostAddOK(ps.Name("check-hold"), cmd.pCheckHold)
 	_ = pps.POK(launch.PNameStates).
+		PreAddOK(PNameOperationProcessorsMap, POperationProcessorsMap).
 		PreAddOK(ps.Name("when-new-block-saved-in-consensus-state-func"), cmd.pWhenNewBlockSavedInConsensusStateFunc).
 		PreAddOK(ps.Name("when-new-block-confirmed-func"), cmd.pWhenNewBlockConfirmed).
 		PreAddOK(ps.Name("when-new-block-saved-in-syncing-state-func"), cmd.pWhenNewBlockSavedInSyncingStateFunc)
 	_ = pps.POK(launch.PNameEncoder).
 		PostAddOK(launch.PNameAddHinters, PAddHinters)
-	_ = pps.POK(PNameDigest).
-		PostAddOK(PNameDigestAPIHandlers, cmd.pDigestAPIHandlers)
-	_ = pps.POK(PNameDigester).
-		PostAddOK(PNameDigesterFollowUp, PdigesterFollowUp)
+	_ = pps.POK(ccmds.PNameDigest).
+		PostAddOK(ccmds.PNameDigestAPIHandlers, cmd.pDigestAPIHandlers)
+	_ = pps.POK(ccmds.PNameDigester).
+		PostAddOK(ccmds.PNameDigesterFollowUp, PdigesterFollowUp)
 
 	_ = pps.SetLogging(log)
 
@@ -193,7 +196,7 @@ func (cmd *RunCommand) pWhenNewBlockSavedInSyncingStateFunc(pctx context.Context
 		return pctx, err
 	}
 
-	if err := util.LoadFromContext(pctx, digest.ContextValueDigester, &di); err != nil {
+	if err := util.LoadFromContext(pctx, cdigest.ContextValueDigester, &di); err != nil {
 		return pctx, err
 	}
 
@@ -269,7 +272,7 @@ func (cmd *RunCommand) pWhenNewBlockConfirmed(pctx context.Context) (context.Con
 		return pctx, err
 	}
 
-	if err := util.LoadFromContext(pctx, digest.ContextValueDigester, &di); err != nil {
+	if err := util.LoadFromContext(pctx, cdigest.ContextValueDigester, &di); err != nil {
 		return pctx, err
 	}
 
@@ -384,8 +387,8 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return nil, err
 	}
 
-	var design digest.YamlDigestDesign
-	if err := util.LoadFromContext(ctx, digest.ContextValueDigestDesign, &design); err != nil {
+	var design cdigest.YamlDigestDesign
+	if err := util.LoadFromContext(ctx, cdigest.ContextValueDigestDesign, &design); err != nil {
 		if errors.Is(err, util.ErrNotFound) {
 			return ctx, nil
 		}
@@ -393,7 +396,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return nil, err
 	}
 
-	if design.Equal(digest.YamlDigestDesign{}) {
+	if design.Equal(cdigest.YamlDigestDesign{}) {
 		return ctx, nil
 	}
 
@@ -402,14 +405,22 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return ctx, err
 	}
 
-	var dnt *digest.HTTP2Server
-	if err := util.LoadFromContext(ctx, digest.ContextValueDigestNetwork, &dnt); err != nil {
+	var dnt *cdigest.HTTP2Server
+	if err := util.LoadFromContext(ctx, cdigest.ContextValueDigestNetwork, &dnt); err != nil {
+		return ctx, err
+	}
+	router := dnt.Router()
+
+	defaultHandlers, err := cmd.setDigestDefaultHandlers(ctx, params, cache, router, dnt.Queue())
+	if err != nil {
 		return ctx, err
 	}
 
-	router := dnt.Router()
+	if err := defaultHandlers.Initialize(); err != nil {
+		return ctx, err
+	}
 
-	handlers, err := cmd.setDigestDefaultHandlers(ctx, params, cache, router, dnt.Queue())
+	handlers, err := cmd.setDigestHandlers(ctx, params, cache, router, defaultHandlers.Routes())
 	if err != nil {
 		return ctx, err
 	}
@@ -418,13 +429,15 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return ctx, err
 	}
 
+	dnt.SetEncoder(encs)
+
 	return ctx, nil
 }
 
-func (cmd *RunCommand) loadCache(_ context.Context, design digest.YamlDigestDesign) (digest.Cache, error) {
-	c, err := digest.NewCacheFromURI(design.Cache().String())
+func (cmd *RunCommand) loadCache(_ context.Context, design cdigest.YamlDigestDesign) (cdigest.Cache, error) {
+	c, err := cdigest.NewCacheFromURI(design.Cache().String())
 	if err != nil {
-		cmd.log.Err(err).Str("cache", design.Cache().String()).Msg("connect cache server")
+		cmd.log.Err(err).Str("cache", design.Cache().String()).Msg("failed to connect cache server")
 		cmd.log.Warn().Msg("instead of remote cache server, internal mem cache can be available, `memory://`")
 
 		return nil, err
@@ -435,20 +448,16 @@ func (cmd *RunCommand) loadCache(_ context.Context, design digest.YamlDigestDesi
 func (cmd *RunCommand) setDigestDefaultHandlers(
 	ctx context.Context,
 	params *launch.LocalParams,
-	cache digest.Cache,
+	cache cdigest.Cache,
 	router *mux.Router,
-	queue chan digest.RequestWrapper,
-) (*digest.Handlers, error) {
-	var st *digest.Database
-	if err := util.LoadFromContext(ctx, digest.ContextValueDigestDatabase, &st); err != nil {
-		return nil, err
-	}
-	var design digest.YamlDigestDesign
-	if err := util.LoadFromContext(ctx, digest.ContextValueDigestDesign, &design); err != nil {
+	queue chan cdigest.RequestWrapper,
+) (*cdigest.Handlers, error) {
+	var st *cdigest.Database
+	if err := util.LoadFromContext(ctx, cdigest.ContextValueDigestDatabase, &st); err != nil {
 		return nil, err
 	}
 
-	handlers := digest.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router, queue)
+	handlers := cdigest.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router, queue)
 
 	h, err := cmd.setDigestNetworkClient(ctx, params, handlers)
 	if err != nil {
@@ -459,13 +468,30 @@ func (cmd *RunCommand) setDigestDefaultHandlers(
 	return handlers, nil
 }
 
+func (cmd *RunCommand) setDigestHandlers(
+	ctx context.Context,
+	params *launch.LocalParams,
+	cache cdigest.Cache,
+	router *mux.Router,
+	routes map[string]*mux.Route,
+) (*digest.Handlers, error) {
+	var st *cdigest.Database
+	if err := util.LoadFromContext(ctx, cdigest.ContextValueDigestDatabase, &st); err != nil {
+		return nil, err
+	}
+
+	handlers := digest.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router, routes)
+
+	return handlers, nil
+}
+
 func (cmd *RunCommand) setDigestNetworkClient(
 	ctx context.Context,
 	params *launch.LocalParams,
-	handlers *digest.Handlers,
-) (*digest.Handlers, error) {
-	var design digest.YamlDigestDesign
-	if err := util.LoadFromContext(ctx, digest.ContextValueDigestDesign, &design); err != nil {
+	handlers *cdigest.Handlers,
+) (*cdigest.Handlers, error) {
+	var design cdigest.YamlDigestDesign
+	if err := util.LoadFromContext(ctx, cdigest.ContextValueDigestDesign, &design); err != nil {
 		if errors.Is(err, util.ErrNotFound) {
 			return handlers, nil
 		}
@@ -473,7 +499,7 @@ func (cmd *RunCommand) setDigestNetworkClient(
 		return nil, err
 	}
 
-	if design.Equal(digest.YamlDigestDesign{}) {
+	if design.Equal(cdigest.YamlDigestDesign{}) {
 		return handlers, nil
 	}
 

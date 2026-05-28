@@ -10,20 +10,26 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"unsafe"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	digestmongo "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
-	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
-	ptypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
+	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
+	mongodb "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
+	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
+	"github.com/ProtoconNet/mitum-smart-contract/types"
 	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
 	isaacdatabase "github.com/ProtoconNet/mitum2/isaac/database"
 	"github.com/ProtoconNet/mitum2/launch"
+	leveldbstorage "github.com/ProtoconNet/mitum2/storage/leveldb"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog"
+	leveldbmem "github.com/syndtr/goleveldb/leveldb/storage"
 )
 
 const typedDigestQueryContractSource = `package contract
@@ -81,9 +87,9 @@ func GetUser(ctx chain.QueryContext, name string) (User, bool) {
 `
 
 func TestContractQueryEndpointScalarResult(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(500),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -116,9 +122,9 @@ func TestContractQueryEndpointScalarResult(t *testing.T) {
 }
 
 func TestContractQueryEndpointIgnoresSenderParameter(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(501),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -139,17 +145,15 @@ func TestContractQueryEndpointIgnoresSenderParameter(t *testing.T) {
 }
 
 func TestContractQueryEndpointSeparatesViewAndCurrentHeight(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(502),
 			Function: "Initialize",
 			CallData: map[string]string{},
 		},
 	})
-	hd.database.Lock()
-	hd.database.lastBlock = base.Height(777)
-	hd.database.Unlock()
+	setDigestDatabaseLastBlockForTest(t, hd.database, base.Height(777))
 
 	status, body, _ := performContractQueryRequest(t, hd, contract, map[string]string{
 		"function": "GetViewHeight",
@@ -173,9 +177,9 @@ func TestContractQueryEndpointSeparatesViewAndCurrentHeight(t *testing.T) {
 }
 
 func TestContractQueryEndpointStructResult(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(510),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -239,9 +243,9 @@ func TestContractQueryEndpointStructResult(t *testing.T) {
 }
 
 func TestContractQueryEndpointMapScalarResult(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(520),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -261,9 +265,9 @@ func TestContractQueryEndpointMapScalarResult(t *testing.T) {
 }
 
 func TestContractQueryEndpointMapStructResult(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(530),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -300,9 +304,9 @@ func TestContractQueryEndpointMapStructResult(t *testing.T) {
 }
 
 func TestContractQueryEndpointSliceScalarResult(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(540),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -322,9 +326,9 @@ func TestContractQueryEndpointSliceScalarResult(t *testing.T) {
 }
 
 func TestContractQueryEndpointSliceStructResult(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(550),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -361,9 +365,9 @@ func TestContractQueryEndpointSliceStructResult(t *testing.T) {
 }
 
 func TestContractQueryEndpointOptionalResult(t *testing.T) {
-	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, snapshotBefore := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(560),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -405,9 +409,9 @@ func TestContractQueryEndpointOptionalResult(t *testing.T) {
 }
 
 func TestContractQueryEndpointMalformedJSONBodyRejected(t *testing.T) {
-	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(600),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -424,9 +428,9 @@ func TestContractQueryEndpointMalformedJSONBodyRejected(t *testing.T) {
 }
 
 func TestContractQueryEndpointRawBodyLimitRejectedBeforeJSONDecode(t *testing.T) {
-	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(605),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -443,9 +447,9 @@ func TestContractQueryEndpointRawBodyLimitRejectedBeforeJSONDecode(t *testing.T)
 }
 
 func TestContractQueryEndpointMissingFunctionRejected(t *testing.T) {
-	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(610),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -461,9 +465,9 @@ func TestContractQueryEndpointMissingFunctionRejected(t *testing.T) {
 }
 
 func TestContractQueryEndpointCallDataPayloadWithinLimit(t *testing.T) {
-	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(620),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -472,7 +476,7 @@ func TestContractQueryEndpointCallDataPayloadWithinLimit(t *testing.T) {
 
 	status, body, _ := performContractQueryRequest(t, hd, contract, map[string]string{
 		"function": "GetOwner",
-		"padding":  strings.Repeat("v", cruntime.MaxContractCallDataValueBytes),
+		"padding":  strings.Repeat("v", runtime.MaxContractCallDataValueBytes),
 	})
 	if status != http.StatusOK {
 		t.Fatalf("unexpected status: %d body=%s", status, body)
@@ -480,9 +484,9 @@ func TestContractQueryEndpointCallDataPayloadWithinLimit(t *testing.T) {
 }
 
 func TestContractQueryEndpointCallDataPayloadLimitsRejected(t *testing.T) {
-	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []cruntime.ExecuteRequest{
+	hd, contract, _ := newTypedQueryTestHandlers(t, typedDigestQueryContractSource, []runtime.ExecuteRequest{
 		{
-			Mode:     cruntime.InvocationModeRegister,
+			Mode:     runtime.InvocationModeRegister,
 			Height:   base.Height(630),
 			Function: "Initialize",
 			CallData: map[string]string{},
@@ -496,14 +500,14 @@ func TestContractQueryEndpointCallDataPayloadLimitsRejected(t *testing.T) {
 	}{
 		{
 			name:      "entry count exceeded",
-			callData:  digestQueryPayloadEntries(cruntime.MaxContractCallDataEntries + 1),
+			callData:  digestQueryPayloadEntries(runtime.MaxContractCallDataEntries + 1),
 			wantError: "max entries",
 		},
 		{
 			name: "key size exceeded",
 			callData: map[string]string{
 				"function": "GetOwner",
-				strings.Repeat("k", cruntime.MaxContractCallDataKeyBytes+1): "v",
+				strings.Repeat("k", runtime.MaxContractCallDataKeyBytes+1): "v",
 			},
 			wantError: "key exceeds max size",
 		},
@@ -511,7 +515,7 @@ func TestContractQueryEndpointCallDataPayloadLimitsRejected(t *testing.T) {
 			name: "value size exceeded",
 			callData: map[string]string{
 				"function": "GetOwner",
-				"padding":  strings.Repeat("v", cruntime.MaxContractCallDataValueBytes+1),
+				"padding":  strings.Repeat("v", runtime.MaxContractCallDataValueBytes+1),
 			},
 			wantError: "value for key",
 		},
@@ -538,7 +542,7 @@ func TestContractQueryEndpointCallDataPayloadLimitsRejected(t *testing.T) {
 func newTypedQueryTestHandlers(
 	t *testing.T,
 	source string,
-	requests []cruntime.ExecuteRequest,
+	requests []runtime.ExecuteRequest,
 ) (*Handlers, string, []byte) {
 	t.Helper()
 
@@ -552,7 +556,7 @@ func newTypedQueryTestHandlers(
 		return st, found, nil
 	}
 
-	engine := cruntime.NewGnoEngine()
+	engine := runtime.NewGnoEngine()
 
 	for _, req := range requests {
 		req.Contract = contract
@@ -569,10 +573,10 @@ func newTypedQueryTestHandlers(
 		}
 	}
 
-	states[pstate.DesignStateKey(contract)] = common.NewBaseState(
+	states[state.DesignStateKey(contract)] = common.NewBaseState(
 		requests[0].Height,
-		pstate.DesignStateKey(contract),
-		pstate.NewDesignStateValue(ptypes.NewDesign(source)),
+		state.DesignStateKey(contract),
+		state.NewDesignStateValue(types.NewDesign(source)),
 		nil,
 		nil,
 	)
@@ -589,35 +593,131 @@ func newDigestHandlersForStates(
 ) *Handlers {
 	t.Helper()
 
-	mdb, err := digestmongo.NewDatabase(nil, encs, enc)
+	mdb, err := mongodb.NewDatabase(nil, encs, enc)
 	if err != nil {
-		t.Fatalf("digestmongo.NewDatabase returned error: %v", err)
+		t.Fatalf("mongodb.NewDatabase returned error: %v", err)
 	}
 
-	center := &isaacdatabase.Center{
-		Logging: logging.NewLogging(nil).SetLogger(zerolog.Nop()),
+	centerStorage, err := leveldbstorage.NewStorage(leveldbmem.NewMemStorage(), nil)
+	if err != nil {
+		t.Fatalf("leveldbstorage.NewStorage returned error: %v", err)
 	}
 
-	db, err := NewDatabase(center, mdb)
+	center, err := isaacdatabase.NewCenter(
+		centerStorage,
+		encs,
+		enc,
+		digestQueryStatePermanent{states: states},
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("isaacdatabase.NewCenter returned error: %v", err)
+	}
+	_ = center.SetLogging(logging.NewLogging(nil).SetLogger(zerolog.Nop()))
+
+	db, err := cdigest.NewDatabase(center, mdb)
 	if err != nil {
 		t.Fatalf("digest.NewDatabase returned error: %v", err)
-	}
-	db.stateGetter = func(key string) (base.State, bool, error) {
-		st, found := states[key]
-		return st, found, nil
 	}
 
 	router := mux.NewRouter()
 	ctx := context.WithValue(context.Background(), launch.LoggingContextKey, logging.NewLogging(nil).SetLogger(zerolog.Nop()))
-	hd := NewHandlers(ctx, base.NetworkID("testnet"), encs, enc, db, DummyCache{}, router, nil)
+	routes := map[string]*mux.Route{}
+	hd := NewHandlers(ctx, base.NetworkID("testnet"), encs, enc, db, cdigest.DummyCache{}, router, routes)
 	if hd == nil {
 		t.Fatalf("NewHandlers returned nil")
 	}
 	if err := hd.Initialize(); err != nil {
 		t.Fatalf("Handlers.Initialize returned error: %v", err)
 	}
+	blockRoute := router.HandleFunc(cdigest.HandlerPathBlockByHeight, http.NotFound).
+		Name(cdigest.HandlerPathBlockByHeight)
+	hd.routes[cdigest.HandlerPathBlockByHeight] = blockRoute
 
 	return hd
+}
+
+type digestQueryStatePermanent struct {
+	states map[string]base.State
+}
+
+func (db digestQueryStatePermanent) State(key string) (base.State, bool, error) {
+	st, found := db.states[key]
+	return st, found, nil
+}
+
+func (digestQueryStatePermanent) StateBytes(string) (string, []byte, []byte, bool, error) {
+	return "", nil, nil, false, nil
+}
+
+func (digestQueryStatePermanent) ExistsInStateOperation(util.Hash) (bool, error) {
+	return false, nil
+}
+
+func (digestQueryStatePermanent) ExistsKnownOperation(util.Hash) (bool, error) {
+	return false, nil
+}
+
+func (digestQueryStatePermanent) Close() error { return nil }
+
+func (digestQueryStatePermanent) Clean() error { return nil }
+
+func (digestQueryStatePermanent) LastBlockMap() (base.BlockMap, bool, error) {
+	return nil, false, nil
+}
+
+func (digestQueryStatePermanent) LastBlockMapBytes() (string, []byte, []byte, bool, error) {
+	return "", nil, nil, false, nil
+}
+
+func (digestQueryStatePermanent) LastSuffrageProof() (base.SuffrageProof, bool, error) {
+	return nil, false, nil
+}
+
+func (digestQueryStatePermanent) LastSuffrageProofBytes() (string, []byte, []byte, bool, error) {
+	return "", nil, nil, false, nil
+}
+
+func (digestQueryStatePermanent) SuffrageProof(base.Height) (base.SuffrageProof, bool, error) {
+	return nil, false, nil
+}
+
+func (digestQueryStatePermanent) SuffrageProofBytes(base.Height) (string, []byte, []byte, bool, error) {
+	return "", nil, nil, false, nil
+}
+
+func (digestQueryStatePermanent) SuffrageProofByBlockHeight(base.Height) (base.SuffrageProof, bool, error) {
+	return nil, false, nil
+}
+
+func (digestQueryStatePermanent) BlockMap(base.Height) (base.BlockMap, bool, error) {
+	return nil, false, nil
+}
+
+func (digestQueryStatePermanent) BlockMapBytes(base.Height) (string, []byte, []byte, bool, error) {
+	return "", nil, nil, false, nil
+}
+
+func (digestQueryStatePermanent) LastNetworkPolicy() base.NetworkPolicy { return nil }
+
+func (digestQueryStatePermanent) MergeTempDatabase(context.Context, isaac.TempDatabase) error {
+	return nil
+}
+
+func setDigestDatabaseLastBlockForTest(t *testing.T, db *cdigest.Database, height base.Height) {
+	t.Helper()
+
+	db.Lock()
+	defer db.Unlock()
+
+	field := reflect.ValueOf(db).Elem().FieldByName("lastBlock")
+	if !field.IsValid() {
+		t.Fatal(`cdigest.Database field "lastBlock" not found`)
+	}
+
+	reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).
+		Elem().
+		Set(reflect.ValueOf(height))
 }
 
 func newDigestTestEncoders(t *testing.T) (*encoder.Encoders, encoder.Encoder) {
@@ -668,9 +768,9 @@ func digestQueryPayloadEntries(count int) map[string]string {
 }
 
 func digestQueryPayloadTotalBytesExceeded() map[string]string {
-	out := make(map[string]string, cruntime.MaxContractCallDataEntries)
+	out := make(map[string]string, runtime.MaxContractCallDataEntries)
 	out["function"] = "GetOwner"
-	for i := 1; i < cruntime.MaxContractCallDataEntries; i++ {
+	for i := 1; i < runtime.MaxContractCallDataEntries; i++ {
 		out[fmt.Sprintf("k%02d", i)] = strings.Repeat("v", 1040)
 	}
 
@@ -776,14 +876,14 @@ func assertHasHALLink(t *testing.T, resp map[string]interface{}, rel string) {
 func snapshotBytesFromStates(t *testing.T, states map[string]base.State, contract base.Address) []byte {
 	t.Helper()
 
-	sv, err := pstate.GetSnapshotFromState(states[pstate.SnapshotStateKey(contract)])
+	sv, err := state.GetSnapshotFromState(states[state.SnapshotStateKey(contract)])
 	if err != nil {
 		t.Fatalf("GetSnapshotFromState returned error: %v", err)
 	}
 	return append([]byte(nil), sv.Snapshot...)
 }
 
-func assertDigestSnapshotStateUnchanged(t *testing.T, db *Database, contract string, before []byte) {
+func assertDigestSnapshotStateUnchanged(t *testing.T, db *cdigest.Database, contract string, before []byte) {
 	t.Helper()
 
 	_, sv, _, found, err := ContractSnapshotFromChainState(db, contract)

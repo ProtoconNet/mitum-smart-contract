@@ -1,7 +1,7 @@
 package runtime
 
 import (
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
@@ -26,7 +26,7 @@ type ExecuteRequest struct {
 }
 
 type ExecuteResult struct {
-	Engine      pstate.RuntimeEngine
+	Engine      state.RuntimeEngine
 	StateMerges []base.StateMergeValue
 }
 
@@ -42,7 +42,7 @@ type QueryRequest struct {
 }
 
 type QueryResult struct {
-	Engine pstate.RuntimeEngine
+	Engine state.RuntimeEngine
 	Result interface{}
 	Ok     *bool
 }

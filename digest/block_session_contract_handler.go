@@ -1,7 +1,7 @@
 package digest
 
 import (
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
 	"github.com/ProtoconNet/mitum2/base"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -18,21 +18,21 @@ func (bs *BlockSession) prepareContract() error {
 	for i := range bs.sts {
 		st := bs.sts[i]
 		switch {
-		case pstate.IsDesignStateKey(st.Key()):
+		case state.IsDesignStateKey(st.Key()):
 			j, err := bs.handleContractDesignState(st)
 			if err != nil {
 				return err
 			}
 			contractModels = append(contractModels, j...)
 
-		case pstate.IsRuntimeStateKey(st.Key()):
+		case state.IsRuntimeStateKey(st.Key()):
 			j, err := bs.handleContractRuntimeState(st)
 			if err != nil {
 				return err
 			}
 			contractRuntimeModels = append(contractRuntimeModels, j...)
 
-		case pstate.IsSnapshotStateKey(st.Key()):
+		case state.IsSnapshotStateKey(st.Key()):
 			j, err := bs.handleContractSnapshotState(st)
 			if err != nil {
 				return err
@@ -44,7 +44,7 @@ func (bs *BlockSession) prepareContract() error {
 		}
 	}
 
-	bs.contractModels = contractModels
+	bs.smartContractModels = contractModels
 	bs.contractRuntimeModels = contractRuntimeModels
 	bs.contractSnapshotModels = contractSnapshotModels
 

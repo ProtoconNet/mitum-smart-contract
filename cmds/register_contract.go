@@ -6,7 +6,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/ProtoconNet/mitum-currency/v3/operation/contract"
+	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
+	"github.com/ProtoconNet/mitum-smart-contract/operation/contract"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -15,11 +16,11 @@ import (
 type RegisterContractCommand struct {
 	BaseCommand
 	OperationFlags
-	Sender   AddressFlag    `arg:"" name:"sender" help:"sender address" required:"true"`
-	Contract AddressFlag    `arg:"" name:"contract" help:"contract account to register policy" required:"true"`
-	Code     string         `arg:"" name:"contract-code" help:"contract code" type:"filepath"`
-	CallData string         `name:"calldata" help:"call data" required:"true"`
-	Currency CurrencyIDFlag `arg:"" name:"currency" help:"currency id" required:"true"`
+	Sender   ccmds.AddressFlag    `arg:"" name:"sender" help:"sender address" required:"true"`
+	Contract ccmds.AddressFlag    `arg:"" name:"contract" help:"contract account to register policy" required:"true"`
+	Code     string               `arg:"" name:"contract-code" help:"contract code" type:"filepath"`
+	CallData string               `name:"calldata" help:"call data" required:"true"`
+	Currency ccmds.CurrencyIDFlag `arg:"" name:"currency" help:"currency id" required:"true"`
 	sender   base.Address
 	contract base.Address
 	code     string
@@ -40,7 +41,7 @@ func (cmd *RegisterContractCommand) Run(pctx context.Context) error {
 		return err
 	}
 
-	PrettyPrint(cmd.Out, op)
+	ccmds.PrettyPrint(cmd.Out, op)
 
 	return nil
 }

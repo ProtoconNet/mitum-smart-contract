@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cruntime "github.com/ProtoconNet/mitum-currency/v3/operation/contract/runtime"
-	pstate "github.com/ProtoconNet/mitum-currency/v3/state/contract"
-	types "github.com/ProtoconNet/mitum-currency/v3/types"
-	ptypes "github.com/ProtoconNet/mitum-currency/v3/types/contract"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	cruntime "github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
+	"github.com/ProtoconNet/mitum-smart-contract/state"
+	"github.com/ProtoconNet/mitum-smart-contract/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -76,7 +76,7 @@ func (e *callProcessSchemaCaptureEngine) ExecuteContract(
 	}
 
 	return cruntime.ExecuteResult{
-		Engine:      pstate.RuntimeEngineGnoSnapshot,
+		Engine:      state.RuntimeEngineGnoSnapshot,
 		StateMerges: nil,
 	}, nil
 }
@@ -141,7 +141,7 @@ func mustAnalyzeCallProcessSchema(t *testing.T) cruntime.ContractSchema {
 
 func runCallProcessSchemaTest(
 	t *testing.T,
-	persisted *ptypes.PersistedContractSchema,
+	persisted *types.PersistedContractSchema,
 	fakeEngine *callProcessSchemaCaptureEngine,
 ) {
 	t.Helper()
@@ -156,11 +156,11 @@ func runCallProcessSchemaTest(
 	var proposal base.ProposalSignFact = isaac.NewProposalSignFact(proposalFact)
 	fakeEngine.expectedTime = proposal.ProposalFact().ProposedAt().Unix()
 	states := map[string]base.State{
-		pstate.DesignStateKey(contractAddr): common.NewBaseState(
+		state.DesignStateKey(contractAddr): common.NewBaseState(
 			base.Height(1),
-			pstate.DesignStateKey(contractAddr),
-			pstate.NewDesignStateValueWithSchema(
-				ptypes.NewDesign(callProcessPersistedSchemaSource),
+			state.DesignStateKey(contractAddr),
+			state.NewDesignStateValueWithSchema(
+				types.NewDesign(callProcessPersistedSchemaSource),
 				persisted,
 			),
 			nil,
@@ -190,7 +190,7 @@ func runCallProcessSchemaTest(
 			"function": "Store",
 			"next":     "updated",
 		},
-		types.CurrencyID("ABC"),
+		ctypes.CurrencyID("ABC"),
 	)
 	op, err := NewCallContract(fact)
 	if err != nil {
