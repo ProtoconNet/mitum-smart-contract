@@ -62,6 +62,10 @@ query contract에서 `ctx.GetHeight()`는 현재 query가 읽는 state/view heig
 
 write-only `ctx.GetBlockTime()`은 proposal inclusion timestamp를 위한 API이며 query context에는 제공되지 않는다.
 
+### Stdlib Import Loading
+
+allowlist에 있는 stdlib package는 runtime binary에 embedded 된 vendored Gno stdlib bundle에서 로드된다. query/register/write execution은 실행 머신의 `$GOMODCACHE`, `GNOROOT`, 또는 로컬 `gnovm/stdlibs` checkout에 의존하지 않는다. bundle에는 필요한 internal dependency가 포함될 수 있지만, contract가 직접 import할 수 있는 stdlib root는 `Contract-language-support.md`의 allowlist로 제한된다.
+
 ### Query Execution Gas Cap
 
 query execution도 VM resource cap으로 gas meter를 사용한다. 이 gas는 transaction fee/billing 의미가 아니라 read-only query가 CPU/step/native call을 과도하게 쓰지 못하게 막는 실행 제한이다.

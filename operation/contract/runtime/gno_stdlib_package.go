@@ -1,21 +1,22 @@
 package runtime
 
 import (
+	"embed"
 	"fmt"
 	"go/parser"
 	"go/token"
-	"os"
 	"path"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/gnolang/gno/gnovm/pkg/gnoenv"
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
 	gnostd "github.com/gnolang/gno/tm2/pkg/std"
 )
+
+//go:embed gno_stdlib
+var embeddedGnoStdlib embed.FS
 
 var (
 	gnoStdlibPackagesOnce        sync.Once
@@ -25,8 +26,9 @@ var (
 )
 
 // GnoStdlibMemPackages returns the Gno source packages needed by the allowed
-// contract stdlib imports. The Gno source tree must be available through
-// GNOROOT or gnoenv's module-root discovery; source is read once per process.
+// contract stdlib imports. The Gno source is vendored under gno_stdlib and
+// embedded into the binary, so runtime execution does not depend on GNOROOT,
+// GOMODCACHE, or a local github.com/gnolang/gno checkout.
 //
 // Internal dependencies are loaded to execute allowed packages, but are not
 // added to the contract import allowlist.
@@ -81,19 +83,13 @@ func GnoStdlibMemPackagesForContract(sourceCode string) ([]*gnostd.MemPackage, e
 
 func initializeGnoStdlibPackages() error {
 	gnoStdlibPackagesOnce.Do(func() {
-		root, err := gnoenv.GuessRootDir()
-		if err != nil {
-			gnoStdlibPackagesErr = fmt.Errorf("resolve GNOROOT for contract stdlibs: %w", err)
-			return
-		}
-
-		gnoStdlibPackages, gnoStdlibPackageDependencies, gnoStdlibPackagesErr = loadGnoStdlibMemPackages(root, allowedTypedContractImportPathsByKind(AllowedImportStdlib))
+		gnoStdlibPackages, gnoStdlibPackageDependencies, gnoStdlibPackagesErr = loadGnoStdlibMemPackages(allowedTypedContractImportPathsByKind(AllowedImportStdlib))
 	})
 
 	return gnoStdlibPackagesErr
 }
 
-func loadGnoStdlibMemPackages(root string, roots []string) ([]*gnostd.MemPackage, map[string][]string, error) {
+func loadGnoStdlibMemPackages(roots []string) ([]*gnostd.MemPackage, map[string][]string, error) {
 	loaded := map[string]bool{}
 	visiting := map[string]bool{}
 	dependencies := map[string][]string{}
@@ -110,7 +106,7 @@ func loadGnoStdlibMemPackages(root string, roots []string) ([]*gnostd.MemPackage
 		visiting[importPath] = true
 		defer delete(visiting, importPath)
 
-		pkg, err := readGnoStdlibMemPackage(root, importPath)
+		pkg, err := readGnoStdlibMemPackage(importPath)
 		if err != nil {
 			return err
 		}
@@ -172,9 +168,9 @@ func contractGnoStdlibImports(sourceCode string) ([]string, error) {
 	return out, nil
 }
 
-func readGnoStdlibMemPackage(root, importPath string) (*gnostd.MemPackage, error) {
-	dir := filepath.Join(root, "gnovm", "stdlibs", filepath.FromSlash(importPath))
-	entries, err := os.ReadDir(dir)
+func readGnoStdlibMemPackage(importPath string) (*gnostd.MemPackage, error) {
+	dir := path.Join("gno_stdlib", importPath)
+	entries, err := embeddedGnoStdlib.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("read Gno stdlib package %q: %w", importPath, err)
 	}
@@ -197,7 +193,7 @@ func readGnoStdlibMemPackage(root, importPath string) (*gnostd.MemPackage, error
 
 	files := make([]*gnostd.MemFile, 0, len(names))
 	for _, name := range names {
-		body, err := os.ReadFile(filepath.Join(dir, name))
+		body, err := embeddedGnoStdlib.ReadFile(path.Join(dir, name))
 		if err != nil {
 			return nil, fmt.Errorf("read Gno stdlib file %q/%q: %w", importPath, name, err)
 		}

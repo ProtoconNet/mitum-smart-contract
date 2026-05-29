@@ -150,6 +150,42 @@ func TestGnoStdlibMemPackagesAreDeterministicAndContainAllowedRoots(t *testing.T
 	}
 }
 
+func TestEmbeddedGnoStdlibBundleContainsAllowedRoots(t *testing.T) {
+	for _, importPath := range allowedTypedContractImportPathsByKind(AllowedImportStdlib) {
+		pkg, err := readGnoStdlibMemPackage(importPath)
+		if err != nil {
+			t.Fatalf("readGnoStdlibMemPackage(%q) returned error: %v", importPath, err)
+		}
+		if pkg.Path != importPath {
+			t.Fatalf("expected package path %q, got %q", importPath, pkg.Path)
+		}
+		if len(pkg.Files) == 0 {
+			t.Fatalf("expected embedded package %q to contain production .gno files", importPath)
+		}
+		for _, file := range pkg.Files {
+			if !strings.HasSuffix(file.Name, ".gno") {
+				t.Fatalf("embedded package %q includes non-.gno file %q", importPath, file.Name)
+			}
+			if strings.HasSuffix(file.Name, "_test.gno") || strings.HasSuffix(file.Name, "_filetest.gno") {
+				t.Fatalf("embedded package %q includes test source %q", importPath, file.Name)
+			}
+		}
+	}
+}
+
+func TestEmbeddedGnoStdlibLoaderDoesNotExposeModuleCachePath(t *testing.T) {
+	_, err := readGnoStdlibMemPackage("missing/package")
+	if err == nil {
+		t.Fatal("expected missing embedded stdlib package error")
+	}
+	got := err.Error()
+	for _, forbidden := range []string{"pkg/mod", "GOMODCACHE", "GNOROOT", "gnovm/stdlibs", "github.com/gnolang/gno@"} {
+		if strings.Contains(got, forbidden) {
+			t.Fatalf("embedded loader error still exposes module-cache dependency %q in %q", forbidden, got)
+		}
+	}
+}
+
 func assertStdlibQueryResult(
 	t *testing.T,
 	engine ContractEngine,
