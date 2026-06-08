@@ -52,7 +52,8 @@ func (gnoEngine) ExecuteContract(
 		}
 	}()
 
-	if err := ValidateContractCallDataLimits("execute callData", req.CallData); err != nil {
+	normalized, err := normalizeExecuteRequest(req)
+	if err != nil {
 		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("invalid call data: %v", err)
 	}
 
@@ -153,14 +154,41 @@ func (gnoEngine) ExecuteContract(
 		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to restore snapshot: %v", err)
 	}
 
-	if req.Mode == InvocationModeCall && req.Function == "Initialize" {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError(
-			"Initialize cannot be called through call operation for typed contracts",
-		)
-	}
+	switch normalized.mode {
+	case InvocationModeRegister:
+		invokeReq := req
+		invokeReq.Mode = InvocationModeRegister
+		invokeReq.Function = normalized.registerFunction
+		invokeReq.CallData = normalized.initData
+		if err := invokeTypedWrite(m, pkg, invokeReq, schema); err != nil {
+			return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to execute typed contract call: %v", err)
+		}
+	case InvocationModeCall:
+		for i := range normalized.callItems {
+			item := normalized.callItems[i]
+			if item.Function == "Initialize" {
+				return ExecuteResult{}, base.NewBaseOperationProcessReasonError(
+					"failed to execute typed contract call: call item %d %q: Initialize cannot be called through call operation for typed contracts",
+					i+1,
+					item.Function,
+				)
+			}
 
-	if err := invokeTypedWrite(m, pkg, req, schema); err != nil {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to execute typed contract call: %v", err)
+			invokeReq := req
+			invokeReq.Mode = InvocationModeCall
+			invokeReq.Function = item.Function
+			invokeReq.CallData = item.CallData
+			if err := invokeTypedWrite(m, pkg, invokeReq, schema); err != nil {
+				return ExecuteResult{}, base.NewBaseOperationProcessReasonError(
+					"failed to execute typed contract call: call item %d %q: %v",
+					i+1,
+					item.Function,
+					err,
+				)
+			}
+		}
+	default:
+		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("unsupported invocation mode %q", normalized.mode)
 	}
 
 	snapshotBytes, err := CaptureSnapshot(pkg, m.Store, schema)
@@ -186,6 +214,114 @@ func (gnoEngine) ExecuteContract(
 		Engine:      state.RuntimeEngineGnoSnapshot,
 		StateMerges: merges,
 	}, nil
+}
+
+type normalizedExecuteRequest struct {
+	mode             InvocationMode
+	registerFunction string
+	initData         map[string]string
+	callItems        []ExecuteCallItem
+}
+
+func normalizeExecuteRequest(req ExecuteRequest) (normalizedExecuteRequest, error) {
+	mode := req.Mode
+	if mode == "" {
+		mode = InvocationModeCall
+	}
+
+	switch mode {
+	case InvocationModeRegister:
+		initData := req.InitData
+		if initData == nil {
+			initData = req.CallData
+		}
+		initData = copyCallDataMap(initData)
+		if err := ValidateContractCallDataLimits("execute initData", initData); err != nil {
+			return normalizedExecuteRequest{}, err
+		}
+
+		function := req.Function
+		if function == "" {
+			function = "Initialize"
+		}
+		if function != "Initialize" {
+			return normalizedExecuteRequest{}, fmt.Errorf("register mode can only execute Initialize, not %q", function)
+		}
+
+		return normalizedExecuteRequest{
+			mode:             InvocationModeRegister,
+			registerFunction: function,
+			initData:         initData,
+		}, nil
+	case InvocationModeCall:
+		items, err := normalizeExecuteCallItems(req)
+		if err != nil {
+			return normalizedExecuteRequest{}, err
+		}
+
+		return normalizedExecuteRequest{
+			mode:      InvocationModeCall,
+			callItems: items,
+		}, nil
+	default:
+		return normalizedExecuteRequest{}, fmt.Errorf("unsupported invocation mode %q", mode)
+	}
+}
+
+func normalizeExecuteCallItems(req ExecuteRequest) ([]ExecuteCallItem, error) {
+	hasLegacy := req.Function != "" || req.CallData != nil
+	if len(req.CallItems) > 0 && hasLegacy {
+		return nil, fmt.Errorf("call items and legacy function/callData cannot both be set")
+	}
+
+	var items []ExecuteCallItem
+	switch {
+	case len(req.CallItems) > 0:
+		items = copyExecuteCallItems(req.CallItems)
+	case hasLegacy:
+		if err := ValidateContractCallDataLimits("execute callData", req.CallData); err != nil {
+			return nil, err
+		}
+		items = []ExecuteCallItem{
+			{
+				Function: req.Function,
+				CallData: copyCallDataMap(req.CallData),
+			},
+		}
+	default:
+		items = nil
+	}
+
+	if err := ValidateContractCallItemsLimits("execute call items", items); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func copyExecuteCallItems(items []ExecuteCallItem) []ExecuteCallItem {
+	if items == nil {
+		return nil
+	}
+
+	out := make([]ExecuteCallItem, len(items))
+	for i := range items {
+		out[i] = ExecuteCallItem{
+			Function: items[i].Function,
+			CallData: copyCallDataMap(items[i].CallData),
+		}
+	}
+
+	return out
+}
+
+func copyCallDataMap(m map[string]string) map[string]string {
+	out := make(map[string]string, len(m))
+	for key, value := range m {
+		out[key] = value
+	}
+
+	return out
 }
 
 func deriveRuntimeState(contract base.Address, source string) state.RuntimeStateValue {

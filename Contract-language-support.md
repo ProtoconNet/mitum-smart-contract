@@ -174,6 +174,126 @@ register payload:
 
 ---
 
+## CallContract payload
+
+`CallContract`는 기존 단일 호출 payload와 새 batch payload를 모두 지원한다.
+컨트랙트 함수 인자는 여전히 `map[string]string` 기반 scalar-only 입력이다.
+JSON과 BSON 모두 같은 field 이름과 nested shape를 사용한다. 아래 예제는
+읽기 쉬운 JSON 형태로 표시한다.
+
+### Legacy single call
+
+기존 단일 호출은 `call_data` 안에 `function` selector를 넣는다.
+
+```json
+{
+  "call_data": {
+    "function": "UpdateData",
+    "value": "next"
+  }
+}
+```
+
+이 형태는 JSON/BSON decode에서 계속 지원된다. 내부적으로는 하나의
+`CallContractItem`으로 정규화되고, item의 `call_data`에서는 `function` 키가
+제거된다. fact 내부에는 legacy 원본 map을 따로 저장하지 않는다. 단일 item
+operation을 marshal하거나 hash 호환 view를 만들 때만 item에서 legacy
+`call_data` 형태를 다시 재구성한다.
+
+### Batch call
+
+새 batch 호출은 `items` 배열을 사용한다.
+
+```json
+{
+  "items": [
+    {
+      "function": "CreateData",
+      "call_data": {
+        "id": "a",
+        "value": "one"
+      }
+    },
+    {
+      "function": "UpdateData",
+      "call_data": {
+        "id": "a",
+        "value": "two"
+      }
+    }
+  ]
+}
+```
+
+Batch semantics:
+
+- `items`는 배열 순서대로 실행된다.
+- 앞 item의 state 변경은 뒤 item에서 볼 수 있다.
+- 중간 item이 실패하면 전체 operation은 실패하고 contract snapshot은 저장되지 않는다.
+- 모든 item은 하나의 write gas meter를 공유한다.
+- item별 `call_data`는 scalar-only string map이다.
+- item `call_data` 안에 `function` 키를 넣을 수 없다.
+- `Initialize`는 batch call item으로 호출할 수 없고 register 전용이다.
+- `call_data`와 `items`를 같은 payload에 동시에 넣을 수 없다.
+
+Batch limit:
+
+- 최대 item 수: `16`
+- item별 `call_data` limit: entry `64`, key `128 bytes`, value `16 KiB`, total key+value `64 KiB`
+- batch 전체 limit: `64 KiB`
+- batch 전체 limit에는 각 item의 `function` byte length와 모든 item `call_data` key+value bytes가 포함된다.
+
+### CLI examples
+
+CLI는 세 입력 방식 중 정확히 하나만 받는다.
+
+- `--calldata`: legacy single call JSON object
+- `--items`: batch call items JSON array
+- `--items-file`: batch call items JSON array file path
+
+Legacy single call:
+
+```sh
+--calldata '{"function":"UpdateData","value":"next"}'
+```
+
+Inline batch call:
+
+```sh
+--items '[{"function":"CreateData","call_data":{"id":"a","value":"one"}},{"function":"UpdateData","call_data":{"id":"a","value":"two"}}]'
+```
+
+Batch call from file:
+
+```json
+[
+  {
+    "function": "CreateData",
+    "call_data": {
+      "id": "a",
+      "value": "one"
+    }
+  },
+  {
+    "function": "UpdateData",
+    "call_data": {
+      "id": "a",
+      "value": "two"
+    }
+  }
+]
+```
+
+```sh
+--items-file ./call-items.json
+```
+
+`--items`가 item 1개만 담아도 허용된다. 이 경우 operation marshal 결과가
+legacy `call_data` 형태로 보일 수 있으며, 이는 single-item compatibility
+정책과 일치한다.
+
+---
+
 ## 지원되는 상태 변수 타입
 
 전역 persistent state는 scalar를 넘어 복합 타입까지 지원한다.

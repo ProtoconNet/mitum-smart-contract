@@ -156,6 +156,7 @@ func (opp *RegisterContractProcessor) Process(
 			Schema:       &schema,
 			Function:     initializeFuncName,
 			CallData:     fact.callData,
+			InitData:     fact.callData,
 		},
 	)
 	if bErr != nil {

@@ -123,7 +123,8 @@ func TestCallContractPreProcessDoesNotPerformHeavyWork(t *testing.T) {
 
 	states := validCallPreProcessStates(t, "not valid gno source {{{")
 	_, reason := runCallContractPreProcess(t, states, map[string]string{
-		"next": "updated",
+		"function": "Missing",
+		"next":     "updated",
 	})
 	if reason != nil {
 		t.Fatalf("expected PreProcess to avoid function/schema/runtime execution checks, got %v", reason)

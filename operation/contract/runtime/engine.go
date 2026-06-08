@@ -21,8 +21,18 @@ type ExecuteRequest struct {
 	BlockTime    int64
 	ContractCode string
 	Schema       *ContractSchema
-	Function     string
-	CallData     map[string]string
+
+	// Function and CallData are kept as a legacy single-call bridge. New call
+	// execution should normalize through CallItems; register should use InitData.
+	Function  string
+	CallData  map[string]string
+	CallItems []ExecuteCallItem
+	InitData  map[string]string
+}
+
+type ExecuteCallItem struct {
+	Function string
+	CallData map[string]string
 }
 
 type ExecuteResult struct {

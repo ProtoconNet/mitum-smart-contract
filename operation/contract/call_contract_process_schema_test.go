@@ -68,8 +68,14 @@ func (e *callProcessSchemaCaptureEngine) ExecuteContract(
 	if req.ContractCode != callProcessPersistedSchemaSource {
 		e.t.Fatal("expected ExecuteRequest.ContractCode to be preserved")
 	}
-	if req.Function != "Store" {
-		e.t.Fatalf("unexpected function: %q", req.Function)
+	if len(req.CallItems) != 1 {
+		e.t.Fatalf("expected one call item, got %d", len(req.CallItems))
+	}
+	if req.CallItems[0].Function != "Store" {
+		e.t.Fatalf("unexpected function: %q", req.CallItems[0].Function)
+	}
+	if req.CallItems[0].CallData["next"] != "updated" {
+		e.t.Fatalf("unexpected call item data: %#v", req.CallItems[0].CallData)
 	}
 	if req.BlockTime != e.expectedTime {
 		e.t.Fatalf("unexpected block time passed to ExecuteContract: %d", req.BlockTime)

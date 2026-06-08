@@ -132,10 +132,9 @@ func (opp *CallContractProcessor) Process(
 		), nil
 	}
 
-	fName, found := fact.callData["function"]
-	if !found {
+	if len(fact.items) < 1 {
 		return nil, base.NewBaseOperationProcessReasonError(
-			"missing function name in call data"), nil
+			"missing call items"), nil
 	}
 
 	st, err := cstate.ExistsState(state.DesignStateKey(fact.Contract()), "contract design", getStateFunc)
@@ -166,8 +165,7 @@ func (opp *CallContractProcessor) Process(
 			BlockTime:    blockTime,
 			ContractCode: cd.ContractCode(),
 			Schema:       schema,
-			Function:     fName,
-			CallData:     fact.callData,
+			CallItems:    fact.runtimeCallItems(),
 		},
 	)
 	if bErr != nil {
