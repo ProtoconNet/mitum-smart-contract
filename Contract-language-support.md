@@ -225,6 +225,24 @@ operation을 marshal하거나 hash 호환 view를 만들 때만 item에서 legac
 }
 ```
 
+Operation JSON/BSON encoder는 각 batch item에 Mitum item hint를 포함한다.
+입력 payload에서는 `_hint`가 선택 사항이며, 없으면
+`mitum-contract-call-item-v0.0.1`로 보정된다.
+
+```json
+{
+  "items": [
+    {
+      "_hint": "mitum-contract-call-item-v0.0.1",
+      "function": "UpdateData",
+      "call_data": {
+        "value": "next"
+      }
+    }
+  ]
+}
+```
+
 Batch semantics:
 
 - `items`는 배열 순서대로 실행된다.

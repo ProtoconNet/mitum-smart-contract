@@ -17,6 +17,7 @@ var AddedHinters = []encoder.DecodeDetail{
 	// revive:disable-next-line:line-length-limit
 	{Hint: contract.RegisterContractHint, Instance: contract.RegisterContract{}},
 	{Hint: contract.CallContractHint, Instance: contract.CallContract{}},
+	{Hint: contract.CallContractItemHint, Instance: contract.CallContractItem{}},
 	{Hint: ptypes.DesignHint, Instance: ptypes.Design{}},
 	{Hint: pstate.DesignStateValueHint, Instance: pstate.DesignStateValue{}},
 	{Hint: pstate.RuntimeStateValueHint, Instance: pstate.RuntimeStateValue{}},

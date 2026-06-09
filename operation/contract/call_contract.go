@@ -16,6 +16,7 @@ import (
 var (
 	CallContractFactHint = hint.MustNewHint("mitum-contract-call-operation-fact-v0.0.1")
 	CallContractHint     = hint.MustNewHint("mitum-contract-call-operation-v0.0.1")
+	CallContractItemHint = hint.MustNewHint("mitum-contract-call-item-v0.0.1")
 )
 
 const (
@@ -24,14 +25,20 @@ const (
 )
 
 type CallContractItem struct {
+	hint.BaseHinter
 	function string
 	callData map[string]string
 }
 
 func NewCallContractItem(function string, callData map[string]string) CallContractItem {
+	return newCallContractItem(CallContractItemHint, function, callData)
+}
+
+func newCallContractItem(ht hint.Hint, function string, callData map[string]string) CallContractItem {
 	return CallContractItem{
-		function: function,
-		callData: copyStringMap(callData),
+		BaseHinter: hint.NewBaseHinter(ht),
+		function:   function,
+		callData:   copyStringMap(callData),
 	}
 }
 
@@ -45,6 +52,10 @@ func (it CallContractItem) Bytes() []byte {
 }
 
 func (it CallContractItem) IsValid([]byte) error {
+	if err := it.BaseHinter.IsValid(CallContractItemHint.Type().Bytes()); err != nil {
+		return common.ErrItemInvalid.Wrap(err)
+	}
+
 	if it.function == "" {
 		return common.ErrItemInvalid.Wrap(common.ErrValueInvalid.Wrap(errors.Errorf("function is empty")))
 	}

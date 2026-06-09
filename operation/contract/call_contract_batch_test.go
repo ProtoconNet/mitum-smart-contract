@@ -12,6 +12,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -19,6 +20,153 @@ import (
 func TestCallContractFactDoesNotStoreLegacyCallData(t *testing.T) {
 	if _, found := reflect.TypeOf(CallContractFact{}).FieldByName("legacyCallData"); found {
 		t.Fatal("CallContractFact must not store legacyCallData; legacy call_data is only a compatibility view")
+	}
+}
+
+func TestCallContractItemSetsHint(t *testing.T) {
+	item := NewCallContractItem("UpdateData", map[string]string{"value": "next"})
+	if !item.Hint().Equal(CallContractItemHint) {
+		t.Fatalf("unexpected item hint: got %q, want %q", item.Hint(), CallContractItemHint)
+	}
+	if err := item.IsValid(nil); err != nil {
+		t.Fatalf("IsValid returned error: %v", err)
+	}
+}
+
+func TestCallContractItemRejectsInvalidHint(t *testing.T) {
+	item := NewCallContractItem("UpdateData", map[string]string{"value": "next"})
+	item.BaseHinter = hint.NewBaseHinter(hint.MustNewHint("mitum-contract-other-call-item-v0.0.1"))
+
+	err := item.IsValid(nil)
+	if err == nil {
+		t.Fatal("expected invalid item hint error")
+	}
+	if !strings.Contains(err.Error(), "type does not match") {
+		t.Fatalf("expected hint type mismatch error, got %v", err)
+	}
+}
+
+func TestCallContractItemJSONHintRoundTrip(t *testing.T) {
+	item := NewCallContractItem("UpdateData", map[string]string{"value": "next"})
+	b, err := json.Marshal(item)
+	if err != nil {
+		t.Fatalf("json.Marshal returned error: %v", err)
+	}
+
+	var m map[string]json.RawMessage
+	if err := json.Unmarshal(b, &m); err != nil {
+		t.Fatalf("json.Unmarshal returned error: %v", err)
+	}
+	var gotHint string
+	if err := json.Unmarshal(m["_hint"], &gotHint); err != nil {
+		t.Fatalf("json.Unmarshal(_hint) returned error: %v", err)
+	}
+	if gotHint != CallContractItemHint.String() {
+		t.Fatalf("unexpected JSON item hint: got %q, want %q", gotHint, CallContractItemHint)
+	}
+
+	var decoded CallContractItem
+	if err := json.Unmarshal(b, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal(with hint) returned error: %v", err)
+	}
+	assertCallContractItems(t, []CallContractItem{decoded}, []CallContractItem{item})
+	if !decoded.Hint().Equal(CallContractItemHint) {
+		t.Fatalf("decoded item hint mismatch: %q", decoded.Hint())
+	}
+
+	var decodedByMethod CallContractItem
+	if err := decodedByMethod.DecodeJSON(b, testCallContractJSONEncoder(t)); err != nil {
+		t.Fatalf("DecodeJSON(with hint) returned error: %v", err)
+	}
+	assertCallContractItems(t, []CallContractItem{decodedByMethod}, []CallContractItem{item})
+	if !decodedByMethod.Hint().Equal(CallContractItemHint) {
+		t.Fatalf("DecodeJSON item hint mismatch: %q", decodedByMethod.Hint())
+	}
+
+	withoutHint := []byte(`{"function":"UpdateData","call_data":{"value":"next"}}`)
+	var decodedWithoutHint CallContractItem
+	if err := json.Unmarshal(withoutHint, &decodedWithoutHint); err != nil {
+		t.Fatalf("json.Unmarshal(without hint) returned error: %v", err)
+	}
+	assertCallContractItems(t, []CallContractItem{decodedWithoutHint}, []CallContractItem{item})
+	if !decodedWithoutHint.Hint().Equal(CallContractItemHint) {
+		t.Fatalf("decoded item without hint should default to %q, got %q", CallContractItemHint, decodedWithoutHint.Hint())
+	}
+
+	var decodedWithoutHintByMethod CallContractItem
+	if err := decodedWithoutHintByMethod.DecodeJSON(withoutHint, testCallContractJSONEncoder(t)); err != nil {
+		t.Fatalf("DecodeJSON(without hint) returned error: %v", err)
+	}
+	assertCallContractItems(t, []CallContractItem{decodedWithoutHintByMethod}, []CallContractItem{item})
+	if !decodedWithoutHintByMethod.Hint().Equal(CallContractItemHint) {
+		t.Fatalf(
+			"DecodeJSON item without hint should default to %q, got %q",
+			CallContractItemHint,
+			decodedWithoutHintByMethod.Hint(),
+		)
+	}
+}
+
+func TestCallContractItemBSONHintRoundTrip(t *testing.T) {
+	item := NewCallContractItem("UpdateData", map[string]string{"value": "next"})
+	b, err := bson.Marshal(item)
+	if err != nil {
+		t.Fatalf("bson.Marshal returned error: %v", err)
+	}
+
+	var m bson.M
+	if err := bson.Unmarshal(b, &m); err != nil {
+		t.Fatalf("bson.Unmarshal returned error: %v", err)
+	}
+	if gotHint := m["_hint"]; gotHint != CallContractItemHint.String() {
+		t.Fatalf("unexpected BSON item hint: got %#v, want %q", gotHint, CallContractItemHint)
+	}
+
+	var decoded CallContractItem
+	if err := bson.Unmarshal(b, &decoded); err != nil {
+		t.Fatalf("bson.Unmarshal(with hint) returned error: %v", err)
+	}
+	assertCallContractItems(t, []CallContractItem{decoded}, []CallContractItem{item})
+	if !decoded.Hint().Equal(CallContractItemHint) {
+		t.Fatalf("decoded item hint mismatch: %q", decoded.Hint())
+	}
+
+	var decodedByMethod CallContractItem
+	if err := decodedByMethod.DecodeBSON(b, testCallContractBSONEncoder(t)); err != nil {
+		t.Fatalf("DecodeBSON(with hint) returned error: %v", err)
+	}
+	assertCallContractItems(t, []CallContractItem{decodedByMethod}, []CallContractItem{item})
+	if !decodedByMethod.Hint().Equal(CallContractItemHint) {
+		t.Fatalf("DecodeBSON item hint mismatch: %q", decodedByMethod.Hint())
+	}
+
+	withoutHint, err := bson.Marshal(bson.M{
+		"function":  "UpdateData",
+		"call_data": bson.M{"value": "next"},
+	})
+	if err != nil {
+		t.Fatalf("bson.Marshal(without hint) returned error: %v", err)
+	}
+	var decodedWithoutHint CallContractItem
+	if err := bson.Unmarshal(withoutHint, &decodedWithoutHint); err != nil {
+		t.Fatalf("bson.Unmarshal(without hint) returned error: %v", err)
+	}
+	assertCallContractItems(t, []CallContractItem{decodedWithoutHint}, []CallContractItem{item})
+	if !decodedWithoutHint.Hint().Equal(CallContractItemHint) {
+		t.Fatalf("decoded item without hint should default to %q, got %q", CallContractItemHint, decodedWithoutHint.Hint())
+	}
+
+	var decodedWithoutHintByMethod CallContractItem
+	if err := decodedWithoutHintByMethod.DecodeBSON(withoutHint, testCallContractBSONEncoder(t)); err != nil {
+		t.Fatalf("DecodeBSON(without hint) returned error: %v", err)
+	}
+	assertCallContractItems(t, []CallContractItem{decodedWithoutHintByMethod}, []CallContractItem{item})
+	if !decodedWithoutHintByMethod.Hint().Equal(CallContractItemHint) {
+		t.Fatalf(
+			"DecodeBSON item without hint should default to %q, got %q",
+			CallContractItemHint,
+			decodedWithoutHintByMethod.Hint(),
+		)
 	}
 }
 

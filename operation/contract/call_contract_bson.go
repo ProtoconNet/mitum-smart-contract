@@ -108,6 +108,7 @@ func decodeCallContractItemsBSONRaw(raw bson.Raw) ([]CallContractItem, error) {
 func (it CallContractItem) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
+			"_hint":     it.Hint().String(),
 			"function":  it.function,
 			"call_data": normalizeStringMap(it.callData),
 		},
@@ -115,6 +116,7 @@ func (it CallContractItem) MarshalBSON() ([]byte, error) {
 }
 
 type CallContractItemBSONUnmarshaler struct {
+	Hint     string            `bson:"_hint"`
 	Function string            `bson:"function"`
 	CallData map[string]string `bson:"call_data"`
 }
@@ -125,7 +127,11 @@ func (it *CallContractItem) DecodeBSON(b []byte, _ *bsonenc.Encoder) error {
 		return common.DecorateError(err, common.ErrDecodeBson, *it)
 	}
 
-	*it = NewCallContractItem(u.Function, u.CallData)
+	n, err := decodeCallContractItemHint(u.Hint, u.Function, u.CallData)
+	if err != nil {
+		return common.DecorateError(err, common.ErrDecodeBson, *it)
+	}
+	*it = n
 
 	return nil
 }
@@ -136,7 +142,11 @@ func (it *CallContractItem) UnmarshalBSON(b []byte) error {
 		return common.DecorateError(err, common.ErrDecodeBson, *it)
 	}
 
-	*it = NewCallContractItem(u.Function, u.CallData)
+	n, err := decodeCallContractItemHint(u.Hint, u.Function, u.CallData)
+	if err != nil {
+		return common.DecorateError(err, common.ErrDecodeBson, *it)
+	}
+	*it = n
 
 	return nil
 }

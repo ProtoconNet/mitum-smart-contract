@@ -9,6 +9,7 @@ import (
 	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	contractop "github.com/ProtoconNet/mitum-smart-contract/operation/contract"
 	"github.com/ProtoconNet/mitum2/base"
+	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/alecthomas/kong"
 )
 
@@ -19,6 +20,43 @@ func TestCallContractCommandKongSchemaAcceptsBatchFlags(t *testing.T) {
 
 	if _, err := kong.New(&cli, kong.Vars{"network_id": "mitum"}); err != nil {
 		t.Fatalf("kong.New returned error: %v", err)
+	}
+}
+
+func TestAddedHintersDecodeCallContractItem(t *testing.T) {
+	enc := jsonenc.NewEncoder()
+	found := false
+	for i := range AddedHinters {
+		if AddedHinters[i].Hint.String() != contractop.CallContractItemHint.String() {
+			continue
+		}
+		found = true
+		if err := enc.Add(AddedHinters[i]); err != nil {
+			t.Fatalf("Add(CallContractItemHint) returned error: %v", err)
+		}
+		break
+	}
+	if !found {
+		t.Fatalf("AddedHinters must include %q", contractop.CallContractItemHint)
+	}
+
+	b, err := contractop.NewCallContractItem("UpdateData", map[string]string{"value": "next"}).MarshalJSON()
+	if err != nil {
+		t.Fatalf("MarshalJSON returned error: %v", err)
+	}
+	decoded, err := enc.Decode(b)
+	if err != nil {
+		t.Fatalf("encoder Decode returned error: %v", err)
+	}
+	item, ok := decoded.(contractop.CallContractItem)
+	if !ok {
+		t.Fatalf("decoded unexpected type: %T", decoded)
+	}
+	assertCLIItems(t, []contractop.CallContractItem{item}, []contractop.CallContractItem{
+		contractop.NewCallContractItem("UpdateData", map[string]string{"value": "next"}),
+	})
+	if !item.Hint().Equal(contractop.CallContractItemHint) {
+		t.Fatalf("decoded item hint mismatch: %q", item.Hint())
 	}
 }
 

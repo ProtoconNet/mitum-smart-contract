@@ -9,6 +9,7 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 type CallContractFactJSONMarshaler struct {
@@ -87,18 +88,21 @@ func (fact *CallContractFact) DecodeJSON(b []byte, enc encoder.Encoder) error {
 }
 
 type CallContractItemJSONMarshaler struct {
+	hint.BaseHinter
 	Function string            `json:"function"`
 	CallData map[string]string `json:"call_data"`
 }
 
 func (it CallContractItem) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(CallContractItemJSONMarshaler{
-		Function: it.function,
-		CallData: normalizeStringMap(it.callData),
+		BaseHinter: it.BaseHinter,
+		Function:   it.function,
+		CallData:   normalizeStringMap(it.callData),
 	})
 }
 
 type CallContractItemJSONUnmarshaler struct {
+	Hint     string            `json:"_hint"`
 	Function string            `json:"function"`
 	CallData map[string]string `json:"call_data"`
 }
@@ -109,7 +113,11 @@ func (it *CallContractItem) DecodeJSON(b []byte, enc encoder.Encoder) error {
 		return common.DecorateError(err, common.ErrDecodeJson, *it)
 	}
 
-	*it = NewCallContractItem(u.Function, u.CallData)
+	n, err := decodeCallContractItemHint(u.Hint, u.Function, u.CallData)
+	if err != nil {
+		return common.DecorateError(err, common.ErrDecodeJson, *it)
+	}
+	*it = n
 
 	return nil
 }
@@ -120,9 +128,26 @@ func (it *CallContractItem) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*it = NewCallContractItem(u.Function, u.CallData)
+	n, err := decodeCallContractItemHint(u.Hint, u.Function, u.CallData)
+	if err != nil {
+		return err
+	}
+	*it = n
 
 	return nil
+}
+
+func decodeCallContractItemHint(s, function string, callData map[string]string) (CallContractItem, error) {
+	if s == "" {
+		return NewCallContractItem(function, callData), nil
+	}
+
+	ht, err := hint.ParseHint(s)
+	if err != nil {
+		return CallContractItem{}, err
+	}
+
+	return newCallContractItem(ht, function, callData), nil
 }
 
 func (op CallContract) MarshalJSON() ([]byte, error) {
