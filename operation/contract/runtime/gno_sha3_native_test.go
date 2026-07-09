@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum2/base"
+	"github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/mitum2/base"
 	"golang.org/x/crypto/sha3"
 )
 

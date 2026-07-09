@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/ProtoconNet/mitum2/launch"
-	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/imfact-labs/mitum2/launch"
+	"github.com/imfact-labs/mitum2/util/encoder"
 )
 
 var (

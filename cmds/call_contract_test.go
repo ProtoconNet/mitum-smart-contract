@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	contractop "github.com/ProtoconNet/mitum-smart-contract/operation/contract"
-	"github.com/ProtoconNet/mitum2/base"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	ctypes "github.com/imfact-labs/currency-model/types"
+	contractop "github.com/imfact-labs/smart-contract-model/operation/contract"
+	"github.com/imfact-labs/mitum2/base"
+	jsonenc "github.com/imfact-labs/mitum2/util/encoder/json"
 	"github.com/alecthomas/kong"
 )
 

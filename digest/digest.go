@@ -6,13 +6,13 @@ import (
 	"sync"
 	"time"
 
-	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/isaac"
-	isaacblock "github.com/ProtoconNet/mitum2/isaac/block"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/fixedtree"
-	"github.com/ProtoconNet/mitum2/util/logging"
+	cdigest "github.com/imfact-labs/currency-model/digest"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/isaac"
+	isaacblock "github.com/imfact-labs/mitum2/isaac/block"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/fixedtree"
+	"github.com/imfact-labs/mitum2/util/logging"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
@@ -159,7 +159,7 @@ func DigestBlock(
 	proposal base.ProposalSignFact,
 	vs string,
 ) error {
-	if m, _, _, _, _, _ := st.ManifestByHeight(blk.Manifest().Height()); m != nil {
+	if m, _, _, _, _, _, _ := st.ManifestByHeight(blk.Manifest().Height()); m != nil {
 		return nil
 	}
 

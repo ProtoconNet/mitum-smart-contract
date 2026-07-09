@@ -7,15 +7,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ProtoconNet/mitum-currency/v3/common"
-	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
-	"github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum-smart-contract/types"
-	"github.com/ProtoconNet/mitum2/base"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
-	"github.com/ProtoconNet/mitum2/util/hint"
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/imfact-labs/currency-model/common"
+	bsonenc "github.com/imfact-labs/currency-model/utils/bsonenc"
+	"github.com/imfact-labs/smart-contract-model/operation/contract/runtime"
+	"github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/smart-contract-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	jsonenc "github.com/imfact-labs/mitum2/util/encoder/json"
+	"github.com/imfact-labs/mitum2/util/hint"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 const designStateSchemaTestSource = `package contract

@@ -1,9 +1,9 @@
 package digest
 
 import (
-	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
-	"github.com/ProtoconNet/mitum2/base"
-	"go.mongodb.org/mongo-driver/mongo"
+	cdigest "github.com/imfact-labs/currency-model/digest"
+	"github.com/imfact-labs/mitum2/base"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func (bs *BlockSession) handleAccountState(st base.State) ([]mongo.WriteModel, error) {

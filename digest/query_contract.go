@@ -6,10 +6,10 @@ import (
 	stderrors "errors"
 	"net/http"
 
-	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
-	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
-	"github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum2/base"
+	capi "github.com/imfact-labs/currency-model/api"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/smart-contract-model/operation/contract/runtime"
+	"github.com/imfact-labs/smart-contract-model/state"
 	pkgerrors "github.com/pkg/errors"
 )
 
@@ -31,9 +31,9 @@ type ContractQueryOutput struct {
 }
 
 func (hd *Handlers) handleContractQuery(w http.ResponseWriter, r *http.Request) {
-	contract, err, status := cdigest.ParseRequest(w, r, "contract")
+	contract, err, status := capi.ParseRequest(w, r, "contract")
 	if err != nil {
-		cdigest.HTTP2ProblemWithError(w, err, status)
+		capi.HTTP2ProblemWithError(w, err, status)
 		return
 	}
 
@@ -42,7 +42,7 @@ func (hd *Handlers) handleContractQuery(w http.ResponseWriter, r *http.Request) 
 	if _, err := body.ReadFrom(r.Body); err != nil {
 		var maxBytesErr *http.MaxBytesError
 		if stderrors.As(err, &maxBytesErr) {
-			cdigest.HTTP2ProblemWithError(
+			capi.HTTP2ProblemWithError(
 				w,
 				pkgerrors.Errorf("query body exceeds max size: max %d bytes", MaxContractQueryBodyBytes),
 				http.StatusRequestEntityTooLarge,
@@ -50,33 +50,33 @@ func (hd *Handlers) handleContractQuery(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		cdigest.HTTP2ProblemWithError(w, err, http.StatusInternalServerError)
+		capi.HTTP2ProblemWithError(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	var callData map[string]string
 	if err := json.Unmarshal(body.Bytes(), &callData); err != nil {
-		cdigest.HTTP2ProblemWithError(w, err, http.StatusBadRequest)
+		capi.HTTP2ProblemWithError(w, err, http.StatusBadRequest)
 		return
 	}
 	if err := runtime.ValidateContractCallDataLimits("query callData", callData); err != nil {
-		cdigest.HTTP2ProblemWithError(w, err, http.StatusBadRequest)
+		capi.HTTP2ProblemWithError(w, err, http.StatusBadRequest)
 		return
 	}
 
 	fName, found := callData["function"]
 	if !found || fName == "" {
-		cdigest.HTTP2ProblemWithError(w, pkgerrors.Errorf("missing function in query body"), http.StatusBadRequest)
+		capi.HTTP2ProblemWithError(w, pkgerrors.Errorf("missing function in query body"), http.StatusBadRequest)
 		return
 	}
 
 	b, err := hd.handleContractQueryInGroup(contract, callData)
 	if err != nil {
-		cdigest.HTTP2HandleError(w, err)
+		capi.HTTP2HandleError(w, err)
 		return
 	}
 
-	cdigest.HTTP2WriteHalBytes(hd.encoder, w, b, http.StatusOK)
+	capi.HTTP2WriteHalBytes(hd.encoder, w, b, http.StatusOK)
 }
 
 func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[string]string) ([]byte, error) {
@@ -121,7 +121,7 @@ func (hd *Handlers) handleContractQueryInGroup(contract string, callData map[str
 
 	qr, qerr := digestContractQueryEngine.QueryContract(
 		*hd.encoders,
-		hd.database.State,
+		contractDigestGetStateFunc(hd.database),
 		runtime.QueryRequest{
 			Contract:      contractAddr,
 			Sender:        contractAddr,
@@ -150,7 +150,7 @@ func (hd *Handlers) buildContractQuery(
 	function string,
 	qr runtime.QueryResult,
 	st base.State,
-) (cdigest.Hal, error) {
+) (capi.Hal, error) {
 	h, err := hd.combineURL(HandlerPathContractQuery, "contract", contract)
 	if err != nil {
 		return nil, err
@@ -167,20 +167,20 @@ func (hd *Handlers) buildContractQuery(
 		},
 	}
 
-	var hal cdigest.Hal
-	hal = cdigest.NewBaseHal(resp, cdigest.NewHalLink(h, nil))
+	var hal capi.Hal
+	hal = capi.NewBaseHal(resp, capi.NewHalLink(h, nil))
 
 	h, err = hd.combineURL(HandlerPathContractDesign, "contract", contract)
 	if err != nil {
 		return nil, err
 	}
-	hal = hal.AddLink("design", cdigest.NewHalLink(h, nil))
+	hal = hal.AddLink("design", capi.NewHalLink(h, nil))
 
-	h, err = hd.combineURL(cdigest.HandlerPathBlockByHeight, "height", st.Height().String())
+	h, err = hd.combineURL(capi.HandlerPathBlockByHeight, "height", st.Height().String())
 	if err != nil {
 		return nil, err
 	}
-	hal = hal.AddLink("block", cdigest.NewHalLink(h, nil))
+	hal = hal.AddLink("block", capi.NewHalLink(h, nil))
 
 	return hal, nil
 }

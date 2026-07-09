@@ -5,17 +5,18 @@ import (
 	"net/http"
 	"time"
 
-	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
-	"github.com/ProtoconNet/mitum-currency/v3/digest/network"
-	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/launch"
-	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
-	"github.com/ProtoconNet/mitum2/network/quicstream"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/encoder"
-	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/gorilla/mux"
+	capi "github.com/imfact-labs/currency-model/api"
+	"github.com/imfact-labs/currency-model/api/network"
+	cdigest "github.com/imfact-labs/currency-model/digest"
+	ctypes "github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/launch"
+	"github.com/imfact-labs/mitum2/network/quicmemberlist"
+	"github.com/imfact-labs/mitum2/network/quicstream"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/encoder"
+	"github.com/imfact-labs/mitum2/util/logging"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/singleflight"
@@ -26,21 +27,13 @@ var (
 	HandlerPathContractQuery  = `/contract/{contract:(?i)` + ctypes.REStringAddressString + `}/query`
 )
 
-func init() {
-	if b, err := cdigest.JSON.Marshal(cdigest.UnknownProblem); err != nil {
-		panic(err)
-	} else {
-		cdigest.UnknownProblemJSON = b
-	}
-}
-
 type Handlers struct {
 	*zerolog.Logger
 	networkID       base.NetworkID
 	encoders        *encoder.Encoders
 	encoder         encoder.Encoder
 	database        *cdigest.Database
-	cache           cdigest.Cache
+	cache           capi.Cache
 	nodeInfoHandler cdigest.NodeInfoHandler
 	send            func(interface{}) (base.Operation, error)
 	client          func() (*quicstream.ConnectionPool, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error)
@@ -57,7 +50,7 @@ func NewHandlers(
 	encs *encoder.Encoders,
 	enc encoder.Encoder,
 	st *cdigest.Database,
-	cache cdigest.Cache,
+	cache capi.Cache,
 	router *mux.Router,
 	routes map[string]*mux.Route,
 ) *Handlers {
@@ -75,7 +68,7 @@ func NewHandlers(
 		cache:           cache,
 		router:          router,
 		routes:          routes,
-		itemsLimiter:    cdigest.DefaultItemsLimiter,
+		itemsLimiter:    capi.DefaultItemsLimiter,
 		rg:              &singleflight.Group{},
 		expireNotFilled: time.Second * 3,
 	}
@@ -101,7 +94,7 @@ func (hd *Handlers) SetLimiter(f func(string) int64) *Handlers {
 	return hd
 }
 
-func (hd *Handlers) Cache() cdigest.Cache {
+func (hd *Handlers) Cache() capi.Cache {
 	return hd.cache
 }
 
@@ -131,7 +124,7 @@ func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCach
 	if !useCache {
 		handler = http.HandlerFunc(h)
 	} else {
-		ch := cdigest.NewCachedHTTPHandler(hd.cache, h)
+		ch := capi.NewCachedHTTPHandler(hd.cache, h)
 
 		handler = ch
 	}
@@ -150,7 +143,7 @@ func (hd *Handlers) setHandler(prefix string, h network.HTTPHandlerFunc, useCach
 		route = hd.router.Name(name)
 	}
 
-	handler = cdigest.RateLimiter(rps, burst)(handler)
+	handler = capi.RateLimiter(rps, burst)(handler)
 
 	/*
 		if rules, found := hd.rateLimit[prefix]; found {

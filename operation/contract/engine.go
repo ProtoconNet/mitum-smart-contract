@@ -1,5 +1,5 @@
 package contract
 
-import "github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
+import "github.com/imfact-labs/smart-contract-model/operation/contract/runtime"
 
 var contractEngine runtime.ContractEngine = runtime.NewGnoEngine()

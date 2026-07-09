@@ -6,11 +6,11 @@ import (
 	"os"
 	"strings"
 
-	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
-	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum-smart-contract/operation/contract"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
+	ccmds "github.com/imfact-labs/currency-model/app/cmds"
+	ctypes "github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/smart-contract-model/operation/contract"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util"
 	"github.com/pkg/errors"
 )
 

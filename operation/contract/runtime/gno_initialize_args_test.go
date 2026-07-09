@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	pstate "github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum2/base"
+	pstate "github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/mitum2/base"
 )
 
 const initializeArgsContractSource = `package contract

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ProtoconNet/mitum2/base"
+	"github.com/imfact-labs/mitum2/base"
 	gstore "github.com/gnolang/gno/tm2/pkg/store"
 )
 

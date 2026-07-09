@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum2/base"
+	"github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/mitum2/base"
 )
 
 func TestRegisterContractFactAllowsSourceAtMaxSize(t *testing.T) {

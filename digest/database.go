@@ -1,15 +1,19 @@
 package digest
 
 import (
-	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
-	utilc "github.com/ProtoconNet/mitum-currency/v3/digest/util"
-	"github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum-smart-contract/types"
-	"github.com/ProtoconNet/mitum2/base"
-	utilm "github.com/ProtoconNet/mitum2/util"
+	"reflect"
+	"strings"
+	"unsafe"
+
+	cdigest "github.com/imfact-labs/currency-model/digest"
+	utilc "github.com/imfact-labs/currency-model/digest/util"
+	"github.com/imfact-labs/mitum2/base"
+	utilm "github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/smart-contract-model/types"
 	"github.com/pkg/errors"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var (
@@ -65,7 +69,7 @@ func ContractDesignFromChainState(db *cdigest.Database, contract string) (base.A
 		return nil, types.Design{}, nil, errors.Wrap(err, "invalid contract address")
 	}
 
-	st, found, err := db.State(state.DesignStateKey(address))
+	st, found, err := latestContractState(db, DefaultColNameContract, contract)
 	if err != nil {
 		return nil, types.Design{}, nil, errors.Wrap(err, "failed to read design state from chain")
 	}
@@ -90,7 +94,7 @@ func ContractRuntimeFromChainState(
 		return nil, state.RuntimeStateValue{}, nil, false, errors.Wrap(err, "invalid contract address")
 	}
 
-	st, found, err := db.State(state.RuntimeStateKey(address))
+	st, found, err := latestContractState(db, DefaultColNameContractRuntime, contract)
 	if err != nil {
 		return nil, state.RuntimeStateValue{}, nil, false, errors.Wrap(err, "failed to read runtime state from chain")
 	}
@@ -115,7 +119,7 @@ func ContractSnapshotFromChainState(
 		return nil, state.SnapshotStateValue{}, nil, false, errors.Wrap(err, "invalid contract address")
 	}
 
-	st, found, err := db.State(state.SnapshotStateKey(address))
+	st, found, err := latestContractState(db, DefaultColNameContractSnapshot, contract)
 	if err != nil {
 		return nil, state.SnapshotStateValue{}, nil, false, errors.Wrap(err, "failed to read snapshot state from chain")
 	}
@@ -129,4 +133,101 @@ func ContractSnapshotFromChainState(
 	}
 
 	return address, sv, st, true, nil
+}
+
+func latestContractState(db *cdigest.Database, collection, contract string) (base.State, bool, error) {
+	if db.MongoClient() == nil {
+		return chainState(db, contractStateKey(db, collection, contract))
+	}
+
+	filter := utilc.NewBSONFilter("contract", contract)
+	opt := options.FindOne().SetSort(utilc.NewBSONFilter("height", -1).D())
+
+	var st base.State
+	if err := db.MongoClient().GetByFilter(
+		collection,
+		filter.D(),
+		func(res *mongo.SingleResult) error {
+			i, err := cdigest.LoadState(res.Decode, db.Encoders())
+			if err != nil {
+				return err
+			}
+			st = i
+			return nil
+		},
+		opt,
+	); err != nil {
+		return nil, false, err
+	}
+
+	return st, st != nil, nil
+}
+
+func chainState(db *cdigest.Database, key string) (base.State, bool, error) {
+	v := reflect.ValueOf(db)
+	if v.Kind() != reflect.Ptr || v.IsNil() {
+		return nil, false, utilm.ErrNotFound.Errorf("state not found for %s", key)
+	}
+
+	field := v.Elem().FieldByName("mitumDB")
+	if !field.IsValid() || field.IsNil() {
+		return nil, false, utilm.ErrNotFound.Errorf("state not found for %s", key)
+	}
+
+	i := reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface()
+	stater, ok := i.(interface {
+		State(string) (base.State, bool, error)
+	})
+	if !ok {
+		return nil, false, utilm.ErrNotFound.Errorf("state not found for %s", key)
+	}
+
+	return stater.State(key)
+}
+
+func contractStateKey(db *cdigest.Database, collection, contract string) string {
+	address, err := base.DecodeAddress(contract, db.Encoders().JSON())
+	if err != nil {
+		return ""
+	}
+
+	switch collection {
+	case DefaultColNameContract:
+		return state.DesignStateKey(address)
+	case DefaultColNameContractRuntime:
+		return state.RuntimeStateKey(address)
+	case DefaultColNameContractSnapshot:
+		return state.SnapshotStateKey(address)
+	default:
+		return ""
+	}
+}
+
+func contractDigestGetStateFunc(db *cdigest.Database) base.GetStateFunc {
+	return func(key string) (base.State, bool, error) {
+		contract, err := contractFromStateKey(key)
+		if err != nil {
+			return nil, false, err
+		}
+
+		switch {
+		case state.IsDesignStateKey(key):
+			return latestContractState(db, DefaultColNameContract, contract)
+		case state.IsRuntimeStateKey(key):
+			return latestContractState(db, DefaultColNameContractRuntime, contract)
+		case state.IsSnapshotStateKey(key):
+			return latestContractState(db, DefaultColNameContractSnapshot, contract)
+		default:
+			return nil, false, utilm.ErrNotFound.Errorf("state not found for %s", key)
+		}
+	}
+}
+
+func contractFromStateKey(key string) (string, error) {
+	parts := strings.Split(key, ":")
+	if len(parts) < 3 || parts[0] != state.ContractStateKeyPrefix {
+		return "", errors.Errorf("invalid contract state key %q", key)
+	}
+
+	return parts[1], nil
 }

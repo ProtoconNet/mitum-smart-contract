@@ -3,15 +3,15 @@ package cmds
 import (
 	"context"
 
-	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/isaac"
-	isaacblock "github.com/ProtoconNet/mitum2/isaac/block"
-	"github.com/ProtoconNet/mitum2/launch"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/encoder"
-	"github.com/ProtoconNet/mitum2/util/logging"
-	"github.com/ProtoconNet/mitum2/util/ps"
+	"github.com/imfact-labs/currency-model/app/runtime/steps"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/isaac"
+	isaacblock "github.com/imfact-labs/mitum2/isaac/block"
+	"github.com/imfact-labs/mitum2/launch"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/encoder"
+	"github.com/imfact-labs/mitum2/util/logging"
+	"github.com/imfact-labs/mitum2/util/ps"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
@@ -77,7 +77,7 @@ func (cmd *ValidateBlocksCommand) Run(pctx context.Context) error {
 	_ = pps.SetLogging(log)
 
 	_ = pps.
-		AddOK(launch.PNameEncoder, ccmds.PEncoder, nil).
+		AddOK(launch.PNameEncoder, steps.PEncoder, nil).
 		AddOK(launch.PNameDesign, launch.PLoadDesign, nil, launch.PNameEncoder).
 		AddOK(launch.PNameLocal, launch.PLocal, nil, launch.PNameDesign).
 		AddOK(launch.PNameBlockItemReaders, launch.PBlockItemReaders, nil, launch.PNameDesign).

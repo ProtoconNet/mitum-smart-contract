@@ -92,14 +92,14 @@ func HasFieldAndSliceValue(
 		}
 		field := item.FieldByName(fieldName)
 		if !field.IsValid() {
-			return false, false, errors.Errorf("No such field: " + fieldName)
+			return false, false, errors.New("No such field: " + fieldName)
 		}
 		if field.Interface() != fieldValue {
 			return false, false, nil
 		}
 		sliceField := item.FieldByName(sliceFieldName)
 		if !sliceField.IsValid() {
-			return true, false, errors.Errorf("No such field: " + sliceFieldName)
+			return true, false, errors.New("No such field: " + sliceFieldName)
 		}
 		if sliceField.Kind() != reflect.Slice {
 			return true, false, errors.Errorf("Invalid data-type, Not Slice")

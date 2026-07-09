@@ -3,13 +3,12 @@ package contract
 import (
 	"encoding/json"
 
-	"github.com/ProtoconNet/mitum-currency/v3/common"
-	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
-	"github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/encoder"
-	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/imfact-labs/currency-model/common"
+	"github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/encoder"
+	"github.com/imfact-labs/mitum2/util/hint"
 )
 
 type CallContractFactJSONMarshaler struct {
@@ -151,9 +150,13 @@ func decodeCallContractItemHint(s, function string, callData map[string]string) 
 }
 
 func (op CallContract) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(currency.BaseOperationMarshaler{
+	return util.MarshalJSON(contractOperationMarshaler{
 		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
 	})
+}
+
+type contractOperationMarshaler struct {
+	common.BaseOperationJSONMarshaler
 }
 
 func (op *CallContract) DecodeJSON(b []byte, enc encoder.Encoder) error {

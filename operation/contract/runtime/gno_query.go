@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	pstate "github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
+	pstate "github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util/encoder"
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
 	gstore "github.com/gnolang/gno/tm2/pkg/store"
 )

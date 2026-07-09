@@ -3,16 +3,16 @@ package cmds
 import (
 	"context"
 
-	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
-	currencyprocessor "github.com/ProtoconNet/mitum-currency/v3/operation/processor"
-	"github.com/ProtoconNet/mitum-smart-contract/operation/contract"
-	"github.com/ProtoconNet/mitum-smart-contract/operation/processor"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/isaac"
-	"github.com/ProtoconNet/mitum2/launch"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/hint"
-	"github.com/ProtoconNet/mitum2/util/ps"
+	"github.com/imfact-labs/currency-model/app/runtime/contracts"
+	currencyprocessor "github.com/imfact-labs/currency-model/operation/processor"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/isaac"
+	"github.com/imfact-labs/mitum2/launch"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/hint"
+	"github.com/imfact-labs/mitum2/util/ps"
+	"github.com/imfact-labs/smart-contract-model/operation/contract"
+	"github.com/imfact-labs/smart-contract-model/operation/processor"
 )
 
 var PNameOperationProcessorsMap = ps.Name("mitum-smart-contract-operation-processors-map")
@@ -24,23 +24,23 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 	var db isaac.Database
 	var opr *currencyprocessor.OperationProcessor
 	var setA *hint.CompatibleSet[isaac.NewOperationProcessorInternalFunc]
-	var setB *hint.CompatibleSet[ccmds.NewOperationProcessorInternalWithProposalFunc]
+	var setB *hint.CompatibleSet[contracts.NewOperationProcessorInternalWithProposalFunc]
 
 	if err := util.LoadFromContextOK(pctx,
 		launch.ISAACParamsContextKey, &isaacParams,
 		launch.CenterDatabaseContextKey, &db,
-		ccmds.OperationProcessorContextKey, &opr,
+		contracts.OperationProcessorContextKey, &opr,
 		launch.OperationProcessorsMapContextKey, &setA,
-		ccmds.OperationProcessorsMapBContextKey, &setB,
+		contracts.OperationProcessorsMapBContextKey, &setB,
 	); err != nil {
 		return pctx, err
 	}
 
-	//err = opr.SetCheckDuplicationFunc(processor.CheckDuplication)
-	//if err != nil {
-	//	return pctx, err
-	//}
-	err := opr.SetGetNewProcessorFunc(processor.GetNewProcessor)
+	err := opr.SetCheckDuplicationFunc(processor.CheckDuplication)
+	if err != nil {
+		return pctx, err
+	}
+	err = opr.SetGetNewProcessorFunc(processor.GetNewProcessor)
 	if err != nil {
 		return pctx, err
 	}
@@ -84,9 +84,9 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 
 	//var f ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
 
-	pctx = context.WithValue(pctx, ccmds.OperationProcessorContextKey, opr)
-	pctx = context.WithValue(pctx, launch.OperationProcessorsMapContextKey, setA) //revive:disable-line:modifies-parameter
-	pctx = context.WithValue(pctx, ccmds.OperationProcessorsMapBContextKey, setB) //revive:disable-line:modifies-parameter
+	pctx = context.WithValue(pctx, contracts.OperationProcessorContextKey, opr)
+	pctx = context.WithValue(pctx, launch.OperationProcessorsMapContextKey, setA)     //revive:disable-line:modifies-parameter
+	pctx = context.WithValue(pctx, contracts.OperationProcessorsMapBContextKey, setB) //revive:disable-line:modifies-parameter
 	//pctx = context.WithValue(pctx, ProposalOperationFactHintContextKey, f)
 
 	return pctx, nil

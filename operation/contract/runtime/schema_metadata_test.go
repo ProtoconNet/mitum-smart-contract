@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ProtoconNet/mitum-smart-contract/types"
-	"github.com/ProtoconNet/mitum2/base"
+	"github.com/imfact-labs/smart-contract-model/types"
+	"github.com/imfact-labs/mitum2/base"
 )
 
 func TestPersistedContractSchemaRoundTrip(t *testing.T) {

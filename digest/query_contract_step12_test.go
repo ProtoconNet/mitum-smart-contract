@@ -12,22 +12,23 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
-	mongodb "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
-	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
-	"github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum-smart-contract/types"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/isaac"
-	isaacdatabase "github.com/ProtoconNet/mitum2/isaac/database"
-	"github.com/ProtoconNet/mitum2/launch"
-	leveldbstorage "github.com/ProtoconNet/mitum2/storage/leveldb"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/encoder"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
-	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/gorilla/mux"
+	capi "github.com/imfact-labs/currency-model/api"
+	"github.com/imfact-labs/currency-model/common"
+	cdigest "github.com/imfact-labs/currency-model/digest"
+	mongodb "github.com/imfact-labs/currency-model/digest/mongodb"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/isaac"
+	isaacdatabase "github.com/imfact-labs/mitum2/isaac/database"
+	"github.com/imfact-labs/mitum2/launch"
+	leveldbstorage "github.com/imfact-labs/mitum2/storage/leveldb"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/encoder"
+	jsonenc "github.com/imfact-labs/mitum2/util/encoder/json"
+	"github.com/imfact-labs/mitum2/util/logging"
+	"github.com/imfact-labs/smart-contract-model/operation/contract/runtime"
+	"github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/smart-contract-model/types"
 	"github.com/rs/zerolog"
 	leveldbmem "github.com/syndtr/goleveldb/leveldb/storage"
 )
@@ -623,16 +624,16 @@ func newDigestHandlersForStates(
 	router := mux.NewRouter()
 	ctx := context.WithValue(context.Background(), launch.LoggingContextKey, logging.NewLogging(nil).SetLogger(zerolog.Nop()))
 	routes := map[string]*mux.Route{}
-	hd := NewHandlers(ctx, base.NetworkID("testnet"), encs, enc, db, cdigest.DummyCache{}, router, routes)
+	hd := NewHandlers(ctx, base.NetworkID("testnet"), encs, enc, db, capi.DummyCache{}, router, routes)
 	if hd == nil {
 		t.Fatalf("NewHandlers returned nil")
 	}
 	if err := hd.Initialize(); err != nil {
 		t.Fatalf("Handlers.Initialize returned error: %v", err)
 	}
-	blockRoute := router.HandleFunc(cdigest.HandlerPathBlockByHeight, http.NotFound).
-		Name(cdigest.HandlerPathBlockByHeight)
-	hd.routes[cdigest.HandlerPathBlockByHeight] = blockRoute
+	blockRoute := router.HandleFunc(capi.HandlerPathBlockByHeight, http.NotFound).
+		Name(capi.HandlerPathBlockByHeight)
+	hd.routes[capi.HandlerPathBlockByHeight] = blockRoute
 
 	return hd
 }

@@ -1,12 +1,12 @@
 package cmds
 
 import (
-	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
-	"github.com/ProtoconNet/mitum-smart-contract/operation/contract"
-	pstate "github.com/ProtoconNet/mitum-smart-contract/state"
-	ptypes "github.com/ProtoconNet/mitum-smart-contract/types"
-	"github.com/ProtoconNet/mitum2/launch"
-	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/imfact-labs/currency-model/app/runtime/spec"
+	"github.com/imfact-labs/mitum2/launch"
+	"github.com/imfact-labs/mitum2/util/encoder"
+	"github.com/imfact-labs/smart-contract-model/operation/contract"
+	pstate "github.com/imfact-labs/smart-contract-model/state"
+	ptypes "github.com/imfact-labs/smart-contract-model/types"
 	"github.com/pkg/errors"
 )
 
@@ -31,35 +31,35 @@ var AddedSupportedHinters = []encoder.DecodeDetail{
 
 func init() {
 	defaultLen := len(launch.Hinters)
-	currencyExtendedLen := defaultLen + len(currencycmds.AddedHinters)
+	currencyExtendedLen := defaultLen + len(spec.AddedHinters)
 	allExtendedLen := currencyExtendedLen + len(AddedHinters)
 
 	Hinters = make([]encoder.DecodeDetail, allExtendedLen)
 	copy(Hinters, launch.Hinters)
-	copy(Hinters[defaultLen:currencyExtendedLen], currencycmds.AddedHinters)
+	copy(Hinters[defaultLen:currencyExtendedLen], spec.AddedHinters)
 	copy(Hinters[currencyExtendedLen:], AddedHinters)
 
 	defaultSupportedLen := len(launch.SupportedProposalOperationFactHinters)
-	currencySupportedExtendedLen := defaultSupportedLen + len(currencycmds.AddedSupportedHinters)
+	currencySupportedExtendedLen := defaultSupportedLen + len(spec.AddedSupportedHinters)
 	allSupportedExtendedLen := currencySupportedExtendedLen + len(AddedSupportedHinters)
 
 	SupportedProposalOperationFactHinters = make(
 		[]encoder.DecodeDetail,
 		allSupportedExtendedLen)
 	copy(SupportedProposalOperationFactHinters, launch.SupportedProposalOperationFactHinters)
-	copy(SupportedProposalOperationFactHinters[defaultSupportedLen:currencySupportedExtendedLen], currencycmds.AddedSupportedHinters)
+	copy(SupportedProposalOperationFactHinters[defaultSupportedLen:currencySupportedExtendedLen], spec.AddedSupportedHinters)
 	copy(SupportedProposalOperationFactHinters[currencySupportedExtendedLen:], AddedSupportedHinters)
 }
 
 func LoadHinters(encs *encoder.Encoders) error {
-	for i := range Hinters {
-		if err := encs.AddDetail(Hinters[i]); err != nil {
+	for i := range AddedHinters {
+		if err := encs.AddDetail(AddedHinters[i]); err != nil {
 			return errors.Wrap(err, "add hinter to encoder")
 		}
 	}
 
-	for i := range SupportedProposalOperationFactHinters {
-		if err := encs.AddDetail(SupportedProposalOperationFactHinters[i]); err != nil {
+	for i := range AddedSupportedHinters {
+		if err := encs.AddDetail(AddedSupportedHinters[i]); err != nil {
 			return errors.Wrap(err, "add supported proposal operation fact hinter to encoder")
 		}
 	}

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util/encoder"
+	jsonenc "github.com/imfact-labs/mitum2/util/encoder/json"
 )
 
 const flatStructEngineContractSource = `package contract

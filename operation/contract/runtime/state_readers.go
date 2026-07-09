@@ -1,10 +1,10 @@
 package runtime
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/imfact-labs/currency-model/state/currency"
+	ctypes "github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util/encoder"
 	"github.com/pkg/errors"
 )
 

@@ -1,26 +1,25 @@
 package processor
 
 import (
-	"fmt"
-
-	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
-	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
-	cprocessor "github.com/ProtoconNet/mitum-currency/v3/operation/processor"
-	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum-smart-contract/operation/contract"
-	"github.com/ProtoconNet/mitum2/base"
+	"github.com/imfact-labs/currency-model/operation/currency"
+	"github.com/imfact-labs/currency-model/operation/extension"
+	"github.com/imfact-labs/currency-model/operation/extras"
+	cprocessor "github.com/imfact-labs/currency-model/operation/processor"
+	ctypes "github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/smart-contract-model/operation/contract"
 
 	"github.com/pkg/errors"
 )
 
 const (
-	DuplicationTypeSender   ctypes.DuplicationType = "sender"
-	DuplicationTypeCurrency ctypes.DuplicationType = "currency"
-	DuplicationTypeContract ctypes.DuplicationType = "contract"
+	DuplicationTypeSender   ctypes.DuplicationKeyType = "sender"
+	DuplicationTypeCurrency ctypes.DuplicationKeyType = "currency"
+	DuplicationTypeContract ctypes.DuplicationKeyType = "contract"
 )
 
-func DuplicationKey(key string, duplType ctypes.DuplicationType) string {
-	return fmt.Sprintf("%s:%s", key, duplType)
+func DuplicationKey(key string, duplType ctypes.DuplicationKeyType) string {
+	return cprocessor.DuplicationKey(duplType, key)
 }
 
 func CheckDuplication(opr *cprocessor.OperationProcessor, op base.Operation) error {
@@ -87,6 +86,20 @@ func CheckDuplication(opr *cprocessor.OperationProcessor, op base.Operation) err
 			return errors.Errorf("expected WithdrawFact, not %T", t.Fact())
 		}
 		duplicationTypeSenderID = DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
+	case contract.RegisterContract:
+		fact, ok := t.Fact().(contract.RegisterContractFact)
+		if !ok {
+			return errors.Errorf("expected %T, not %T", contract.RegisterContractFact{}, t.Fact())
+		}
+		duplicationTypeSenderID = DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
+		duplicationTypeContractID = DuplicationKey(fact.Contract().String(), DuplicationTypeContract)
+	case contract.CallContract:
+		fact, ok := t.Fact().(contract.CallContractFact)
+		if !ok {
+			return errors.Errorf("expected %T, not %T", contract.CallContractFact{}, t.Fact())
+		}
+		duplicationTypeSenderID = DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
+		duplicationTypeContractID = DuplicationKey(fact.Contract().String(), DuplicationTypeContract)
 	default:
 		return nil
 	}
@@ -121,8 +134,13 @@ func CheckDuplication(opr *cprocessor.OperationProcessor, op base.Operation) err
 	}
 
 	if len(newAddresses) > 0 {
-		if err := opr.CheckNewAddressDuplication(newAddresses); err != nil {
-			return err
+		for i := range newAddresses {
+			key := cprocessor.DuplicationKey(extras.DuplicationKeyTypeNewAddress, newAddresses[i].String())
+			if _, found := opr.Duplicated[key]; found {
+				return errors.Errorf("cannot use a duplicated new address, %v within a proposal", key)
+			}
+
+			opr.Duplicated[key] = struct{}{}
 		}
 	}
 

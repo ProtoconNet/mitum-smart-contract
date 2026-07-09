@@ -1,12 +1,11 @@
 package contract
 
 import (
-	"github.com/ProtoconNet/mitum-currency/v3/common"
-	"github.com/ProtoconNet/mitum-currency/v3/operation/currency"
-	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/imfact-labs/currency-model/common"
+	ctypes "github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/encoder"
 )
 
 type RegisterContractFactJSONMarshaler struct {
@@ -54,7 +53,7 @@ func (fact *RegisterContractFact) DecodeJSON(b []byte, enc encoder.Encoder) erro
 }
 
 func (op RegisterContract) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(currency.BaseOperationMarshaler{
+	return util.MarshalJSON(contractOperationMarshaler{
 		BaseOperationJSONMarshaler: op.BaseOperation.JSONMarshaler(),
 	})
 }

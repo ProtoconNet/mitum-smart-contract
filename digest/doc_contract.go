@@ -4,13 +4,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 
-	mongodb "github.com/ProtoconNet/mitum-currency/v3/digest/mongodb"
-	bsonutil "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
-	"github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum-smart-contract/types"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
+	mongodb "github.com/imfact-labs/currency-model/digest/mongodb"
+	bsonutil "github.com/imfact-labs/currency-model/utils/bsonenc"
+	cstate "github.com/imfact-labs/currency-model/state"
+	"github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/smart-contract-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util/encoder"
 )
 
 type ContractDesignDoc struct {

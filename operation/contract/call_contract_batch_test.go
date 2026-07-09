@@ -6,15 +6,15 @@ import (
 	"strings"
 	"testing"
 
-	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/encoder"
-	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
-	"github.com/ProtoconNet/mitum2/util/hint"
-	"github.com/ProtoconNet/mitum2/util/valuehash"
-	"go.mongodb.org/mongo-driver/bson"
+	bsonenc "github.com/imfact-labs/currency-model/utils/bsonenc"
+	ctypes "github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/encoder"
+	jsonenc "github.com/imfact-labs/mitum2/util/encoder/json"
+	"github.com/imfact-labs/mitum2/util/hint"
+	"github.com/imfact-labs/mitum2/util/valuehash"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestCallContractFactDoesNotStoreLegacyCallData(t *testing.T) {

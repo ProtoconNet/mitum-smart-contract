@@ -5,12 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ProtoconNet/mitum-currency/v3/common"
-	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
-	"github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum-smart-contract/types"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/imfact-labs/currency-model/common"
+	"github.com/imfact-labs/smart-contract-model/operation/contract/runtime"
+	"github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/smart-contract-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util/encoder"
 )
 
 type digestQuerySpyEngine struct {

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ProtoconNet/mitum-currency/v3/common"
-	pstate "github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum2/base"
+	"github.com/imfact-labs/currency-model/common"
+	pstate "github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/mitum2/base"
 )
 
 const typedWriteErrorContractSource = `package contract

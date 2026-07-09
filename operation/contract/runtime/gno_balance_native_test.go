@@ -4,12 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cstate "github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
+	"github.com/imfact-labs/currency-model/common"
+	cstate "github.com/imfact-labs/currency-model/state/currency"
+	ctypes "github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util"
 )
 
 const balanceNativeContractSource = `package contract

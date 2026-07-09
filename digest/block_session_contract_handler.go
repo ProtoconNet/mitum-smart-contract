@@ -1,9 +1,9 @@
 package digest
 
 import (
-	"github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum2/base"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/mitum2/base"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func (bs *BlockSession) prepareContract() error {

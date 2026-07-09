@@ -6,10 +6,10 @@ import (
 	"io"
 	"os"
 
-	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
-	"github.com/ProtoconNet/mitum-smart-contract/operation/contract"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
+	ccmds "github.com/imfact-labs/currency-model/app/cmds"
+	"github.com/imfact-labs/smart-contract-model/operation/contract"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util"
 	"github.com/pkg/errors"
 )
 

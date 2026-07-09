@@ -1,14 +1,14 @@
-module github.com/ProtoconNet/mitum-smart-contract
+module github.com/imfact-labs/smart-contract-model
 
 go 1.25.9
 
 require (
-	github.com/ProtoconNet/mitum-currency/v3 v3.0.0-alpha.0.20260528024047-8f088e2c2c04
-	github.com/ProtoconNet/mitum2 v0.0.0-20251029064552-01636c528af3
 	github.com/alecthomas/kong v1.12.1
 	github.com/arl/statsviz v0.7.1
 	github.com/gnolang/gno v0.0.0-20260513121932-eb9f51920519
 	github.com/gorilla/mux v1.8.1
+	github.com/imfact-labs/currency-model v0.0.0
+	github.com/imfact-labs/mitum2 v0.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.34.0
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
@@ -48,6 +48,7 @@ require (
 	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/consul/api v1.32.1 // indirect
@@ -80,6 +81,10 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
+	github.com/mr-tron/base58 v1.1.0 // indirect
+	github.com/multiformats/go-base32 v0.0.3 // indirect
+	github.com/multiformats/go-base36 v0.1.0 // indirect
+	github.com/multiformats/go-multibase v0.2.0 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
@@ -93,10 +98,11 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
-	github.com/xdg-go/scram v1.1.2 // indirect
+	github.com/xdg-go/scram v1.2.0 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
-	github.com/youmark/pkcs8 v0.0.0-20240424034433-3c2c7870ae76 // indirect
+	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
+	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
 	go.uber.org/mock v0.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.7.0 // indirect
@@ -112,3 +118,7 @@ require (
 )
 
 replace github.com/hashicorp/memberlist => github.com/spikeekips/memberlist v0.0.0-20230626195851-39f17fa10d23 // latest fix-data-race branch
+
+replace github.com/imfact-labs/mitum2 => /Users/soonkukkang/go/src/github.com/imfact-labs/mitum2-serial-process
+
+replace github.com/imfact-labs/currency-model => /Users/soonkukkang/go/src/github.com/imfact-labs/currency-model-serial-process

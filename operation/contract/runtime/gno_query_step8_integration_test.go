@@ -3,8 +3,8 @@ package runtime
 import (
 	"testing"
 
-	"github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum2/base"
+	"github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/mitum2/base"
 )
 
 const sliceQueryContractSource = `package contract

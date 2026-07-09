@@ -9,14 +9,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cstate "github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	"github.com/ProtoconNet/mitum-currency/v3/state/extension"
-	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/isaac"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/imfact-labs/currency-model/common"
+	cstate "github.com/imfact-labs/currency-model/state/currency"
+	"github.com/imfact-labs/currency-model/state/extension"
+	ctypes "github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/isaac"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/encoder"
 )
 
 type TestOperationProcessorNoItem interface {
@@ -514,7 +514,7 @@ func (t *TestProcessor) Print(fileName string, i interface{}) {
 		panic(err)
 	}
 
-	_, _ = fmt.Fprintf(file, string(b))
+	_, _ = fmt.Fprint(file, string(b))
 
 	return
 }

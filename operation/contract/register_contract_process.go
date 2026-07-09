@@ -4,16 +4,16 @@ import (
 	"context"
 	"sync"
 
-	"github.com/ProtoconNet/mitum-currency/v3/common"
-	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
-	cestate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
-	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum-smart-contract/operation/contract/runtime"
-	"github.com/ProtoconNet/mitum-smart-contract/state"
-	"github.com/ProtoconNet/mitum-smart-contract/types"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/imfact-labs/currency-model/common"
+	cstate "github.com/imfact-labs/currency-model/state"
+	cestate "github.com/imfact-labs/currency-model/state/extension"
+	ctypes "github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/encoder"
+	"github.com/imfact-labs/smart-contract-model/operation/contract/runtime"
+	"github.com/imfact-labs/smart-contract-model/state"
+	"github.com/imfact-labs/smart-contract-model/types"
 	"github.com/pkg/errors"
 )
 
@@ -183,11 +183,11 @@ func (opp *RegisterContractProcessor) Process(
 
 	st, _ := cstate.ExistsState(cestate.StateKeyContractAccount(fact.Contract()), "contract account", getStateFunc)
 	ca, _ := cestate.StateContractAccountValue(st)
-	nca := ca.SetIsActive(true)
+	ca.SetActive(true)
 
 	sts = append(sts, cstate.NewStateMergeValue(
 		cestate.StateKeyContractAccount(fact.Contract()),
-		cestate.NewContractAccountStateValue(nca),
+		cestate.NewContractAccountStateValue(ca),
 	))
 
 	return sts, nil, nil

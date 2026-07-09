@@ -8,20 +8,22 @@ import (
 	"os/signal"
 	"syscall"
 
-	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
-	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
-	"github.com/ProtoconNet/mitum-smart-contract/digest"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/isaac"
-	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
-	"github.com/ProtoconNet/mitum2/launch"
-	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
-	"github.com/ProtoconNet/mitum2/network/quicstream"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/logging"
-	"github.com/ProtoconNet/mitum2/util/ps"
 	"github.com/arl/statsviz"
 	"github.com/gorilla/mux"
+	capi "github.com/imfact-labs/currency-model/api"
+	ccmds "github.com/imfact-labs/currency-model/app/cmds"
+	"github.com/imfact-labs/currency-model/app/runtime/pipeline"
+	cdigest "github.com/imfact-labs/currency-model/digest"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/isaac"
+	isaacstates "github.com/imfact-labs/mitum2/isaac/states"
+	"github.com/imfact-labs/mitum2/launch"
+	"github.com/imfact-labs/mitum2/network/quicmemberlist"
+	"github.com/imfact-labs/mitum2/network/quicstream"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/logging"
+	"github.com/imfact-labs/mitum2/util/ps"
+	"github.com/imfact-labs/smart-contract-model/digest"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
@@ -73,10 +75,10 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		launch.ACLFlagsContextKey:      cmd.ACLFlags,
 	})
 
-	pps := ccmds.DefaultRunPS()
+	pps := pipeline.DefaultRunPS()
 
-	_ = pps.AddOK(PNameDigester, ProcessDigester, nil, ccmds.PNameMongoDBsDataBase).
-		AddOK(PNameStartDigester, ProcessStartDigester, nil, ccmds.PNameDigestStart)
+	_ = pps.AddOK(PNameDigester, ProcessDigester, nil, cdigest.PNameDigesterDataBase).
+		AddOK(PNameStartDigester, ProcessStartDigester, nil, capi.PNameStartAPI)
 	_ = pps.POK(launch.PNameStorage).PostAddOK(ps.Name("check-hold"), cmd.pCheckHold)
 	_ = pps.POK(launch.PNameStates).
 		PreAddOK(PNameOperationProcessorsMap, POperationProcessorsMap).
@@ -85,9 +87,9 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		PreAddOK(ps.Name("when-new-block-saved-in-syncing-state-func"), cmd.pWhenNewBlockSavedInSyncingStateFunc)
 	_ = pps.POK(launch.PNameEncoder).
 		PostAddOK(launch.PNameAddHinters, PAddHinters)
-	_ = pps.POK(ccmds.PNameDigest).
+	_ = pps.POK(capi.PNameAPI).
 		PostAddOK(ccmds.PNameDigestAPIHandlers, cmd.pDigestAPIHandlers)
-	_ = pps.POK(ccmds.PNameDigester).
+	_ = pps.POK(cdigest.PNameDigester).
 		PostAddOK(ccmds.PNameDigesterFollowUp, PdigesterFollowUp)
 
 	_ = pps.SetLogging(log)
@@ -405,8 +407,8 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return ctx, err
 	}
 
-	var dnt *cdigest.HTTP2Server
-	if err := util.LoadFromContext(ctx, cdigest.ContextValueDigestNetwork, &dnt); err != nil {
+	var dnt *capi.HTTP2Server
+	if err := util.LoadFromContext(ctx, capi.ContextValueDigestNetwork, &dnt); err != nil {
 		return ctx, err
 	}
 	router := dnt.Router()
@@ -434,8 +436,8 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 	return ctx, nil
 }
 
-func (cmd *RunCommand) loadCache(_ context.Context, design cdigest.YamlDigestDesign) (cdigest.Cache, error) {
-	c, err := cdigest.NewCacheFromURI(design.Cache().String())
+func (cmd *RunCommand) loadCache(_ context.Context, design cdigest.YamlDigestDesign) (capi.Cache, error) {
+	c, err := capi.NewCacheFromURI(design.Cache().String())
 	if err != nil {
 		cmd.log.Err(err).Str("cache", design.Cache().String()).Msg("failed to connect cache server")
 		cmd.log.Warn().Msg("instead of remote cache server, internal mem cache can be available, `memory://`")
@@ -448,16 +450,25 @@ func (cmd *RunCommand) loadCache(_ context.Context, design cdigest.YamlDigestDes
 func (cmd *RunCommand) setDigestDefaultHandlers(
 	ctx context.Context,
 	params *launch.LocalParams,
-	cache cdigest.Cache,
+	cache capi.Cache,
 	router *mux.Router,
-	queue chan cdigest.RequestWrapper,
-) (*cdigest.Handlers, error) {
+	queue chan capi.RequestWrapper,
+) (*capi.Handlers, error) {
+	var nodeDesign launch.NodeDesign
 	var st *cdigest.Database
-	if err := util.LoadFromContext(ctx, cdigest.ContextValueDigestDatabase, &st); err != nil {
+	if err := util.LoadFromContext(ctx,
+		launch.DesignContextKey, &nodeDesign,
+		cdigest.ContextValueDigestDatabase, &st,
+	); err != nil {
 		return nil, err
 	}
 
-	handlers := cdigest.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router, queue)
+	node, err := quicstream.NewConnInfoFromStringAddr(nodeDesign.Network.PublishString, nodeDesign.Network.TLSInsecure)
+	if err != nil {
+		return nil, err
+	}
+
+	handlers := capi.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router, queue, node)
 
 	h, err := cmd.setDigestNetworkClient(ctx, params, handlers)
 	if err != nil {
@@ -471,7 +482,7 @@ func (cmd *RunCommand) setDigestDefaultHandlers(
 func (cmd *RunCommand) setDigestHandlers(
 	ctx context.Context,
 	params *launch.LocalParams,
-	cache cdigest.Cache,
+	cache capi.Cache,
 	router *mux.Router,
 	routes map[string]*mux.Route,
 ) (*digest.Handlers, error) {
@@ -488,8 +499,8 @@ func (cmd *RunCommand) setDigestHandlers(
 func (cmd *RunCommand) setDigestNetworkClient(
 	ctx context.Context,
 	params *launch.LocalParams,
-	handlers *cdigest.Handlers,
-) (*cdigest.Handlers, error) {
+	handlers *capi.Handlers,
+) (*capi.Handlers, error) {
 	var design cdigest.YamlDigestDesign
 	if err := util.LoadFromContext(ctx, cdigest.ContextValueDigestDesign, &design); err != nil {
 		if errors.Is(err, util.ErrNotFound) {

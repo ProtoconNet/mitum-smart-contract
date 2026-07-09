@@ -1,6 +1,6 @@
 package cmds
 
-import launchcmd "github.com/ProtoconNet/mitum2/launch/cmd"
+import launchcmd "github.com/imfact-labs/mitum2/launch/cmd"
 
 type Storage struct { //nolint:govet //...
 	Import         ImportCommand                  `cmd:"" help:"import block data files"`

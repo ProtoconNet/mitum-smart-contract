@@ -6,16 +6,18 @@ import (
 	"sync"
 	"time"
 
-	cdigest "github.com/ProtoconNet/mitum-currency/v3/digest"
-	"github.com/ProtoconNet/mitum-currency/v3/digest/isaac"
-	cstate "github.com/ProtoconNet/mitum-currency/v3/state/currency"
-	cestate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
-	"github.com/ProtoconNet/mitum2/base"
-	mitumutil "github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/fixedtree"
+	cdigest "github.com/imfact-labs/currency-model/digest"
+	"github.com/imfact-labs/currency-model/digest/isaac"
+	mongodbst "github.com/imfact-labs/currency-model/digest/mongodb"
+	cstate "github.com/imfact-labs/currency-model/state/currency"
+	cestate "github.com/imfact-labs/currency-model/state/extension"
+	ctypes "github.com/imfact-labs/currency-model/types"
+	"github.com/imfact-labs/mitum2/base"
+	mitumutil "github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/fixedtree"
 	"github.com/pkg/errors"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var bulkWriteLimit = 500
@@ -110,7 +112,7 @@ func (bs *BlockSession) Commit(ctx context.Context) error {
 		_ = bs.close()
 	}()
 
-	_, err := bs.st.MongoClient().WithSession(func(txnCtx mongo.SessionContext, collection func(string) *mongo.Collection) (interface{}, error) {
+	_, err := bs.st.MongoClient().WithSession(ctx, func(txnCtx context.Context, collection func(string) *mongo.Collection) (interface{}, error) {
 		if err := bs.writeModels(txnCtx, defaultColNameBlock, bs.blockModels); err != nil {
 			return nil, err
 		}
@@ -214,7 +216,21 @@ func (bs *BlockSession) prepareBlock() error {
 		bs.block.Manifest().ProposedAt(),
 	)
 
-	doc, err := cdigest.NewManifestDoc(manifest, bs.st.Encoder(), bs.block.Manifest().Height(), bs.ops, bs.block.SignedAt(), bs.proposal.ProposalFact().Proposer(), bs.proposal.ProposalFact().Point().Round(), bs.buildinfo)
+	opInfo := mongodbst.OperationItemInfo{
+		TotalOperations: uint(len(bs.ops)),
+		ItemOperations:  uint(len(bs.ops)),
+	}
+	doc, err := cdigest.NewManifestDoc(
+		manifest,
+		bs.st.Encoder(),
+		bs.block.Manifest().Height(),
+		opInfo,
+		[]ctypes.Amount{},
+		bs.block.SignedAt(),
+		bs.proposal.ProposalFact().Proposer(),
+		bs.proposal.ProposalFact().Point().Round(),
+		bs.buildinfo,
+	)
 	if err != nil {
 		return err
 	}
@@ -262,6 +278,7 @@ func (bs *BlockSession) prepareOperations() error {
 				inState,
 				reasonMsg,
 				uint64(i),
+				base.NewBaseOperationReceipt(),
 			)
 			if err != nil {
 				return err

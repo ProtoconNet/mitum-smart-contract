@@ -7,7 +7,7 @@ import (
 var Symbols = map[string]map[string]reflect.Value{}
 
 func init() {
-	Symbols["github.com/ProtoconNet/mitum-currency/v3/operation/contract/util/util"] = map[string]reflect.Value{
+	Symbols["github.com/imfact-labs/currency-model/operation/contract/util/util"] = map[string]reflect.Value{
 		// type definitions
 		"APICollection":   reflect.ValueOf((*APICollection)(nil)),
 		"ContractContext": reflect.ValueOf((*ContractContext)(nil)),

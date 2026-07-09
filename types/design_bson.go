@@ -1,11 +1,11 @@
 package types
 
 import (
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 
-	bsonenc "github.com/ProtoconNet/mitum-currency/v3/digest/util/bson"
-	"github.com/ProtoconNet/mitum2/util"
-	"github.com/ProtoconNet/mitum2/util/hint"
+	bsonenc "github.com/imfact-labs/currency-model/utils/bsonenc"
+	"github.com/imfact-labs/mitum2/util"
+	"github.com/imfact-labs/mitum2/util/hint"
 )
 
 func (de Design) MarshalBSON() ([]byte, error) {

@@ -1,16 +1,16 @@
 package cmds
 
 import (
-	ccmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
-	"github.com/ProtoconNet/mitum2/launch"
-	"github.com/ProtoconNet/mitum2/util/ps"
+	"github.com/imfact-labs/currency-model/app/runtime/steps"
+	"github.com/imfact-labs/mitum2/launch"
+	"github.com/imfact-labs/mitum2/util/ps"
 )
 
 func DefaultImportPS() *ps.PS {
 	pps := ps.NewPS("cmd-import")
 
 	_ = pps.
-		AddOK(launch.PNameEncoder, ccmds.PEncoder, nil).
+		AddOK(launch.PNameEncoder, steps.PEncoder, nil).
 		AddOK(launch.PNameDesign, launch.PLoadDesign, nil, launch.PNameEncoder).
 		AddOK(launch.PNameTimeSyncer, launch.PStartTimeSyncer, launch.PCloseTimeSyncer, launch.PNameDesign).
 		AddOK(launch.PNameLocal, launch.PLocal, nil, launch.PNameDesign).

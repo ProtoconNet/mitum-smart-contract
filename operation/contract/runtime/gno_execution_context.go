@@ -1,9 +1,9 @@
 package runtime
 
 import (
-	cestate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
-	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/util/encoder"
+	cestate "github.com/imfact-labs/currency-model/state/extension"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util/encoder"
 	"github.com/pkg/errors"
 )
 

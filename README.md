@@ -9,7 +9,7 @@
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/spikeekips/mitum-currency.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/spikeekips/mitum-currency/alerts/)
 
 *mitum-currency* is the cryptocurrency case of mitum model, based on
-[*mitum*](https://github.com/ProtoconNet/mitum2). This project was started for
+[*mitum*](https://github.com/imfact-labs/mitum2). This project was started for
 creating the first model case of *mitum*, but it can be used for simple
 cryptocurrency blockchain network (at your own risk).
 
@@ -25,9 +25,9 @@ cryptocurrency blockchain network (at your own risk).
 > NOTE: at this time, *mitum* and *mitum-currency* is actively developed, so
 before building mitum-currency, you will be better with building the latest
 mitum source.
-> `$ git clone https://github.com/ProtoconNet/mitum2`
+> `$ git clone https://github.com/imfact-labs/mitum2`
 >
-> and then, add `replace github.com/ProtoconNet/mitum2 => <your mitum source directory>` to `go.mod` of *mitum-currency*.
+> and then, add `replace github.com/imfact-labs/mitum2 => <your mitum source directory>` to `go.mod` of *mitum-currency*.
 
 Build it from source
 ```sh
