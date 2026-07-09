@@ -76,12 +76,14 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 	})
 
 	pps := pipeline.DefaultRunPS()
+	_ = pps.POK(launch.PNameStates).PreRemoveOK(launch.PNameProposalProcessors)
 
 	_ = pps.AddOK(PNameDigester, ProcessDigester, nil, cdigest.PNameDigesterDataBase).
 		AddOK(PNameStartDigester, ProcessStartDigester, nil, capi.PNameStartAPI)
 	_ = pps.POK(launch.PNameStorage).PostAddOK(ps.Name("check-hold"), cmd.pCheckHold)
 	_ = pps.POK(launch.PNameStates).
 		PreAddOK(PNameOperationProcessorsMap, POperationProcessorsMap).
+		PreAddOK(launch.PNameProposalProcessors, PProposalProcessors).
 		PreAddOK(ps.Name("when-new-block-saved-in-consensus-state-func"), cmd.pWhenNewBlockSavedInConsensusStateFunc).
 		PreAddOK(ps.Name("when-new-block-confirmed-func"), cmd.pWhenNewBlockConfirmed).
 		PreAddOK(ps.Name("when-new-block-saved-in-syncing-state-func"), cmd.pWhenNewBlockSavedInSyncingStateFunc)
