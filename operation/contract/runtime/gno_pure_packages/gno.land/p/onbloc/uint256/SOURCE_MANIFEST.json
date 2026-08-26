@@ -1,0 +1,18 @@
+{
+  "schema": "smart-contract-model.gno-source-bundle/v1",
+  "package_path": "gno.land/p/onbloc/uint256",
+  "hash_algorithm": "sha256",
+  "bundle_framing": "For each production file in byte-wise lexicographic relative-path order: uint64 big-endian path byte length, UTF-8 path bytes using '/', uint64 big-endian content byte length, raw content bytes. SHA-256 the concatenated frames.",
+  "files": [
+    {"path": "arithmetic.gno", "sha256": "bbf72982c461fbbcfd70f0931c57aa7f81d70cae4dc83814ecfb7c7bbc7c4841"},
+    {"path": "bits_table.gno", "sha256": "b47af4efddad7ce3303ec3863c8efffa92f38360a0ede635441b3a53d92055d9"},
+    {"path": "bitwise.gno", "sha256": "a6051f99a30b96dbc3f90e216fb62698b00b80d3c33d84a3ddc1d2eda86f2dc2"},
+    {"path": "cmp.gno", "sha256": "8e754723b36e860abf99e8d3c25510cc6605fb680a63cd8d46bba28cd934b8f0"},
+    {"path": "conversion.gno", "sha256": "2ff2b525ad346ebde1da35ff628c8cad4c9fab347d0978b0eea426cad2bcae71"},
+    {"path": "error.gno", "sha256": "e33fcf254e62c362ef40e547303adfbb9dc20aa6aaef9ce567833b6c51e460ca"},
+    {"path": "mod.gno", "sha256": "70e3e549b0cee27ac42592d492af0197a8870f2c939dbce6c4d8cd028a0bbfda"},
+    {"path": "uint256.gno", "sha256": "c79d70bd7000eef2468610ed42370f9f1894e5a705b04ffd3a797595e13c9ddb"},
+    {"path": "utils.gno", "sha256": "4282c562b8d6487a00c3c79c25af2fdf588f4cd32d4cf6666c21cd387e210206"}
+  ],
+  "bundle_sha256": "2e60329f269f003bc64c023aeb4f3288ca597e2cf906819b37f46a6de0d7aeb5"
+}
