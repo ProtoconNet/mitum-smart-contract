@@ -10,7 +10,9 @@ import (
 const (
 	Uint256NativeSemanticsVersion = "mitum-u256-native-v1"
 	Uint256NativeGasSchedule      = "mitum-u256-provisional-gas-v1"
-	Uint256WrapperSourceSHA256    = "c04840345511e6ceadfbb1ab7f6a0b3b0adaf92135e76f1ae9bcf5733559a68d"
+	Uint256CanonicalDecimalPolicy = "mitum-u256-canonical-decimal-v1"
+	Uint256CanonicalDecimalError  = "u256: non-canonical decimal"
+	Uint256WrapperSourceSHA256    = "2ede8385bd0e9fac75db73689a073fd905c2012426fd4f8c6538abe997533d27"
 	Uint256MulDivDenominatorZero  = "u256: denominator is zero"
 	Uint256MulDivResultOverflow   = "u256: result overflow"
 	Uint256InvalidNativeInput     = "u256: invalid native input"
