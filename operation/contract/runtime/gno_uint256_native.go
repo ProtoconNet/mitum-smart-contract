@@ -8,11 +8,11 @@ import (
 )
 
 const (
-	Uint256NativeSemanticsVersion = "mitum-u256-native-v1"
+	Uint256NativeSemanticsVersion = "mitum-u256-native-v2"
 	Uint256NativeGasSchedule      = "mitum-u256-provisional-gas-v1"
 	Uint256CanonicalDecimalPolicy = "mitum-u256-canonical-decimal-v1"
 	Uint256CanonicalDecimalError  = "u256: non-canonical decimal"
-	Uint256WrapperSourceSHA256    = "2ede8385bd0e9fac75db73689a073fd905c2012426fd4f8c6538abe997533d27"
+	Uint256WrapperSourceSHA256    = "43980a468b2a107b64c3efa4ced7568b5f21a8f012dbcdd22fd94dae03cee899"
 	Uint256MulDivDenominatorZero  = "u256: denominator is zero"
 	Uint256MulDivResultOverflow   = "u256: result overflow"
 	Uint256InvalidNativeInput     = "u256: invalid native input"
@@ -25,6 +25,8 @@ func Uint256NativeResolver(pkgPath string, name gno.Name) func(*gno.Machine) {
 		return nil
 	}
 	switch string(name) {
+	case "_nativeCanonicalToHex":
+		return nativeUint256CanonicalToHex
 	case "_nativeMulDiv":
 		return nativeUint256MulDiv
 	case "_nativeSqrt":
@@ -34,32 +36,60 @@ func Uint256NativeResolver(pkgPath string, name gno.Name) func(*gno.Machine) {
 	}
 }
 
+func nativeUint256CanonicalToHex(m *gno.Machine) {
+	hex, code := uint256CanonicalToHex(machineStringArg(m, 0))
+	pushStringResult(m, hex)
+	pushStringResult(m, code)
+}
+
 func nativeUint256MulDiv(m *gno.Machine) {
-	result, code := uint256MulDivDecimal(machineStringArg(m, 0), machineStringArg(m, 1), machineStringArg(m, 2))
-	pushStringResult(m, result)
+	decimal, code := uint256MulDivDecimal(machineStringArg(m, 0), machineStringArg(m, 1), machineStringArg(m, 2))
+	hex := ""
+	if code == "" {
+		x, _ := parseCanonicalUint256(decimal)
+		hex = canonicalUint256Hex(x)
+	}
+	pushStringResult(m, hex)
+	pushStringResult(m, decimal)
 	pushStringResult(m, code)
 }
 
 func nativeUint256Sqrt(m *gno.Machine) {
-	result, ok := uint256SqrtDecimal(machineStringArg(m, 0))
+	decimal, ok := uint256SqrtDecimal(machineStringArg(m, 0))
 	if !ok {
-		panic(Uint256InvalidNativeInput)
+		pushStringResult(m, "")
+		pushStringResult(m, "")
+		pushStringResult(m, Uint256CanonicalDecimalError)
+		return
 	}
-	pushStringResult(m, result)
+	x, _ := parseCanonicalUint256(decimal)
+	pushStringResult(m, canonicalUint256Hex(x))
+	pushStringResult(m, decimal)
+	pushStringResult(m, "")
 }
+
+func uint256CanonicalToHex(input string) (string, string) {
+	x, ok := parseCanonicalUint256(input)
+	if !ok {
+		return "", Uint256CanonicalDecimalError
+	}
+	return canonicalUint256Hex(x), ""
+}
+
+func canonicalUint256Hex(x *big.Int) string { return "0x" + x.Text(16) }
 
 func uint256MulDivDecimal(a, b, denominator string) (string, string) {
 	x, ok := parseCanonicalUint256(a)
 	if !ok {
-		return "", Uint256InvalidNativeInput
+		return "", Uint256CanonicalDecimalError
 	}
 	y, ok := parseCanonicalUint256(b)
 	if !ok {
-		return "", Uint256InvalidNativeInput
+		return "", Uint256CanonicalDecimalError
 	}
 	d, ok := parseCanonicalUint256(denominator)
 	if !ok {
-		return "", Uint256InvalidNativeInput
+		return "", Uint256CanonicalDecimalError
 	}
 	if d.Sign() == 0 {
 		return "", Uint256MulDivDenominatorZero

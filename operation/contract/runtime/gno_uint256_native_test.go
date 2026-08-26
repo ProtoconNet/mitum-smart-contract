@@ -17,7 +17,7 @@ func TestUint256NativeMulDivBoundaries(t *testing.T) {
 		{u256Max, u256Max, u256Max, u256Max, ""},
 		{"1", "1", "0", "", Uint256MulDivDenominatorZero},
 		{u256Max, u256Max, "1", "", Uint256MulDivResultOverflow},
-		{"01", "1", "1", "", Uint256InvalidNativeInput},
+		{"01", "1", "1", "", Uint256CanonicalDecimalError},
 	} {
 		result, code := uint256MulDivDecimal(tc.a, tc.b, tc.d)
 		if result != tc.result || code != tc.code {
@@ -64,7 +64,7 @@ func TestUint256NativeRejectsNonCanonicalInputs(t *testing.T) {
 }
 
 func TestUint256NativeIdentityIsExact(t *testing.T) {
-	for _, name := range []gno.Name{"_nativeMulDiv", "_nativeSqrt"} {
+	for _, name := range []gno.Name{"_nativeCanonicalToHex", "_nativeMulDiv", "_nativeSqrt"} {
 		if Uint256NativeResolver(Uint256PackagePath, name) == nil {
 			t.Fatalf("missing native resolver for %s.%s", Uint256PackagePath, name)
 		}

@@ -22,22 +22,16 @@ func hasCanonicalDecimalSyntax(v string) bool {
 }
 
 func IsCanonicalDecimal(v string) bool {
-	if !hasCanonicalDecimalSyntax(v) {
-		return false
-	}
-	parsed, err := onbloc.FromDecimal(v)
-	return err == nil && parsed.String() == v
+	_, code := _nativeCanonicalToHex(v)
+	return code == ""
 }
 
 func FromCanonicalDecimal(v string) (*Uint, error) {
-	if !hasCanonicalDecimalSyntax(v) {
-		return nil, errors.New(CanonicalDecimalError)
+	hex, code := _nativeCanonicalToHex(v)
+	if code != "" {
+		return nil, errors.New(code)
 	}
-	parsed, err := onbloc.FromDecimal(v)
-	if err != nil || parsed.String() != v {
-		return nil, errors.New(CanonicalDecimalError)
-	}
-	return parsed, nil
+	return onbloc.FromHex(hex)
 }
 
 func MustFromCanonicalDecimal(v string) *Uint {
@@ -50,17 +44,38 @@ func MustFromCanonicalDecimal(v string) *Uint {
 
 func ToCanonicalDecimal(v *Uint) string { return v.String() }
 
-func _nativeMulDiv(a string, b string, denominator string) (string, string)
-func _nativeSqrt(x string) string
+func _nativeCanonicalToHex(v string) (string, string)
+func _nativeMulDiv(a string, b string, denominator string) (string, string, string)
+func _nativeSqrt(x string) (string, string, string)
 
 func MulDiv(a, b, denominator *Uint) (*Uint, error) {
-	result, code := _nativeMulDiv(a.String(), b.String(), denominator.String())
+	hex, _, code := _nativeMulDiv(a.String(), b.String(), denominator.String())
 	if code != "" {
 		return nil, errors.New(code)
 	}
-	return onbloc.MustFromDecimal(result), nil
+	return onbloc.MustFromHex(hex), nil
 }
 
 func Sqrt(x *Uint) *Uint {
-	return onbloc.MustFromDecimal(_nativeSqrt(x.String()))
+	hex, _, code := _nativeSqrt(x.String())
+	if code != "" {
+		panic(code)
+	}
+	return onbloc.MustFromHex(hex)
+}
+
+func MulDivCanonicalDecimal(a, b, denominator string) (string, error) {
+	_, decimal, code := _nativeMulDiv(a, b, denominator)
+	if code != "" {
+		return "", errors.New(code)
+	}
+	return decimal, nil
+}
+
+func SqrtCanonicalDecimal(x string) (string, error) {
+	_, decimal, code := _nativeSqrt(x)
+	if code != "" {
+		return "", errors.New(code)
+	}
+	return decimal, nil
 }

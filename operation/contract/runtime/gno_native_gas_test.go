@@ -7,8 +7,8 @@ import (
 	cstate "github.com/imfact-labs/currency-model/state/currency"
 	cestate "github.com/imfact-labs/currency-model/state/extension"
 	ctypes "github.com/imfact-labs/currency-model/types"
-	"github.com/imfact-labs/smart-contract-model/state"
 	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/smart-contract-model/state"
 )
 
 const hostABINativeGasContractSource = `package contract
@@ -72,6 +72,21 @@ func TestMitumNativeGasCalibrationTiers(t *testing.T) {
 	}
 	if !(balanceOfGas > isContractAccountGas) {
 		t.Fatalf("expected BalanceOf gas > IsContractAccount gas")
+	}
+}
+
+func TestUint256ProvisionalNativeGasTiers(t *testing.T) {
+	if Uint256NativeGasSchedule != "mitum-u256-provisional-gas-v1" {
+		t.Fatalf("unexpected provisional schedule %q", Uint256NativeGasSchedule)
+	}
+	for name, tc := range map[string]struct{ got, want int64 }{
+		"canonical-to-hex": {uint256NativeCanonicalToHexGasBase, 10_000},
+		"muldiv":           {uint256NativeMulDivGasBase, 25_000},
+		"sqrt":             {uint256NativeSqrtGasBase, 15_000},
+	} {
+		if tc.got != tc.want {
+			t.Fatalf("%s provisional gas=%d, want %d", name, tc.got, tc.want)
+		}
 	}
 }
 

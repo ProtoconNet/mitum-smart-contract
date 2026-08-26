@@ -16,8 +16,9 @@ const (
 	// Uint256 costs are provisional flat dispatch tiers. They are deliberately
 	// below the fixed query budget so a single bounded 256-bit operation works;
 	// repeated calls still consume the shared machine meter deterministically.
-	uint256NativeMulDivGasBase int64 = 1
-	uint256NativeSqrtGasBase   int64 = 1
+	uint256NativeCanonicalToHexGasBase int64 = 10_000
+	uint256NativeMulDivGasBase         int64 = 25_000
+	uint256NativeSqrtGasBase           int64 = 15_000
 )
 
 func init() {
@@ -26,6 +27,7 @@ func init() {
 	registerMitumNativeFlatGas("IsContractAccount", mitumNativeSingleLookupGasBase)
 	registerMitumNativeFlatGas("BalanceOf", mitumNativeTripleLookupGasBase)
 	registerMitumNativeStringLinearGas("SHA3Sum256", mitumNativeSHA3Sum256GasBase, mitumNativeSHA3Sum256GasPerByte)
+	registerUint256NativeFlatGas("_nativeCanonicalToHex", uint256NativeCanonicalToHexGasBase)
 	registerUint256NativeFlatGas("_nativeMulDiv", uint256NativeMulDivGasBase)
 	registerUint256NativeFlatGas("_nativeSqrt", uint256NativeSqrtGasBase)
 }
