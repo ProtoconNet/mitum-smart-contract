@@ -1,12 +1,16 @@
 package runtime
 
-const MitumChainPackagePath = "mitum/chain"
+const (
+	MitumChainPackagePath    = "mitum/chain"
+	OnblocUint256PackagePath = "gno.land/p/onbloc/uint256"
+)
 
 type AllowedImportKind string
 
 const (
-	AllowedImportHostABI AllowedImportKind = "hostabi"
-	AllowedImportStdlib  AllowedImportKind = "stdlib"
+	AllowedImportHostABI     AllowedImportKind = "hostabi"
+	AllowedImportStdlib      AllowedImportKind = "stdlib"
+	AllowedImportPurePackage AllowedImportKind = "pure-package"
 )
 
 type AllowedImportSpec struct {
@@ -23,6 +27,7 @@ var allowedTypedContractImportSpecs = [...]AllowedImportSpec{
 	{Path: "encoding/hex", Kind: AllowedImportStdlib},
 	{Path: "encoding/base64", Kind: AllowedImportStdlib},
 	{Path: "unicode/utf8", Kind: AllowedImportStdlib},
+	{Path: OnblocUint256PackagePath, Kind: AllowedImportPurePackage},
 }
 
 // AllowedTypedContractImportSpecs returns the canonical contract-facing import

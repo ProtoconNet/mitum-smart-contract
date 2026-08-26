@@ -8,10 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	cstate "github.com/imfact-labs/currency-model/state"
-	"github.com/imfact-labs/smart-contract-model/state"
-	"github.com/imfact-labs/mitum2/base"
-	"github.com/imfact-labs/mitum2/util/encoder"
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
 	gnostdlibs "github.com/gnolang/gno/gnovm/stdlibs"
 	"github.com/gnolang/gno/tm2/pkg/db/memdb"
@@ -19,6 +15,10 @@ import (
 	gstore "github.com/gnolang/gno/tm2/pkg/store"
 	"github.com/gnolang/gno/tm2/pkg/store/dbadapter"
 	storetypes "github.com/gnolang/gno/tm2/pkg/store/types"
+	cstate "github.com/imfact-labs/currency-model/state"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util/encoder"
+	"github.com/imfact-labs/smart-contract-model/state"
 )
 
 type gnoEngine struct{}
@@ -385,8 +385,13 @@ func newGnoMachineAndPackage(
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load Gno stdlib packages: %w", err)
 	}
-	if len(stdlibPackages) > 0 {
-		// Loaded stdlib code is runtime environment setup, not contract work.
+	purePackages, err := GnoPureMemPackagesForContract(contractSource)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load Gno pure packages: %w", err)
+	}
+	runtimePackages := mergeGnoMemPackages(stdlibPackages, purePackages)
+	if len(runtimePackages) > 0 {
+		// Fixed stdlib and pure-package code is runtime environment setup, not contract work.
 		// Persist it to the backing store before opening the metered execution
 		// transaction so a permitted import does not spend invocation gas just
 		// constructing fixed runtime library packages.
@@ -398,9 +403,9 @@ func newGnoMachineAndPackage(
 			MaxAllocBytes:      limits.MaxAllocBytes,
 			BoundedPanicRender: true,
 		})
-		for _, spkg := range stdlibPackages {
-			if _, _, err := runMemPackage(setupMachine, spkg, gasMeter); err != nil {
-				return nil, nil, fmt.Errorf("failed to load stdlib package %q: %w", spkg.Path, err)
+		for _, rpkg := range runtimePackages {
+			if _, _, err := runMemPackage(setupMachine, rpkg, gasMeter); err != nil {
+				return nil, nil, fmt.Errorf("failed to load runtime package %q: %w", rpkg.Path, err)
 			}
 		}
 	}

@@ -111,3 +111,37 @@ func Initialize(ctx chain.WriteContext) error {
 		})
 	}
 }
+
+func TestAnalyzeContractSchemaAllowsExactOnblocUint256Import(t *testing.T) {
+	source := `package contract
+import (
+	"gno.land/p/onbloc/uint256"
+	"mitum/chain"
+)
+
+func Initialize(ctx chain.WriteContext) error {
+	_ = uint256.One()
+	return nil
+}
+`
+	if _, err := AnalyzeContractSchema(source); err != nil {
+		t.Fatalf("AnalyzeContractSchema rejected exact uint256 import: %v", err)
+	}
+}
+
+func TestAnalyzeContractSchemaRejectsPurePackageLookalikesAndRealms(t *testing.T) {
+	for _, importPath := range []string{
+		"gno.land/p/onbloc",
+		"gno.land/p/onbloc/uint256/subpackage",
+		"gno.land/p/onbloc/uint2562",
+		"gno.land/p/other/package",
+		"gno.land/r/demo/realm",
+	} {
+		t.Run(importPath, func(t *testing.T) {
+			source := "package contract\nimport _ \"" + importPath + "\"\n"
+			if _, err := AnalyzeContractSchema(source); err == nil {
+				t.Fatalf("expected exact-path policy to reject %q", importPath)
+			}
+		})
+	}
+}

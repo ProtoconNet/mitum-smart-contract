@@ -15,6 +15,7 @@ func TestAllowedTypedContractImportSpecsMatchCurrentPolicy(t *testing.T) {
 		{Path: "encoding/hex", Kind: AllowedImportStdlib},
 		{Path: "encoding/base64", Kind: AllowedImportStdlib},
 		{Path: "unicode/utf8", Kind: AllowedImportStdlib},
+		{Path: OnblocUint256PackagePath, Kind: AllowedImportPurePackage},
 	}
 
 	if got := AllowedTypedContractImportSpecs(); !reflect.DeepEqual(got, expected) {
@@ -56,6 +57,18 @@ func TestAllowedTypedContractImportSpecsDriveDerivedConsumers(t *testing.T) {
 	}
 	if !reflect.DeepEqual(gotStdlibPaths, expectedStdlibPaths) {
 		t.Fatalf("runtime stdlib roots %#v do not match canonical stdlib paths %#v", gotStdlibPaths, expectedStdlibPaths)
+	}
+
+	expectedPurePaths := allowedTypedContractImportPathsByKind(AllowedImportPurePackage)
+	gotPurePaths, err := contractImportsByKind(
+		"package contract\nimport \""+OnblocUint256PackagePath+"\"\n",
+		AllowedImportPurePackage,
+	)
+	if err != nil {
+		t.Fatalf("contractImportsByKind returned error: %v", err)
+	}
+	if !reflect.DeepEqual(gotPurePaths, expectedPurePaths) {
+		t.Fatalf("runtime pure roots %#v do not match canonical pure paths %#v", gotPurePaths, expectedPurePaths)
 	}
 }
 

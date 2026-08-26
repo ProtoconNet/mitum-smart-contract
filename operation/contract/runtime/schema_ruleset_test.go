@@ -29,6 +29,7 @@ func TestCurrentSchemaRulesetMatchesCurrentTypedGnoPolicy(t *testing.T) {
 		"encoding/hex",
 		"encoding/base64",
 		"unicode/utf8",
+		OnblocUint256PackagePath,
 	}
 	if !reflect.DeepEqual(rules.ImportRules.AllowedImports, expectedImports) {
 		t.Fatalf("unexpected allowed imports: %#v", rules.ImportRules.AllowedImports)

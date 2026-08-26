@@ -137,35 +137,7 @@ func loadGnoStdlibMemPackages(roots []string) ([]*gnostd.MemPackage, map[string]
 }
 
 func contractGnoStdlibImports(sourceCode string) ([]string, error) {
-	node, err := parser.ParseFile(token.NewFileSet(), "contract.gno", sourceCode, parser.ImportsOnly)
-	if err != nil {
-		return nil, fmt.Errorf("parse contract stdlib imports: %w", err)
-	}
-
-	roots := allowedTypedContractImportPathsByKind(AllowedImportStdlib)
-	rootSet := make(map[string]struct{}, len(roots))
-	for _, importPath := range roots {
-		rootSet[importPath] = struct{}{}
-	}
-
-	imported := map[string]struct{}{}
-	for _, imp := range node.Imports {
-		importPath, err := strconv.Unquote(imp.Path.Value)
-		if err != nil {
-			return nil, fmt.Errorf("decode contract stdlib import: %w", err)
-		}
-		if _, found := rootSet[importPath]; found {
-			imported[importPath] = struct{}{}
-		}
-	}
-
-	out := make([]string, 0, len(imported))
-	for _, importPath := range roots {
-		if _, found := imported[importPath]; found {
-			out = append(out, importPath)
-		}
-	}
-	return out, nil
+	return contractImportsByKind(sourceCode, AllowedImportStdlib)
 }
 
 func readGnoStdlibMemPackage(importPath string) (*gnostd.MemPackage, error) {
