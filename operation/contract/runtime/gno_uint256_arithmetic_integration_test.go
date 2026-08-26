@@ -18,7 +18,7 @@ const (
 
 const uint256ArithmeticContractSource = `package contract
 import (
-	"gno.land/p/onbloc/uint256"
+	"mitum/math/v1/u256"
 	"mitum/chain"
 	"strconv"
 )
@@ -28,34 +28,47 @@ var stored string
 func Initialize(ctx chain.WriteContext) error { stored = "0"; return nil }
 func Stored(ctx chain.QueryContext) string { return stored }
 
+func Calculate(ctx chain.QueryContext, op string, a string, b string, c string) string {
+	if op == "muldiv" {
+		value, err := u256.MulDiv(u256.MustFromDecimal(a), u256.MustFromDecimal(b), u256.MustFromDecimal(c))
+		if err != nil { return err.Error() }
+		return value.String()
+	}
+	return u256.Sqrt(u256.MustFromDecimal(a)).String()
+}
+
 func Eval(ctx chain.WriteContext, op string, a string, b string, c string, n uint64) error {
 	if op == "basic" {
-		x := uint256.NewUint(7); y := uint256.Zero().Set(x); one := uint256.One()
-		all := uint256.Zero().SetAllOne(); clone := x.Clone(); x.Clear(); y.SetOne()
+		x := u256.NewUint(7); y := u256.Zero().Set(x); one := u256.One()
+		all := u256.Zero().SetAllOne(); clone := x.Clone(); x.Clear(); y.SetOne()
 		stored = y.String()+"|"+one.String()+"|"+all.String()+"|"+clone.String()+"|"+x.String()
 		return nil
 	}
 	if op == "decimal" {
-		x, err := uint256.FromDecimal(a); if err != nil { stored = "invalid"; return nil }
-		y := uint256.Zero(); if err := y.SetFromDecimal(a); err != nil { stored = "invalid"; return nil }
-		stored = x.Dec()+"|"+y.String()+"|"+uint256.MustFromDecimal(a).String(); return nil
+		x, err := u256.FromDecimal(a); if err != nil { stored = "invalid"; return nil }
+		y := u256.Zero(); if err := y.SetFromDecimal(a); err != nil { stored = "invalid"; return nil }
+		stored = x.Dec()+"|"+y.String()+"|"+u256.MustFromDecimal(a).String(); return nil
 	}
-	if op == "decimal-single" { x,err:=uint256.FromDecimal(a);if err!=nil{stored="invalid"}else{stored=x.String()};return nil }
-	if op == "decimal-valid" { _, err := uint256.FromDecimal(a); stored = strconv.FormatBool(err == nil); return nil }
+	if op == "decimal-single" { x,err:=u256.FromDecimal(a);if err!=nil{stored="invalid"}else{stored=x.String()};return nil }
+	if op == "decimal-valid" { _, err := u256.FromDecimal(a); stored = strconv.FormatBool(err == nil); return nil }
 	if op == "hex" {
-		x, err := uint256.FromHex(a); if err != nil { stored = "invalid"; return nil }
-		y := uint256.Zero(); if err := y.SetFromHex(a); err != nil { stored = "invalid"; return nil }
-		stored = x.String()+"|"+y.String()+"|"+uint256.MustFromHex(a).String(); return nil
+		x, err := u256.FromHex(a); if err != nil { stored = "invalid"; return nil }
+		y := u256.Zero(); if err := y.SetFromHex(a); err != nil { stored = "invalid"; return nil }
+		stored = x.String()+"|"+y.String()+"|"+u256.MustFromHex(a).String(); return nil
 	}
-	if op == "hex-valid" { _, err := uint256.FromHex(a); stored = strconv.FormatBool(err == nil); return nil }
-	if op == "must-decimal" { stored = uint256.MustFromDecimal(a).String(); return nil }
-	if op == "must-hex" { stored = uint256.MustFromHex(a).String(); return nil }
+	if op == "hex-valid" { _, err := u256.FromHex(a); stored = strconv.FormatBool(err == nil); return nil }
+	if op == "must-decimal" { stored = u256.MustFromDecimal(a).String(); return nil }
+	if op == "must-hex" { stored = u256.MustFromHex(a).String(); return nil }
+	if op == "muldiv" { value,err:=u256.MulDiv(u256.MustFromDecimal(a),u256.MustFromDecimal(b),u256.MustFromDecimal(c));if err!=nil{return err};stored=value.String();return nil }
+	if op == "muldiv-handled" { _,err:=u256.MulDiv(u256.MustFromDecimal(a),u256.MustFromDecimal(b),u256.MustFromDecimal(c));if err!=nil{stored=err.Error();return nil};stored="ok";return nil }
+	if op == "sqrt" { stored=u256.Sqrt(u256.MustFromDecimal(a)).String();return nil }
+	if op == "oog" { stored="must-roll-back";for i:=0;i<10000;i++{_,err:=u256.MulDiv(u256.One(),u256.One(),u256.One());if err!=nil{return err}};return nil }
 	if op == "bytes" {
 		b32 := []byte{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0}
 		b33 := []byte{0xff,0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0}
-		stored = new(uint256.Uint).SetBytes(b32).String()+"|"+new(uint256.Uint).SetBytes(b33).String(); return nil
+		stored = new(u256.Uint).SetBytes(b32).String()+"|"+new(u256.Uint).SetBytes(b33).String(); return nil
 	}
-	x := uint256.MustFromDecimal(a); y := uint256.MustFromDecimal(b); z := new(uint256.Uint)
+	x := u256.MustFromDecimal(a); y := u256.MustFromDecimal(b); z := new(u256.Uint)
 	if op == "alias-add" { stored = x.Add(x,y).String(); return nil }
 	if op == "alias-sub" { stored = x.Sub(x,y).String(); return nil }
 	if op == "alias-mul" { stored = x.Mul(x,y).String(); return nil }
@@ -69,8 +82,8 @@ func Eval(ctx chain.WriteContext, op string, a string, b string, c string, n uin
 	if op == "add-overflow" { _, over := z.AddOverflow(x,y); stored = z.String()+"|"+strconv.FormatBool(over); return nil }
 	if op == "sub-overflow" { _, over := z.SubOverflow(x,y); stored = z.String()+"|"+strconv.FormatBool(over); return nil }
 	if op == "mul-overflow" { _, over := z.MulOverflow(x,y); stored = z.String()+"|"+strconv.FormatBool(over); return nil }
-	if op == "mulmod" { stored = z.MulMod(x,y,uint256.MustFromDecimal(c)).String(); return nil }
-	if op == "divmod" { q,r := z.DivMod(x,y,uint256.MustFromDecimal(c)); stored = q.String()+"|"+r.String(); return nil }
+	if op == "mulmod" { stored = z.MulMod(x,y,u256.MustFromDecimal(c)).String(); return nil }
+	if op == "divmod" { q,r := z.DivMod(x,y,u256.MustFromDecimal(c)); stored = q.String()+"|"+r.String(); return nil }
 	if op == "compare" {
 		u := y.Uint64(); stored = strconv.Itoa(x.Cmp(y))+"|"+strconv.FormatBool(x.Eq(y))+"|"+strconv.FormatBool(x.Neq(y))+"|"+
 			strconv.FormatBool(x.Lt(y))+"|"+strconv.FormatBool(x.Lte(y))+"|"+strconv.FormatBool(x.Gt(y))+"|"+strconv.FormatBool(x.Gte(y))+"|"+
@@ -87,11 +100,11 @@ func Eval(ctx chain.WriteContext, op string, a string, b string, c string, n uin
 	if op == "uint64" { v,over := x.Uint64WithOverflow(); stored = strconv.FormatUint(x.Uint64(),10)+"|"+strconv.FormatUint(v,10)+"|"+strconv.FormatBool(over)+"|"+strconv.FormatBool(x.IsUint64()); return nil }
 	if op == "length" { stored = strconv.Itoa(x.BitLen())+"|"+strconv.Itoa(x.ByteLen())+"|"+x.Byte(y).String(); return nil }
 	if op == "codec" {
-		text,err := x.MarshalText(); if err != nil { stored="text-error"; return nil }; p:=uint256.Zero(); if err:=p.UnmarshalText(text);err!=nil{stored="unmarshal-text-error";return nil}
-		json,err:=x.MarshalJSON();if err!=nil{stored="json-error";return nil};q:=uint256.Zero();if err:=q.UnmarshalJSON(json);err!=nil{stored="unmarshal-json-error";return nil};s:=uint256.Zero();if err:=s.Scan(a);err!=nil{stored="scan-error";return nil}
+		text,err := x.MarshalText(); if err != nil { stored="text-error"; return nil }; p:=u256.Zero(); if err:=p.UnmarshalText(text);err!=nil{stored="unmarshal-text-error";return nil}
+		json,err:=x.MarshalJSON();if err!=nil{stored="json-error";return nil};q:=u256.Zero();if err:=q.UnmarshalJSON(json);err!=nil{stored="unmarshal-json-error";return nil};s:=u256.Zero();if err:=s.Scan(a);err!=nil{stored="scan-error";return nil}
 		stored=string(text)+"|"+p.String()+"|"+string(json)+"|"+q.String()+"|"+s.String();return nil
 	}
-	if op == "differential" { stored=z.Add(x,y).String()+"|"+new(uint256.Uint).Sub(x,y).String()+"|"+new(uint256.Uint).Mul(x,y).String()+"|"+new(uint256.Uint).Div(x,y).String()+"|"+new(uint256.Uint).Mod(x,y).String();return nil }
+	if op == "differential" { stored=z.Add(x,y).String()+"|"+new(u256.Uint).Sub(x,y).String()+"|"+new(u256.Uint).Mul(x,y).String()+"|"+new(u256.Uint).Div(x,y).String()+"|"+new(u256.Uint).Mod(x,y).String();return nil }
 	stored = "unknown"; return nil
 }
 `
@@ -189,8 +202,8 @@ func TestUint256DeterministicBigIntDifferential(t *testing.T) {
 }
 
 func TestUint256ExternalTypesRemainOutsideSchemaABI(t *testing.T) {
-	for _, decl := range []string{"var amount *uint256.Uint\nfunc Initialize(ctx chain.WriteContext) error{return nil}", "func Initialize(ctx chain.WriteContext, amount *uint256.Uint) error{return nil}", "func Initialize(ctx chain.WriteContext) error{return nil}\nfunc Amount(ctx chain.QueryContext) *uint256.Uint{return uint256.Zero()}"} {
-		source := "package contract\nimport (\"gno.land/p/onbloc/uint256\";\"mitum/chain\")\n" + decl
+	for _, decl := range []string{"var amount *u256.Uint\nfunc Initialize(ctx chain.WriteContext) error{return nil}", "func Initialize(ctx chain.WriteContext, amount *u256.Uint) error{return nil}", "func Initialize(ctx chain.WriteContext) error{return nil}\nfunc Amount(ctx chain.QueryContext) *u256.Uint{return u256.Zero()}"} {
+		source := "package contract\nimport (\"mitum/math/v1/u256\";\"mitum/chain\")\n" + decl
 		if _, err := AnalyzeContractSchema(source); err == nil {
 			t.Fatalf("expected external Uint ABI rejection: %s", decl)
 		}
@@ -218,8 +231,8 @@ func TestUint256InvalidMustConversionsUseSanitizedRuntimeError(t *testing.T) {
 
 func TestUint256WrapperTypeAliasProbe(t *testing.T) {
 	source := `package contract
-import ("gno.land/p/onbloc/uint256";"mitum/chain")
-type Uint = uint256.Uint
+import ("mitum/math/v1/u256";"mitum/chain")
+type Uint = u256.Uint
 func Initialize(ctx chain.WriteContext) error{return nil}
 func Probe(ctx chain.QueryContext) string{return new(Uint).SetOne().String()}`
 	engine := NewGnoEngine()

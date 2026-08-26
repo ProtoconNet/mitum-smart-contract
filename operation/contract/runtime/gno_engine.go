@@ -379,7 +379,7 @@ func newGnoMachineAndPackage(
 	baseStore := dbadapter.StoreConstructor(db, storetypes.StoreOptions{})
 
 	store := gno.NewStore(alloc, baseStore, baseStore)
-	store.SetNativeResolver(CombineNativeResolvers(MitumNativeResolver, gnostdlibs.NativeResolver))
+	store.SetNativeResolver(CombineNativeResolvers(MitumNativeResolver, Uint256NativeResolver, gnostdlibs.NativeResolver))
 
 	stdlibPackages, err := GnoStdlibMemPackagesForContract(contractSource)
 	if err != nil {

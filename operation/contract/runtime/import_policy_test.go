@@ -15,7 +15,7 @@ func TestAllowedTypedContractImportSpecsMatchCurrentPolicy(t *testing.T) {
 		{Path: "encoding/hex", Kind: AllowedImportStdlib},
 		{Path: "encoding/base64", Kind: AllowedImportStdlib},
 		{Path: "unicode/utf8", Kind: AllowedImportStdlib},
-		{Path: OnblocUint256PackagePath, Kind: AllowedImportPurePackage},
+		{Path: Uint256PackagePath, Kind: AllowedImportPurePackage},
 	}
 
 	if got := AllowedTypedContractImportSpecs(); !reflect.DeepEqual(got, expected) {
@@ -61,7 +61,7 @@ func TestAllowedTypedContractImportSpecsDriveDerivedConsumers(t *testing.T) {
 
 	expectedPurePaths := allowedTypedContractImportPathsByKind(AllowedImportPurePackage)
 	gotPurePaths, err := contractImportsByKind(
-		"package contract\nimport \""+OnblocUint256PackagePath+"\"\n",
+		"package contract\nimport \""+Uint256PackagePath+"\"\n",
 		AllowedImportPurePackage,
 	)
 	if err != nil {

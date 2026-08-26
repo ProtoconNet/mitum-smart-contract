@@ -25,7 +25,7 @@ const (
 	gnoPurePackageEmbeddedPrefix = "gno_pure_packages"
 )
 
-//go:embed gno_pure_packages/gno.land/p/onbloc/uint256/*.gno
+//go:embed gno_pure_packages/gno.land/p/onbloc/uint256/*.gno gno_pure_packages/mitum/math/v1/u256/*.gno
 var embeddedGnoPurePackages embed.FS
 
 type GnoPurePackageLimits struct {
@@ -80,7 +80,7 @@ func initializeGnoPurePackages() error {
 	gnoPurePackagesOnce.Do(func() {
 		roots := allowedTypedContractImportPathsByKind(AllowedImportPurePackage)
 		gnoPurePackagesByRoot = make(map[string][]*gnostd.MemPackage, len(roots))
-		allowed := stringSet(roots)
+		allowed := stringSet(embeddedGnoPurePackagePaths())
 		for _, root := range roots {
 			packages, err := loadGnoPureRuntimePackages(
 				[]string{root}, allowed, readEmbeddedGnoPurePackage, defaultGnoPurePackageLimits,
@@ -196,7 +196,7 @@ func resolveGnoPurePackageGraph(
 }
 
 func readEmbeddedGnoPurePackage(importPath string) (*gnostd.MemPackage, error) {
-	if _, found := stringSet(allowedTypedContractImportPathsByKind(AllowedImportPurePackage))[importPath]; !found {
+	if _, found := stringSet(embeddedGnoPurePackagePaths())[importPath]; !found {
 		return nil, fmt.Errorf("Gno pure package %q is not embedded", importPath)
 	}
 	dir := path.Join(gnoPurePackageEmbeddedPrefix, importPath)
@@ -225,7 +225,39 @@ func readEmbeddedGnoPurePackage(importPath string) (*gnostd.MemPackage, error) {
 		}
 		files = append(files, &gnostd.MemFile{Name: name, Body: string(body)})
 	}
-	return &gnostd.MemPackage{Name: path.Base(importPath), Path: importPath, Type: gno.MPUserProd, Files: files}, nil
+	packageType := gno.MPUserProd
+	if importPath == Uint256PackagePath {
+		// GnoVM restricts MPUserProd identities to gno.land user paths. The
+		// system-owned hybrid API remains exact-policy code but must be stored
+		// as MPStdlibProd to preserve its required mitum/math/... identity.
+		packageType = gno.MPStdlibProd
+	}
+	pkg := &gnostd.MemPackage{Name: path.Base(importPath), Path: importPath, Type: packageType, Files: files}
+	if err := validateGnoPurePackageIdentity(pkg); err != nil {
+		return nil, err
+	}
+	return pkg, nil
+}
+
+func validateGnoPurePackageIdentity(pkg *gnostd.MemPackage) error {
+	expected := path.Base(pkg.Path)
+	if pkg.Name != expected {
+		return fmt.Errorf("Gno pure package %q name %q does not match path basename %q", pkg.Path, pkg.Name, expected)
+	}
+	for _, file := range pkg.Files {
+		node, err := parser.ParseFile(token.NewFileSet(), file.Name, file.Body, parser.PackageClauseOnly)
+		if err != nil {
+			return fmt.Errorf("parse Gno package declaration in %q/%q: %w", pkg.Path, file.Name, err)
+		}
+		if node.Name.Name != expected {
+			return fmt.Errorf("Gno pure package %q file %q declares package %q; expected %q", pkg.Path, file.Name, node.Name.Name, expected)
+		}
+	}
+	return nil
+}
+
+func embeddedGnoPurePackagePaths() []string {
+	return []string{OnblocUint256PackagePath, Uint256PackagePath}
 }
 
 func contractImportsByKind(sourceCode string, kind AllowedImportKind) ([]string, error) {

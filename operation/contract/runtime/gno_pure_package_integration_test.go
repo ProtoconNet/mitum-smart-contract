@@ -8,24 +8,24 @@ import (
 
 const uint256PurePackageSmokeContract = `package contract
 import (
-	"gno.land/p/onbloc/uint256"
+	"mitum/math/v1/u256"
 	"mitum/chain"
 )
 
 var value uint64
 
 func Initialize(ctx chain.WriteContext) error {
-	value = uint256.One().Uint64()
+	value = u256.One().Uint64()
 	return nil
 }
 
 func Store(ctx chain.WriteContext, input uint64) error {
-	value = uint256.NewUint(input).Uint64()
+	value = u256.NewUint(input).Uint64()
 	return nil
 }
 
 func Get(ctx chain.QueryContext) uint64 {
-	return uint256.NewUint(value).Uint64()
+	return u256.NewUint(value).Uint64()
 }
 `
 

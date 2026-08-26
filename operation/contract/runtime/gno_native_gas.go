@@ -13,6 +13,11 @@ const (
 	mitumNativeTripleLookupGasBase  int64 = mitumNativeSingleLookupGasBase * 3
 	mitumNativeSHA3Sum256GasBase    int64 = 1000
 	mitumNativeSHA3Sum256GasPerByte int64 = 2
+	// Uint256 costs are provisional flat dispatch tiers. They are deliberately
+	// below the fixed query budget so a single bounded 256-bit operation works;
+	// repeated calls still consume the shared machine meter deterministically.
+	uint256NativeMulDivGasBase int64 = 1
+	uint256NativeSqrtGasBase   int64 = 1
 )
 
 func init() {
@@ -21,6 +26,12 @@ func init() {
 	registerMitumNativeFlatGas("IsContractAccount", mitumNativeSingleLookupGasBase)
 	registerMitumNativeFlatGas("BalanceOf", mitumNativeTripleLookupGasBase)
 	registerMitumNativeStringLinearGas("SHA3Sum256", mitumNativeSHA3Sum256GasBase, mitumNativeSHA3Sum256GasPerByte)
+	registerUint256NativeFlatGas("_nativeMulDiv", uint256NativeMulDivGasBase)
+	registerUint256NativeFlatGas("_nativeSqrt", uint256NativeSqrtGasBase)
+}
+
+func registerUint256NativeFlatGas(name string, base int64) {
+	gno.RegisterNativeGas(Uint256PackagePath, gno.Name(name), &gno.NativeGasInfo{Base: base, SlopeIdx: -1, SlopeKind: gno.SizeFlat})
 }
 
 func registerMitumNativeFlatGas(name string, base int64) {

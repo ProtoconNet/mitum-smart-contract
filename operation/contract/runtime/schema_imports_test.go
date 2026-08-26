@@ -115,12 +115,12 @@ func Initialize(ctx chain.WriteContext) error {
 func TestAnalyzeContractSchemaAllowsExactOnblocUint256Import(t *testing.T) {
 	source := `package contract
 import (
-	"gno.land/p/onbloc/uint256"
+	"mitum/math/v1/u256"
 	"mitum/chain"
 )
 
 func Initialize(ctx chain.WriteContext) error {
-	_ = uint256.One()
+	_ = u256.One()
 	return nil
 }
 `
@@ -131,7 +131,12 @@ func Initialize(ctx chain.WriteContext) error {
 
 func TestAnalyzeContractSchemaRejectsPurePackageLookalikesAndRealms(t *testing.T) {
 	for _, importPath := range []string{
+		"gno.land/p/onbloc/uint256",
 		"gno.land/p/onbloc",
+		"mitum/math/u256/v1",
+		"mitum/math/v1",
+		"mitum/math/v1/u256/subpackage",
+		"mitum/math/v1/u2562",
 		"gno.land/p/onbloc/uint256/subpackage",
 		"gno.land/p/onbloc/uint2562",
 		"gno.land/p/other/package",

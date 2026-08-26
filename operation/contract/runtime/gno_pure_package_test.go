@@ -1,6 +1,8 @@
 package runtime
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"reflect"
 	"strings"
 	"testing"
@@ -41,8 +43,28 @@ func TestEmbeddedOnblocUint256MemPackage(t *testing.T) {
 	}
 }
 
+func TestEmbeddedUint256WrapperIdentity(t *testing.T) {
+	pkg, err := readEmbeddedGnoPurePackage(Uint256PackagePath)
+	if err != nil {
+		t.Fatalf("read wrapper: %v", err)
+	}
+	if pkg.Name != "u256" || pkg.Path != "mitum/math/v1/u256" || pkg.Type != gno.MPStdlibProd {
+		t.Fatalf("unexpected wrapper identity: name=%q path=%q type=%v", pkg.Name, pkg.Path, pkg.Type)
+	}
+	if got := memPackageFileNames(pkg); !reflect.DeepEqual(got, []string{"u256.gno"}) {
+		t.Fatalf("unexpected wrapper files: %v", got)
+	}
+	if err := gno.ValidateMemPackageAny(pkg); err != nil {
+		t.Fatalf("validate wrapper identity: %v", err)
+	}
+	sum := sha256.Sum256([]byte(pkg.Files[0].Body))
+	if got := hex.EncodeToString(sum[:]); got != Uint256WrapperSourceSHA256 {
+		t.Fatalf("wrapper source SHA-256 = %s, want %s", got, Uint256WrapperSourceSHA256)
+	}
+}
+
 func TestGnoPureMemPackagesAreDeterministicAndCloneIsolated(t *testing.T) {
-	source := "package contract\nimport \"" + OnblocUint256PackagePath + "\"\n"
+	source := "package contract\nimport \"" + Uint256PackagePath + "\"\n"
 	first, err := GnoPureMemPackagesForContract(source)
 	if err != nil {
 		t.Fatalf("GnoPureMemPackagesForContract returned error: %v", err)
@@ -55,7 +77,7 @@ func TestGnoPureMemPackagesAreDeterministicAndCloneIsolated(t *testing.T) {
 		t.Fatalf("pure runtime package order is not deterministic")
 	}
 	last := first[len(first)-1]
-	if last.Path != OnblocUint256PackagePath {
+	if last.Path != Uint256PackagePath {
 		t.Fatalf("expected pure root last, got %q", last.Path)
 	}
 	first[len(first)-1].Files[0].Body = "mutated"
@@ -73,6 +95,11 @@ func TestGnoPureMemPackagesAreDeterministicAndCloneIsolated(t *testing.T) {
 
 func TestGnoPureRuntimeResolverSelectsOnlyExactCanonicalPath(t *testing.T) {
 	for _, importPath := range []string{
+		OnblocUint256PackagePath,
+		"mitum/math/u256/v1",
+		"mitum/math/v1",
+		"mitum/math/v1/u256/subpackage",
+		"mitum/math/v1/u2562",
 		"gno.land/p/onbloc",
 		"gno.land/p/onbloc/uint256/subpackage",
 		"gno.land/p/onbloc/uint2562",
@@ -91,7 +118,7 @@ func TestGnoPureRuntimeResolverSelectsOnlyExactCanonicalPath(t *testing.T) {
 
 func TestOnblocUint256DependenciesLoadFirstWithoutDuplicates(t *testing.T) {
 	packages, err := GnoPureMemPackagesForContract(
-		"package contract\nimport \"" + OnblocUint256PackagePath + "\"\n",
+		"package contract\nimport \"" + Uint256PackagePath + "\"\n",
 	)
 	if err != nil {
 		t.Fatalf("GnoPureMemPackagesForContract returned error: %v", err)
@@ -103,7 +130,10 @@ func TestOnblocUint256DependenciesLoadFirstWithoutDuplicates(t *testing.T) {
 		}
 		indices[pkg.Path] = i
 	}
-	rootIndex := indices[OnblocUint256PackagePath]
+	rootIndex := indices[Uint256PackagePath]
+	if indices[OnblocUint256PackagePath] >= rootIndex {
+		t.Fatal("internal Onbloc dependency must load before public wrapper")
+	}
 	for _, dependency := range []string{"encoding/binary", "errors", "math/bits", "strconv", "strings"} {
 		index, found := indices[dependency]
 		if !found {
