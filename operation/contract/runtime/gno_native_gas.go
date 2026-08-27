@@ -9,11 +9,12 @@ const (
 	// design, and balance keys. SHA3Sum256 is pure CPU work, charged as a
 	// small dispatch/hash base plus exact per-input-byte cost using Gno's
 	// per-KiB native slope convention.
-	mitumNativeSingleLookupGasBase  int64 = 3000
-	mitumNativeTripleLookupGasBase  int64 = mitumNativeSingleLookupGasBase * 3
-	mitumNativeCallContractGasBase  int64 = 15000
-	mitumNativeSHA3Sum256GasBase    int64 = 1000
-	mitumNativeSHA3Sum256GasPerByte int64 = 2
+	mitumNativeSingleLookupGasBase     int64 = 3000
+	mitumNativeTripleLookupGasBase     int64 = mitumNativeSingleLookupGasBase * 3
+	mitumNativeCallContractGasBase     int64 = 15000
+	mitumNativeCurrencyTransferGasBase int64 = 12000
+	mitumNativeSHA3Sum256GasBase       int64 = 1000
+	mitumNativeSHA3Sum256GasPerByte    int64 = 2
 	// Uint256 costs are bounded flat tiers calibrated for 256-bit inputs.
 	uint256NativeCanonicalToHexGasBase int64 = 10_000
 	uint256NativeMulDivGasBase         int64 = 40_000
@@ -26,6 +27,8 @@ func init() {
 	registerMitumNativeFlatGas("IsContractAccount", mitumNativeSingleLookupGasBase)
 	registerMitumNativeFlatGas("BalanceOf", mitumNativeTripleLookupGasBase)
 	registerMitumNativeFlatGas("CallContract", mitumNativeCallContractGasBase)
+	registerMitumNativeFlatGas("TransferSenderToContract", mitumNativeCurrencyTransferGasBase)
+	registerMitumNativeFlatGas("TransferContractTo", mitumNativeCurrencyTransferGasBase)
 	registerMitumNativeStringLinearGas("SHA3Sum256", mitumNativeSHA3Sum256GasBase, mitumNativeSHA3Sum256GasPerByte)
 	registerUint256NativeFlatGas("_nativeCanonicalToHex", uint256NativeCanonicalToHexGasBase)
 	registerUint256NativeFlatGas("_nativeMulDiv", uint256NativeMulDivGasBase)

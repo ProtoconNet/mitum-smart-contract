@@ -166,7 +166,7 @@ func NewStateContractReader(
 }
 
 func (r StateContractReader) IsContractAccount(addr string) (bool, error) {
-	address, err := base.DecodeAddress(addr, r.encs.JSON())
+	address, err := decodeRuntimeAddress(addr, r.encs)
 	if err != nil {
 		return false, errors.Errorf("failed to decode address, %v", addr)
 	}
