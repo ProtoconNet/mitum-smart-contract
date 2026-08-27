@@ -75,17 +75,17 @@ func TestMitumNativeGasCalibrationTiers(t *testing.T) {
 	}
 }
 
-func TestUint256ProvisionalNativeGasTiers(t *testing.T) {
-	if Uint256NativeGasSchedule != "mitum-u256-provisional-gas-v1" {
-		t.Fatalf("unexpected provisional schedule %q", Uint256NativeGasSchedule)
+func TestUint256NativeGasTiers(t *testing.T) {
+	if Uint256NativeGasSchedule != "mitum-u256-gas-v1" {
+		t.Fatalf("unexpected schedule %q", Uint256NativeGasSchedule)
 	}
 	for name, tc := range map[string]struct{ got, want int64 }{
 		"canonical-to-hex": {uint256NativeCanonicalToHexGasBase, 10_000},
-		"muldiv":           {uint256NativeMulDivGasBase, 25_000},
-		"sqrt":             {uint256NativeSqrtGasBase, 15_000},
+		"muldiv":           {uint256NativeMulDivGasBase, 40_000},
+		"sqrt":             {uint256NativeSqrtGasBase, 20_000},
 	} {
 		if tc.got != tc.want {
-			t.Fatalf("%s provisional gas=%d, want %d", name, tc.got, tc.want)
+			t.Fatalf("%s gas=%d, want %d", name, tc.got, tc.want)
 		}
 	}
 }

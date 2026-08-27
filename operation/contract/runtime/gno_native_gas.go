@@ -13,16 +13,14 @@ const (
 	mitumNativeTripleLookupGasBase  int64 = mitumNativeSingleLookupGasBase * 3
 	mitumNativeSHA3Sum256GasBase    int64 = 1000
 	mitumNativeSHA3Sum256GasPerByte int64 = 2
-	// Uint256 costs are provisional flat dispatch tiers. They are deliberately
-	// below the fixed query budget so a single bounded 256-bit operation works;
-	// repeated calls still consume the shared machine meter deterministically.
+	// Uint256 costs are bounded flat tiers calibrated for 256-bit inputs.
 	uint256NativeCanonicalToHexGasBase int64 = 10_000
-	uint256NativeMulDivGasBase         int64 = 25_000
-	uint256NativeSqrtGasBase           int64 = 15_000
+	uint256NativeMulDivGasBase         int64 = 40_000
+	uint256NativeSqrtGasBase           int64 = 20_000
 )
 
 func init() {
-	// Provisional costs for app-specific Mitum host ABI natives.
+	// Calibrated costs for app-specific Mitum host ABI natives.
 	registerMitumNativeFlatGas("AccountExists", mitumNativeSingleLookupGasBase)
 	registerMitumNativeFlatGas("IsContractAccount", mitumNativeSingleLookupGasBase)
 	registerMitumNativeFlatGas("BalanceOf", mitumNativeTripleLookupGasBase)
