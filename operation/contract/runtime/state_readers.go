@@ -9,7 +9,7 @@ import (
 )
 
 func GetAccountStateFunc(addr string, encs encoder.Encoders, getStateFunc base.GetStateFunc) (bool, error) {
-	address, err := base.DecodeAddress(addr, encs.JSON())
+	address, err := decodeRuntimeAddress(addr, encs)
 	if err != nil {
 		return false, errors.Errorf("failed to decode address, %v", addr)
 	}
@@ -48,7 +48,7 @@ func NewStateBalanceReader(
 }
 
 func (r StateBalanceReader) BalanceOf(addr string, currencyID string) (string, bool, error) {
-	address, err := base.DecodeAddress(addr, r.encs.JSON())
+	address, err := decodeRuntimeAddress(addr, r.encs)
 	if err != nil {
 		return "", false, nil
 	}
@@ -99,4 +99,18 @@ func (r StateBalanceReader) BalanceOf(addr string, currencyID string) (string, b
 	}
 
 	return amount.Big().String(), true, nil
+}
+
+func decodeRuntimeAddress(addr string, encs encoder.Encoders) (base.Address, error) {
+	address, err := base.DecodeAddress(addr, encs.JSON())
+	if err == nil {
+		return address, nil
+	}
+
+	currencyAddress, cerr := ctypes.NewAddressFromString(addr)
+	if cerr == nil {
+		return currencyAddress, nil
+	}
+
+	return nil, err
 }

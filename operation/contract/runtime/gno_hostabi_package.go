@@ -69,6 +69,8 @@ func IsContractAccount(addr string) bool
 func BalanceOf(addr string, currency string) (string, bool)
 func SHA3Sum256(data string) string
 func CallContract(ctx WriteContext, contract string, function string, callData map[string]string) error
+func TransferSenderToContract(ctx WriteContext, currency string, amount string) error
+func TransferContractTo(ctx WriteContext, receiver string, currency string, amount string) error
 `
 
 func MitumChainMemPackage() *gnostd.MemPackage {

@@ -5,6 +5,11 @@ import (
 	"reflect"
 
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
+	ccommon "github.com/imfact-labs/currency-model/common"
+	cstate "github.com/imfact-labs/currency-model/state"
+	ccurrency "github.com/imfact-labs/currency-model/state/currency"
+	cestate "github.com/imfact-labs/currency-model/state/extension"
+	ctypes "github.com/imfact-labs/currency-model/types"
 	"github.com/imfact-labs/mitum2/base"
 	pstate "github.com/imfact-labs/smart-contract-model/state"
 	"github.com/pkg/errors"
@@ -43,6 +48,10 @@ func MitumNativeResolver(pkgPath string, name gno.Name) func(m *gno.Machine) {
 		return nativeSHA3Sum256
 	case "CallContract":
 		return nativeCallContract
+	case "TransferSenderToContract":
+		return nativeTransferSenderToContract
+	case "TransferContractTo":
+		return nativeTransferContractTo
 	default:
 		return nil
 	}
@@ -194,6 +203,46 @@ func nativeCallContract(m *gno.Machine) {
 	pushNilErrorResult(m)
 }
 
+func nativeTransferSenderToContract(m *gno.Machine) {
+	defer sanitizeTransferNativePanic("chain.TransferSenderToContract native failed")
+
+	ctx := mustExecutionContext(m)
+	currency := machineStringArg(m, 1)
+	amount := machineStringArg(m, 2)
+
+	if err := ctx.TransferSenderToContract(currency, amount); err != nil {
+		panic(sanitizedExecutionError{message: err.Error()})
+	}
+
+	pushNilErrorResult(m)
+}
+
+func nativeTransferContractTo(m *gno.Machine) {
+	defer sanitizeTransferNativePanic("chain.TransferContractTo native failed")
+
+	ctx := mustExecutionContext(m)
+	receiver := machineStringArg(m, 1)
+	currency := machineStringArg(m, 2)
+	amount := machineStringArg(m, 3)
+
+	if err := ctx.TransferContractTo(receiver, currency, amount); err != nil {
+		panic(sanitizedExecutionError{message: err.Error()})
+	}
+
+	pushNilErrorResult(m)
+}
+
+func sanitizeTransferNativePanic(message string) func() {
+	return func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(sanitizedExecutionError); ok {
+				panic(r)
+			}
+			panic(sanitizedExecutionError{message: message})
+		}
+	}
+}
+
 func (ctx *ExecutionContext) CallContract(
 	contract string,
 	function string,
@@ -304,4 +353,190 @@ func (ctx *ExecutionContext) CallContract(
 	}
 
 	return nil
+}
+
+func (ctx *ExecutionContext) TransferSenderToContract(currencyID string, amountText string) error {
+	session, err := ctx.ensureTopLevelCurrencyTransferAllowed("TransferSenderToContract")
+	if err != nil {
+		return err
+	}
+
+	cid, amount, err := parseCurrencyAmount(currencyID, amountText)
+	if err != nil {
+		return err
+	}
+	if err := session.ensureCurrencyDesignExists(cid); err != nil {
+		return err
+	}
+	if err := session.ensureRegularAccountExists(session.sender, "sender"); err != nil {
+		return err
+	}
+	if err := session.ensureAddressIsNotContractAccount(session.sender, "sender"); err != nil {
+		return err
+	}
+	if err := session.ensureContractAccountExists(ctx.Contract, "contract"); err != nil {
+		return err
+	}
+
+	sourceBalance, found, err := session.projectedBalance(session.sender, cid)
+	switch {
+	case err != nil:
+		return errors.Errorf("failed to read sender balance for currency %s", cid)
+	case !found:
+		return errors.Errorf("sender balance not found for currency %s", cid)
+	case sourceBalance.Compare(amount) < 0:
+		return errors.Errorf("insufficient sender balance for currency %s", cid)
+	}
+
+	session.removeBalance(session.sender, cid, amount)
+	session.addBalance(ctx.Contract, cid, amount)
+
+	return nil
+}
+
+func (ctx *ExecutionContext) TransferContractTo(receiverText string, currencyID string, amountText string) error {
+	session, err := ctx.ensureTopLevelCurrencyTransferAllowed("TransferContractTo")
+	if err != nil {
+		return err
+	}
+
+	receiver, err := decodeRuntimeAddress(receiverText, session.encs)
+	if err != nil {
+		return errors.Errorf("failed to decode transfer receiver %q", receiverText)
+	}
+	cid, amount, err := parseCurrencyAmount(currencyID, amountText)
+	if err != nil {
+		return err
+	}
+	if err := session.ensureCurrencyDesignExists(cid); err != nil {
+		return err
+	}
+	if err := session.ensureContractAccountExists(ctx.Contract, "contract"); err != nil {
+		return err
+	}
+
+	sourceBalance, found, err := session.projectedBalance(ctx.Contract, cid)
+	switch {
+	case err != nil:
+		return errors.Errorf("failed to read contract balance for currency %s", cid)
+	case !found:
+		return errors.Errorf("contract balance not found for currency %s", cid)
+	case sourceBalance.Compare(amount) < 0:
+		return errors.Errorf("insufficient contract balance for currency %s", cid)
+	}
+
+	if found, err := session.accountExists(receiver); err != nil {
+		return errors.Errorf("failed to read receiver account %s", receiver)
+	} else if !found {
+		smv, err := cstate.CreateNotExistAccount(receiver, session.overlayGetStateFunc())
+		if err != nil {
+			return errors.Errorf("failed to create receiver account %s", receiver)
+		}
+		if smv != nil {
+			session.putAccountMerge(smv)
+		}
+	}
+
+	session.removeBalance(ctx.Contract, cid, amount)
+	session.addBalance(receiver, cid, amount)
+
+	return nil
+}
+
+func (ctx *ExecutionContext) ensureTopLevelCurrencyTransferAllowed(name string) (*ExecutionSession, error) {
+	session := ctx.Session
+	if session == nil {
+		return nil, errors.Errorf("chain.%s is unavailable outside write execution", name)
+	}
+	if ctx.ReadOnly {
+		return nil, errors.Errorf("chain.%s is unavailable from QueryContext", name)
+	}
+	if session.topLevelMode == InvocationModeRegister {
+		return nil, errors.Errorf("chain.%s is not allowed during contract registration", name)
+	}
+	if session.topLevelMode != InvocationModeCall {
+		return nil, errors.Errorf("chain.%s is allowed only during contract call execution", name)
+	}
+	if session.depth != 1 || len(session.callStack) < 1 || !ctx.Contract.Equal(session.callStack[0]) {
+		return nil, errors.Errorf("chain.%s is allowed only from the top-level contract", name)
+	}
+
+	return session, nil
+}
+
+func parseCurrencyAmount(currencyID string, amountText string) (ctypes.CurrencyID, ccommon.Big, error) {
+	cid := ctypes.CurrencyID(currencyID)
+	if err := cid.IsValid(nil); err != nil {
+		return "", ccommon.ZeroBig, errors.Errorf("invalid currency %q", currencyID)
+	}
+
+	amount, err := ccommon.NewBigFromString(amountText)
+	if err != nil {
+		return "", ccommon.ZeroBig, errors.Errorf("invalid transfer amount %q", amountText)
+	}
+	if !amount.OverZero() {
+		return "", ccommon.ZeroBig, errors.Errorf("transfer amount must be positive")
+	}
+
+	return cid, amount, nil
+}
+
+func (session *ExecutionSession) ensureCurrencyDesignExists(cid ctypes.CurrencyID) error {
+	st, found, err := session.baseGetState(ccurrency.DesignStateKey(cid))
+	switch {
+	case err != nil:
+		return errors.Errorf("failed to read currency design %s", cid)
+	case !found:
+		return errors.Errorf("currency design not found for %s", cid)
+	}
+	if _, ok := st.Value().(ccurrency.DesignStateValue); !ok {
+		return errors.Errorf("invalid currency design state for %s", cid)
+	}
+
+	return nil
+}
+
+func (session *ExecutionSession) ensureRegularAccountExists(address base.Address, name string) error {
+	st, found, err := session.getState(ccurrency.AccountStateKey(address))
+	switch {
+	case err != nil:
+		return errors.Errorf("failed to read %s account %s", name, address)
+	case !found:
+		return errors.Errorf("%s account not found %s", name, address)
+	}
+	if _, err := ccurrency.LoadAccountStateValue(st); err != nil {
+		return errors.Errorf("invalid %s account state %s", name, address)
+	}
+
+	return nil
+}
+
+func (session *ExecutionSession) ensureContractAccountExists(address base.Address, name string) error {
+	st, found, err := session.baseGetState(cestate.StateKeyContractAccount(address))
+	switch {
+	case err != nil:
+		return errors.Errorf("failed to read %s contract account %s", name, address)
+	case !found:
+		return errors.Errorf("%s contract account not found %s", name, address)
+	}
+	if _, err := cestate.StateContractAccountValue(st); err != nil {
+		return errors.Errorf("invalid %s contract account state %s", name, address)
+	}
+
+	return nil
+}
+
+func (session *ExecutionSession) ensureAddressIsNotContractAccount(address base.Address, name string) error {
+	st, found, err := session.baseGetState(cestate.StateKeyContractAccount(address))
+	switch {
+	case err != nil:
+		return errors.Errorf("failed to read %s contract account %s", name, address)
+	case !found:
+		return nil
+	}
+	if _, err := cestate.StateContractAccountValue(st); err != nil {
+		return errors.Errorf("invalid %s contract account state %s", name, address)
+	}
+
+	return errors.Errorf("%s must not be a contract account %s", name, address)
 }
