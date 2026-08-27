@@ -57,4 +57,12 @@ Focused race verification completed with U6A-R2A at 3/3 commands passing, U6A-R2
 
 The package-wide runtime race command timed out at both 10 and 20 minutes without emitting a race detector finding; the 20-minute run was executing `TestUint256OptimizedMaxWriteAndQuery` when it timed out. This package-wide timeout is deferred as legacy audit work and does not block the U6A-R commit. Pure arithmetic differential and non-uint256 runtime race coverage move to U6A-LR.
 
-Write/query gas and allocation limits, package setup accounting, snapshot codec, and digest schema are unchanged. Contract-to-contract shared gas and nested native scaling remain pending for C2.
+## Nested Shared Gas
+
+C2 nested Uint256 integration is verified by `TestNestedUint256ExactSharedGasMeterIdentity`, which observes the top-level machine and two nested machines receiving the exact same gas meter instance. All three machines receive the unchanged write allocator limit. Allocators remain machine-local; aggregate allocation protection continues to rely on depth, touched-contract, and shared-gas limits rather than a new shared allocator.
+
+`TestNestedUint256NativePathsAndOverlayVisibility` exercises canonical conversion, MulDiv, and Sqrt through the public `mitum/math/v1/u256` API. Its second nested call reads the first call's session-overlay snapshot before top-level merges are applied. `TestNestedUint256GasAccumulationDeterministic` measured 481,425 gas for one nested workload and 866,716 for the multi-nested workload, a deterministic 385,291 delta on the shared meter.
+
+`TestNestedUint256OutOfGasAtomicRollback` consumed 5,026,357 against the fixed 5,000,000 limit and returned no merges while preserving caller and both target snapshots. `TestNestedUint256NativeFailureAtomicRollback` likewise preserved all three snapshots and returned the stable denominator-zero reason with no merges. Caller/Origin ABI and currency overlay remain unapplied. The U6A-LR package-wide race audit remains deferred.
+
+Write/query gas and allocation limits, package setup accounting, snapshot codec, and digest schema are unchanged.
