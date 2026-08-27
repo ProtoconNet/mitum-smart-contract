@@ -28,6 +28,7 @@ type ExecutionContext struct {
 	AccountReader  AccountReader
 	ContractReader ContractReader
 	BalanceReader  BalanceReader
+	Session        *ExecutionSession
 }
 
 func (ctx *ExecutionContext) Validate() error {

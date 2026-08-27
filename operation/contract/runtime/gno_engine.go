@@ -24,7 +24,17 @@ import (
 type gnoEngine struct{}
 
 var analyzeContractSchemaFunc = AnalyzeContractSchema
-var newGnoMachineAndPackageFunc = newGnoMachineAndPackage
+var newGnoMachineAndPackageFunc func(
+	*ExecutionContext,
+	string,
+	string,
+	GnoExecutionLimits,
+	gstore.GasMeter,
+) (*gno.Machine, *gno.PackageValue, error)
+
+func init() {
+	newGnoMachineAndPackageFunc = newGnoMachineAndPackage
+}
 
 func NewGnoEngine() ContractEngine {
 	return gnoEngine{}
@@ -52,34 +62,57 @@ func (gnoEngine) ExecuteContract(
 		}
 	}()
 
+	if _, err := normalizeExecuteRequest(req); err != nil {
+		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("invalid call data: %v", err)
+	}
+
+	limits := WriteGnoExecutionLimits()
+	gasMeter = NewGnoGasMeter(limits.GasLimit)
+	session := NewExecutionSession(encs, getStateFunc, req, limits, gasMeter)
+
+	result, err := executeContractInSession(session, req, true)
+	if err != nil {
+		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("%v", err)
+	}
+
+	return result, nil
+}
+
+func executeContractInSession(
+	session *ExecutionSession,
+	req ExecuteRequest,
+	topLevel bool,
+) (ExecuteResult, error) {
 	normalized, err := normalizeExecuteRequest(req)
 	if err != nil {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("invalid call data: %v", err)
+		return ExecuteResult{}, fmt.Errorf("invalid call data: %v", err)
 	}
 
 	schema, err := resolveContractSchemaForExecution(req.Schema, req.ContractCode)
 	if err != nil {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to analyze contract schema: %v", err)
+		return ExecuteResult{}, fmt.Errorf("failed to analyze contract schema: %v", err)
 	}
 
 	var runtimeValue state.RuntimeStateValue
 	isNewRuntime := false
 
+	getStateFunc := session.overlayGetStateFunc()
+
 	if st, found, err := getStateFunc(state.RuntimeStateKey(req.Contract)); err != nil {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to read runtime state: %v", err)
+		return ExecuteResult{}, fmt.Errorf("failed to read runtime state: %v", err)
 	} else if found {
 		runtimeValue, err = state.GetRuntimeFromState(st)
 		if err != nil {
-			return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to decode runtime state: %v", err)
+			return ExecuteResult{}, fmt.Errorf("failed to decode runtime state: %v", err)
 		}
 		if runtimeValue.Engine != state.RuntimeEngineGnoSnapshot {
-			return ExecuteResult{}, base.NewBaseOperationProcessReasonError(
+			return ExecuteResult{}, fmt.Errorf(
 				"runtime engine mismatch: %q", runtimeValue.Engine,
 			)
 		}
 	} else {
 		if req.Mode != InvocationModeRegister {
-			return ExecuteResult{}, base.NewBaseOperationProcessReasonError(
+			return ExecuteResult{}, fmt.Errorf(
 				"runtime state not found for typed contract %v; register must create runtime first",
 				req.Contract,
 			)
@@ -91,16 +124,13 @@ func (gnoEngine) ExecuteContract(
 
 	var snapshotValue state.SnapshotStateValue
 
-	if st, found, err := getStateFunc(state.SnapshotStateKey(req.Contract)); err != nil {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to read snapshot state: %v", err)
+	if snapshotFromState, found, err := session.snapshotFor(req.Contract); err != nil {
+		return ExecuteResult{}, fmt.Errorf("failed to read snapshot state: %v", err)
 	} else if found {
-		snapshotValue, err = state.GetSnapshotFromState(st)
-		if err != nil {
-			return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to decode snapshot state: %v", err)
-		}
+		snapshotValue = snapshotFromState
 	} else {
 		if req.Mode != InvocationModeRegister {
-			return ExecuteResult{}, base.NewBaseOperationProcessReasonError(
+			return ExecuteResult{}, fmt.Errorf(
 				"snapshot state not found for typed contract %v",
 				req.Contract,
 			)
@@ -114,18 +144,18 @@ func (gnoEngine) ExecuteContract(
 	}
 
 	if snapshotValue.Version != GnoSnapshotVersion {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError(
+		return ExecuteResult{}, fmt.Errorf(
 			"unsupported snapshot version %d", snapshotValue.Version,
 		)
 	}
 	if snapshotValue.Codec != GnoSnapshotCodecName {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError(
+		return ExecuteResult{}, fmt.Errorf(
 			"unsupported snapshot codec %q", snapshotValue.Codec,
 		)
 	}
 
 	execCtx, err := NewExecutionContext(
-		encs,
+		session.encs,
 		getStateFunc,
 		req.Contract,
 		req.Sender,
@@ -133,25 +163,23 @@ func (gnoEngine) ExecuteContract(
 		false,
 	)
 	if err != nil {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to build execution context: %v", err)
+		return ExecuteResult{}, fmt.Errorf("failed to build execution context: %v", err)
 	}
-
-	limits := WriteGnoExecutionLimits()
-	gasMeter = NewGnoGasMeter(limits.GasLimit)
+	execCtx.Session = session
 
 	m, pkg, err := newGnoMachineAndPackageFunc(
 		execCtx,
 		runtimeValue.PackagePath,
 		req.ContractCode,
-		limits,
-		gasMeter,
+		session.limits,
+		session.gasMeter,
 	)
 	if err != nil {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to initialize gno machine: %v", err)
+		return ExecuteResult{}, fmt.Errorf("failed to initialize gno machine: %v", err)
 	}
 
 	if err := RestoreSnapshot(m, pkg, snapshotValue.Snapshot, schema); err != nil {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to restore snapshot: %v", err)
+		return ExecuteResult{}, fmt.Errorf("failed to restore snapshot: %v", err)
 	}
 
 	switch normalized.mode {
@@ -161,13 +189,13 @@ func (gnoEngine) ExecuteContract(
 		invokeReq.Function = normalized.registerFunction
 		invokeReq.CallData = normalized.initData
 		if err := invokeTypedWrite(m, pkg, invokeReq, schema); err != nil {
-			return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to execute typed contract call: %v", err)
+			return ExecuteResult{}, fmt.Errorf("failed to execute typed contract call: %v", err)
 		}
 	case InvocationModeCall:
 		for i := range normalized.callItems {
 			item := normalized.callItems[i]
 			if item.Function == "Initialize" {
-				return ExecuteResult{}, base.NewBaseOperationProcessReasonError(
+				return ExecuteResult{}, fmt.Errorf(
 					"failed to execute typed contract call: call item %d %q: Initialize cannot be called through call operation for typed contracts",
 					i+1,
 					item.Function,
@@ -179,7 +207,7 @@ func (gnoEngine) ExecuteContract(
 			invokeReq.Function = item.Function
 			invokeReq.CallData = item.CallData
 			if err := invokeTypedWrite(m, pkg, invokeReq, schema); err != nil {
-				return ExecuteResult{}, base.NewBaseOperationProcessReasonError(
+				return ExecuteResult{}, fmt.Errorf(
 					"failed to execute typed contract call: call item %d %q: %v",
 					i+1,
 					item.Function,
@@ -188,19 +216,18 @@ func (gnoEngine) ExecuteContract(
 			}
 		}
 	default:
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("unsupported invocation mode %q", normalized.mode)
+		return ExecuteResult{}, fmt.Errorf("unsupported invocation mode %q", normalized.mode)
 	}
 
 	snapshotBytes, err := CaptureSnapshot(pkg, m.Store, schema)
 	if err != nil {
-		return ExecuteResult{}, base.NewBaseOperationProcessReasonError("failed to capture snapshot: %v", err)
+		return ExecuteResult{}, fmt.Errorf("failed to capture snapshot: %v", err)
 	}
+	session.putSnapshot(req.Contract, snapshotBytes)
 
-	merges := []base.StateMergeValue{
-		cstate.NewStateMergeValue(
-			state.SnapshotStateKey(req.Contract),
-			state.NewSnapshotStateValue(GnoSnapshotVersion, GnoSnapshotCodecName, snapshotBytes),
-		),
+	merges := []base.StateMergeValue(nil)
+	if topLevel {
+		merges = session.stateMerges()
 	}
 
 	if isNewRuntime {
