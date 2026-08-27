@@ -11,6 +11,7 @@ const (
 	// per-KiB native slope convention.
 	mitumNativeSingleLookupGasBase  int64 = 3000
 	mitumNativeTripleLookupGasBase  int64 = mitumNativeSingleLookupGasBase * 3
+	mitumNativeCallContractGasBase  int64 = 15000
 	mitumNativeSHA3Sum256GasBase    int64 = 1000
 	mitumNativeSHA3Sum256GasPerByte int64 = 2
 	// Uint256 costs are bounded flat tiers calibrated for 256-bit inputs.
@@ -24,6 +25,7 @@ func init() {
 	registerMitumNativeFlatGas("AccountExists", mitumNativeSingleLookupGasBase)
 	registerMitumNativeFlatGas("IsContractAccount", mitumNativeSingleLookupGasBase)
 	registerMitumNativeFlatGas("BalanceOf", mitumNativeTripleLookupGasBase)
+	registerMitumNativeFlatGas("CallContract", mitumNativeCallContractGasBase)
 	registerMitumNativeStringLinearGas("SHA3Sum256", mitumNativeSHA3Sum256GasBase, mitumNativeSHA3Sum256GasPerByte)
 	registerUint256NativeFlatGas("_nativeCanonicalToHex", uint256NativeCanonicalToHexGasBase)
 	registerUint256NativeFlatGas("_nativeMulDiv", uint256NativeMulDivGasBase)

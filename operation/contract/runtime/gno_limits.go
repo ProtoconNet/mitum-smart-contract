@@ -4,9 +4,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/imfact-labs/mitum2/base"
 	gstore "github.com/gnolang/gno/tm2/pkg/store"
+	"github.com/imfact-labs/mitum2/base"
 )
+
+type sanitizedExecutionError struct {
+	message string
+}
+
+func (err sanitizedExecutionError) Error() string {
+	return err.message
+}
 
 // Query gas is a read-only resource cap, not a transaction billing budget.
 // It is intentionally smaller than write/register/call execution gas.
@@ -45,6 +53,10 @@ func ClassifyGnoExecutionPanic(
 	r any,
 	gasMeter gstore.GasMeter,
 ) base.OperationProcessReasonError {
+	if err, ok := r.(sanitizedExecutionError); ok {
+		return base.NewBaseOperationProcessReasonError("%s", err.Error())
+	}
+
 	if gasMeter != nil && gasMeter.IsOutOfGas() {
 		return base.NewBaseOperationProcessReasonError(
 			"%s out of gas", scope,
