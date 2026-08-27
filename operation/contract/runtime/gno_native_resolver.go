@@ -285,6 +285,7 @@ func (ctx *ExecutionContext) CallContract(
 			Mode:         InvocationModeCall,
 			Contract:     target,
 			Sender:       session.sender,
+			Caller:       ctx.Contract,
 			Height:       session.height,
 			BlockTime:    session.blockTime,
 			ContractCode: designValue.Design.ContractCode(),

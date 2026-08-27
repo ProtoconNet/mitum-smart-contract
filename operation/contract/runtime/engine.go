@@ -1,9 +1,9 @@
 package runtime
 
 import (
-	"github.com/imfact-labs/smart-contract-model/state"
 	"github.com/imfact-labs/mitum2/base"
 	"github.com/imfact-labs/mitum2/util/encoder"
+	"github.com/imfact-labs/smart-contract-model/state"
 )
 
 type InvocationMode string
@@ -17,6 +17,7 @@ type ExecuteRequest struct {
 	Mode         InvocationMode
 	Contract     base.Address
 	Sender       base.Address
+	Caller       base.Address
 	Height       base.Height
 	BlockTime    int64
 	ContractCode string

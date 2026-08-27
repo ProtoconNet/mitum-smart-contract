@@ -21,6 +21,7 @@ type BalanceReader interface {
 
 type ExecutionContext struct {
 	Sender         base.Address
+	Caller         base.Address
 	Contract       base.Address
 	Height         base.Height
 	CurrentHeight  base.Height
@@ -37,6 +38,9 @@ func (ctx *ExecutionContext) Validate() error {
 	}
 	if ctx.Sender == nil {
 		return errors.Errorf("execution context sender is nil")
+	}
+	if ctx.Caller == nil {
+		return errors.Errorf("execution context caller is nil")
 	}
 	if ctx.Contract == nil {
 		return errors.Errorf("execution context contract is nil")
@@ -70,6 +74,28 @@ func NewExecutionContext(
 		getStateFunc,
 		contract,
 		sender,
+		sender,
+		height,
+		height,
+		readOnly,
+	)
+}
+
+func NewExecutionContextWithCaller(
+	encs encoder.Encoders,
+	getStateFunc base.GetStateFunc,
+	contract base.Address,
+	sender base.Address,
+	caller base.Address,
+	height base.Height,
+	readOnly bool,
+) (*ExecutionContext, error) {
+	return NewExecutionContextWithCurrentHeight(
+		encs,
+		getStateFunc,
+		contract,
+		sender,
+		caller,
 		height,
 		height,
 		readOnly,
@@ -81,12 +107,14 @@ func NewExecutionContextWithCurrentHeight(
 	getStateFunc base.GetStateFunc,
 	contract base.Address,
 	sender base.Address,
+	caller base.Address,
 	height base.Height,
 	currentHeight base.Height,
 	readOnly bool,
 ) (*ExecutionContext, error) {
 	ctx := &ExecutionContext{
 		Sender:         sender,
+		Caller:         caller,
 		Contract:       contract,
 		Height:         height,
 		CurrentHeight:  currentHeight,

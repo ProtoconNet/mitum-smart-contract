@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"fmt"
 
-	pstate "github.com/imfact-labs/smart-contract-model/state"
-	"github.com/imfact-labs/mitum2/base"
-	"github.com/imfact-labs/mitum2/util/encoder"
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
 	gstore "github.com/gnolang/gno/tm2/pkg/store"
+	"github.com/imfact-labs/mitum2/base"
+	"github.com/imfact-labs/mitum2/util/encoder"
+	pstate "github.com/imfact-labs/smart-contract-model/state"
 )
 
 func (gnoEngine) QueryContract(
@@ -79,6 +79,7 @@ func (gnoEngine) QueryContract(
 	execCtx, err := NewExecutionContextWithCurrentHeight(
 		encs,
 		getStateFunc,
+		req.Contract,
 		req.Contract,
 		req.Contract,
 		req.Height,

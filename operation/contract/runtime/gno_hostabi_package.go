@@ -10,6 +10,7 @@ const mitumChainPackageSource = `package chain
 
 type WriteContext struct {
 	Sender    string
+	Caller    string
 	Contract  string
 	Height    int64
 	BlockTime int64
@@ -18,6 +19,10 @@ type WriteContext struct {
 
 func (ctx WriteContext) GetSender() string {
 	return ctx.Sender
+}
+
+func (ctx WriteContext) GetCaller() string {
+	return ctx.Caller
 }
 
 func (ctx WriteContext) GetContract() string {
