@@ -154,11 +154,17 @@ func executeContractInSession(
 		)
 	}
 
-	execCtx, err := NewExecutionContext(
+	caller := req.Caller
+	if caller == nil {
+		caller = req.Sender
+	}
+
+	execCtx, err := NewExecutionContextWithCaller(
 		session.encs,
 		getStateFunc,
 		req.Contract,
 		req.Sender,
+		caller,
 		req.Height,
 		false,
 	)
@@ -507,7 +513,14 @@ func invokeTypedWrite(
 	m.RunDeclaration(gno.ImportD("chain", MitumChainPackagePath))
 
 	args := []any{
-		writeContextExpr(req.Sender.String(), req.Contract.String(), int64(req.Height), req.BlockTime, false),
+		writeContextExpr(
+			req.Sender.String(),
+			callerAddressString(req.Caller, req.Sender),
+			req.Contract.String(),
+			int64(req.Height),
+			req.BlockTime,
+			false,
+		),
 	}
 
 	if req.Mode == InvocationModeRegister && fn.Name == "Initialize" {
@@ -615,11 +628,20 @@ func safeTypedValueString(tv gno.TypedValue) (out string) {
 	return tv.String()
 }
 
-func writeContextExpr(sender, contract string, height int64, blockTime int64, readOnly bool) gno.Expr {
+func callerAddressString(caller base.Address, sender base.Address) string {
+	if caller != nil {
+		return caller.String()
+	}
+
+	return sender.String()
+}
+
+func writeContextExpr(sender, caller, contract string, height int64, blockTime int64, readOnly bool) gno.Expr {
 	return &gno.CompositeLitExpr{
 		Type: gno.Sel(gno.Nx("chain"), "WriteContext"),
 		Elts: gno.KeyValueExprs{
 			gno.Kv("Sender", gno.Str(sender)),
+			gno.Kv("Caller", gno.Str(caller)),
 			gno.Kv("Contract", gno.Str(contract)),
 			gno.Kv("Height", gno.Num(strconv.FormatInt(height, 10))),
 			gno.Kv("BlockTime", gno.Num(strconv.FormatInt(blockTime, 10))),
