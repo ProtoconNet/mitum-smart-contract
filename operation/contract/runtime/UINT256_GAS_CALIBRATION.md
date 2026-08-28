@@ -55,7 +55,9 @@ go test -race -timeout 10m ./operation/contract/runtime -run '^TestUint256FinalC
 
 Focused race verification completed with U6A-R2A at 3/3 commands passing, U6A-R2B at 4/4, and U6A-R2C at 4/4. It produced no race findings and no focused timeouts. Each run emitted the known macOS malformed `LC_DYSYMTAB` linker warning.
 
-The package-wide runtime race command timed out at both 10 and 20 minutes without emitting a race detector finding; the 20-minute run was executing `TestUint256OptimizedMaxWriteAndQuery` when it timed out. This package-wide timeout is deferred as legacy audit work and does not block the U6A-R commit. Pure arithmetic differential and non-uint256 runtime race coverage move to U6A-LR.
+The U6A-LR work completed through the UF2 bounded split race audit, including the deterministic arithmetic differential, package and consensus identity, engine/query/snapshot paths, nested shared gas, and currency atomic rollback paths. Reconciliation covers all 291 current runtime top-level tests. Split commands produced zero race findings and zero timeouts.
+
+The package-wide runtime race command historically timed out at both 10 and 20 minutes without emitting a race detector finding; the 20-minute run was executing `TestUint256OptimizedMaxWriteAndQuery` when it timed out. This remains a known cumulative execution-time limitation, while the completed split audit supplies full current test-list coverage. The package-wide command itself has not completed.
 
 ## Nested Shared Gas
 
@@ -63,6 +65,6 @@ C2 nested Uint256 integration is verified by `TestNestedUint256ExactSharedGasMet
 
 `TestNestedUint256NativePathsAndOverlayVisibility` exercises canonical conversion, MulDiv, and Sqrt through the public `mitum/math/v1/u256` API. Its second nested call reads the first call's session-overlay snapshot before top-level merges are applied. `TestNestedUint256GasAccumulationDeterministic` measured 481,425 gas for one nested workload and 866,716 for the multi-nested workload, a deterministic 385,291 delta on the shared meter.
 
-`TestNestedUint256OutOfGasAtomicRollback` consumed 5,026,357 against the fixed 5,000,000 limit and returned no merges while preserving caller and both target snapshots. `TestNestedUint256NativeFailureAtomicRollback` likewise preserved all three snapshots and returned the stable denominator-zero reason with no merges. Caller/Origin ABI was applied and verified in C3. The model-owned currency account/balance overlay was applied and verified in C4, including shared-gas snapshot/currency atomic rollback. The U6A-LR legacy race audit moves to UF2.
+`TestNestedUint256OutOfGasAtomicRollback` consumed 5,026,357 against the fixed 5,000,000 limit and returned no merges while preserving caller and both target snapshots. `TestNestedUint256NativeFailureAtomicRollback` likewise preserved all three snapshots and returned the stable denominator-zero reason with no merges. Caller/Origin ABI was applied and verified in C3. The model-owned currency account/balance overlay was applied and verified in C4, including shared-gas snapshot/currency atomic rollback. UF2 completed the U6A-LR split legacy race audit with no findings or timeouts.
 
-Write/query gas and allocation limits, package setup accounting, snapshot codec, and digest schema are unchanged.
+Consensus gas identity, write/query gas and allocation limits, package setup accounting, snapshot codec, and digest schema are unchanged.
