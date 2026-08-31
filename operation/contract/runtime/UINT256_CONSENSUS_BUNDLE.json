@@ -6,8 +6,8 @@
   "hash_identity": {"wrapper_sha256": "43980a468b2a107b64c3efa4ced7568b5f21a8f012dbcdd22fd94dae03cee899", "onbloc_bundle_sha256": "2e60329f269f003bc64c023aeb4f3288ca597e2cf906819b37f46a6de0d7aeb5"},
   "resource_identity": {"write_gas": 5000000, "query_gas": 1000000, "write_allocation_bytes": 8388608, "query_allocation_bytes": 4194304, "canonical_to_hex_gas": 10000, "muldiv_gas": 40000, "sqrt_gas": 20000, "call_contract_gas": 15000, "transfer_sender_to_contract_gas": 12000, "transfer_contract_to_gas": 12000, "depth_limit": 8, "touched_contract_limit": 32},
   "source_files": {
-    "go.mod": "0fcc3f024b62c53ff9b0cf29246bb677971f889371293b6dcd44616494ebdd30",
-    "go.sum": "b9494d435d6655114afafd5a0c9b7f040efa674ba75fa81f25f6cfe0d23901c2",
+    "go.mod": "47d8ea6ebf2ce484c7563d6584080fc34b81d272e2cda7089175be4dfbaf220c",
+    "go.sum": "78328a9f52e34c4b530f503164f351c566f37620b2b8ba98194d7c7113b9101d",
     "operation/contract/runtime/engine.go": "39e4e7afea42fb163fbf87164691476aff760b7fd7a743576806a6d2072a0202",
     "operation/contract/runtime/execution_session.go": "1bbbb00eade2b0fe5ad281ecd9244ff70efef879456f6f1607920e81debc9a5c",
     "operation/contract/runtime/gno_engine.go": "8a77cac3e053aebcf6bea8bdb7eb7f6cc3627eb99d382e75b8d83b945f1394ab",
@@ -33,5 +33,5 @@
     "operation/contract/runtime/schema_ruleset.go": "98a379b2ec31b4d457f6181eae5b5bb8448745c5f7566628a8ec9f54b7cfc610",
     "operation/contract/runtime/state_readers.go": "91909d45becb34e82a12ef0b2b7499be38bc93c2184806c255bf4c9ff73214f0"
   },
-  "canonical_source_bundle_sha256": "cbb6f6f75d5b053060a1d72abec93d2922278a9015698651d4b70627d26bbe16"
+  "canonical_source_bundle_sha256": "9c93abb9d26e526755533efaf449483c428c45919bbebd2beec3ae18bba14152"
 }
