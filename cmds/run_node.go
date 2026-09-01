@@ -2,40 +2,33 @@ package cmds
 
 import (
 	"context"
-	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/arl/statsviz"
 	"github.com/gorilla/mux"
 	capi "github.com/imfact-labs/currency-model/api"
+	ccmds "github.com/imfact-labs/currency-model/app/cmds"
+	cpipeline "github.com/imfact-labs/currency-model/app/runtime/pipeline"
 	cdigest "github.com/imfact-labs/currency-model/digest"
 	"github.com/imfact-labs/mitum2/base"
 	"github.com/imfact-labs/mitum2/isaac"
 	isaacstates "github.com/imfact-labs/mitum2/isaac/states"
 	"github.com/imfact-labs/mitum2/launch"
-	"github.com/imfact-labs/mitum2/network/quicmemberlist"
 	"github.com/imfact-labs/mitum2/network/quicstream"
 	"github.com/imfact-labs/mitum2/util"
 	"github.com/imfact-labs/mitum2/util/logging"
 	"github.com/imfact-labs/mitum2/util/ps"
 	"github.com/imfact-labs/smart-contract-model/digest"
-	"github.com/imfact-labs/smart-contract-model/runtime/pipeline"
+	"github.com/imfact-labs/smart-contract-model/runtime/steps"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
 
 type RunCommand struct { //nolint:govet //...
+	ccmds.RunCommand
+
 	//revive:disable:line-length-limit
-	launch.DesignFlag
-	launch.DevFlags `embed:"" prefix:"dev."`
-	launch.PrivatekeyFlags
-	Discovery []launch.ConnInfoFlag `help:"member discovery" placeholder:"ConnInfo"`
-	Hold      launch.HeightFlag     `help:"hold consensus states"`
-	HTTPState string                `name:"http-state" help:"runtime statistics thru https" placeholder:"bind address"`
-	launch.ACLFlags
 	exitf  func(error)
 	log    *zerolog.Logger
 	holded bool
@@ -59,10 +52,11 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		Msg("flags")
 
 	cmd.log = log.Log()
+	cmd.RunCommand.SetLog(log.Log())
 
 	if len(cmd.HTTPState) > 0 {
-		if err := cmd.runHTTPState(cmd.HTTPState); err != nil {
-			return errors.Wrap(err, "run http state")
+		if err := cmd.RunCommand.RunHTTPState(cmd.HTTPState); err != nil {
+			return errors.Wrap(err, "failed to run http state")
 		}
 	}
 
@@ -74,19 +68,20 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		launch.ACLFlagsContextKey:      cmd.ACLFlags,
 	})
 
-	pps := pipeline.DefaultRunPS(pipeline.RunHooks{
-		DigesterName:             PNameDigester,
-		Digester:                 ProcessDigester,
-		StartDigesterName:        PNameStartDigester,
-		StartDigester:            ProcessStartDigester,
-		CheckHold:                cmd.pCheckHold,
-		ProposalProcessors:       PProposalProcessors,
-		WhenNewBlockSaved:        cmd.pWhenNewBlockSavedInConsensusStateFunc,
-		WhenNewBlockConfirmed:    cmd.pWhenNewBlockConfirmed,
-		WhenNewBlockSavedSyncing: cmd.pWhenNewBlockSavedInSyncingStateFunc,
-		DigestAPIHandlers:        cmd.pDigestAPIHandlers,
-		DigesterFollowUp:         PdigesterFollowUp,
-	})
+	pps := cpipeline.DefaultRunPS()
+	_ = pps.POK(launch.PNameStates).PreRemoveOK(launch.PNameProposalProcessors)
+	_ = pps.AddOK(PNameDigester, ProcessDigester, nil, cdigest.PNameDigesterDataBase).
+		AddOK(PNameStartDigester, ProcessStartDigester, nil, capi.PNameStartAPI)
+	_ = pps.POK(launch.PNameStorage).PostAddOK(ps.Name("check-hold"), cmd.pCheckHold)
+	_ = pps.POK(launch.PNameStates).
+		PreAddOK(steps.PNameOperationProcessorsMap, steps.POperationProcessorsMap).
+		PreAddOK(launch.PNameProposalProcessors, PProposalProcessors).
+		PreAddOK(ps.Name("when-new-block-saved-in-consensus-state-func"), cmd.pWhenNewBlockSavedInConsensusStateFunc).
+		PreAddOK(ps.Name("when-new-block-confirmed-func"), cmd.pWhenNewBlockConfirmed).
+		PreAddOK(ps.Name("when-new-block-saved-in-syncing-state-func"), cmd.pWhenNewBlockSavedInSyncingStateFunc)
+	_ = pps.POK(launch.PNameEncoder).PostAddOK(launch.PNameAddHinters, steps.PAddHinters)
+	_ = pps.POK(capi.PNameAPI).PostAddOK(ccmds.PNameDigestAPIHandlers, cmd.pDigestAPIHandlers)
+	_ = pps.POK(PNameDigester).PostAddOK(ccmds.PNameDigesterFollowUp, PdigesterFollowUp)
 
 	_ = pps.SetLogging(log)
 
@@ -120,34 +115,26 @@ func (cmd *RunCommand) run(pctx context.Context) error {
 	defer stop()
 
 	exitch := make(chan error)
-
-	cmd.exitf = func(err error) {
-		exitch <- err
-	}
+	cmd.exitf = func(err error) { exitch <- err }
 
 	stopstates := func() {}
-
 	if !cmd.holded {
 		deferred, err := cmd.runStates(ctx, pctx)
 		if err != nil {
 			return err
 		}
-
 		stopstates = deferred
 	}
 
 	select {
-	case <-ctx.Done(): // NOTE graceful stop
+	case <-ctx.Done():
 		return errors.WithStack(ctx.Err())
 	case err := <-exitch:
 		if errors.Is(err, errHoldStop) {
 			stopstates()
-
 			<-ctx.Done()
-
 			return errors.WithStack(ctx.Err())
 		}
-
 		return err
 	}
 }
@@ -155,29 +142,22 @@ func (cmd *RunCommand) run(pctx context.Context) error {
 func (cmd *RunCommand) runStates(ctx, pctx context.Context) (func(), error) {
 	var discoveries *util.Locked[[]quicstream.ConnInfo]
 	var states *isaacstates.States
-
 	if err := util.LoadFromContextOK(pctx,
 		launch.DiscoveryContextKey, &discoveries,
 		launch.StatesContextKey, &states,
 	); err != nil {
 		return nil, err
 	}
-
 	if dis := launch.GetDiscoveriesFromLocked(discoveries); len(dis) < 1 {
 		cmd.log.Warn().Msg("empty discoveries; will wait to be joined by remote nodes")
 	}
 
-	go func() {
-		cmd.exitf(<-states.Wait(ctx))
-	}()
-
+	go func() { cmd.exitf(<-states.Wait(ctx)) }()
 	return func() {
 		if err := states.Hold(); err != nil && !errors.Is(err, util.ErrDaemonAlreadyStopped) {
 			cmd.log.Error().Err(err).Msg("stop states")
-
 			return
 		}
-
 		cmd.log.Debug().Msg("states stopped")
 	}, nil
 }
@@ -354,26 +334,6 @@ func (cmd *RunCommand) pCheckHold(pctx context.Context) (context.Context, error)
 	return pctx, nil
 }
 
-func (cmd *RunCommand) runHTTPState(bind string) error {
-	addr, err := net.ResolveTCPAddr("tcp", bind)
-	if err != nil {
-		return errors.Wrap(err, "parse --http-state")
-	}
-
-	m := http.NewServeMux()
-	if err := statsviz.Register(m); err != nil {
-		return errors.Wrap(err, "register statsviz for http-state")
-	}
-
-	cmd.log.Debug().Stringer("bind", addr).Msg("statsviz started")
-
-	go func() {
-		_ = http.ListenAndServe(addr.String(), m)
-	}()
-
-	return nil
-}
-
 func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context, error) {
 	var params *launch.LocalParams
 	var local base.LocalNode
@@ -398,7 +358,7 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 		return ctx, nil
 	}
 
-	cache, err := cmd.loadCache(ctx, design)
+	cache, err := ccmds.LoadCache(cmd.RunCommand.Log(), ctx, design)
 	if err != nil {
 		return ctx, err
 	}
@@ -409,7 +369,9 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 	}
 	router := dnt.Router()
 
-	defaultHandlers, err := cmd.setDigestDefaultHandlers(ctx, params, cache, router, dnt.Queue())
+	defaultHandlers, err := ccmds.SetDigestAPIDefaultHandlers(
+		cmd.RunCommand.Log(), ctx, params, cache, router, dnt.Queue(),
+	)
 	if err != nil {
 		return ctx, err
 	}
@@ -417,6 +379,9 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 	if err := defaultHandlers.Initialize(); err != nil {
 		return ctx, err
 	}
+	capi.SetHandlers(defaultHandlers, design.Digest)
+	defaultHandlers.SetEncoders(encs)
+	defaultHandlers.SetEncoder(enc)
 
 	handlers, err := cmd.setDigestHandlers(ctx, params, cache, router, defaultHandlers.Routes())
 	if err != nil {
@@ -432,49 +397,6 @@ func (cmd *RunCommand) pDigestAPIHandlers(ctx context.Context) (context.Context,
 	return ctx, nil
 }
 
-func (cmd *RunCommand) loadCache(_ context.Context, design cdigest.YamlDigestDesign) (capi.Cache, error) {
-	c, err := capi.NewCacheFromURI(design.Cache().String())
-	if err != nil {
-		cmd.log.Err(err).Str("cache", design.Cache().String()).Msg("failed to connect cache server")
-		cmd.log.Warn().Msg("instead of remote cache server, internal mem cache can be available, `memory://`")
-
-		return nil, err
-	}
-	return c, nil
-}
-
-func (cmd *RunCommand) setDigestDefaultHandlers(
-	ctx context.Context,
-	params *launch.LocalParams,
-	cache capi.Cache,
-	router *mux.Router,
-	queue chan capi.RequestWrapper,
-) (*capi.Handlers, error) {
-	var nodeDesign launch.NodeDesign
-	var st *cdigest.Database
-	if err := util.LoadFromContext(ctx,
-		launch.DesignContextKey, &nodeDesign,
-		cdigest.ContextValueDigestDatabase, &st,
-	); err != nil {
-		return nil, err
-	}
-
-	node, err := quicstream.NewConnInfoFromStringAddr(nodeDesign.Network.PublishString, nodeDesign.Network.TLSInsecure)
-	if err != nil {
-		return nil, err
-	}
-
-	handlers := capi.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router, queue, node)
-
-	h, err := cmd.setDigestNetworkClient(ctx, params, handlers)
-	if err != nil {
-		return nil, err
-	}
-	handlers = h
-
-	return handlers, nil
-}
-
 func (cmd *RunCommand) setDigestHandlers(
 	ctx context.Context,
 	params *launch.LocalParams,
@@ -488,51 +410,6 @@ func (cmd *RunCommand) setDigestHandlers(
 	}
 
 	handlers := digest.NewHandlers(ctx, params.ISAAC.NetworkID(), encs, enc, st, cache, router, routes)
-
-	return handlers, nil
-}
-
-func (cmd *RunCommand) setDigestNetworkClient(
-	ctx context.Context,
-	params *launch.LocalParams,
-	handlers *capi.Handlers,
-) (*capi.Handlers, error) {
-	var design cdigest.YamlDigestDesign
-	if err := util.LoadFromContext(ctx, cdigest.ContextValueDigestDesign, &design); err != nil {
-		if errors.Is(err, util.ErrNotFound) {
-			return handlers, nil
-		}
-
-		return nil, err
-	}
-
-	if design.Equal(cdigest.YamlDigestDesign{}) {
-		return handlers, nil
-	}
-
-	var memberList *quicmemberlist.Memberlist
-	if err := util.LoadFromContextOK(ctx, launch.MemberlistContextKey, &memberList); err != nil {
-		return nil, err
-	}
-
-	connectionPool, err := launch.NewConnectionPool(
-		1<<9,
-		params.ISAAC.NetworkID(),
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	//handlers = handlers.SetConnectionPool(connectionPool)
-
-	handlers = handlers.SetNetworkClientFunc(
-		func() (*quicstream.ConnectionPool, *quicmemberlist.Memberlist, []quicstream.ConnInfo, error) { // nolint:contextcheck
-			return connectionPool, memberList, design.ConnInfo, nil
-		},
-	)
-
-	cmd.log.Debug().Msg("send handler attached")
 
 	return handlers, nil
 }
