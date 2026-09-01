@@ -2,19 +2,9 @@ package cmds
 
 import (
 	"github.com/imfact-labs/mitum2/util/hint"
+	"github.com/imfact-labs/smart-contract-model/runtime/steps"
 )
 
 func IsSupportedProposalOperationFactHintFunc() func(hint.Hint) bool {
-	return func(ht hint.Hint) bool {
-		for i := range SupportedProposalOperationFactHinters {
-			s := SupportedProposalOperationFactHinters[i].Hint
-			if ht.Type() != s.Type() {
-				continue
-			}
-
-			return ht.IsCompatible(s)
-		}
-
-		return false
-	}
+	return steps.IsSupportedProposalOperationFactHintFunc()
 }

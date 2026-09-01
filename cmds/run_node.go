@@ -11,8 +11,6 @@ import (
 	"github.com/arl/statsviz"
 	"github.com/gorilla/mux"
 	capi "github.com/imfact-labs/currency-model/api"
-	ccmds "github.com/imfact-labs/currency-model/app/cmds"
-	"github.com/imfact-labs/currency-model/app/runtime/pipeline"
 	cdigest "github.com/imfact-labs/currency-model/digest"
 	"github.com/imfact-labs/mitum2/base"
 	"github.com/imfact-labs/mitum2/isaac"
@@ -24,6 +22,7 @@ import (
 	"github.com/imfact-labs/mitum2/util/logging"
 	"github.com/imfact-labs/mitum2/util/ps"
 	"github.com/imfact-labs/smart-contract-model/digest"
+	"github.com/imfact-labs/smart-contract-model/runtime/pipeline"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
@@ -75,24 +74,19 @@ func (cmd *RunCommand) Run(pctx context.Context) error {
 		launch.ACLFlagsContextKey:      cmd.ACLFlags,
 	})
 
-	pps := pipeline.DefaultRunPS()
-	_ = pps.POK(launch.PNameStates).PreRemoveOK(launch.PNameProposalProcessors)
-
-	_ = pps.AddOK(PNameDigester, ProcessDigester, nil, cdigest.PNameDigesterDataBase).
-		AddOK(PNameStartDigester, ProcessStartDigester, nil, capi.PNameStartAPI)
-	_ = pps.POK(launch.PNameStorage).PostAddOK(ps.Name("check-hold"), cmd.pCheckHold)
-	_ = pps.POK(launch.PNameStates).
-		PreAddOK(PNameOperationProcessorsMap, POperationProcessorsMap).
-		PreAddOK(launch.PNameProposalProcessors, PProposalProcessors).
-		PreAddOK(ps.Name("when-new-block-saved-in-consensus-state-func"), cmd.pWhenNewBlockSavedInConsensusStateFunc).
-		PreAddOK(ps.Name("when-new-block-confirmed-func"), cmd.pWhenNewBlockConfirmed).
-		PreAddOK(ps.Name("when-new-block-saved-in-syncing-state-func"), cmd.pWhenNewBlockSavedInSyncingStateFunc)
-	_ = pps.POK(launch.PNameEncoder).
-		PostAddOK(launch.PNameAddHinters, PAddHinters)
-	_ = pps.POK(capi.PNameAPI).
-		PostAddOK(ccmds.PNameDigestAPIHandlers, cmd.pDigestAPIHandlers)
-	_ = pps.POK(cdigest.PNameDigester).
-		PostAddOK(ccmds.PNameDigesterFollowUp, PdigesterFollowUp)
+	pps := pipeline.DefaultRunPS(pipeline.RunHooks{
+		DigesterName:             PNameDigester,
+		Digester:                 ProcessDigester,
+		StartDigesterName:        PNameStartDigester,
+		StartDigester:            ProcessStartDigester,
+		CheckHold:                cmd.pCheckHold,
+		ProposalProcessors:       PProposalProcessors,
+		WhenNewBlockSaved:        cmd.pWhenNewBlockSavedInConsensusStateFunc,
+		WhenNewBlockConfirmed:    cmd.pWhenNewBlockConfirmed,
+		WhenNewBlockSavedSyncing: cmd.pWhenNewBlockSavedInSyncingStateFunc,
+		DigestAPIHandlers:        cmd.pDigestAPIHandlers,
+		DigesterFollowUp:         PdigesterFollowUp,
+	})
 
 	_ = pps.SetLogging(log)
 

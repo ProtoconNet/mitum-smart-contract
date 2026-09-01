@@ -5,7 +5,6 @@ import (
 	"math"
 	"time"
 
-	"github.com/imfact-labs/currency-model/app/runtime/contracts"
 	"github.com/imfact-labs/mitum2/launch"
 
 	"github.com/imfact-labs/mitum2/base"
@@ -19,6 +18,7 @@ import (
 	"github.com/imfact-labs/mitum2/util/hint"
 	"github.com/imfact-labs/mitum2/util/logging"
 	"github.com/imfact-labs/smart-contract-model/operation/processor"
+	"github.com/imfact-labs/smart-contract-model/runtime/contracts"
 	"github.com/pkg/errors"
 )
 
