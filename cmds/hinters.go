@@ -30,36 +30,28 @@ var AddedSupportedHinters = []encoder.DecodeDetail{
 }
 
 func init() {
-	defaultLen := len(launch.Hinters)
-	currencyExtendedLen := defaultLen + len(spec.AddedHinters)
-	allExtendedLen := currencyExtendedLen + len(AddedHinters)
+	Hinters = append(Hinters, spec.Hinters...)
+	Hinters = append(Hinters, AddedHinters...)
 
-	Hinters = make([]encoder.DecodeDetail, allExtendedLen)
-	copy(Hinters, launch.Hinters)
-	copy(Hinters[defaultLen:currencyExtendedLen], spec.AddedHinters)
-	copy(Hinters[currencyExtendedLen:], AddedHinters)
-
-	defaultSupportedLen := len(launch.SupportedProposalOperationFactHinters)
-	currencySupportedExtendedLen := defaultSupportedLen + len(spec.AddedSupportedHinters)
-	allSupportedExtendedLen := currencySupportedExtendedLen + len(AddedSupportedHinters)
-
-	SupportedProposalOperationFactHinters = make(
-		[]encoder.DecodeDetail,
-		allSupportedExtendedLen)
-	copy(SupportedProposalOperationFactHinters, launch.SupportedProposalOperationFactHinters)
-	copy(SupportedProposalOperationFactHinters[defaultSupportedLen:currencySupportedExtendedLen], spec.AddedSupportedHinters)
-	copy(SupportedProposalOperationFactHinters[currencySupportedExtendedLen:], AddedSupportedHinters)
+	SupportedProposalOperationFactHinters = append(
+		SupportedProposalOperationFactHinters,
+		launch.SupportedProposalOperationFactHinters...,
+	)
+	SupportedProposalOperationFactHinters = append(
+		SupportedProposalOperationFactHinters, spec.AddedSupportedHinters...)
+	SupportedProposalOperationFactHinters = append(
+		SupportedProposalOperationFactHinters, AddedSupportedHinters...)
 }
 
 func LoadHinters(encs *encoder.Encoders) error {
-	for i := range AddedHinters {
-		if err := encs.AddDetail(AddedHinters[i]); err != nil {
+	for i := range Hinters {
+		if err := encs.AddDetail(Hinters[i]); err != nil {
 			return errors.Wrap(err, "add hinter to encoder")
 		}
 	}
 
-	for i := range AddedSupportedHinters {
-		if err := encs.AddDetail(AddedSupportedHinters[i]); err != nil {
+	for i := range SupportedProposalOperationFactHinters {
+		if err := encs.AddDetail(SupportedProposalOperationFactHinters[i]); err != nil {
 			return errors.Wrap(err, "add supported proposal operation fact hinter to encoder")
 		}
 	}

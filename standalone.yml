@@ -6,12 +6,13 @@ network:
   tls_insecure: true
 storage:
   base: ./mitum-data
-digest:
+api:
   network:
     bind: http://0.0.0.0:54320
     url: http://localhost:54320
   database:
-    uri: mongodb://127.0.0.1:27017/mc?replicaSet=mitum
+    uri: mongodb://127.0.0.1:27017/mc?directConnection=true
+  digest: true
 parameters:
   misc:
     max_message_size: 3000000
