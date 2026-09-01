@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 
 	"github.com/imfact-labs/currency-model/common"
+	"github.com/imfact-labs/currency-model/operation/extras"
 	ctypes "github.com/imfact-labs/currency-model/types"
-	"github.com/imfact-labs/smart-contract-model/operation/contract/runtime"
 	"github.com/imfact-labs/mitum2/base"
 	"github.com/imfact-labs/mitum2/util"
 	"github.com/imfact-labs/mitum2/util/hint"
 	"github.com/imfact-labs/mitum2/util/valuehash"
+	"github.com/imfact-labs/smart-contract-model/operation/contract/runtime"
 	"github.com/pkg/errors"
 )
 
@@ -28,6 +29,8 @@ type RegisterContractFact struct {
 	callData map[string]string
 	currency ctypes.CurrencyID
 }
+
+var _ extras.FeeAble = RegisterContractFact{}
 
 func NewRegisterContractFact(token []byte, sender, contract base.Address, code string, callData map[string]string, currency ctypes.CurrencyID) RegisterContractFact {
 	bf := base.NewBaseFact(RegisterContractFactHint, token)
@@ -119,6 +122,25 @@ func (fact RegisterContractFact) Token() base.Token {
 
 func (fact RegisterContractFact) Sender() base.Address {
 	return fact.sender
+}
+
+func (fact RegisterContractFact) FeeBase() (ctypes.CurrencyID, int, int, bool) {
+	return fact.currency, extras.NoItemFeeBaseItemCount, fact.feeDataSize(), extras.HasNoItem
+}
+
+func (fact RegisterContractFact) FeePayer() base.Address {
+	return fact.sender
+}
+
+func (fact RegisterContractFact) Currency() ctypes.CurrencyID {
+	return fact.currency
+}
+
+func (fact RegisterContractFact) feeDataSize() int {
+	callData, _ := json.Marshal(normalizeStringMap(fact.callData))
+
+	return len(fact.Token()) + len(fact.sender.Bytes()) + len(fact.contract.Bytes()) +
+		len(fact.code) + len(callData) + len(fact.currency.Bytes())
 }
 
 func (fact RegisterContractFact) Contract() base.Address {
