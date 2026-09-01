@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/imfact-labs/currency-model/app/runtime/contracts"
+
 	ccmds "github.com/imfact-labs/currency-model/app/cmds"
 	"github.com/imfact-labs/currency-model/app/runtime/steps"
 	"github.com/imfact-labs/mitum2/launch"
@@ -64,10 +66,13 @@ func PAddHinters(pctx context.Context) (context.Context, error) {
 	e := util.StringError("add hinters")
 
 	var encs *encoder.Encoders
+	var f contracts.ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
 
 	if err := util.LoadFromContextOK(pctx, launch.EncodersContextKey, &encs); err != nil {
 		return pctx, e.Wrap(err)
 	}
+
+	pctx = context.WithValue(pctx, contracts.ProposalOperationFactHintContextKey, f)
 
 	if err := LoadHinters(encs); err != nil {
 		return pctx, e.Wrap(err)
