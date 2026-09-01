@@ -6,8 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/imfact-labs/currency-model/app/runtime/contracts"
-
 	ccmds "github.com/imfact-labs/currency-model/app/cmds"
 	"github.com/imfact-labs/currency-model/app/runtime/steps"
 	"github.com/imfact-labs/mitum2/launch"
@@ -16,6 +14,7 @@ import (
 	"github.com/imfact-labs/mitum2/util/localtime"
 	"github.com/imfact-labs/mitum2/util/logging"
 	"github.com/imfact-labs/mitum2/util/ps"
+	smartsteps "github.com/imfact-labs/smart-contract-model/runtime/steps"
 	"github.com/rs/zerolog"
 )
 
@@ -63,22 +62,7 @@ func (cmd *BaseCommand) print(f string, a ...interface{}) {
 }
 
 func PAddHinters(pctx context.Context) (context.Context, error) {
-	e := util.StringError("add hinters")
-
-	var encs *encoder.Encoders
-	var f contracts.ProposalOperationFactHintFunc = IsSupportedProposalOperationFactHintFunc
-
-	if err := util.LoadFromContextOK(pctx, launch.EncodersContextKey, &encs); err != nil {
-		return pctx, e.Wrap(err)
-	}
-
-	pctx = context.WithValue(pctx, contracts.ProposalOperationFactHintContextKey, f)
-
-	if err := LoadHinters(encs); err != nil {
-		return pctx, e.Wrap(err)
-	}
-
-	return pctx, nil
+	return smartsteps.PAddHinters(pctx)
 }
 
 type OperationFlags struct {
