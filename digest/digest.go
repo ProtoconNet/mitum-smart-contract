@@ -142,7 +142,18 @@ func (di *Digester) digest(ctx context.Context, blk base.BlockMap) error {
 		return e.Wrap(err)
 	}
 
-	if err := DigestBlock(ctx, di.database, blk, ops, opsTree, sts, pr, di.buildInfo); err != nil {
+	var receipts []base.OperationReceiptRecord
+	switch i, found, err := isaacblock.LoadOperationReceiptsFromReader(
+		bm, di.sourceReaders.Item, blk.Manifest().Height(),
+	); {
+	case err != nil:
+		return e.Wrap(err)
+	case !found:
+	default:
+		receipts = i
+	}
+
+	if err := DigestBlock(ctx, di.database, blk, ops, opsTree, sts, receipts, pr, di.buildInfo); err != nil {
 		return e.Wrap(err)
 	}
 
@@ -156,6 +167,7 @@ func DigestBlock(
 	ops []base.Operation,
 	opsTree fixedtree.Tree,
 	sts []base.State,
+	receipts []base.OperationReceiptRecord,
 	proposal base.ProposalSignFact,
 	vs string,
 ) error {
@@ -163,7 +175,7 @@ func DigestBlock(
 		return nil
 	}
 
-	bs, err := NewBlockSession(st, blk, ops, opsTree, sts, proposal, vs)
+	bs, err := NewBlockSession(st, blk, ops, opsTree, sts, receipts, proposal, vs)
 	if err != nil {
 		return err
 	}
