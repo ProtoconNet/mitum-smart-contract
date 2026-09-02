@@ -4,7 +4,6 @@ import (
 	"context"
 
 	cdigest "github.com/imfact-labs/currency-model/digest"
-	"github.com/imfact-labs/smart-contract-model/digest"
 	"github.com/imfact-labs/mitum2/base"
 	"github.com/imfact-labs/mitum2/isaac"
 	isaacblock "github.com/imfact-labs/mitum2/isaac/block"
@@ -13,6 +12,7 @@ import (
 	"github.com/imfact-labs/mitum2/util"
 	"github.com/imfact-labs/mitum2/util/logging"
 	"github.com/imfact-labs/mitum2/util/ps"
+	"github.com/imfact-labs/smart-contract-model/digest"
 )
 
 const (
@@ -194,7 +194,16 @@ func digestFollowup(ctx context.Context, height base.Height) error {
 			return err
 		}
 
-		if err := digest.DigestBlock(ctx, st, bm, ops, opsTree, sts, pr, vs.String()); err != nil {
+		var receipts []base.OperationReceiptRecord
+		switch i, found, err := isaacblock.LoadOperationReceiptsFromReader(bm, sourceReaders.Item, h); {
+		case err != nil:
+			return err
+		case !found:
+		default:
+			receipts = i
+		}
+
+		if err := digest.DigestBlock(ctx, st, bm, ops, opsTree, sts, receipts, pr, vs.String()); err != nil {
 			return err
 		}
 

@@ -26,6 +26,7 @@ type BlockSession struct {
 	sync.RWMutex
 	block                  base.BlockMap
 	ops                    []base.Operation
+	receipts               []base.OperationReceiptRecord
 	opsTree                fixedtree.Tree
 	sts                    []base.State
 	st                     *cdigest.Database
@@ -51,6 +52,7 @@ func NewBlockSession(
 	ops []base.Operation,
 	opsTree fixedtree.Tree,
 	sts []base.State,
+	receipts []base.OperationReceiptRecord,
 	proposal base.ProposalSignFact,
 	vs string,
 ) (*BlockSession, error) {
@@ -67,6 +69,7 @@ func NewBlockSession(
 		st:          nst,
 		block:       blk,
 		ops:         ops,
+		receipts:    receipts,
 		opsTree:     opsTree,
 		sts:         sts,
 		proposal:    proposal,
@@ -244,6 +247,10 @@ func (bs *BlockSession) prepareOperations() error {
 		return nil
 	}
 
+	if len(bs.receipts) > 0 && len(bs.receipts) != len(bs.ops) {
+		return errors.Errorf("operation receipts length does not match operations")
+	}
+
 	node := func(h mitumutil.Hash) (bool, bool, base.OperationProcessReasonError) {
 		no, found := bs.opsTreeNodes[h.String()]
 		if !found {
@@ -270,6 +277,24 @@ func (bs *BlockSession) prepareOperations() error {
 			default:
 				reasonMsg = reason.Msg()
 			}
+			var receipt base.OperationReceipt
+			if len(bs.receipts) > 0 {
+				record := bs.receipts[i]
+				if err := record.IsValid(nil); err != nil {
+					return err
+				}
+
+				if !record.OperationHash().Equal(op.Hash()) {
+					return errors.Errorf("operation receipt hash does not match operation")
+				}
+
+				if !record.FactHash().Equal(op.Fact().Hash()) {
+					return errors.Errorf("operation receipt fact hash does not match operation fact")
+				}
+
+				receipt = record.Receipt()
+			}
+
 			d, err := cdigest.NewOperationDoc(
 				op,
 				bs.st.Encoder(),
@@ -278,7 +303,7 @@ func (bs *BlockSession) prepareOperations() error {
 				inState,
 				reasonMsg,
 				uint64(i),
-				base.NewBaseOperationReceipt(),
+				receipt,
 			)
 			if err != nil {
 				return err
