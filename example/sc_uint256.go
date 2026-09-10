@@ -87,6 +87,14 @@ func PreviewRatio(ctx chain.QueryContext, numerator string, denominator string) 
 	return result, true
 }
 
+func PreviewRatioWithError(ctx chain.QueryContext, numerator string, denominator string) string {
+	result, err := u256.MulDivCanonicalDecimal(total, numerator, denominator)
+	if err != nil {
+		return err.Error()
+	}
+	return result
+}
+
 func PreviewSqrt(ctx chain.QueryContext) string {
 	// Query calculations return canonical strings without mutating state.
 	result, err := u256.SqrtCanonicalDecimal(total)

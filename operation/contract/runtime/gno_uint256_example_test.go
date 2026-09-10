@@ -43,17 +43,26 @@ func TestUint256ContractExample(t *testing.T) {
 		t.Fatalf("PreviewRatio = %#v, ok=%v", preview.Result, preview.Ok)
 	}
 	assertCanonicalExampleResult(t, preview.Result)
+	if got := env.query(t, "PreviewRatioWithError", map[string]string{"numerator": "5", "denominator": "2"}).Result; got != "205" {
+		t.Fatalf("PreviewRatioWithError success = %#v", got)
+	}
 
 	for _, tc := range []struct {
 		function string
 		callData map[string]string
+		code     string
 	}{
-		{"Add", map[string]string{"amount": "001"}},
-		{"Reset", map[string]string{"next": "-1"}},
-		{"ApplyRatio", map[string]string{"numerator": "1", "denominator": "0"}},
+		{"Add", map[string]string{"amount": ""}, Uint256EmptyDecimalError},
+		{"Add", map[string]string{"amount": strings.Repeat("1", 79)}, Uint256DecimalTooLongError},
+		{"Add", map[string]string{"amount": "007"}, Uint256LeadingZeroError},
+		{"Reset", map[string]string{"next": "-1"}, Uint256InvalidDigitError},
+		{"Reset", map[string]string{"next": "12a"}, Uint256InvalidDigitError},
+		{"Reset", map[string]string{"next": " 1"}, Uint256InvalidDigitError},
+		{"Reset", map[string]string{"next": u256Modulus}, Uint256DecimalOverflowError},
+		{"ApplyRatio", map[string]string{"numerator": "1", "denominator": "0"}, Uint256MulDivDenominatorZero},
 	} {
 		before := env.snapshot(t)
-		if err := env.writeError(t, tc.function, tc.callData); err == nil {
+		if err := env.writeError(t, tc.function, tc.callData); err == nil || !strings.Contains(err.Error(), tc.code) {
 			t.Fatalf("%s unexpectedly succeeded", tc.function)
 		}
 		if !bytes.Equal(before, env.snapshot(t)) {
@@ -67,6 +76,26 @@ func TestUint256ContractExample(t *testing.T) {
 	}
 	if got := env.query(t, "GetTotal", nil).Result; got != "82" {
 		t.Fatalf("failed operations changed total to %#v", got)
+	}
+
+	for _, tc := range []struct {
+		data map[string]string
+		code string
+	}{
+		{map[string]string{"numerator": "0", "denominator": "0"}, Uint256MulDivDenominatorZero},
+		{map[string]string{"numerator": "", "denominator": "2"}, Uint256EmptyDecimalError},
+		{map[string]string{"numerator": "007", "denominator": "2"}, Uint256LeadingZeroError},
+		{map[string]string{"numerator": "-1", "denominator": "2"}, Uint256InvalidDigitError},
+		{map[string]string{"numerator": u256Modulus, "denominator": "2"}, Uint256DecimalOverflowError},
+	} {
+		before := env.snapshot(t)
+		got := env.query(t, "PreviewRatioWithError", tc.data).Result
+		if got != tc.code {
+			t.Fatalf("PreviewRatioWithError(%v) = %#v, want %q", tc.data, got, tc.code)
+		}
+		if !bytes.Equal(before, env.snapshot(t)) {
+			t.Fatalf("PreviewRatioWithError(%v) changed state", tc.data)
+		}
 	}
 }
 
@@ -89,6 +118,8 @@ func assertUint256ContractExamplePolicy(t *testing.T, source string) {
 		"u256.FromCanonicalDecimal",
 		"u256.ToCanonicalDecimal",
 		"u256.MulDivCanonicalDecimal",
+		"PreviewRatio(ctx chain.QueryContext",
+		"PreviewRatioWithError(ctx chain.QueryContext",
 		"u256.SqrtCanonicalDecimal",
 	} {
 		if !strings.Contains(source, required) {
