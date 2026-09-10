@@ -45,13 +45,26 @@ func TestUint256CanonicalInvalidVectorsRollBack(t *testing.T) {
 	env.write(t, "Set", map[string]string{"input": "7"})
 	invalid := []string{"", "00", "01", "+0", "+1", "-0", "-1", " 1", "1 ", "1\n", "1.0", "1e3", "0x1", "١", "１２", u256Modulus, "115792089237316195423570985008687907853269984665640564039457584007913129639937", strings.Repeat("9", 256)}
 	for _, input := range invalid {
+		wantCode := Uint256InvalidDigitError
+		switch {
+		case input == "":
+			wantCode = Uint256EmptyDecimalError
+		case len(input) > 78:
+			wantCode = Uint256DecimalTooLongError
+		case len(input) > 1 && input[0] == '0':
+			wantCode = Uint256LeadingZeroError
+		case len(input) > 1 && input[0] == '+':
+			wantCode = Uint256InvalidDigitError
+		case input == u256Modulus || input == "115792089237316195423570985008687907853269984665640564039457584007913129639937":
+			wantCode = Uint256DecimalOverflowError
+		}
 		before := env.snapshot(t)
 		_, err := env.engine.ExecuteContract(newRuntimeTestEncoders(t), stateGetter(env.states), ExecuteRequest{
 			Mode: InvocationModeCall, Contract: env.contract, Sender: env.sender, Height: env.height() + 1,
 			ContractCode: uint256CanonicalContractSource, Function: "Set", CallData: map[string]string{"input": input},
 		})
-		if err == nil || !strings.Contains(err.Error(), Uint256CanonicalDecimalError) {
-			t.Fatalf("Set(%q) error = %v", input, err)
+		if err == nil || !strings.Contains(err.Error(), wantCode) {
+			t.Fatalf("Set(%q) error = %v, want %s", input, err, wantCode)
 		}
 		if !bytes.Equal(before, env.snapshot(t)) {
 			t.Fatalf("Set(%q) changed snapshot", input)

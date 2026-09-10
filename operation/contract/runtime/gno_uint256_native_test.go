@@ -3,6 +3,7 @@ package runtime
 import (
 	"math/big"
 	"math/rand"
+	"strings"
 	"testing"
 
 	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
@@ -17,11 +18,38 @@ func TestUint256NativeMulDivBoundaries(t *testing.T) {
 		{u256Max, u256Max, u256Max, u256Max, ""},
 		{"1", "1", "0", "", Uint256MulDivDenominatorZero},
 		{u256Max, u256Max, "1", "", Uint256MulDivResultOverflow},
-		{"01", "1", "1", "", Uint256CanonicalDecimalError},
+		{"01", "1", "1", "", Uint256LeadingZeroError},
 	} {
 		result, code := uint256MulDivDecimal(tc.a, tc.b, tc.d)
 		if result != tc.result || code != tc.code {
 			t.Fatalf("MulDiv(%s,%s,%s) = (%q,%q), want (%q,%q)", tc.a, tc.b, tc.d, result, code, tc.result, tc.code)
+		}
+	}
+}
+
+func TestUint256CanonicalDecimalErrorCodes(t *testing.T) {
+	for _, tc := range []struct {
+		input string
+		code  string
+	}{
+		{"", Uint256EmptyDecimalError},
+		{strings.Repeat("1", 79), Uint256DecimalTooLongError},
+		{"00", Uint256LeadingZeroError},
+		{"007", Uint256LeadingZeroError},
+		{"-1", Uint256InvalidDigitError},
+		{"+1", Uint256InvalidDigitError},
+		{"12a", Uint256InvalidDigitError},
+		{" 1", Uint256InvalidDigitError},
+		{"1 ", Uint256InvalidDigitError},
+		{u256Modulus, Uint256DecimalOverflowError},
+	} {
+		if _, code := parseCanonicalUint256(tc.input); code != tc.code {
+			t.Errorf("parseCanonicalUint256(%q) code=%q, want %q", tc.input, code, tc.code)
+		}
+	}
+	for _, input := range []string{"0", "1", u256Max} {
+		if value, code := parseCanonicalUint256(input); code != "" || value == nil {
+			t.Errorf("parseCanonicalUint256(%q)=(%v,%q), want valid", input, value, code)
 		}
 	}
 }
@@ -48,16 +76,16 @@ func TestUint256NativeDeterministicBigIntDifferential(t *testing.T) {
 		}
 
 		x := new(big.Int).Rand(rng, maxUint256Big)
-		sqrt, ok := uint256SqrtDecimal(x.String())
-		if !ok || sqrt != new(big.Int).Sqrt(x).String() {
-			t.Fatalf("sqrt vector %d got (%q,%v)", i, sqrt, ok)
+		sqrt, code := uint256SqrtDecimal(x.String())
+		if code != "" || sqrt != new(big.Int).Sqrt(x).String() {
+			t.Fatalf("sqrt vector %d got (%q,%q)", i, sqrt, code)
 		}
 	}
 }
 
 func TestUint256NativeRejectsNonCanonicalInputs(t *testing.T) {
 	for _, input := range []string{"", "00", "01", "-1", "+1", " 1", "1 ", "0x1", u256Modulus} {
-		if _, ok := parseCanonicalUint256(input); ok {
+		if _, code := parseCanonicalUint256(input); code == "" {
 			t.Fatalf("accepted non-canonical uint256 %q", input)
 		}
 	}

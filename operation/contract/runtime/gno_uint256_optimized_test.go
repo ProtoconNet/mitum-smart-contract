@@ -10,7 +10,7 @@ import (
 )
 
 func TestUint256CanonicalToHexBoundaries(t *testing.T) {
-	for _, tc := range []struct{ input, hex, code string }{{"0", "0x0", ""}, {"1", "0x1", ""}, {u256Max, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", ""}, {"01", "", Uint256CanonicalDecimalError}, {u256Modulus, "", Uint256CanonicalDecimalError}} {
+	for _, tc := range []struct{ input, hex, code string }{{"0", "0x0", ""}, {"1", "0x1", ""}, {u256Max, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", ""}, {"01", "", Uint256LeadingZeroError}, {u256Modulus, "", Uint256DecimalOverflowError}} {
 		hex, code := uint256CanonicalToHex(tc.input)
 		if hex != tc.hex || code != tc.code {
 			t.Fatalf("canonicalToHex(%q)=(%q,%q), want (%q,%q)", tc.input, hex, code, tc.hex, tc.code)
@@ -99,7 +99,7 @@ func TestUint256OptimizedErrorsRollBack(t *testing.T) {
 		fn     string
 		data   map[string]string
 		reason string
-	}{{"Convert", map[string]string{"v": "01"}, Uint256CanonicalDecimalError}, {"MulDivDecimal", map[string]string{"a": "1", "b": "1", "d": "0"}, Uint256MulDivDenominatorZero}, {"MulDivDecimal", map[string]string{"a": u256Max, "b": u256Max, "d": "1"}, Uint256MulDivResultOverflow}} {
+	}{{"Convert", map[string]string{"v": "01"}, Uint256LeadingZeroError}, {"MulDivDecimal", map[string]string{"a": "1", "b": "1", "d": "0"}, Uint256MulDivDenominatorZero}, {"MulDivDecimal", map[string]string{"a": u256Max, "b": u256Max, "d": "1"}, Uint256MulDivResultOverflow}} {
 		before := e.snapshot(t)
 		_, err := e.engine.ExecuteContract(newRuntimeTestEncoders(t), stateGetter(e.states), ExecuteRequest{Mode: InvocationModeCall, Contract: e.contract, Sender: e.sender, Height: e.height() + 1, ContractCode: uint256OptimizedContractSource, Function: tc.fn, CallData: tc.data})
 		if err == nil || !strings.Contains(err.Error(), tc.reason) {

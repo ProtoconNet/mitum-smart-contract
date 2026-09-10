@@ -16,7 +16,11 @@ const (
 
 // Runtime errors returned by the Uint256 native functions.
 const (
-	Uint256CanonicalDecimalError = "u256: non-canonical decimal"
+	Uint256EmptyDecimalError     = "u256: empty decimal"
+	Uint256DecimalTooLongError   = "u256: decimal too long"
+	Uint256LeadingZeroError      = "u256: leading zero"
+	Uint256InvalidDigitError     = "u256: invalid decimal digit"
+	Uint256DecimalOverflowError  = "u256: decimal overflow"
 	Uint256MulDivDenominatorZero = "u256: denominator is zero"
 	Uint256MulDivResultOverflow  = "u256: result overflow"
 )
@@ -58,11 +62,11 @@ func nativeUint256MulDiv(m *gno.Machine) {
 }
 
 func nativeUint256Sqrt(m *gno.Machine) {
-	decimal, ok := uint256SqrtDecimal(machineStringArg(m, 0))
-	if !ok {
+	decimal, code := uint256SqrtDecimal(machineStringArg(m, 0))
+	if code != "" {
 		pushStringResult(m, "")
 		pushStringResult(m, "")
-		pushStringResult(m, Uint256CanonicalDecimalError)
+		pushStringResult(m, code)
 		return
 	}
 	x, _ := parseCanonicalUint256(decimal)
@@ -72,9 +76,9 @@ func nativeUint256Sqrt(m *gno.Machine) {
 }
 
 func uint256CanonicalToHex(input string) (string, string) {
-	x, ok := parseCanonicalUint256(input)
-	if !ok {
-		return "", Uint256CanonicalDecimalError
+	x, code := parseCanonicalUint256(input)
+	if code != "" {
+		return "", code
 	}
 	return canonicalUint256Hex(x), ""
 }
@@ -82,17 +86,17 @@ func uint256CanonicalToHex(input string) (string, string) {
 func canonicalUint256Hex(x *big.Int) string { return "0x" + x.Text(16) }
 
 func uint256MulDivDecimal(a, b, denominator string) (string, string) {
-	x, ok := parseCanonicalUint256(a)
-	if !ok {
-		return "", Uint256CanonicalDecimalError
+	x, code := parseCanonicalUint256(a)
+	if code != "" {
+		return "", code
 	}
-	y, ok := parseCanonicalUint256(b)
-	if !ok {
-		return "", Uint256CanonicalDecimalError
+	y, code := parseCanonicalUint256(b)
+	if code != "" {
+		return "", code
 	}
-	d, ok := parseCanonicalUint256(denominator)
-	if !ok {
-		return "", Uint256CanonicalDecimalError
+	d, code := parseCanonicalUint256(denominator)
+	if code != "" {
+		return "", code
 	}
 	if d.Sign() == 0 {
 		return "", Uint256MulDivDenominatorZero
@@ -104,24 +108,30 @@ func uint256MulDivDecimal(a, b, denominator string) (string, string) {
 	return result.String(), ""
 }
 
-func uint256SqrtDecimal(input string) (string, bool) {
-	x, ok := parseCanonicalUint256(input)
-	if !ok {
-		return "", false
+func uint256SqrtDecimal(input string) (string, string) {
+	x, code := parseCanonicalUint256(input)
+	if code != "" {
+		return "", code
 	}
-	return new(big.Int).Sqrt(x).String(), true
+	return new(big.Int).Sqrt(x).String(), ""
 }
 
-func parseCanonicalUint256(input string) (*big.Int, bool) {
-	if input == "" || len(input) > 78 || (len(input) > 1 && input[0] == '0') {
-		return nil, false
+func parseCanonicalUint256(input string) (*big.Int, string) {
+	if input == "" {
+		return nil, Uint256EmptyDecimalError
+	}
+	if len(input) > 78 {
+		return nil, Uint256DecimalTooLongError
+	}
+	if len(input) > 1 && input[0] == '0' {
+		return nil, Uint256LeadingZeroError
 	}
 	if strings.IndexFunc(input, func(r rune) bool { return r < '0' || r > '9' }) >= 0 {
-		return nil, false
+		return nil, Uint256InvalidDigitError
 	}
 	x, ok := new(big.Int).SetString(input, 10)
 	if !ok || x.Sign() < 0 || x.Cmp(maxUint256Big) > 0 || x.String() != input {
-		return nil, false
+		return nil, Uint256DecimalOverflowError
 	}
-	return x, true
+	return x, ""
 }
