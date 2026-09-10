@@ -28,10 +28,10 @@
     "operation/contract/runtime/gno_pure_packages/gno.land/p/onbloc/uint256/utils.gno": "4282c562b8d6487a00c3c79c25af2fdf588f4cd32d4cf6666c21cd387e210206",
     "operation/contract/runtime/gno_pure_packages/mitum/math/v1/u256/u256.gno": "43980a468b2a107b64c3efa4ced7568b5f21a8f012dbcdd22fd94dae03cee899",
     "operation/contract/runtime/gno_snapshot_codec.go": "2b70c15876022ad3e8509cc65cecf6c93f1dc81934dfd2c12fb73205fcface8d",
-    "operation/contract/runtime/gno_uint256_native.go": "e5944ecf6b12dc3eef1e2b70ea02354bd50bbe0604a57215f649437b8d3308aa",
+    "operation/contract/runtime/gno_uint256_native.go": "9b83a395957cd3eef5fde5206af6e869f61a47f41e5ae59522c8bdb4fe6bd7c1",
     "operation/contract/runtime/import_policy.go": "d3ffa4c66fb24cd86b7f960020eb92267e391943ec2c4cb3d06a2a5c30970556",
     "operation/contract/runtime/schema_ruleset.go": "98a379b2ec31b4d457f6181eae5b5bb8448745c5f7566628a8ec9f54b7cfc610",
     "operation/contract/runtime/state_readers.go": "91909d45becb34e82a12ef0b2b7499be38bc93c2184806c255bf4c9ff73214f0"
   },
-  "canonical_source_bundle_sha256": "9c93abb9d26e526755533efaf449483c428c45919bbebd2beec3ae18bba14152"
+  "canonical_source_bundle_sha256": "533dd818ba710372ee8799fff013addbc3f75a8962f198f44ffcb58f2934ccf8"
 }

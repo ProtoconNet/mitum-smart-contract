@@ -11,11 +11,14 @@ const (
 	Uint256NativeSemanticsVersion = "mitum-u256-native-v2"
 	Uint256NativeGasSchedule      = "mitum-u256-gas-v1"
 	Uint256CanonicalDecimalPolicy = "mitum-u256-canonical-decimal-v1"
-	Uint256CanonicalDecimalError  = "u256: non-canonical decimal"
 	Uint256WrapperSourceSHA256    = "43980a468b2a107b64c3efa4ced7568b5f21a8f012dbcdd22fd94dae03cee899"
-	Uint256MulDivDenominatorZero  = "u256: denominator is zero"
-	Uint256MulDivResultOverflow   = "u256: result overflow"
-	Uint256InvalidNativeInput     = "u256: invalid native input"
+)
+
+// Runtime errors returned by the Uint256 native functions.
+const (
+	Uint256CanonicalDecimalError = "u256: non-canonical decimal"
+	Uint256MulDivDenominatorZero = "u256: denominator is zero"
+	Uint256MulDivResultOverflow  = "u256: result overflow"
 )
 
 var maxUint256Big = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
